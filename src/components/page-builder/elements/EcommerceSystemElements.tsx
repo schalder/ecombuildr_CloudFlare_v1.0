@@ -1616,6 +1616,8 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   const [items, setItems] = useState<any[]>([]);
   const [downloadLinks, setDownloadLinks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
   const orderContentRef = useRef<HTMLDivElement>(null);
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const id = orderId || query.get('orderId') || '';
@@ -1718,81 +1720,80 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         if (!store) {
           return;
         }
+        
+        // Add initial delay for race condition handling
+        if (retryCount === 0) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        const { data, error } = await supabase.functions.invoke('get-order-public', {
+          body: { 
+            orderId: id, 
+            storeId: store.id,
+            token: orderToken 
+          }
+        });
+        
+        if (error) {
+          console.error('OrderConfirmationElement: get-order-public error:', error);
+          
+          // Retry logic for temporary errors (race conditions)
+          if (retryCount < 3 && (
+            error.message?.includes('Order not found') || 
+            error.message?.includes('Invalid access token') ||
+            error.message?.includes('Failed to fetch order')
+          )) {
+            console.log(`OrderConfirmationElement: Retrying order fetch (attempt ${retryCount + 1})`);
+            setRetryCount(prev => prev + 1);
+            // Exponential backoff: 200ms, 400ms, 800ms
+            await new Promise(resolve => setTimeout(resolve, 200 * Math.pow(2, retryCount)));
+            return; // Don't set loading to false, retry
+          }
+          
+          // Permanent error after retries
+          setError(error.message || 'Failed to fetch order');
+          setLoading(false);
+          return;
+        }
+        
+        if (!data?.order) {
+          // Order not found after all retries
+          setError('Order not found');
+          setLoading(false);
+          return;
+        }
+        
+        // Success - set order data
+        setOrder(data.order);
+        setItems(data.items || []);
+        setDownloadLinks(data.downloadLinks || []);
+        setError(null);
 
-        // ✅ Add retry logic for order fetching to handle temporary unavailability
-        let retryCount = 0;
-        const maxRetries = 3;
-        let lastError = null;
-
-        while (retryCount < maxRetries) {
+        // Fallback: if no download links yet, try to generate them (service-side)
+        if ((!data?.downloadLinks || data.downloadLinks.length === 0) && id) {
           try {
-            const { data, error } = await supabase.functions.invoke('get-order-public', {
-              body: { 
-                orderId: id, 
-                storeId: store.id,
-                token: orderToken 
-              }
+            const { data: ensureData } = await supabase.functions.invoke('ensure-download-links', {
+              body: { orderId: id }
             });
-            
-            if (error) {
-              lastError = error;
-              // If it's a 404 or 403 error, don't retry (order doesn't exist or invalid token)
-              if (error.message?.includes('not found') || error.message?.includes('Invalid access token')) {
-                throw error;
-              }
-              // For other errors, retry
-              retryCount++;
-              if (retryCount < maxRetries) {
-                console.log(`OrderConfirmationElement: Retry ${retryCount}/${maxRetries} for order ${id}`);
-                await new Promise(resolve => setTimeout(resolve, 500 * retryCount)); // Exponential backoff
-                continue;
-              }
-              throw error;
+            if (ensureData?.downloadLinks?.length) {
+              setDownloadLinks(ensureData.downloadLinks);
             }
-
-            // Success - set the data
-            setOrder(data?.order || null);
-            setItems(data?.items || []);
-            setDownloadLinks(data?.downloadLinks || []);
-
-            // Fallback: if no download links yet, try to generate them (service-side)
-            if ((!data?.downloadLinks || data.downloadLinks.length === 0) && id) {
-              try {
-                const { data: ensureData } = await supabase.functions.invoke('ensure-download-links', {
-                  body: { orderId: id }
-                });
-                if (ensureData?.downloadLinks?.length) {
-                  setDownloadLinks(ensureData.downloadLinks);
-                }
-              } catch (genErr) {
-                // ignore and keep empty
-              }
-            }
-            
-            // Success - break out of retry loop
-            break;
-          } catch (e) {
-            lastError = e;
-            retryCount++;
-            if (retryCount < maxRetries) {
-              console.log(`OrderConfirmationElement: Retry ${retryCount}/${maxRetries} for order ${id}, error:`, e);
-              await new Promise(resolve => setTimeout(resolve, 500 * retryCount)); // Exponential backoff
-            } else {
-              // Final attempt failed
-              throw e;
-            }
+          } catch (genErr) {
+            // ignore and keep empty
           }
         }
+        
+        setLoading(false);
       } catch (e) {
-        console.error('OrderConfirmationElement: Failed to fetch order after retries:', e);
-        // Error fetching order - will show "Order not found" message
-      } finally {
+        console.error('OrderConfirmationElement: Unexpected error:', e);
+        setError('An unexpected error occurred');
         setLoading(false);
       }
     })();
-  }, [id, store, orderToken]);
+  }, [id, store, orderToken, retryCount]);
 
   if (loading) return <div className="text-center">Loading...</div>;
+  if (error) return <div className="text-center text-destructive">{error}</div>;
   if (!order) return <div className="text-center">Order not found</div>;
 
   // Derived totals

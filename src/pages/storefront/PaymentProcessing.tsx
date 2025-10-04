@@ -253,9 +253,8 @@ useEffect(() => {
                 
                 const newOrderToken = data.order.access_token;
                 
-                // ✅ Add small delay to ensure database consistency before redirect
-                console.log('PaymentProcessing: Adding delay before redirect to ensure order availability...');
-                await new Promise(resolve => setTimeout(resolve, 200));
+                // Add small delay to ensure database consistency before redirect
+                await new Promise(resolve => setTimeout(resolve, 100));
                 
                 if (isAppEnvironment) {
                   // App/sandbox: use funnel-aware paths
