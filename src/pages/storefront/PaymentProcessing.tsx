@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { CoursePaymentProcessing } from '@/components/course/CoursePaymentProcessing';
 
-export const PaymentProcessing: React.FC = () => {
+export const PaymentProcessing: React.FC<{ funnelContext?: any }> = ({ funnelContext }) => {
   const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -170,56 +170,69 @@ useEffect(() => {
         
         // Check if this order came from a funnel and handle funnel-specific redirect
         const orderFunnelId = checkoutData.orderData?.funnel_id;
-        if (orderFunnelId) {
-          console.log('PaymentProcessing: Order from funnel detected', { funnelId: orderFunnelId, orderId: data.order.id });
+        if (orderFunnelId || funnelContext) {
+          console.log('PaymentProcessing: Order from funnel detected', { 
+            funnelId: orderFunnelId || funnelContext?.funnelId, 
+            orderId: data.order.id,
+            hasFunnelContext: !!funnelContext
+          });
           
           try {
-            // Find the current funnel step where checkout happened
-            // We need to find which step has this order's funnel_id and has a checkout element
-            const { data: currentStep, error: stepError } = await supabase
-              .from('funnel_steps')
-              .select('id, on_success_step_id, funnel_id')
-              .eq('funnel_id', orderFunnelId)
-              .eq('is_published', true)
-              .order('step_order', { ascending: true })
-              .limit(1)
-              .maybeSingle();
+            let nextStepSlug = null;
+            let funnelId = orderFunnelId || funnelContext?.funnelId;
             
-            if (!stepError && currentStep?.on_success_step_id) {
-              // Get the next step details
-              const { data: nextStep, error: nextStepError } = await supabase
+            // Use funnel context if available (from custom domain wrapper)
+            if (funnelContext?.nextStepSlug) {
+              nextStepSlug = funnelContext.nextStepSlug;
+              console.log('PaymentProcessing: Using funnel context for redirect', { nextStepSlug, funnelId });
+            } else {
+              // Fallback to database lookup (for app environment)
+              const { data: currentStep, error: stepError } = await supabase
                 .from('funnel_steps')
-                .select('slug, funnel_id')
-                .eq('id', currentStep.on_success_step_id)
-                .single();
+                .select('id, on_success_step_id, funnel_id')
+                .eq('funnel_id', funnelId)
+                .eq('is_published', true)
+                .order('step_order', { ascending: true })
+                .limit(1)
+                .maybeSingle();
               
-              if (!nextStepError && nextStep?.slug) {
-                // Environment-aware redirect to next funnel step
-                const isAppEnvironment = (
-                  window.location.hostname === 'localhost' || 
-                  window.location.hostname.includes('lovable.dev') ||
-                  window.location.hostname.includes('lovable.app') ||
-                  window.location.hostname.includes('lovableproject.com')
-                );
+              if (!stepError && currentStep?.on_success_step_id) {
+                const { data: nextStep, error: nextStepError } = await supabase
+                  .from('funnel_steps')
+                  .select('slug, funnel_id')
+                  .eq('id', currentStep.on_success_step_id)
+                  .single();
                 
-                if (isAppEnvironment) {
-                  // App/sandbox: use funnel-aware paths
-                  const nextUrl = `/funnel/${orderFunnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
-                  console.log(`PaymentProcessing: Redirecting to next funnel step (app): ${nextUrl}`);
-                  window.location.href = nextUrl;
-                  return;
-                } else {
-                  // Custom domain: use clean paths
-                  const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
-                  console.log(`PaymentProcessing: Redirecting to next funnel step (custom domain): ${nextUrl}`);
-                  window.location.href = nextUrl;
-                  return;
+                if (!nextStepError && nextStep?.slug) {
+                  nextStepSlug = nextStep.slug;
                 }
+              }
+            }
+            
+            if (nextStepSlug) {
+              // Environment-aware redirect to next funnel step
+              const isAppEnvironment = (
+                window.location.hostname === 'localhost' || 
+                window.location.hostname.includes('lovable.dev') ||
+                window.location.hostname.includes('lovable.app') ||
+                window.location.hostname.includes('lovableproject.com')
+              );
+              
+              if (isAppEnvironment) {
+                // App/sandbox: use funnel-aware paths
+                const nextUrl = `/funnel/${funnelId}/${nextStepSlug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                console.log(`PaymentProcessing: Redirecting to next funnel step (app): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
               } else {
-                console.log('PaymentProcessing: Next funnel step not found, falling back to order confirmation');
+                // Custom domain: use clean paths
+                const nextUrl = `/${nextStepSlug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                console.log(`PaymentProcessing: Redirecting to next funnel step (custom domain): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
               }
             } else {
-              console.log('PaymentProcessing: No next funnel step configured, falling back to order confirmation');
+              console.log('PaymentProcessing: Next funnel step not found, falling back to order confirmation');
             }
           } catch (error) {
             console.error('PaymentProcessing: Error handling funnel redirect:', error);
@@ -337,55 +350,69 @@ useEffect(() => {
         const orderToken = searchParams.get('ot') || '';
         
         // Check if this order came from a funnel and handle funnel-specific redirect
-        if (order.funnel_id) {
-          console.log('PaymentProcessing: Payment verification - Order from funnel detected', { funnelId: order.funnel_id, orderId: order.id });
+        if (order.funnel_id || funnelContext) {
+          console.log('PaymentProcessing: Payment verification - Order from funnel detected', { 
+            funnelId: order.funnel_id || funnelContext?.funnelId, 
+            orderId: order.id,
+            hasFunnelContext: !!funnelContext
+          });
           
           try {
-            // Find the current funnel step where checkout happened
-            const { data: currentStep, error: stepError } = await supabase
-              .from('funnel_steps')
-              .select('id, on_success_step_id, funnel_id')
-              .eq('funnel_id', order.funnel_id)
-              .eq('is_published', true)
-              .order('step_order', { ascending: true })
-              .limit(1)
-              .maybeSingle();
+            let nextStepSlug = null;
+            let funnelId = order.funnel_id || funnelContext?.funnelId;
             
-            if (!stepError && currentStep?.on_success_step_id) {
-              // Get the next step details
-              const { data: nextStep, error: nextStepError } = await supabase
+            // Use funnel context if available (from custom domain wrapper)
+            if (funnelContext?.nextStepSlug) {
+              nextStepSlug = funnelContext.nextStepSlug;
+              console.log('PaymentProcessing: Payment verification - Using funnel context for redirect', { nextStepSlug, funnelId });
+            } else {
+              // Fallback to database lookup (for app environment)
+              const { data: currentStep, error: stepError } = await supabase
                 .from('funnel_steps')
-                .select('slug, funnel_id')
-                .eq('id', currentStep.on_success_step_id)
-                .single();
+                .select('id, on_success_step_id, funnel_id')
+                .eq('funnel_id', funnelId)
+                .eq('is_published', true)
+                .order('step_order', { ascending: true })
+                .limit(1)
+                .maybeSingle();
               
-              if (!nextStepError && nextStep?.slug) {
-                // Environment-aware redirect to next funnel step
-                const isAppEnvironment = (
-                  window.location.hostname === 'localhost' || 
-                  window.location.hostname.includes('lovable.dev') ||
-                  window.location.hostname.includes('lovable.app') ||
-                  window.location.hostname.includes('lovableproject.com')
-                );
+              if (!stepError && currentStep?.on_success_step_id) {
+                const { data: nextStep, error: nextStepError } = await supabase
+                  .from('funnel_steps')
+                  .select('slug, funnel_id')
+                  .eq('id', currentStep.on_success_step_id)
+                  .single();
                 
-                if (isAppEnvironment) {
-                  // App/sandbox: use funnel-aware paths
-                  const nextUrl = `/funnel/${order.funnel_id}/${nextStep.slug}?orderId=${order.id}&ot=${orderToken}`;
-                  console.log(`PaymentProcessing: Payment verification - Redirecting to next funnel step (app): ${nextUrl}`);
-                  window.location.href = nextUrl;
-                  return;
-                } else {
-                  // Custom domain: use clean paths
-                  const nextUrl = `/${nextStep.slug}?orderId=${order.id}&ot=${orderToken}`;
-                  console.log(`PaymentProcessing: Payment verification - Redirecting to next funnel step (custom domain): ${nextUrl}`);
-                  window.location.href = nextUrl;
-                  return;
+                if (!nextStepError && nextStep?.slug) {
+                  nextStepSlug = nextStep.slug;
                 }
+              }
+            }
+            
+            if (nextStepSlug) {
+              // Environment-aware redirect to next funnel step
+              const isAppEnvironment = (
+                window.location.hostname === 'localhost' || 
+                window.location.hostname.includes('lovable.dev') ||
+                window.location.hostname.includes('lovable.app') ||
+                window.location.hostname.includes('lovableproject.com')
+              );
+              
+              if (isAppEnvironment) {
+                // App/sandbox: use funnel-aware paths
+                const nextUrl = `/funnel/${funnelId}/${nextStepSlug}?orderId=${order.id}&ot=${orderToken}`;
+                console.log(`PaymentProcessing: Payment verification - Redirecting to next funnel step (app): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
               } else {
-                console.log('PaymentProcessing: Payment verification - Next funnel step not found, falling back to order confirmation');
+                // Custom domain: use clean paths
+                const nextUrl = `/${nextStepSlug}?orderId=${order.id}&ot=${orderToken}`;
+                console.log(`PaymentProcessing: Payment verification - Redirecting to next funnel step (custom domain): ${nextUrl}`);
+                window.location.href = nextUrl;
+                return;
               }
             } else {
-              console.log('PaymentProcessing: Payment verification - No next funnel step configured, falling back to order confirmation');
+              console.log('PaymentProcessing: Payment verification - Next funnel step not found, falling back to order confirmation');
             }
           } catch (error) {
             console.error('PaymentProcessing: Payment verification - Error handling funnel redirect:', error);

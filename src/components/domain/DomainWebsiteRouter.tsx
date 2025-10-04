@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Routes, Route, useParams, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Routes, Route, useParams, useLocation, useSearchParams } from 'react-router-dom';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { CartPage } from '@/pages/storefront/CartPage';
@@ -25,10 +25,135 @@ import CourseMemberDashboard from '@/components/course/CourseMemberDashboard';
 import { MemberAuthProvider } from '@/hooks/useMemberAuth';
 import CoursePlayerPage from '@/pages/CoursePlayerPage';
 import { StorefrontCourseCheckoutWrapper } from '@/components/course/CourseRouteWrappers';
+import { supabase } from '@/integrations/supabase/client';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
   const { slug } = useParams<{ slug: string }>();
   return <WebsiteOverrideRoute slug={slug || ''} fallback={fallback} websiteId={websiteId} />;
+};
+
+// Funnel-aware PaymentProcessing wrapper for custom domains
+const FunnelAwarePaymentProcessing: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const [funnelContext, setFunnelContext] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  const tempId = searchParams.get('tempId');
+  const orderId = searchParams.get('orderId');
+  
+  useEffect(() => {
+    const detectFunnelContext = async () => {
+      if (!tempId && !orderId) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        console.log('FunnelAwarePaymentProcessing: Detecting funnel context', { tempId, orderId });
+        
+        // Check if this is a funnel order by looking at stored checkout data
+        const pendingCheckout = sessionStorage.getItem('pending_checkout');
+        if (pendingCheckout) {
+          const checkoutData = JSON.parse(pendingCheckout);
+          const orderFunnelId = checkoutData.orderData?.funnel_id;
+          
+          if (orderFunnelId) {
+            console.log('FunnelAwarePaymentProcessing: Funnel order detected', { funnelId: orderFunnelId });
+            
+            // Find the current funnel step and next step
+            const { data: currentStep, error: stepError } = await supabase
+              .from('funnel_steps')
+              .select('id, on_success_step_id, funnel_id')
+              .eq('funnel_id', orderFunnelId)
+              .eq('is_published', true)
+              .order('step_order', { ascending: true })
+              .limit(1)
+              .maybeSingle();
+            
+            if (!stepError && currentStep?.on_success_step_id) {
+              // Get the next step details
+              const { data: nextStep, error: nextStepError } = await supabase
+                .from('funnel_steps')
+                .select('slug, funnel_id')
+                .eq('id', currentStep.on_success_step_id)
+                .single();
+              
+              if (!nextStepError && nextStep?.slug) {
+                setFunnelContext({
+                  funnelId: orderFunnelId,
+                  nextStepSlug: nextStep.slug,
+                  currentStepId: currentStep.id
+                });
+                console.log('FunnelAwarePaymentProcessing: Next funnel step found', { 
+                  nextStepSlug: nextStep.slug, 
+                  funnelId: orderFunnelId 
+                });
+              }
+            }
+          }
+        }
+        
+        // Also check existing orders for funnel context
+        if (orderId) {
+          const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .select('funnel_id')
+            .eq('id', orderId)
+            .maybeSingle();
+          
+          if (!orderError && order?.funnel_id) {
+            console.log('FunnelAwarePaymentProcessing: Existing funnel order detected', { 
+              orderId, 
+              funnelId: order.funnel_id 
+            });
+            
+            // Find next step for existing funnel order
+            const { data: currentStep, error: stepError } = await supabase
+              .from('funnel_steps')
+              .select('id, on_success_step_id, funnel_id')
+              .eq('funnel_id', order.funnel_id)
+              .eq('is_published', true)
+              .order('step_order', { ascending: true })
+              .limit(1)
+              .maybeSingle();
+            
+            if (!stepError && currentStep?.on_success_step_id) {
+              const { data: nextStep, error: nextStepError } = await supabase
+                .from('funnel_steps')
+                .select('slug, funnel_id')
+                .eq('id', currentStep.on_success_step_id)
+                .single();
+              
+              if (!nextStepError && nextStep?.slug) {
+                setFunnelContext({
+                  funnelId: order.funnel_id,
+                  nextStepSlug: nextStep.slug,
+                  currentStepId: currentStep.id
+                });
+                console.log('FunnelAwarePaymentProcessing: Next funnel step found for existing order', { 
+                  nextStepSlug: nextStep.slug, 
+                  funnelId: order.funnel_id 
+                });
+              }
+            }
+          }
+        }
+        
+      } catch (error) {
+        console.error('FunnelAwarePaymentProcessing: Error detecting funnel context:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    detectFunnelContext();
+  }, [tempId, orderId]);
+  
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+  
+  return <PaymentProcessing funnelContext={funnelContext} />;
 };
 
 interface DomainWebsiteRouterProps {
@@ -98,7 +223,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
           fallback={<CheckoutPage />} 
         />
       } />
-      <Route path="/payment-processing" element={<PaymentProcessing />} />
+      <Route path="/payment-processing" element={<FunnelAwarePaymentProcessing />} />
       <Route path="/order-confirmation" element={
         <WebsiteOverrideRoute 
           slug="order-confirmation" 
@@ -125,7 +250,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
           fallback={<OrderConfirmation />} 
         />
       } />
-      <Route path="/courses/payment-processing" element={<PaymentProcessing />} />
+      <Route path="/courses/payment-processing" element={<FunnelAwarePaymentProcessing />} />
       <Route path="/courses/members/login" element={<CourseMemberLoginPage />} />
       <Route path="/courses/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
       <Route path="/courses/learn/:courseId" element={<CoursePlayerPage />} />
