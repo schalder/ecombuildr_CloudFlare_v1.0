@@ -68,6 +68,14 @@ serve(async (req: Request) => {
       });
     }
 
+    // First, let's check if order_items exist at all
+    const { data: rawItems, error: rawItemsError } = await supabase
+      .from("order_items")
+      .select("*")
+      .eq("order_id", orderId);
+
+    console.log('get-order-public: raw order_items:', { rawItems, rawItemsError, orderId });
+
     // Fetch items with product type information
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
@@ -82,6 +90,8 @@ serve(async (req: Request) => {
         products(product_type)
       `)
       .eq("order_id", orderId);
+
+    console.log('get-order-public: items query result:', { items, itemsError, orderId });
 
     if (itemsError) {
       console.error("get-order-public: itemsError", itemsError);
@@ -123,6 +133,8 @@ serve(async (req: Request) => {
       ...item,
       product_type: item.products?.product_type || 'physical'
     }));
+
+    console.log('get-order-public: processed items:', processedItems);
 
     return new Response(JSON.stringify({ 
       order: safeOrder, 

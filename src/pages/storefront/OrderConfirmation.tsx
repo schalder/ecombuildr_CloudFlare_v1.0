@@ -122,6 +122,9 @@ useEffect(() => {
           token: orderToken 
         },
       });
+      
+      console.log('OrderConfirmation - API Response:', { data, error, orderId, storeId: store.id, token: orderToken });
+      
       if (error) throw error;
       if (!data || !data.order) {
         // As a fallback, try course order lookup even if token exists
