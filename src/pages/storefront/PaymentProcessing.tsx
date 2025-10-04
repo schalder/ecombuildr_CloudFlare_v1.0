@@ -486,8 +486,8 @@ useEffect(() => {
     const notFoundContent = (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-destructive mb-2">Order Not Found</h1>
-          <p className="text-muted-foreground mb-4">The requested order could not be found.</p>
+          <h1 className="text-2xl font-bold text-destructive mb-2">Order Processing</h1>
+          <p className="text-muted-foreground mb-4">Please wait while we process your order...</p>
           <Button onClick={() => navigate(paths.home)}>
             Continue Shopping
           </Button>

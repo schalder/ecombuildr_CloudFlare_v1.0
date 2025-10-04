@@ -1616,8 +1616,6 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   const [items, setItems] = useState<any[]>([]);
   const [downloadLinks, setDownloadLinks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
-  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   const orderContentRef = useRef<HTMLDivElement>(null);
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const id = orderId || query.get('orderId') || '';
@@ -1714,17 +1712,12 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             ]);
           }
           setLoading(false);
-          setHasAttemptedFetch(true);
           return;
         }
-        
         // Use secure public order access with token
         if (!store) {
           return;
         }
-        
-        setHasAttemptedFetch(true);
-        
         const { data, error } = await supabase.functions.invoke('get-order-public', {
           body: { 
             orderId: id, 
@@ -1732,19 +1725,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             token: orderToken 
           }
         });
-        
-        if (error) {
-          // If it's a temporary error and we haven't retried too many times, retry
-          if (retryCount < 3 && (error.message?.includes('Order not found') || error.message?.includes('Invalid access token'))) {
-            console.log(`OrderConfirmationElement: Retry ${retryCount + 1} for order ${id}`);
-            setTimeout(() => {
-              setRetryCount(prev => prev + 1);
-            }, 500 * (retryCount + 1)); // Exponential backoff: 500ms, 1s, 1.5s
-            return;
-          }
-          throw error;
-        }
-        
+        if (error) throw error;
         setOrder(data?.order || null);
         setItems(data?.items || []);
         setDownloadLinks(data?.downloadLinks || []);
@@ -1763,22 +1744,15 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           }
         }
       } catch (e) {
-        console.error('OrderConfirmationElement: Error fetching order:', e);
-        // Only set loading to false if we've exhausted retries
-        if (retryCount >= 3) {
-          setLoading(false);
-        }
+        // Error fetching order
       } finally {
-        // Only set loading to false if we have order data or exhausted retries
-        if (order || retryCount >= 3) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     })();
-  }, [id, store, orderToken, retryCount]);
+  }, [id, store, orderToken]);
 
   if (loading) return <div className="text-center">Loading...</div>;
-  if (!order && hasAttemptedFetch && retryCount >= 3) return <div className="text-center">Order not found</div>;
+  if (!order) return <div className="text-center">Order Processing...</div>;
 
   // Derived totals
     const subtotal = Number(order.subtotal ?? items.reduce((s, it) => s + Number(it.total || 0), 0));

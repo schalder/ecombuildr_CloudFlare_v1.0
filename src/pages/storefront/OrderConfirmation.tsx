@@ -292,9 +292,9 @@ useEffect(() => {
       <StorefrontLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-2xl font-bold text-destructive mb-4">Order Not Found</h1>
+            <h1 className="text-2xl font-bold text-destructive mb-4">Order Processing</h1>
             <p className="text-muted-foreground mb-6">
-              The requested order could not be found or does not belong to this store.
+              Please wait while we process your order...
             </p>
             <Link to={paths.home}>
               <Button>Return to Store</Button>

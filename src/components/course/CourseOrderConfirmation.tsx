@@ -189,7 +189,7 @@ export const CourseOrderConfirmation: React.FC = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Order Not Found</h1>
+          <h1 className="text-2xl font-bold mb-4">Order Processing</h1>
           <Button onClick={() => navigate('/')}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Courses
