@@ -1157,12 +1157,23 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       
       if (isLivePayment) {
         // Store checkout data temporarily for order creation after payment
-        sessionStorage.setItem('pending_checkout', JSON.stringify({
+        const checkoutData = {
           orderData,
           itemsPayload,
           storeId: store.id,
           timestamp: Date.now()
-        }));
+        };
+
+        // Add funnel context if we're in a funnel
+        const { funnelId, stepId } = useChannelContext();
+        if (funnelId && stepId) {
+          checkoutData.orderData.funnel_context = {
+            funnel_id: funnelId,
+            step_id: stepId
+          };
+        }
+
+        sessionStorage.setItem('pending_checkout', JSON.stringify(checkoutData));
         
         // Generate temporary ID for tracking
         orderId = crypto.randomUUID();
@@ -1726,37 +1737,21 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           }
         });
         if (error) throw error;
-        
-        console.log('OrderConfirmationElement: Received data:', {
-          hasOrder: !!data?.order,
-          itemsCount: data?.items?.length || 0,
-          downloadLinksCount: data?.downloadLinks?.length || 0,
-          orderId: data?.order?.id,
-          orderNumber: data?.order?.order_number
-        });
-        
         setOrder(data?.order || null);
         setItems(data?.items || []);
         setDownloadLinks(data?.downloadLinks || []);
 
         // Fallback: if no download links yet, try to generate them (service-side)
         if ((!data?.downloadLinks || data.downloadLinks.length === 0) && id) {
-          console.log('OrderConfirmationElement: No download links found, attempting to generate...');
           try {
-            const { data: ensureData, error: ensureError } = await supabase.functions.invoke('ensure-download-links', {
+            const { data: ensureData } = await supabase.functions.invoke('ensure-download-links', {
               body: { orderId: id }
             });
-            
-            if (ensureError) {
-              console.error('OrderConfirmationElement: ensure-download-links error:', ensureError);
-            } else if (ensureData?.downloadLinks?.length) {
-              console.log('OrderConfirmationElement: Generated download links:', ensureData.downloadLinks.length);
+            if (ensureData?.downloadLinks?.length) {
               setDownloadLinks(ensureData.downloadLinks);
-            } else {
-              console.log('OrderConfirmationElement: No download links generated');
             }
           } catch (genErr) {
-            console.error('OrderConfirmationElement: ensure-download-links exception:', genErr);
+            // ignore and keep empty
           }
         }
       } catch (e) {
@@ -1774,27 +1769,6 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
     const subtotal = Number(order.subtotal ?? items.reduce((s, it) => s + Number(it.total || 0), 0));
     const shipping = Number(order.shipping_cost ?? 0);
     const discount = Number(order.discount_amount ?? 0);
-
-    // Determine if order contains digital products with fallback logic
-    const hasDigitalProducts = items.some((item: any) => item.products?.product_type === 'digital');
-    const hasPhysicalProducts = items.some((item: any) => item.products?.product_type === 'physical');
-    
-    // Fallback: if no items or product type data, check shipping cost and download links
-    let isDigitalOnlyOrder = hasDigitalProducts && !hasPhysicalProducts;
-    
-    if (items.length === 0 || (!hasDigitalProducts && !hasPhysicalProducts)) {
-      // Fallback logic: if shipping cost is 0 and we have download links, likely digital
-      const hasDownloadLinks = downloadLinks && downloadLinks.length > 0;
-      const hasZeroShipping = shipping === 0;
-      isDigitalOnlyOrder = hasZeroShipping && hasDownloadLinks;
-      
-      console.log('OrderConfirmationElement: Using fallback logic', {
-        itemsCount: items.length,
-        hasDownloadLinks,
-        hasZeroShipping,
-        isDigitalOnlyOrder
-      });
-    }
 
     // Styles
     const oc = (element.styles as any)?.orderConfirmation || {};
@@ -1827,16 +1801,12 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                 <p className="text-sm text-muted-foreground">{order.customer_email}</p>
               )}
             </div>
-          {!isDigitalOnlyOrder && (
-            <>
-              <Separator />
-              <div>
-                <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>{texts.shippingTitle}</h3>
-                <p className="text-sm">{order.shipping_address}</p>
-                <p className="text-sm">{order.shipping_city}{order.shipping_area && `, ${order.shipping_area}`}</p>
-              </div>
-            </>
-          )}
+          <Separator />
+          <div>
+            <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>{texts.shippingTitle}</h3>
+            <p className="text-sm">{order.shipping_address}</p>
+            <p className="text-sm">{order.shipping_city}{order.shipping_area && `, ${order.shipping_area}`}</p>
+          </div>
           {Array.isArray(order.custom_fields) && order.custom_fields.length > 0 && (
             <>
               <Separator />
@@ -1877,23 +1847,15 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
       <Card className={`element-${element.id}-oc-card`}>
         <CardHeader><CardTitle>{texts.itemsTitle}</CardTitle></CardHeader>
         <CardContent className="space-y-2">
-          {items.length > 0 ? (
-            items.map((it) => (
-              <div key={it.id} className="flex justify-between text-sm">
-                <span>{nameWithVariant(it.product_name, (it as any).variation)} × {it.quantity}</span>
-                <span>{formatCurrency(Number(it.total))}</span>
-              </div>
-            ))
-          ) : (
-            <div className="text-sm text-muted-foreground">
-              {isDigitalOnlyOrder ? 'Digital product order' : 'Order items loading...'}
+          {items.map((it) => (
+            <div key={it.id} className="flex justify-between text-sm">
+              <span>{nameWithVariant(it.product_name, (it as any).variation)} × {it.quantity}</span>
+              <span>{formatCurrency(Number(it.total))}</span>
             </div>
-          )}
+          ))}
           <Separator className="my-2" />
           <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-          {!isDigitalOnlyOrder && (
-            <div className="flex justify-between text-sm"><span>Shipping</span><span>{formatCurrency(shipping)}</span></div>
-          )}
+          <div className="flex justify-between text-sm"><span>Shipping</span><span>{formatCurrency(shipping)}</span></div>
           {discount > 0 && (
             <div className="flex justify-between text-sm"><span>Discount</span><span>- {formatCurrency(discount)}</span></div>
           )}

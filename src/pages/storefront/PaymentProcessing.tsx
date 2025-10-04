@@ -165,60 +165,10 @@ useEffect(() => {
         // Clear cart after successful order creation
         clearCart();
         
-        // Check for funnel context and redirect accordingly
-        const funnelContext = sessionStorage.getItem('pending_funnel_context');
-        if (funnelContext) {
-          try {
-            const { funnelId, nextStepId } = JSON.parse(funnelContext);
-            
-            // Clear funnel context
-            sessionStorage.removeItem('pending_funnel_context');
-            
-            // Fetch next step details for funnel redirect
-            const { data: nextStep, error } = await supabase
-              .from('funnel_steps')
-              .select('slug, funnel_id')
-              .eq('id', nextStepId)
-              .single();
-              
-            if (!error && nextStep?.slug) {
-              // Environment-aware redirect to next funnel step
-              const isAppEnvironment = (
-                window.location.hostname === 'localhost' || 
-                window.location.hostname.includes('lovable.dev') ||
-                window.location.hostname.includes('lovable.app') ||
-                window.location.hostname.includes('lovableproject.com')
-              );
-              
-              const newOrderToken = data.order.access_token;
-              
-              if (isAppEnvironment) {
-                // App/sandbox: use funnel-aware paths
-                const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
-                console.log(`Redirecting to funnel success step (app): ${nextUrl}`);
-                window.location.href = nextUrl;
-                return;
-              } else {
-                // Custom domain: use clean paths
-                const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
-                console.log(`Redirecting to funnel success step (custom domain): ${nextUrl}`);
-                window.location.href = nextUrl;
-                return;
-              }
-            } else {
-              console.log('Next funnel step not found, falling back to order confirmation');
-            }
-          } catch (error) {
-            console.error('Error processing funnel redirect:', error);
-            // Clear invalid funnel context
-            sessionStorage.removeItem('pending_funnel_context');
-          }
-        }
-        
-        // Fallback: Navigate to order confirmation
+        // Check if this is a funnel order and redirect to next funnel step
         const newOrderToken = data.order.access_token;
         toast.success('Order created successfully!');
-        navigate(paths.orderConfirmation(data.order.id, newOrderToken));
+        await handleFunnelRedirect(data.order.id, newOrderToken);
       } else {
         throw new Error('Failed to create order');
       }
@@ -249,6 +199,86 @@ useEffect(() => {
       }
     } catch (error) {
       console.error('Error updating order status:', error);
+    }
+  };
+
+  const handleFunnelRedirect = async (orderId: string, orderToken: string) => {
+    try {
+      // Check if this order was created from a funnel step
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select('custom_fields')
+        .eq('id', orderId)
+        .single();
+
+      if (orderError || !orderData) {
+        console.log('Order not found or no custom fields, using standard redirect');
+        navigate(paths.orderConfirmation(orderId, orderToken));
+        return;
+      }
+
+      const funnelContext = orderData.custom_fields?.funnel_context;
+      if (!funnelContext?.step_id || !funnelContext?.funnel_id) {
+        console.log('No funnel context found, using standard redirect');
+        navigate(paths.orderConfirmation(orderId, orderToken));
+        return;
+      }
+
+      console.log('Funnel context found:', funnelContext);
+
+      // Get the funnel step data to find the next step
+      const { data: stepData, error: stepError } = await supabase
+        .from('funnel_steps')
+        .select('on_success_step_id, funnel_id')
+        .eq('id', funnelContext.step_id)
+        .single();
+
+      if (stepError || !stepData) {
+        console.log('Funnel step not found, using standard redirect');
+        navigate(paths.orderConfirmation(orderId, orderToken));
+        return;
+      }
+
+      // If there's a next step, redirect to it
+      if (stepData.on_success_step_id) {
+        const { data: nextStep, error: nextStepError } = await supabase
+          .from('funnel_steps')
+          .select('slug')
+          .eq('id', stepData.on_success_step_id)
+          .single();
+
+        if (!nextStepError && nextStep) {
+          // Environment-aware redirect to next step
+          const isAppEnvironment = (
+            window.location.hostname === 'localhost' || 
+            window.location.hostname.includes('lovable.dev') ||
+            window.location.hostname.includes('lovable.app') ||
+            window.location.hostname.includes('lovableproject.com')
+          );
+          
+          if (isAppEnvironment) {
+            // App/sandbox: use funnel-aware paths
+            const nextUrl = `/funnel/${stepData.funnel_id}/${nextStep.slug}?orderId=${orderId}&ot=${orderToken}`;
+            console.log(`Redirecting to next funnel step (app): ${nextUrl}`);
+            window.location.href = nextUrl;
+            return;
+          } else {
+            // Custom domain: use clean paths
+            const nextUrl = `/${nextStep.slug}?orderId=${orderId}&ot=${orderToken}`;
+            console.log(`Redirecting to next funnel step (custom domain): ${nextUrl}`);
+            window.location.href = nextUrl;
+            return;
+          }
+        }
+      }
+
+      // No next step or error getting next step, use standard order confirmation
+      console.log('No next step found, using standard order confirmation');
+      navigate(paths.orderConfirmation(orderId, orderToken));
+    } catch (error) {
+      console.error('Error handling funnel redirect:', error);
+      // Fallback to standard redirect
+      navigate(paths.orderConfirmation(orderId, orderToken));
     }
   };
 
@@ -323,60 +353,10 @@ useEffect(() => {
         toast.success('Payment verified successfully!');
         // Clear cart after successful payment
         clearCart();
-        
-        // Check for funnel context and redirect accordingly
-        const funnelContext = sessionStorage.getItem('pending_funnel_context');
-        if (funnelContext) {
-          try {
-            const { funnelId, nextStepId } = JSON.parse(funnelContext);
-            
-            // Clear funnel context
-            sessionStorage.removeItem('pending_funnel_context');
-            
-            // Fetch next step details for funnel redirect
-            const { data: nextStep, error } = await supabase
-              .from('funnel_steps')
-              .select('slug, funnel_id')
-              .eq('id', nextStepId)
-              .single();
-              
-            if (!error && nextStep?.slug) {
-              // Environment-aware redirect to next funnel step
-              const isAppEnvironment = (
-                window.location.hostname === 'localhost' || 
-                window.location.hostname.includes('lovable.dev') ||
-                window.location.hostname.includes('lovable.app') ||
-                window.location.hostname.includes('lovableproject.com')
-              );
-              
-              const orderToken = searchParams.get('ot') || '';
-              
-              if (isAppEnvironment) {
-                // App/sandbox: use funnel-aware paths
-                const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${order.id}&ot=${orderToken}`;
-                console.log(`Redirecting to funnel success step (app): ${nextUrl}`);
-                window.location.href = nextUrl;
-                return;
-              } else {
-                // Custom domain: use clean paths
-                const nextUrl = `/${nextStep.slug}?orderId=${order.id}&ot=${orderToken}`;
-                console.log(`Redirecting to funnel success step (custom domain): ${nextUrl}`);
-                window.location.href = nextUrl;
-                return;
-              }
-            } else {
-              console.log('Next funnel step not found, falling back to order confirmation');
-            }
-          } catch (error) {
-            console.error('Error processing funnel redirect:', error);
-            // Clear invalid funnel context
-            sessionStorage.removeItem('pending_funnel_context');
-          }
-        }
-        
-        // Fallback: Navigate to order confirmation
         const orderToken = searchParams.get('ot') || '';
-        navigate(paths.orderConfirmation(order.id, orderToken));
+        
+        // Check if this is a funnel order and redirect to next funnel step
+        await handleFunnelRedirect(order.id, orderToken);
       } else {
         toast.error('Payment verification failed. Please contact support.');
         setOrder(prev => ({ ...prev, status: 'payment_failed' }));
@@ -546,9 +526,9 @@ useEffect(() => {
               
               {order.status === 'paid' && (
                 <Button 
-                  onClick={() => {
+                  onClick={async () => {
                     const orderToken = searchParams.get('ot') || '';
-                    navigate(paths.orderConfirmation(order.id, orderToken));
+                    await handleFunnelRedirect(order.id, orderToken);
                   }}
                   className="w-full"
                 >
