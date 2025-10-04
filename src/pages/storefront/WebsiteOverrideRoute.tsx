@@ -11,6 +11,9 @@ import { optimizedWebsitePageQuery } from '@/components/storefront/optimized/Dat
 import { PerformanceMonitor } from '@/components/storefront/optimized/PerformanceMonitor';
 import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
 import { CourseOrderConfirmation } from '@/components/course/CourseOrderConfirmation';
+import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
+import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
+import { WebsiteProvider } from '@/contexts/WebsiteContext';
 
 interface WebsitePageData {
   id: string;
@@ -207,7 +210,10 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
 
   if (!page) return fallback;
 
-  return (
+  // Check if this is an order confirmation page that needs website layout
+  const isOrderConfirmationPage = slug === 'order-confirmation' && websiteMeta;
+  
+  const pageContent = (
     <>
       <FontOptimizer />
       <PerformanceMonitor page={`website-${slug}`} />
@@ -230,4 +236,23 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
       </main>
     </>
   );
+
+  // For order confirmation pages, wrap with website header/footer
+  if (isOrderConfirmationPage) {
+    return (
+      <WebsiteProvider websiteId={websiteMeta.id} websiteSlug={websiteMeta.slug}>
+        <div className="min-h-screen bg-background">
+          {websiteMeta.settings?.global_header?.enabled !== false && (
+            <WebsiteHeader website={websiteMeta} />
+          )}
+          {pageContent}
+          {websiteMeta.settings?.global_footer?.enabled !== false && (
+            <WebsiteFooter website={websiteMeta} />
+          )}
+        </div>
+      </WebsiteProvider>
+    );
+  }
+
+  return pageContent;
 };
