@@ -28,7 +28,19 @@ serve(async (req) => {
       storeId, 
       paymentVerified,
       hasOrderData: !!orderData,
-      itemsCount: itemsData?.length 
+      itemsCount: itemsData?.length,
+      sampleOrderData: orderData ? {
+        customer_name: orderData.customer_name,
+        customer_email: orderData.customer_email,
+        total: orderData.total,
+        payment_method: orderData.payment_method
+      } : null,
+      sampleItemData: itemsData?.[0] ? {
+        product_id: itemsData[0].product_id,
+        product_name: itemsData[0].product_name,
+        price: itemsData[0].price,
+        quantity: itemsData[0].quantity
+      } : null
     });
 
     if (!paymentVerified) {
@@ -37,6 +49,19 @@ serve(async (req) => {
 
     if (!orderData || !itemsData || !storeId) {
       throw new Error('Missing required order data');
+    }
+
+    // Validate items data structure
+    if (!Array.isArray(itemsData) || itemsData.length === 0) {
+      throw new Error('Invalid items data: must be non-empty array');
+    }
+
+    // Validate required fields in items
+    for (const item of itemsData) {
+      if (!item.product_id || !item.product_name || !item.price || !item.quantity) {
+        console.error('Invalid item data:', item);
+        throw new Error('Items must have product_id, product_name, price, and quantity');
+      }
     }
 
     // Create Supabase client with service role for admin operations
@@ -75,21 +100,38 @@ serve(async (req) => {
 
     console.log('Order created:', { orderId: order.id, orderNumber: order.order_number });
 
-    // Insert order items
-    const itemsWithOrderId = itemsData.map(item => ({
-      ...item,
+    // Insert order items with proper field mapping (same as create-order function)
+    const itemsToInsert = itemsData.map((item) => ({
       order_id: order.id,
-      total: (item.price || 0) * (item.quantity || 1),
+      product_id: item.product_id,
+      product_name: item.product_name,
+      product_sku: item.product_sku ?? null,
+      price: item.price,
+      quantity: item.quantity,
+      total: item.price * item.quantity,
+      variation: item.variation ?? null,
+      created_at: new Date().toISOString(),
     }));
+
+    console.log('Inserting order items:', { 
+      orderId: order.id, 
+      itemsCount: itemsToInsert.length,
+      sampleItem: itemsToInsert[0] 
+    });
 
     const { error: itemsError } = await supabase
       .from('order_items')
-      .insert(itemsWithOrderId);
+      .insert(itemsToInsert);
 
     if (itemsError) {
       console.error('Order items insertion error:', itemsError);
-      // Don't throw error here, order is already created
+      throw new Error(`Failed to create order items: ${itemsError.message}`);
     }
+
+    console.log('Order items created successfully:', { 
+      orderId: order.id, 
+      itemsCount: itemsToInsert.length 
+    });
 
     // Try to send order notification email (best effort)
     try {
