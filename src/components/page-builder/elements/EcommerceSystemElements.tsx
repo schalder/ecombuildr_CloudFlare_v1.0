@@ -1616,6 +1616,8 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   const [items, setItems] = useState<any[]>([]);
   const [downloadLinks, setDownloadLinks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const [hasAttemptedFetch, setHasAttemptedFetch] = useState(false);
   const orderContentRef = useRef<HTMLDivElement>(null);
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const id = orderId || query.get('orderId') || '';
@@ -1712,14 +1714,16 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             ]);
           }
           setLoading(false);
+          setHasAttemptedFetch(true);
           return;
         }
         
-        // ✅ Wait for store to be loaded before making API call
+        // Use secure public order access with token
         if (!store) {
-          // Don't set loading to false here - keep loading state until store is ready
           return;
         }
+        
+        setHasAttemptedFetch(true);
         
         const { data, error } = await supabase.functions.invoke('get-order-public', {
           body: { 
@@ -1728,7 +1732,19 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             token: orderToken 
           }
         });
-        if (error) throw error;
+        
+        if (error) {
+          // If it's a temporary error and we haven't retried too many times, retry
+          if (retryCount < 3 && (error.message?.includes('Order not found') || error.message?.includes('Invalid access token'))) {
+            console.log(`OrderConfirmationElement: Retry ${retryCount + 1} for order ${id}`);
+            setTimeout(() => {
+              setRetryCount(prev => prev + 1);
+            }, 500 * (retryCount + 1)); // Exponential backoff: 500ms, 1s, 1.5s
+            return;
+          }
+          throw error;
+        }
+        
         setOrder(data?.order || null);
         setItems(data?.items || []);
         setDownloadLinks(data?.downloadLinks || []);
@@ -1746,19 +1762,23 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             // ignore and keep empty
           }
         }
-        
-        // ✅ Only set loading to false after successful API call
-        setLoading(false);
       } catch (e) {
-        // Error fetching order - set loading to false only after error handling
-        console.error('Error fetching order:', e);
-        setLoading(false);
+        console.error('OrderConfirmationElement: Error fetching order:', e);
+        // Only set loading to false if we've exhausted retries
+        if (retryCount >= 3) {
+          setLoading(false);
+        }
+      } finally {
+        // Only set loading to false if we have order data or exhausted retries
+        if (order || retryCount >= 3) {
+          setLoading(false);
+        }
       }
     })();
-  }, [id, store, orderToken]);
+  }, [id, store, orderToken, retryCount]);
 
   if (loading) return <div className="text-center">Loading...</div>;
-  if (!order) return <div className="text-center">Order not found</div>;
+  if (!order && hasAttemptedFetch && retryCount >= 3) return <div className="text-center">Order not found</div>;
 
   // Derived totals
     const subtotal = Number(order.subtotal ?? items.reduce((s, it) => s + Number(it.total || 0), 0));
