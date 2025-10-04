@@ -131,7 +131,7 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
       .replace(/(^-|-$)/g, '');
   };
 
-  // Check slug availability with domain-wide validation
+  // Check slug availability with domain-wide validation (NON-BLOCKING)
   const checkSlugAvailability = async (slug: string) => {
     if (!slug.trim() || slug === step?.slug) {
       setSlugStatus('idle');
@@ -147,6 +147,8 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
       const validation = await validateFunnelStepSlug(slug, funnelId, stepId);
       
       if (validation.hasConflict) {
+        // Auto-populate the suggested slug in the input field
+        setStep(prev => prev ? { ...prev, slug: validation.uniqueSlug } : null);
         setSuggestedSlug(validation.uniqueSlug);
         setFinalSlug(validation.uniqueSlug);
         setSlugStatus('taken');
@@ -336,9 +338,9 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
               </p>
             )}
             {slugStatus === 'taken' && suggestedSlug && (
-              <p className="text-sm text-yellow-600 mt-1 flex items-center gap-1">
+              <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                Slug conflicts with another funnel on this domain. Using "{suggestedSlug}" instead
+                Slug auto-corrected to "{suggestedSlug}" to avoid conflicts
               </p>
             )}
             {slugStatus === 'error' && (

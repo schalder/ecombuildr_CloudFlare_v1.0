@@ -114,7 +114,8 @@ export const getFunnelDomain = async (funnelId: string): Promise<string | null> 
 };
 
 /**
- * Validate and ensure slug uniqueness for funnel steps
+ * Validate and ensure slug uniqueness for funnel steps (NON-BLOCKING)
+ * Always returns a valid slug, auto-generates unique slug when conflicts exist
  * @param slug - The slug to validate
  * @param funnelId - The funnel ID
  * @param excludeStepId - Optional step ID to exclude from conflict check
@@ -129,33 +130,45 @@ export const validateFunnelStepSlug = async (
   uniqueSlug: string;
   hasConflict: boolean;
 }> => {
-  // Get the domain for this funnel
-  const domain = await getFunnelDomain(funnelId);
-  
-  if (!domain) {
-    // If no domain, fall back to funnel-only validation
+  // Always return valid - never block user from proceeding
+  try {
+    // Get the domain for this funnel
+    const domain = await getFunnelDomain(funnelId);
+    
+    if (!domain) {
+      // If no domain, fall back to funnel-only validation
+      return {
+        isValid: true,
+        uniqueSlug: slug,
+        hasConflict: false
+      };
+    }
+
+    // Check for domain-wide conflicts
+    const hasConflict = await checkDomainSlugConflict(slug, domain, excludeStepId);
+    
+    if (hasConflict) {
+      const uniqueSlug = await generateUniqueDomainSlug(slug, domain, excludeStepId);
+      return {
+        isValid: true,
+        uniqueSlug,
+        hasConflict: true
+      };
+    }
+
     return {
       isValid: true,
       uniqueSlug: slug,
       hasConflict: false
     };
-  }
-
-  // Check for domain-wide conflicts
-  const hasConflict = await checkDomainSlugConflict(slug, domain, excludeStepId);
-  
-  if (hasConflict) {
-    const uniqueSlug = await generateUniqueDomainSlug(slug, domain, excludeStepId);
+  } catch (error) {
+    console.error('Error in validateFunnelStepSlug:', error);
+    // Even on error, return a valid slug to not block user
+    const fallbackSlug = `${slug}-${Math.random().toString(36).substring(2, 8)}`;
     return {
       isValid: true,
-      uniqueSlug,
-      hasConflict: true
+      uniqueSlug: fallbackSlug,
+      hasConflict: false
     };
   }
-
-  return {
-    isValid: true,
-    uniqueSlug: slug,
-    hasConflict: false
-  };
 };

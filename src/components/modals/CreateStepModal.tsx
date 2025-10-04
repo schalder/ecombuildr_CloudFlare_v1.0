@@ -80,7 +80,7 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
     return uniqueSlug;
   };
 
-  // Check slug availability with domain-wide validation
+  // Check slug availability with domain-wide validation (NON-BLOCKING)
   const checkSlugAvailability = async (slug: string) => {
     if (!slug.trim()) return;
     
@@ -91,6 +91,8 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
       const validation = await validateFunnelStepSlug(slug, funnelId);
       
       if (validation.hasConflict) {
+        // Auto-populate the suggested slug in the input field
+        setFormData(prev => ({ ...prev, slug: validation.uniqueSlug }));
         setSuggestedSlug(validation.uniqueSlug);
         setFinalSlug(validation.uniqueSlug);
         setSlugStatus('taken');
@@ -197,14 +199,7 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
       return;
     }
 
-    if (slugStatus === 'taken' && !finalSlug) {
-      toast({
-        title: "Please wait for slug validation to complete.",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    // Always allow creation - never block due to slug conflicts
     createStepMutation.mutate({
       ...formData,
       slug: slugToUse,
@@ -327,9 +322,9 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
               </p>
             )}
             {slugStatus === 'taken' && suggestedSlug && (
-              <p className="text-sm text-yellow-600 mt-1 flex items-center gap-1">
+              <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                Slug conflicts with another funnel on this domain. Using "{suggestedSlug}" instead
+                Slug auto-corrected to "{suggestedSlug}" to avoid conflicts
               </p>
             )}
             {slugStatus === 'error' && (
