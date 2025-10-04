@@ -1729,6 +1729,11 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         setOrder(data?.order || null);
         setItems(data?.items || []);
         setDownloadLinks(data?.downloadLinks || []);
+        
+        // Debug logging
+        console.log('OrderConfirmationElement - Order data:', data?.order);
+        console.log('OrderConfirmationElement - Items data:', data?.items);
+        console.log('OrderConfirmationElement - Download links:', data?.downloadLinks);
 
         // Fallback: if no download links yet, try to generate them (service-side)
         if ((!data?.downloadLinks || data.downloadLinks.length === 0) && id) {

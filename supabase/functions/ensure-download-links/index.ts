@@ -102,10 +102,10 @@ serve(async (req: Request) => {
       });
     }
 
-    // Load products with digital_files
+    // Load products with digital_files and product_type
     const { data: products, error: productsError } = await supabase
       .from("products")
-      .select("id, digital_files")
+      .select("id, digital_files, product_type")
       .in("id", productIds);
 
     if (productsError) {
@@ -123,9 +123,12 @@ serve(async (req: Request) => {
       .eq("order_id", orderId);
     const existingPaths = new Set((existing || []).map((r: any) => r.digital_file_path));
 
-    // Build inserts
+    // Build inserts - only for digital products
     const rows: any[] = [];
     for (const p of products || []) {
+      // Only process digital products
+      if (p.product_type !== 'digital') continue;
+      
       const files: any[] = Array.isArray(p.digital_files) ? p.digital_files : [];
       for (const f of files) {
         const path = f?.url || f?.path || f?.file || f?.file_path;

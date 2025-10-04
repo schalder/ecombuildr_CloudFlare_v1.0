@@ -79,7 +79,7 @@ serve(async (req: Request) => {
         quantity, 
         total, 
         variation,
-        products!inner(product_type)
+        products(product_type)
       `)
       .eq("order_id", orderId);
 
