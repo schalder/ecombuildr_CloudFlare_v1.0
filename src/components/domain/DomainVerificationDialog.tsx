@@ -39,24 +39,25 @@ export const DomainVerificationDialog: React.FC<DomainVerificationDialogProps> =
     
     setIsLoadingCname(true);
     try {
-      const { data, error } = await supabase.functions.invoke('dns-domain-manager', {
+      // First, add the domain to Vercel project
+      const { data: addData, error: addError } = await supabase.functions.invoke('dns-domain-manager', {
         body: {
-          action: 'get_vercel_cname',
+          action: 'add_domain',
           domain: domainName,
           storeId: store.id
         }
       });
 
-      if (error) throw error;
+      if (addError) throw addError;
       
-      if (data.success && data.cnameTarget) {
-        setVercelCnameTarget(data.cnameTarget);
-        console.log(`Vercel CNAME target for ${domainName}:`, data.cnameTarget);
+      if (addData.success && addData.vercelCnameTarget) {
+        setVercelCnameTarget(addData.vercelCnameTarget);
+        console.log(`Domain ${domainName} added to Vercel with CNAME:`, addData.vercelCnameTarget);
       } else {
         setVercelCnameTarget(null);
       }
     } catch (error) {
-      console.error('Failed to fetch Vercel CNAME:', error);
+      console.error('Failed to add domain to Vercel:', error);
       setVercelCnameTarget(null);
     } finally {
       setIsLoadingCname(false);
@@ -235,36 +236,13 @@ Note: This is the specific CNAME target provided by Vercel for your domain. SSL 
             <div>
               <h4 className="font-medium mb-2">Configure DNS for {domain}</h4>
               <p className="text-sm text-muted-foreground mb-4">
-                Add these DNS records in your DNS provider (Cloudflare, Namecheap, GoDaddy, etc.):
+                Add this DNS record in your DNS provider (Cloudflare, Namecheap, GoDaddy, etc.):
               </p>
               
               <div className="space-y-4">
-                {/* A Record */}
-                <div className="bg-muted p-4 rounded-lg space-y-3">
-                  <h5 className="font-medium text-sm">A Record (Root Domain)</h5>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Type:</span>
-                      <div className="font-mono bg-background px-2 py-1 rounded">A</div>
-                    </div>
-                    <div>
-                      <span className="font-medium">TTL:</span>
-                      <div className="font-mono bg-background px-2 py-1 rounded">300</div>
-                    </div>
-                  </div>
-                  <div>
-                    <span className="font-medium">Name:</span>
-                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">@ (or root domain)</div>
-                  </div>
-                  <div>
-                    <span className="font-medium">Value:</span>
-                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">76.76.19.61</div>
-                  </div>
-                </div>
-
                 {/* CNAME Record */}
                 <div className="bg-muted p-4 rounded-lg space-y-3">
-                  <h5 className="font-medium text-sm">CNAME Record (WWW)</h5>
+                  <h5 className="font-medium text-sm">CNAME Record</h5>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="font-medium">Type:</span>
