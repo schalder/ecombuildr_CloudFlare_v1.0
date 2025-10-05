@@ -7,10 +7,6 @@
       "config": {
         "distDir": "dist"
       }
-    },
-    {
-      "src": "api/seo-data/index.ts",
-      "use": "@vercel/node"
     }
   ],
   "headers": [

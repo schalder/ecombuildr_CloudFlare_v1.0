@@ -12,6 +12,9 @@
     'facebookcatalog', 'Pinterestbot', 'Applebot', 'ia_archiver'
   ];
 
+  const SUPABASE_URL = "https://fhqwacmokbtbspkxjixf.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM";
+
   const isSocialCrawler = (userAgent) => {
     return SOCIAL_CRAWLERS.some(crawler => 
       userAgent.toLowerCase().includes(crawler.toLowerCase())
@@ -68,18 +71,157 @@
     document.title = title;
   };
 
-  // Function to fetch SEO data
-  const fetchSEOData = async () => {
+  // Function to fetch data from Supabase
+  const fetchFromSupabase = async (endpoint) => {
     try {
-      const response = await fetch(`/api/seo-data?domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(pathname)}`);
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/${endpoint}`, {
+        headers: {
+          'apikey': SUPABASE_ANON_KEY,
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      });
       if (!response.ok) {
-        throw new Error('Failed to fetch SEO data');
+        throw new Error(`HTTP ${response.status}`);
       }
       return await response.json();
     } catch (error) {
-      console.error('Error fetching SEO data:', error);
+      console.error('Supabase fetch error:', error);
       return null;
     }
+  };
+
+  // Function to resolve SEO data
+  const resolveSEOData = async () => {
+    try {
+      // Get domain connection info
+      const connections = await fetchFromSupabase(`domain_connections?domain=eq.${domain}&select=content_type,content_id,store_id`);
+      if (!connections || connections.length === 0) {
+        console.log('No domain connection found for:', domain);
+        return null;
+      }
+
+      const connection = connections[0];
+      console.log('Found domain connection:', connection);
+
+      // Route to appropriate resolver based on content type
+      switch (connection.content_type) {
+        case 'website':
+          return await resolveWebsiteSEO(connection.content_id, pathname);
+        case 'funnel':
+          return await resolveFunnelSEO(connection.content_id, pathname);
+        case 'course_area':
+          return await resolveCourseAreaSEO(domain);
+        default:
+          console.log('Unknown content type:', connection.content_type);
+          return null;
+      }
+    } catch (error) {
+      console.error('Error resolving SEO data:', error);
+      return null;
+    }
+  };
+
+  // Helper function to resolve website SEO data
+  const resolveWebsiteSEO = async (websiteId, pathname) => {
+    try {
+      const websites = await fetchFromSupabase(`websites?id=eq.${websiteId}&select=name,description`);
+      if (!websites || websites.length === 0) return null;
+
+      const website = websites[0];
+
+      if (pathname === '/' || pathname === '') {
+        return {
+          title: website.name || 'Website',
+          description: website.description || `Visit ${website.name}`,
+          og_image: undefined,
+          keywords: ['website', 'online store'],
+          canonical: `https://${domain}`,
+          robots: 'index, follow',
+          site_name: website.name || 'Website',
+          source: 'website_root'
+        };
+      }
+
+      const pathSegments = pathname.split('/').filter(Boolean);
+      const pageSlug = pathSegments[pathSegments.length - 1];
+
+      const pages = await fetchFromSupabase(`website_pages?website_id=eq.${websiteId}&slug=eq.${pageSlug}&is_published=eq.true&select=id,title,seo_title,seo_description,og_image,slug,is_published`);
+      if (!pages || pages.length === 0) return null;
+
+      const page = pages[0];
+      return {
+        title: page.seo_title || page.title || `${website.name} - ${pageSlug}`,
+        description: page.seo_description || `Visit ${page.title || pageSlug} on ${website.name}`,
+        og_image: page.og_image || undefined,
+        keywords: ['website', 'page', pageSlug],
+        canonical: `https://${domain}${pathname}`,
+        robots: 'index, follow',
+        site_name: website.name || 'Website',
+        source: 'website_page'
+      };
+    } catch (error) {
+      console.error('Error resolving website SEO:', error);
+      return null;
+    }
+  };
+
+  // Helper function to resolve funnel SEO data
+  const resolveFunnelSEO = async (funnelId, pathname) => {
+    try {
+      const funnels = await fetchFromSupabase(`funnels?id=eq.${funnelId}&select=name,description,seo_title,seo_description,og_image`);
+      if (!funnels || funnels.length === 0) return null;
+
+      const funnel = funnels[0];
+
+      if (pathname === '/' || pathname === '') {
+        return {
+          title: funnel.seo_title || funnel.name || 'Sales Funnel',
+          description: funnel.seo_description || funnel.description || `Visit ${funnel.name}`,
+          og_image: funnel.og_image || undefined,
+          keywords: ['sales funnel', 'marketing'],
+          canonical: `https://${domain}`,
+          robots: 'index, follow',
+          site_name: funnel.name || 'Sales Funnel',
+          source: 'funnel_root'
+        };
+      }
+
+      const pathSegments = pathname.split('/').filter(Boolean);
+      const stepSlug = pathSegments[pathSegments.length - 1];
+
+      const steps = await fetchFromSupabase(`funnel_steps?funnel_id=eq.${funnelId}&slug=eq.${stepSlug}&is_published=eq.true&select=id,title,seo_title,seo_description,og_image,slug,is_published`);
+      if (!steps || steps.length === 0) return null;
+
+      const step = steps[0];
+      return {
+        title: step.seo_title || step.title || `${funnel.name} - ${stepSlug}`,
+        description: step.seo_description || `Visit ${step.title || stepSlug} on ${funnel.name}`,
+        og_image: step.og_image || funnel.og_image || undefined,
+        keywords: ['sales funnel', 'step', stepSlug],
+        canonical: `https://${domain}${pathname}`,
+        robots: 'index, follow',
+        site_name: funnel.name || 'Sales Funnel',
+        source: 'funnel_step'
+      };
+    } catch (error) {
+      console.error('Error resolving funnel SEO:', error);
+      return null;
+    }
+  };
+
+  // Helper function to resolve course area SEO data
+  const resolveCourseAreaSEO = async (domain) => {
+    return {
+      title: 'Course Area - EcomBuildr',
+      description: 'Access your courses and learning materials on EcomBuildr',
+      og_image: undefined,
+      keywords: ['courses', 'learning', 'education'],
+      canonical: `https://${domain}`,
+      robots: 'index, follow',
+      site_name: 'EcomBuildr Course Area',
+      source: 'course_area'
+    };
   };
 
   // Function to inject SEO data
@@ -122,20 +264,11 @@
     updateMetaTag('X-SEO-Domain', domain);
     updateMetaTag('X-SEO-Path', pathname);
 
-    if (seoData.debug) {
-      if (seoData.debug.websiteId) updateMetaTag('X-SEO-Website-Id', seoData.debug.websiteId);
-      if (seoData.debug.pageId) updateMetaTag('X-SEO-Page-Id', seoData.debug.pageId);
-      if (seoData.debug.slug) updateMetaTag('X-SEO-Slug', seoData.debug.slug);
-      if (seoData.debug.titleSource) updateMetaTag('X-SEO-Title-Source', seoData.debug.titleSource);
-      if (seoData.debug.descSource) updateMetaTag('X-SEO-Desc-Source', seoData.debug.descSource);
-      if (seoData.debug.imageSource) updateMetaTag('X-SEO-Image-Source', seoData.debug.imageSource);
-    }
-
     console.log('✅ SEO meta tags injected successfully');
   };
 
   // Execute SEO injection
-  fetchSEOData().then(injectSEO).catch(error => {
+  resolveSEOData().then(injectSEO).catch(error => {
     console.error('SEO injection failed:', error);
   });
 
