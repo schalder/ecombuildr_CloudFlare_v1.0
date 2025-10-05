@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Copy, RefreshCw, CheckCircle, XCircle, Clock, AlertCircle } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useUserStore } from '@/hooks/useUserStore';
 
 interface DomainVerificationDialogProps {
   open: boolean;
@@ -27,37 +29,67 @@ export const DomainVerificationDialog: React.FC<DomainVerificationDialogProps> =
   const [isAdding, setIsAdding] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<any>(null);
   const [verificationAttempts, setVerificationAttempts] = useState(0);
+  const [vercelCnameTarget, setVercelCnameTarget] = useState<string | null>(null);
+  const [isLoadingCname, setIsLoadingCname] = useState(false);
+  
+  const { store } = useUserStore();
 
-  const handleDomainSubmit = () => {
+  const fetchVercelCname = async (domainName: string) => {
+    if (!store?.id) return;
+    
+    setIsLoadingCname(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('dns-domain-manager', {
+        body: {
+          action: 'get_vercel_cname',
+          domain: domainName,
+          storeId: store.id
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data.success && data.cnameTarget) {
+        setVercelCnameTarget(data.cnameTarget);
+        console.log(`Vercel CNAME target for ${domainName}:`, data.cnameTarget);
+      } else {
+        setVercelCnameTarget(null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch Vercel CNAME:', error);
+      setVercelCnameTarget(null);
+    } finally {
+      setIsLoadingCname(false);
+    }
+  };
+
+  const handleDomainSubmit = async () => {
     if (!domain.trim()) return;
     
     const cleanDomain = domain.toLowerCase().trim();
     setDomain(cleanDomain);
     setStep('setup');
+    
+    // Fetch Vercel CNAME target for this domain
+    await fetchVercelCname(cleanDomain);
   };
 
   const copyDNSInstructions = () => {
-    const instructions = `DNS Configuration for Vercel:
-
-A Record:
-Type: A
-Name: @ (or root domain)
-Value: 76.76.19.61
-TTL: 300 (or Auto)
+    const cnameTarget = vercelCnameTarget || 'cname.vercel-dns.com';
+    const instructions = `DNS Configuration for ${domain}:
 
 CNAME Record:
 Type: CNAME
-Name: www
-Value: cname.vercel-dns.com
+Name: ${domain.split('.')[0]} (or @ for root domain)
+Value: ${cnameTarget}
 TTL: 300 (or Auto)
 
-SSL Certificate:
-Vercel will automatically issue SSL certificate once DNS is configured.`;
+Note: This is the specific CNAME target provided by Vercel for your domain. SSL will be automatically issued once DNS is configured.`;
     
     navigator.clipboard.writeText(instructions);
     toast({
       title: "DNS Instructions Copied",
-      description: "The Vercel DNS configuration has been copied to your clipboard."
+      description: `The Vercel-specific DNS configuration for ${domain} has been copied to your clipboard.`
     });
   };
 
@@ -245,11 +277,19 @@ Vercel will automatically issue SSL certificate once DNS is configured.`;
                   </div>
                   <div>
                     <span className="font-medium">Name:</span>
-                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">www</div>
+                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">
+                      {domain.split('.')[0]} (or @ for root domain)
+                    </div>
                   </div>
                   <div>
                     <span className="font-medium">Value:</span>
-                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">cname.vercel-dns.com</div>
+                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">
+                      {isLoadingCname ? (
+                        <span className="text-muted-foreground">Loading Vercel CNAME...</span>
+                      ) : (
+                        vercelCnameTarget || 'cname.vercel-dns.com'
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -312,7 +352,7 @@ Vercel will automatically issue SSL certificate once DNS is configured.`;
                     <Alert variant="destructive">
                       <XCircle className="h-4 w-4" />
                       <AlertDescription>
-                        {verificationStatus.status?.errorMessage || 'DNS must point to Vercel (A record: 76.76.19.61 or CNAME: cname.vercel-dns.com)'}
+                        {verificationStatus.status?.errorMessage || `DNS must point to Vercel. Please add CNAME record: ${domain} -> ${vercelCnameTarget || 'cname.vercel-dns.com'}`}
                       </AlertDescription>
                     </Alert>
                   )}
