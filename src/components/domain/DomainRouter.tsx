@@ -8,6 +8,7 @@ import { StoreProvider } from '@/contexts/StoreContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { CartDrawerProvider } from '@/contexts/CartDrawerContext';
 import { isWebsiteSystemRoute } from '@/lib/websiteSystemRoutes';
+import { SocialCrawlerSEO } from '@/components/seo/SocialCrawlerSEO';
 
 // Domain-specific CartProvider wrapper with all necessary providers
 const DomainCartProvider: React.FC<{ children: React.ReactNode; storeId?: string; websiteId?: string }> = ({ children, storeId, websiteId }) => {
@@ -308,31 +309,54 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
   if (selectedConnection.content_type === 'website') {
     // Render the entire website with all its routes - providers are already available from App.tsx
     return (
-      <DomainCartProvider storeId={selectedConnection.store_id} websiteId={selectedConnection.content_id}>
-        <DomainWebsiteRenderer 
-          websiteId={selectedConnection.content_id}
-          customDomain={customDomain.domain}
+      <>
+        <SocialCrawlerSEO 
+          domain={customDomain.domain}
+          pathname={window.location.pathname}
+          contentType="website"
+          contentId={selectedConnection.content_id}
         />
-      </DomainCartProvider>
+        <DomainCartProvider storeId={selectedConnection.store_id} websiteId={selectedConnection.content_id}>
+          <DomainWebsiteRenderer 
+            websiteId={selectedConnection.content_id}
+            customDomain={customDomain.domain}
+          />
+        </DomainCartProvider>
+      </>
     );
   }
   
   if (selectedConnection.content_type === 'funnel') {
     return (
-      <DomainCartProvider storeId={selectedConnection.store_id}>
-        <DomainFunnelRenderer 
-          funnelId={selectedConnection.content_id}
-          customDomain={customDomain.domain}
+      <>
+        <SocialCrawlerSEO 
+          domain={customDomain.domain}
+          pathname={window.location.pathname}
+          contentType="funnel"
+          contentId={selectedConnection.content_id}
         />
-      </DomainCartProvider>
+        <DomainCartProvider storeId={selectedConnection.store_id}>
+          <DomainFunnelRenderer 
+            funnelId={selectedConnection.content_id}
+            customDomain={customDomain.domain}
+          />
+        </DomainCartProvider>
+      </>
     );
   }
 
   if (selectedConnection.content_type === 'course_area') {
     return (
-      <CourseDomainRouter 
-        customDomain={customDomain.domain}
-      />
+      <>
+        <SocialCrawlerSEO 
+          domain={customDomain.domain}
+          pathname={window.location.pathname}
+          contentType="course_area"
+        />
+        <CourseDomainRouter 
+          customDomain={customDomain.domain}
+        />
+      </>
     );
   }
   
