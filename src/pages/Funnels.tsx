@@ -126,13 +126,56 @@ export default function Funnels() {
     navigate(`/dashboard/funnels/${funnelId}`);
   };
 
-  const handlePreviewFunnel = (funnel: Funnel) => {
-    const url = funnel.canonical_domain 
-      ? `https://${funnel.canonical_domain}` 
-      : funnel.domain 
-      ? `https://${funnel.domain}` 
-      : `/funnel/${funnel.id}`;
-    window.open(url, '_blank');
+  const handlePreviewFunnel = async (funnel: Funnel) => {
+    try {
+      // Fetch the first published funnel step
+      const { data: firstStep, error } = await supabase
+        .from('funnel_steps')
+        .select('slug')
+        .eq('funnel_id', funnel.id)
+        .eq('is_published', true)
+        .order('step_order', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching first funnel step:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load funnel preview. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!firstStep) {
+        toast({
+          title: "No Published Steps",
+          description: "This funnel has no published steps yet.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Build the correct preview URL
+      let url: string;
+      if (funnel.canonical_domain) {
+        url = `https://${funnel.canonical_domain}/${firstStep.slug}`;
+      } else if (funnel.domain) {
+        url = `https://${funnel.domain}/${firstStep.slug}`;
+      } else {
+        url = `/funnel/${funnel.id}/${firstStep.slug}`;
+      }
+
+      window.open(url, '_blank');
+    } catch (error) {
+      console.error('Error in handlePreviewFunnel:', error);
+      toast({
+        title: "Error",
+        description: "Failed to open funnel preview. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteFunnel = (funnelId: string, funnelName: string) => {
