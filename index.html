@@ -63,7 +63,119 @@
     />
     
     <!-- SEO Injector Script for Social Crawlers -->
-    <script src="/seo-injector.js"></script>
+    <script>
+      // Detect if this is a social crawler
+      const isSocialCrawler = /facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|DiscordBot|TelegramBot|SkypeUriPreview|facebookcatalog/i.test(navigator.userAgent);
+      
+      if (isSocialCrawler) {
+        // For social crawlers, we need to inject SEO data immediately
+        // This script will run before the React app loads
+        console.log('Social crawler detected, injecting SEO data');
+        
+        // Function to update meta tags
+        function updateMetaTag(property, content) {
+          let meta = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
+          if (!meta) {
+            meta = document.createElement('meta');
+            if (property.startsWith('og:')) {
+              meta.setAttribute('property', property);
+            } else {
+              meta.setAttribute('name', property);
+            }
+            document.head.appendChild(meta);
+          }
+          meta.setAttribute('content', content);
+        }
+        
+        // Function to update title
+        function updateTitle(title) {
+          document.title = title;
+        }
+        
+        // Get current domain and path
+        const domain = window.location.hostname;
+        const pathname = window.location.pathname;
+        
+        // Check if this is a custom domain
+        const isCustomDomain = !domain.includes('ecombuildr.com') && 
+                              !domain.includes('localhost') && 
+                              !domain.includes('lovable.dev') &&
+                              !domain.includes('lovable.app') &&
+                              !domain.includes('lovableproject.com');
+        
+        if (isCustomDomain) {
+          console.log('Custom domain detected:', domain);
+          
+          // For now, we'll use a simple approach - fetch SEO data from Supabase
+          // This is a fallback solution that works client-side
+          fetch('https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/custom_domains?domain=eq.' + domain, {
+            headers: {
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM',
+              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              const customDomain = data[0];
+              console.log('Found custom domain:', customDomain);
+              
+              // Fetch domain connections
+              return fetch('https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/domain_connections?domain_id=eq.' + customDomain.id, {
+                headers: {
+                  'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM',
+                  'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
+                }
+              });
+            }
+            return null;
+          })
+          .then(response => response ? response.json() : null)
+          .then(connections => {
+            if (connections && connections.length > 0) {
+              const connection = connections[0];
+              console.log('Found domain connection:', connection);
+              
+              if (connection.content_type === 'website') {
+                // Fetch website data
+                return fetch('https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/websites?id=eq.' + connection.content_id, {
+                  headers: {
+                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM',
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
+                  }
+                });
+              }
+            }
+            return null;
+          })
+          .then(response => response ? response.json() : null)
+          .then(websites => {
+            if (websites && websites.length > 0) {
+              const website = websites[0];
+              console.log('Found website:', website);
+              
+              // Update meta tags with website data
+              updateTitle(website.name || 'Website');
+              updateMetaTag('og:title', website.name || 'Website');
+              updateMetaTag('og:description', website.description || `Visit ${website.name}`);
+              updateMetaTag('og:site_name', website.name || 'Website');
+              updateMetaTag('twitter:title', website.name || 'Website');
+              updateMetaTag('twitter:description', website.description || `Visit ${website.name}`);
+              
+              if (website.og_image) {
+                updateMetaTag('og:image', website.og_image);
+                updateMetaTag('twitter:image', website.og_image);
+              }
+              
+              console.log('SEO meta tags updated for website:', website.name);
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching SEO data:', error);
+          });
+        }
+      }
+    </script>
     </head>
 
   <body>
