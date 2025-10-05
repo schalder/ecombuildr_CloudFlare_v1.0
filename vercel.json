@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/social-seo/index.ts": {
+      "runtime": "edge"
+    }
+  },
   "builds": [
     {
       "src": "package.json",
@@ -7,6 +12,12 @@
       "config": {
         "distDir": "dist"
       }
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/api/social-seo"
     }
   ],
   "headers": [
