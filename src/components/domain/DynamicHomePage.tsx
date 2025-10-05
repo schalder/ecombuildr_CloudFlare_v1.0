@@ -52,7 +52,11 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         // Find the page marked as homepage for this website
         const { data: homePageData, error: homePageError } = await supabase
           .from('website_pages')
-          .select(optimizedWebsitePageQuery.select)
+          .select(`
+            ${optimizedWebsitePageQuery.select},
+            is_published,
+            is_homepage
+          `)
           .eq('website_id', websiteId)
           .eq('is_homepage', true)
           .eq('is_published', true)
@@ -65,10 +69,15 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         }
 
         if (homePageData) {
-          console.log('Found home page:', (homePageData as any).slug);
+          console.log('✅ DynamicHomePage: Found home page:', {
+            slug: (homePageData as any).slug,
+            title: (homePageData as any).title,
+            hasContent: !!(homePageData as any).content?.sections,
+            websiteId
+          });
           setHomePage(homePageData as unknown as HomePageData);
         } else {
-          console.log('No home page found, using fallback');
+          console.log('❌ DynamicHomePage: No home page found for websiteId:', websiteId, 'using fallback');
           setHomePage(null);
         }
 
@@ -131,8 +140,16 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
 
   // If no home page found, use fallback
   if (!homePage) {
+    console.log('🔄 DynamicHomePage: No home page data, using fallback');
     return fallback;
   }
+
+  console.log('🎨 DynamicHomePage: Rendering home page:', {
+    slug: homePage.slug,
+    title: homePage.title,
+    hasContent: !!homePage.content?.sections,
+    contentSections: homePage.content?.sections?.length || 0
+  });
 
   // Render the home page content directly
   return (
