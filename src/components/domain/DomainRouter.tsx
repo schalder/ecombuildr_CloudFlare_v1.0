@@ -150,8 +150,9 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
         }
       }
       
-      // Skip if we're on staging domains
+      // Skip if we're on staging domains or main app domains
       if (currentHost === 'ecombuildr.com' || 
+          currentHost === 'app.ecombuildr.com' ||
           currentHost === 'localhost' || 
           currentHost.includes('lovable.app') ||
           currentHost.includes('lovableproject.com')) {
