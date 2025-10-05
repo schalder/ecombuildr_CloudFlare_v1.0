@@ -7,18 +7,9 @@
       "config": {
         "distDir": "dist"
       }
-    },
-    {
-      "src": "api/seo-handler.ts",
-      "use": "@vercel/node"
     }
   ],
-  "rewrites": [
-    {
-      "source": "/",
-      "destination": "/api/seo-handler"
-    }
-  ],
+  "rewrites": [],
   "headers": [
     {
       "source": "/(.*)",
