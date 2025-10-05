@@ -106,72 +106,43 @@
         if (isCustomDomain) {
           console.log('Custom domain detected:', domain);
           
-          // For now, we'll use a simple approach - fetch SEO data from Supabase
-          // This is a fallback solution that works client-side
-          fetch('https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/custom_domains?domain=eq.' + domain, {
+          // Use the Supabase Edge Function for SEO data
+          fetch(`/seo-meta?domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(pathname)}`, {
+            method: 'GET',
             headers: {
-              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM',
-              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
+              'User-Agent': navigator.userAgent
             }
           })
-          .then(response => response.json())
-          .then(data => {
-            if (data && data.length > 0) {
-              const customDomain = data[0];
-              console.log('Found custom domain:', customDomain);
-              
-              // Fetch domain connections
-              return fetch('https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/domain_connections?domain_id=eq.' + customDomain.id, {
-                headers: {
-                  'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM',
-                  'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
-                }
-              });
-            }
-            return null;
-          })
-          .then(response => response ? response.json() : null)
-          .then(connections => {
-            if (connections && connections.length > 0) {
-              const connection = connections[0];
-              console.log('Found domain connection:', connection);
-              
-              if (connection.content_type === 'website') {
-                // Fetch website data
-                return fetch('https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/websites?id=eq.' + connection.content_id, {
-                  headers: {
-                    'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM',
-                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
-                  }
-                });
-              }
-            }
-            return null;
-          })
-          .then(response => response ? response.json() : null)
-          .then(websites => {
-            if (websites && websites.length > 0) {
-              const website = websites[0];
-              console.log('Found website:', website);
-              
-              // Update meta tags with website data
-              updateTitle(website.name || 'Website');
-              updateMetaTag('og:title', website.name || 'Website');
-              updateMetaTag('og:description', website.description || `Visit ${website.name}`);
-              updateMetaTag('og:site_name', website.name || 'Website');
-              updateMetaTag('twitter:title', website.name || 'Website');
-              updateMetaTag('twitter:description', website.description || `Visit ${website.name}`);
-              
-              if (website.og_image) {
-                updateMetaTag('og:image', website.og_image);
-                updateMetaTag('twitter:image', website.og_image);
-              }
-              
-              console.log('SEO meta tags updated for website:', website.name);
-            }
+          .then(response => response.text())
+          .then(html => {
+            // Parse the HTML response to extract meta tags
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Extract meta tags from the response
+            const title = doc.querySelector('title')?.textContent;
+            const description = doc.querySelector('meta[name="description"]')?.getAttribute('content');
+            const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content');
+            const ogDescription = doc.querySelector('meta[property="og:description"]')?.getAttribute('content');
+            const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
+            const twitterTitle = doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content');
+            const twitterDescription = doc.querySelector('meta[name="twitter:description"]')?.getAttribute('content');
+            const twitterImage = doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
+            
+            // Update meta tags with the fetched data
+            if (title) updateTitle(title);
+            if (description) updateMetaTag('description', description);
+            if (ogTitle) updateMetaTag('og:title', ogTitle);
+            if (ogDescription) updateMetaTag('og:description', ogDescription);
+            if (ogImage) updateMetaTag('og:image', ogImage);
+            if (twitterTitle) updateMetaTag('twitter:title', twitterTitle);
+            if (twitterDescription) updateMetaTag('twitter:description', twitterDescription);
+            if (twitterImage) updateMetaTag('twitter:image', twitterImage);
+            
+            console.log('SEO meta tags updated from Edge Function');
           })
           .catch(error => {
-            console.error('Error fetching SEO data:', error);
+            console.error('Error fetching SEO data from Edge Function:', error);
           });
         }
       }

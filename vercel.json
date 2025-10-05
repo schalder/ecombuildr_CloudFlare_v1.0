@@ -7,16 +7,12 @@
       "config": {
         "distDir": "dist"
       }
-    },
-    {
-      "src": "api/seo-handler.ts",
-      "use": "@vercel/node"
     }
   ],
-  "routes": [
+  "rewrites": [
     {
-      "src": "/((?!api/).*)",
-      "dest": "/api/seo-handler"
+      "source": "/seo-meta",
+      "destination": "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-meta-injection"
     }
   ],
   "headers": [
