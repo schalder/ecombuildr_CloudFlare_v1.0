@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4?target=deno';
+import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = "https://fhqwacmokbtbspkxjixf.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM";
@@ -44,7 +44,7 @@ async function resolveWebsiteSEO(websiteId: string, pathname: string): Promise<S
         description: website.description || `Visit ${website.name}`,
         og_image: undefined,
         keywords: ['website', 'online store'],
-        canonical: `https://${new URL(Deno.env.get('VERCEL_URL') || 'localhost').hostname}`,
+        canonical: `https://${process.env.VERCEL_URL || 'localhost'}`,
         robots: 'index, follow',
         site_name: website.name || 'Website',
         source: 'website_root',
@@ -74,7 +74,7 @@ async function resolveWebsiteSEO(websiteId: string, pathname: string): Promise<S
         description: page.seo_description || `Visit ${page.title || pageSlug} on ${website.name}`,
         og_image: page.og_image || undefined,
         keywords: ['website', 'page', pageSlug],
-        canonical: `https://${new URL(Deno.env.get('VERCEL_URL') || 'localhost').hostname}${pathname}`,
+        canonical: `https://${process.env.VERCEL_URL || 'localhost'}${pathname}`,
         robots: 'index, follow',
         site_name: website.name || 'Website',
         source: 'website_page',
@@ -112,7 +112,7 @@ async function resolveFunnelSEO(funnelId: string, pathname: string): Promise<SEO
         description: funnel.seo_description || funnel.description || `Visit ${funnel.name}`,
         og_image: funnel.og_image || undefined,
         keywords: ['sales funnel', 'marketing'],
-        canonical: `https://${new URL(Deno.env.get('VERCEL_URL') || 'localhost').hostname}`,
+        canonical: `https://${process.env.VERCEL_URL || 'localhost'}`,
         robots: 'index, follow',
         site_name: funnel.name || 'Sales Funnel',
         source: 'funnel_root',
@@ -142,7 +142,7 @@ async function resolveFunnelSEO(funnelId: string, pathname: string): Promise<SEO
         description: step.seo_description || `Visit ${step.title || stepSlug} on ${funnel.name}`,
         og_image: step.og_image || funnel.og_image || undefined,
         keywords: ['sales funnel', 'step', stepSlug],
-        canonical: `https://${new URL(Deno.env.get('VERCEL_URL') || 'localhost').hostname}${pathname}`,
+        canonical: `https://${process.env.VERCEL_URL || 'localhost'}${pathname}`,
         robots: 'index, follow',
         site_name: funnel.name || 'Sales Funnel',
         source: 'funnel_step',
@@ -223,10 +223,8 @@ async function resolveSEOData(domain: string, pathname: string): Promise<SEOData
   }
 }
 
-export default async function handler(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const domain = url.searchParams.get('domain') || url.hostname;
-  const pathname = url.searchParams.get('pathname') || url.pathname;
+export default async function handler(req: any, res: any) {
+  const { domain, pathname } = req.query;
 
   console.log('SEO API called with:', { domain, pathname });
 
@@ -234,24 +232,16 @@ export default async function handler(request: Request): Promise<Response> {
     const seoData = await resolveSEOData(domain, pathname);
     if (seoData) {
       console.log('Returning SEO data:', seoData);
-      return new Response(JSON.stringify(seoData), {
-        headers: { 
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        },
-      });
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      res.status(200).json(seoData);
+    } else {
+      res.status(404).json({ message: 'SEO data not found' });
     }
-    return new Response(JSON.stringify({ message: 'SEO data not found' }), { 
-      status: 404,
-      headers: { 'Content-Type': 'application/json' }
-    });
   } catch (error) {
     console.error('Error in seo-data API:', error);
-    return new Response(JSON.stringify({ message: 'Internal Server Error' }), { 
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 }
