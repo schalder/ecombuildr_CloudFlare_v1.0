@@ -53,10 +53,101 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
   const [selectedConnection, setSelectedConnection] = useState<DomainConnection | null>(null);
   const [customDomain, setCustomDomain] = useState<CustomDomain | null>(null);
   const [allConnections, setAllConnections] = useState<DomainConnection[]>([]);
+  const [routingContext, setRoutingContext] = useState<any>(null);
   
   useEffect(() => {
     const checkCustomDomain = async () => {
       const currentHost = window.location.hostname;
+      
+      // NEW: Check for injected routing context from Edge Function
+      const contextMeta = document.querySelector('meta[name="routing-context"]');
+      if (contextMeta) {
+        try {
+          const context = JSON.parse(contextMeta.getAttribute('content') || '{}');
+          setRoutingContext(context);
+          console.log('DomainRouter: Using injected routing context:', context);
+          
+          // Use injected context to set up domain and connections
+          if (context.domainId && context.storeId && context.connections) {
+            setCustomDomain({
+              id: context.domainId,
+              domain: context.domain,
+              store_id: context.storeId,
+              is_verified: true,
+              dns_configured: true
+            });
+            
+            const connectionsArray = context.connections.map((conn: any) => ({
+              id: conn.id || `synthetic-${conn.content_type}`,
+              content_type: conn.content_type,
+              content_id: conn.content_id,
+              path: conn.path,
+              is_homepage: conn.is_homepage,
+              store_id: context.storeId
+            }));
+            
+            setAllConnections(connectionsArray);
+            
+            // Use existing routing logic with injected connections
+            const currentPath = window.location.pathname;
+            let selectedConnection: DomainConnection | null = null;
+            
+            if (currentPath === '/' || currentPath === '') {
+              selectedConnection = 
+                connectionsArray.find(c => c.is_homepage) ||
+                connectionsArray.find(c => c.content_type === 'website') ||
+                connectionsArray.find(c => c.content_type === 'course_area') ||
+                connectionsArray.find(c => c.content_type === 'funnel') ||
+                null;
+            } else {
+              // Use existing routing logic...
+              const systemRoutes = ['payment-processing', 'order-confirmation', 'cart', 'checkout'];
+              const pathSegments = currentPath.split('/').filter(Boolean);
+              const potentialSlug = pathSegments[pathSegments.length - 1];
+              
+              if (isWebsiteSystemRoute(potentialSlug)) {
+                selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
+              } else if (systemRoutes.includes(potentialSlug)) {
+                const funnelConnection = connectionsArray.find(c => c.content_type === 'funnel');
+                if (funnelConnection) {
+                  selectedConnection = funnelConnection;
+                } else {
+                  selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
+                }
+              } else {
+                // For funnel steps, we'll need to check the database
+                const funnelConnections = connectionsArray.filter(c => c.content_type === 'funnel');
+                
+                for (const funnelConnection of funnelConnections) {
+                  const { data: stepExists } = await supabase
+                    .from('funnel_steps')
+                    .select('id')
+                    .eq('funnel_id', funnelConnection.content_id)
+                    .eq('slug', potentialSlug)
+                    .eq('is_published', true)
+                    .maybeSingle();
+                    
+                  if (stepExists) {
+                    selectedConnection = funnelConnection;
+                    break;
+                  }
+                }
+                
+                if (!selectedConnection) {
+                  selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
+                }
+              }
+            }
+            
+            console.debug('DomainRouter: Selected connection type:', selectedConnection?.content_type, 'for path:', currentPath);
+            setSelectedConnection(selectedConnection);
+            setLoading(false);
+            return;
+          }
+        } catch (error) {
+          console.error('DomainRouter: Failed to parse routing context:', error);
+        }
+      }
       
       // Skip if we're on staging domains
       if (currentHost === 'ecombuildr.com' || 

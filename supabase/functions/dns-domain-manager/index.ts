@@ -109,9 +109,7 @@ Deno.serve(async (req) => {
             
             for (const record of cnameRecords) {
               cnameTarget = record.data.replace(/\.$/, '') // Remove trailing dot
-              if (cnameTarget.includes('ecombuildr.com') || 
-                  cnameTarget.includes('netlify.app') || 
-                  cnameTarget.includes('netlify.com')) {
+              if (cnameTarget.includes('ecombuildr.com')) {
                 dnsConfigured = true
                 break
               }
@@ -119,17 +117,17 @@ Deno.serve(async (req) => {
             console.log(`CNAME check for ${domain}: ${cnameRecords.length} records found, target: ${cnameTarget}`)
           }
           
-          // If no CNAME, check A records pointing to common hosting IPs
+          // If no CNAME, check A records pointing to ecombuildr.com IPs
           if (!dnsConfigured) {
             const aResponse = await fetch(`https://dns.google.com/resolve?name=${domain}&type=A`)
             if (aResponse.ok) {
               const aData = await aResponse.json()
               const aRecords = aData.Answer?.filter((record: any) => record.type === 1) || []
               
-              // Check if A records point to Netlify or other common hosting IPs
-              const hostingIPs = ['75.2.60.5', '99.83.190.102', '185.158.133.1']
+              // Check if A records point to ecombuildr.com IPs
+              const ecomBuildrIPs = ['75.2.60.5', '99.83.190.102'] // Netlify IPs for ecombuildr.com
               for (const record of aRecords) {
-                if (hostingIPs.includes(record.data)) {
+                if (ecomBuildrIPs.includes(record.data)) {
                   dnsConfigured = true
                   cnameTarget = record.data
                   break

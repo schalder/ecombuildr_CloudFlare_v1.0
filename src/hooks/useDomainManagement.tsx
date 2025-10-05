@@ -159,37 +159,9 @@ export const useDomainManagement = () => {
 
       if (dnsError) throw dnsError;
 
-      // Step 2: Add domain to Netlify as alias via netlify-domain-manager
-      try {
-        const { data: netlifyData, error: netlifyError } = await supabase.functions.invoke(
-          'netlify-domain-manager',
-          {
-            body: {
-              action: 'add',
-              domain: domain,
-              storeId: store.id
-            }
-          }
-        );
-
-        if (netlifyError) {
-          console.error('Netlify domain addition failed:', netlifyError);
-          // Don't throw here - domain was added to DB successfully
-          toast({
-            title: "Domain added with warning",
-            description: "Domain added to database but Netlify setup failed. Please check status.",
-            variant: "default"
-          });
-        }
-      } catch (netlifyError) {
-        console.error('Netlify domain addition failed:', netlifyError);
-        // Don't throw here - domain was added to DB successfully
-        toast({
-          title: "Domain added with warning", 
-          description: "Domain added to database but Netlify setup failed. Please check status.",
-          variant: "default"
-        });
-      }
+      // Step 2: No Netlify API calls needed!
+      // Domain is automatically routed via DNS and Edge Function
+      console.log('✅ Domain added successfully via smart DNS routing');
 
       refetch();
       return dnsData;

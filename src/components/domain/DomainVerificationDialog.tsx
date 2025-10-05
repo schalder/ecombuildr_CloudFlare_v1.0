@@ -216,6 +216,12 @@ TTL: 300 (or Auto)`;
                 </div>
               </div>
               
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800">
+                  <strong>✨ Smart DNS Routing:</strong> No Netlify setup needed! Your domain will be automatically routed via our smart DNS system.
+                </p>
+              </div>
+              
               <Button
                 variant="outline"
                 size="sm"

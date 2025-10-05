@@ -461,6 +461,52 @@ function generateHTML(seo: SEOData, url: string): string {
 </html>`;
 }
 
+// NEW: Function to get routing context for custom domains
+async function getRoutingContext(domain: string, pathname: string): Promise<any> {
+  try {
+    console.log(`🔍 Getting routing context for ${domain}${pathname}`);
+    
+    // Normalize domain variants
+    const apexDomain = domain.replace(/^www\./, '');
+    const domainVariants = [domain, apexDomain, `www.${apexDomain}`];
+    
+    // Get domain info
+    const { data: domainData } = await supabase
+      .from('custom_domains')
+      .select('id, store_id, is_verified, dns_configured')
+      .in('domain', domainVariants)
+      .eq('is_verified', true)
+      .eq('dns_configured', true)
+      .single();
+    
+    if (!domainData) {
+      console.log(`❌ No verified domain found for ${domain}`);
+      return null;
+    }
+    
+    console.log(`✅ Found verified domain: ${domainData.id} -> store ${domainData.store_id}`);
+    
+    // Get connections for this domain
+    const { data: connections } = await supabase
+      .from('domain_connections')
+      .select('content_type, content_id, path, is_homepage')
+      .eq('domain_id', domainData.id);
+    
+    console.log(`✅ Found ${connections?.length || 0} connections for domain`);
+    
+    return {
+      domainId: domainData.id,
+      storeId: domainData.store_id,
+      connections: connections || [],
+      domain: domain,
+      pathname: pathname
+    };
+  } catch (error) {
+    console.error('💥 Error getting routing context:', error);
+    return null;
+  }
+}
+
 export default async function handler(request: Request, context: any): Promise<Response | undefined> {
   const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
@@ -470,7 +516,56 @@ export default async function handler(request: Request, context: any): Promise<R
   
   console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
   
-  // Only handle social crawlers
+  // NEW: Detect if this is a custom domain (not ecombuildr.com or localhost)
+  const isCustomDomain = !domain.includes('ecombuildr.com') && 
+                        !domain.includes('localhost') && 
+                        !domain.includes('lovable.dev') &&
+                        !domain.includes('lovable.app') &&
+                        !domain.includes('lovableproject.com');
+  
+  if (isCustomDomain) {
+    console.log(`🏠 Custom domain detected: ${domain}`);
+    
+    // NEW: Get routing context for custom domain
+    const routingContext = await getRoutingContext(domain, pathname);
+    
+    if (routingContext) {
+      console.log(`✅ Routing context found:`, routingContext);
+      
+      // NEW: Inject routing context into request headers
+      const modifiedRequest = new Request(request.url, {
+        method: request.method,
+        headers: {
+          ...Object.fromEntries(request.headers.entries()),
+          'X-Routing-Context': JSON.stringify(routingContext)
+        },
+        body: request.body
+      });
+      
+      // NEW: Add routing context to HTML head for React app to read
+      const response = await context.next(modifiedRequest);
+      
+      if (response && response.body) {
+        const html = await response.text();
+        const modifiedHtml = html.replace(
+          '<head>',
+          `<head><meta name="routing-context" content='${JSON.stringify(routingContext)}'>`
+        );
+        
+        return new Response(modifiedHtml, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers
+        });
+      }
+      
+      return response;
+    } else {
+      console.log(`❌ No routing context found for custom domain: ${domain}`);
+    }
+  }
+  
+  // Only handle social crawlers for SEO
   if (!isSocialCrawler(userAgent)) {
     console.log('👤 Human visitor - passing through to React app');
     return context.next();
