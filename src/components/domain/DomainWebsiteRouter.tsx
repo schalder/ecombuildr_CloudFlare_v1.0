@@ -25,6 +25,7 @@ import CourseMemberDashboard from '@/components/course/CourseMemberDashboard';
 import { MemberAuthProvider } from '@/hooks/useMemberAuth';
 import CoursePlayerPage from '@/pages/CoursePlayerPage';
 import { StorefrontCourseCheckoutWrapper } from '@/components/course/CourseRouteWrappers';
+import { DynamicHomePage } from './DynamicHomePage';
 
 const DynamicWebsiteRoute: React.FC<{ fallback: React.ReactElement; websiteId: string }> = ({ fallback, websiteId }) => {
   const { slug } = useParams<{ slug: string }>();
@@ -63,10 +64,9 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
       <WebsiteHeader website={website} />
       <main className="flex-1">
         <Routes>
-      {/* Homepage */}
+      {/* Homepage - Dynamic Home Page */}
       <Route path="/" element={
-        <WebsiteOverrideRoute 
-          slug="home" 
+        <DynamicHomePage 
           websiteId={websiteId}
           fallback={<StorefrontHome />} 
         />
