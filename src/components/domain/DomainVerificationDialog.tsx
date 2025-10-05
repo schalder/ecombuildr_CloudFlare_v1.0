@@ -37,16 +37,27 @@ export const DomainVerificationDialog: React.FC<DomainVerificationDialogProps> =
   };
 
   const copyDNSInstructions = () => {
-    const instructions = `CNAME Record:
+    const instructions = `DNS Configuration for Vercel:
+
+A Record:
+Type: A
+Name: @ (or root domain)
+Value: 76.76.19.61
+TTL: 300 (or Auto)
+
+CNAME Record:
 Type: CNAME
-Name: ${domain} (or @)
-Target: ecombuildr.com
-TTL: 300 (or Auto)`;
+Name: www
+Value: cname.vercel-dns.com
+TTL: 300 (or Auto)
+
+SSL Certificate:
+Vercel will automatically issue SSL certificate once DNS is configured.`;
     
     navigator.clipboard.writeText(instructions);
     toast({
       title: "DNS Instructions Copied",
-      description: "The DNS configuration has been copied to your clipboard."
+      description: "The Vercel DNS configuration has been copied to your clipboard."
     });
   };
 
@@ -192,33 +203,60 @@ TTL: 300 (or Auto)`;
             <div>
               <h4 className="font-medium mb-2">Configure DNS for {domain}</h4>
               <p className="text-sm text-muted-foreground mb-4">
-                Add this CNAME record in your DNS provider (Cloudflare, Namecheap, GoDaddy, etc.):
+                Add these DNS records in your DNS provider (Cloudflare, Namecheap, GoDaddy, etc.):
               </p>
               
-              <div className="bg-muted p-4 rounded-lg space-y-3">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Type:</span>
-                    <div className="font-mono bg-background px-2 py-1 rounded">CNAME</div>
+              <div className="space-y-4">
+                {/* A Record */}
+                <div className="bg-muted p-4 rounded-lg space-y-3">
+                  <h5 className="font-medium text-sm">A Record (Root Domain)</h5>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Type:</span>
+                      <div className="font-mono bg-background px-2 py-1 rounded">A</div>
+                    </div>
+                    <div>
+                      <span className="font-medium">TTL:</span>
+                      <div className="font-mono bg-background px-2 py-1 rounded">300</div>
+                    </div>
                   </div>
                   <div>
-                    <span className="font-medium">TTL:</span>
-                    <div className="font-mono bg-background px-2 py-1 rounded">300</div>
+                    <span className="font-medium">Name:</span>
+                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">@ (or root domain)</div>
+                  </div>
+                  <div>
+                    <span className="font-medium">Value:</span>
+                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">76.76.19.61</div>
                   </div>
                 </div>
-                <div>
-                  <span className="font-medium">Name:</span>
-                  <div className="font-mono bg-background px-2 py-1 rounded mt-1">{domain}</div>
-                </div>
-                <div>
-                  <span className="font-medium">Target:</span>
-                  <div className="font-mono bg-background px-2 py-1 rounded mt-1">ecombuildr.com</div>
+
+                {/* CNAME Record */}
+                <div className="bg-muted p-4 rounded-lg space-y-3">
+                  <h5 className="font-medium text-sm">CNAME Record (WWW)</h5>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Type:</span>
+                      <div className="font-mono bg-background px-2 py-1 rounded">CNAME</div>
+                    </div>
+                    <div>
+                      <span className="font-medium">TTL:</span>
+                      <div className="font-mono bg-background px-2 py-1 rounded">300</div>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="font-medium">Name:</span>
+                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">www</div>
+                  </div>
+                  <div>
+                    <span className="font-medium">Value:</span>
+                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">cname.vercel-dns.com</div>
+                  </div>
                 </div>
               </div>
               
-              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>🔗 Hybrid Domain System:</strong> Your domain will be added to Netlify for recognition and use our smart routing system for unlimited scalability.
+              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-800">
+                  <strong>🚀 Vercel Unlimited Domains:</strong> Your domain will be hosted on Vercel with automatic SSL certificates and unlimited scalability.
                 </p>
               </div>
               
@@ -236,7 +274,7 @@ TTL: 300 (or Auto)`;
             <Alert>
               <Clock className="h-4 w-4" />
               <AlertDescription>
-                DNS changes can take 5-30 minutes to propagate. Once configured, click "I've configured DNS" below.
+                DNS changes can take 5-30 minutes to propagate. Vercel will automatically issue SSL certificates once DNS is configured.
               </AlertDescription>
             </Alert>
           </div>

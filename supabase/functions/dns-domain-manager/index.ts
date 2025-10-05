@@ -64,20 +64,40 @@ Deno.serve(async (req) => {
         let preVerifyCnameTarget = ''
         
         try {
-          // Check CNAME records
-          const cnameResponse = await fetch(`https://dns.google.com/resolve?name=${domain}&type=CNAME`)
-          if (cnameResponse.ok) {
-            const cnameData = await cnameResponse.json()
-            const cnameRecords = cnameData.Answer?.filter((record: any) => record.type === 5) || []
+          // Check A records first (Vercel primary method)
+          const aResponse = await fetch(`https://dns.google.com/resolve?name=${domain}&type=A`)
+          if (aResponse.ok) {
+            const aData = await aResponse.json()
+            const aRecords = aData.Answer?.filter((record: any) => record.type === 1) || []
             
-            for (const record of cnameRecords) {
-              preVerifyCnameTarget = record.data.replace(/\.$/, '') // Remove trailing dot
-              if (preVerifyCnameTarget.includes('ecombuildr.com')) {
+            // Check if A records point to Vercel IPs
+            const vercelIPs = ['76.76.19.61', '76.76.21.61'] // Vercel IPs
+            for (const record of aRecords) {
+              if (vercelIPs.includes(record.data)) {
                 preVerifyDnsConfigured = true
+                preVerifyCnameTarget = record.data
                 break
               }
             }
-            console.log(`Pre-verification CNAME check for ${domain}: ${cnameRecords.length} records found, target: ${preVerifyCnameTarget}`)
+            console.log(`Pre-verification A record check for ${domain}: ${aRecords.length} records found`)
+          }
+          
+          // If no A record, check CNAME records
+          if (!preVerifyDnsConfigured) {
+            const cnameResponse = await fetch(`https://dns.google.com/resolve?name=${domain}&type=CNAME`)
+            if (cnameResponse.ok) {
+              const cnameData = await cnameResponse.json()
+              const cnameRecords = cnameData.Answer?.filter((record: any) => record.type === 5) || []
+              
+              for (const record of cnameRecords) {
+                preVerifyCnameTarget = record.data.replace(/\.$/, '') // Remove trailing dot
+                if (preVerifyCnameTarget.includes('vercel-dns.com') || preVerifyCnameTarget.includes('vercel.app')) {
+                  preVerifyDnsConfigured = true
+                  break
+                }
+              }
+              console.log(`Pre-verification CNAME check for ${domain}: ${cnameRecords.length} records found, target: ${preVerifyCnameTarget}`)
+            }
           }
         } catch (error) {
           console.error('Pre-verification DNS check failed:', error)
@@ -88,8 +108,8 @@ Deno.serve(async (req) => {
           status: {
             dnsConfigured: preVerifyDnsConfigured,
             cnameTarget: preVerifyCnameTarget || null,
-            requiresEcomBuildr: !preVerifyDnsConfigured,
-            errorMessage: !preVerifyDnsConfigured ? 'CNAME record must point to ecombuildr.com' : null
+            requiresVercel: !preVerifyDnsConfigured,
+            errorMessage: !preVerifyDnsConfigured ? 'DNS must point to Vercel (A record: 76.76.19.61 or CNAME: cname.vercel-dns.com)' : null
           }
         }
         console.log(`Domain ${domain} pre-verification result:`, result.status)
@@ -101,47 +121,47 @@ Deno.serve(async (req) => {
         let cnameTarget = ''
         
         try {
-          // Check CNAME records
-          const cnameResponse = await fetch(`https://dns.google.com/resolve?name=${domain}&type=CNAME`)
-          if (cnameResponse.ok) {
-            const cnameData = await cnameResponse.json()
-            const cnameRecords = cnameData.Answer?.filter((record: any) => record.type === 5) || []
+          // Check A records first (Vercel primary method)
+          const aResponse = await fetch(`https://dns.google.com/resolve?name=${domain}&type=A`)
+          if (aResponse.ok) {
+            const aData = await aResponse.json()
+            const aRecords = aData.Answer?.filter((record: any) => record.type === 1) || []
             
-            for (const record of cnameRecords) {
-              cnameTarget = record.data.replace(/\.$/, '') // Remove trailing dot
-              if (cnameTarget.includes('ecombuildr.com')) {
+            // Check if A records point to Vercel IPs
+            const vercelIPs = ['76.76.19.61', '76.76.21.61'] // Vercel IPs
+            for (const record of aRecords) {
+              if (vercelIPs.includes(record.data)) {
                 dnsConfigured = true
+                cnameTarget = record.data
                 break
               }
             }
-            console.log(`CNAME check for ${domain}: ${cnameRecords.length} records found, target: ${cnameTarget}`)
+            console.log(`A record check for ${domain}: ${aRecords.length} records found`)
           }
           
-          // If no CNAME, check A records pointing to ecombuildr.com IPs
+          // If no A record, check CNAME records
           if (!dnsConfigured) {
-            const aResponse = await fetch(`https://dns.google.com/resolve?name=${domain}&type=A`)
-            if (aResponse.ok) {
-              const aData = await aResponse.json()
-              const aRecords = aData.Answer?.filter((record: any) => record.type === 1) || []
+            const cnameResponse = await fetch(`https://dns.google.com/resolve?name=${domain}&type=CNAME`)
+            if (cnameResponse.ok) {
+              const cnameData = await cnameResponse.json()
+              const cnameRecords = cnameData.Answer?.filter((record: any) => record.type === 5) || []
               
-              // Check if A records point to ecombuildr.com IPs
-              const ecomBuildrIPs = ['75.2.60.5', '99.83.190.102'] // Netlify IPs for ecombuildr.com
-              for (const record of aRecords) {
-                if (ecomBuildrIPs.includes(record.data)) {
+              for (const record of cnameRecords) {
+                cnameTarget = record.data.replace(/\.$/, '') // Remove trailing dot
+                if (cnameTarget.includes('vercel-dns.com') || cnameTarget.includes('vercel.app')) {
                   dnsConfigured = true
-                  cnameTarget = record.data
                   break
                 }
               }
-              console.log(`A record check for ${domain}: ${aRecords.length} records found`)
+              console.log(`CNAME check for ${domain}: ${cnameRecords.length} records found, target: ${cnameTarget}`)
             }
           }
         } catch (error) {
           console.error('DNS check failed:', error)
         }
 
-        // Check if domain is accessible via HTTPS
-        let sslStatus = 'pending'
+        // Check if domain is accessible via HTTPS (Vercel handles SSL automatically)
+        let sslStatus = 'automatic' // Vercel handles SSL automatically
         let isAccessible = false
         
         try {
@@ -150,7 +170,6 @@ Deno.serve(async (req) => {
             signal: AbortSignal.timeout(10000) // 10 second timeout
           })
           isAccessible = httpsResponse.ok
-          sslStatus = isAccessible ? 'issued' : 'provisioning'
           console.log(`HTTPS check for ${domain}: ${httpsResponse.status} - ${isAccessible ? 'accessible' : 'not accessible'}`)
         } catch (error) {
           console.log(`HTTPS check failed for ${domain}:`, error.message)
@@ -161,7 +180,7 @@ Deno.serve(async (req) => {
               signal: AbortSignal.timeout(5000)
             })
             if (httpResponse.ok) {
-              sslStatus = 'provisioning' // Domain works but SSL not ready
+              sslStatus = 'provisioning' // Domain works but SSL provisioning
             }
           } catch (httpError) {
             console.log(`HTTP check also failed for ${domain}`)
@@ -194,7 +213,8 @@ Deno.serve(async (req) => {
             sslStatus,
             isVerified,
             isAccessible,
-            cnameTarget: cnameTarget || null
+            cnameTarget: cnameTarget || null,
+            message: isVerified ? 'Domain verified and ready!' : 'DNS configured, waiting for SSL certificate'
           }
         }
         console.log(`Domain ${domain} verification result:`, result.status)
@@ -262,7 +282,7 @@ Deno.serve(async (req) => {
             domain: domain,
             dns_configured: isDnsVerified || false,
             is_verified: false,
-            ssl_status: 'pending',
+            ssl_status: 'automatic', // Vercel handles SSL automatically
             verification_token: verificationToken,
             verification_attempts: 0
           })

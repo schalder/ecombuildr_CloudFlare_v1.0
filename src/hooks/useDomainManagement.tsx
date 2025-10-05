@@ -144,7 +144,7 @@ export const useDomainManagement = () => {
     if (!store?.id) throw new Error('No store found');
 
     try {
-      // Step 1: Add domain to database via dns-domain-manager
+      // Add domain to database via dns-domain-manager
       const { data: dnsData, error: dnsError } = await supabase.functions.invoke(
         'dns-domain-manager',
         {
@@ -159,39 +159,14 @@ export const useDomainManagement = () => {
 
       if (dnsError) throw dnsError;
 
-      // Step 2: Add domain to Netlify as alias (REQUIRED for domain recognition)
-      try {
-        const { data: netlifyData, error: netlifyError } = await supabase.functions.invoke(
-          'netlify-domain-manager',
-          {
-            body: {
-              action: 'add',
-              domain: domain,
-              storeId: store.id
-            }
-          }
-        );
-
-        if (netlifyError) {
-          console.error('Netlify domain addition failed:', netlifyError);
-          // Don't throw here - domain was added to DB successfully
-          toast({
-            title: "Domain added with warning",
-            description: "Domain added to database but Netlify setup failed. Please check status.",
-            variant: "default"
-          });
-        } else {
-          console.log('✅ Domain added successfully to both database and Netlify');
-        }
-      } catch (netlifyError) {
-        console.error('Netlify domain addition failed:', netlifyError);
-        // Don't throw here - domain was added to DB successfully
-        toast({
-          title: "Domain added with warning", 
-          description: "Domain added to database but Netlify setup failed. Please check status.",
-          variant: "default"
-        });
-      }
+      // Domain added successfully to database
+      // Vercel will automatically handle SSL certificates once DNS is configured
+      console.log('✅ Domain added successfully to database');
+      
+      toast({
+        title: "Domain Added Successfully",
+        description: `${domain} has been added. Configure DNS to point to Vercel and SSL will be automatically issued.`,
+      });
 
       refetch();
       return dnsData;
