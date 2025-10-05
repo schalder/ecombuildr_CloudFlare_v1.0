@@ -1,8 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
-import { WebsiteOverrideRoute } from '@/pages/storefront/WebsiteOverrideRoute';
-import { StorefrontHome } from '@/pages/storefront/StorefrontHome';
+import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
+import { StorefrontPageBuilder } from '@/components/storefront/renderer/StorefrontPageBuilder';
+import { ScriptManager } from '@/components/storefront/optimized/ScriptManager';
+import { setGlobalCurrency } from '@/lib/currency';
+import { setSEO, buildCanonical } from '@/lib/seo';
+import { optimizedWebsitePageQuery } from '@/components/storefront/optimized/DataOptimizer';
+import { PerformanceMonitor } from '@/components/storefront/optimized/PerformanceMonitor';
+import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
 
 interface DynamicHomePageProps {
   websiteId: string;
@@ -15,6 +21,17 @@ interface HomePageData {
   title: string;
   content: any;
   is_published: boolean;
+  seo_title?: string;
+  seo_description?: string;
+  og_image?: string;
+  custom_scripts?: string;
+  seo_keywords?: string[];
+  meta_author?: string;
+  canonical_url?: string;
+  custom_meta_tags?: any;
+  social_image_url?: string;
+  language_code?: string;
+  meta_robots?: string;
 }
 
 export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({ 
@@ -24,6 +41,7 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
   const [homePage, setHomePage] = useState<HomePageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [websiteMeta, setWebsiteMeta] = useState<any>(null);
 
   useEffect(() => {
     const fetchHomePage = async () => {
@@ -34,7 +52,7 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         // Find the page marked as homepage for this website
         const { data: homePageData, error: homePageError } = await supabase
           .from('website_pages')
-          .select('id, slug, title, content, is_published')
+          .select(optimizedWebsitePageQuery.select)
           .eq('website_id', websiteId)
           .eq('is_homepage', true)
           .eq('is_published', true)
@@ -47,11 +65,24 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         }
 
         if (homePageData) {
-          console.log('Found home page:', homePageData.slug);
-          setHomePage(homePageData);
+          console.log('Found home page:', (homePageData as any).slug);
+          setHomePage(homePageData as unknown as HomePageData);
         } else {
           console.log('No home page found, using fallback');
           setHomePage(null);
+        }
+
+        // Fetch website meta for currency and SEO
+        const { data: websiteData } = await supabase
+          .from('websites')
+          .select('name, settings, domain')
+          .eq('id', websiteId)
+          .maybeSingle();
+        
+        if (websiteData) {
+          setWebsiteMeta(websiteData);
+          const code = (websiteData.settings as any)?.currency?.code || 'BDT';
+          setGlobalCurrency(code as any);
         }
       } catch (err) {
         console.error('Error in DynamicHomePage:', err);
@@ -63,6 +94,25 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
 
     fetchHomePage();
   }, [websiteId]);
+
+  // Set SEO when home page data is available
+  useEffect(() => {
+    if (homePage && websiteMeta) {
+      const seoData = {
+        title: homePage.seo_title || homePage.title,
+        description: homePage.seo_description || '',
+        image: homePage.og_image || homePage.social_image_url,
+        url: buildCanonical(websiteMeta.domain || ''),
+        keywords: homePage.seo_keywords,
+        author: homePage.meta_author,
+        robots: homePage.meta_robots,
+        language: homePage.language_code,
+        customTags: homePage.custom_meta_tags
+      };
+      
+      setSEO(seoData);
+    }
+  }, [homePage, websiteMeta]);
 
   // Show loading state
   if (loading) {
@@ -84,12 +134,24 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
     return fallback;
   }
 
-  // Render the home page using WebsiteOverrideRoute with the actual slug
+  // Render the home page content directly
   return (
-    <WebsiteOverrideRoute 
-      slug={homePage.slug} 
-      websiteId={websiteId}
-      fallback={fallback} 
-    />
+    <>
+      <FontOptimizer />
+      <PerformanceMonitor page={`website-home-${homePage.slug}`} />
+      <main>
+        {homePage.content?.sections ? (
+          <>
+            <PageBuilderRenderer data={homePage.content} />
+            <ScriptManager customScripts={homePage.custom_scripts} />
+          </>
+        ) : (
+          <div className="container mx-auto px-4 py-8">
+            <h1 className="text-3xl font-bold mb-6">{homePage.title}</h1>
+            <p className="text-muted-foreground">This page is still being set up.</p>
+          </div>
+        )}
+      </main>
+    </>
   );
 };
