@@ -67,10 +67,5 @@
         }
       ]
     }
-  ],
-  "functions": {
-    "api/social-meta.ts": {
-      "runtime": "edge"
-    }
-  }
+  ]
 }
