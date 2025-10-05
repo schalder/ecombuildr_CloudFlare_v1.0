@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Vercel } from 'https://esm.sh/@vercel/sdk/core.js'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +8,7 @@ const corsHeaders = {
 }
 
 interface DomainRequest {
-  action: 'verify' | 'check_ssl' | 'pre_verify' | 'add_domain'
+  action: 'verify' | 'check_ssl' | 'pre_verify' | 'add_domain' | 'get_vercel_cname' | 'add_to_vercel'
   domain: string
   storeId: string
   isDnsVerified?: boolean
@@ -24,6 +25,9 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
+
+    // Initialize Vercel SDK
+    const vercel = new Vercel({ bearerToken: Deno.env.get('VERCEL_TOKEN') })
 
     // Verify authentication
     const authHeader = req.headers.get('Authorization')
@@ -261,7 +265,7 @@ Deno.serve(async (req) => {
         break
 
       case 'add_domain':
-        // Add domain to database
+        // Add domain to Vercel project first, then to database
         const verificationToken = crypto.randomUUID()
         
         // Check if domain already exists
@@ -275,13 +279,39 @@ Deno.serve(async (req) => {
           throw new Error('Domain already exists')
         }
         
-        // Insert new domain
+        let vercelCnameTarget = null
+        
+        try {
+          // Add domain to Vercel project
+          const vercelResponse = await vercel.projects.addProjectDomain({
+            idOrName: Deno.env.get('VERCEL_PROJECT_NAME') || 'ecombuildr',
+            teamId: Deno.env.get('VERCEL_TEAM_ID'),
+            domain: domain,
+          })
+
+          console.log(`Domain ${domain} added to Vercel project:`, vercelResponse)
+
+          // Get domain info to get the specific CNAME target
+          const domainInfo = await vercel.projects.getProjectDomain({
+            idOrName: Deno.env.get('VERCEL_PROJECT_NAME') || 'ecombuildr',
+            teamId: Deno.env.get('VERCEL_TEAM_ID'),
+            domain: domain,
+          })
+
+          vercelCnameTarget = domainInfo.value?.cnameTarget
+          console.log(`Vercel CNAME target for ${domain}:`, vercelCnameTarget)
+        } catch (vercelError) {
+          console.error('Failed to add domain to Vercel:', vercelError)
+          throw new Error(`Failed to add domain to Vercel: ${vercelError.message}`)
+        }
+        
+        // Insert new domain to database
         const { data: newDomain, error: insertError } = await supabase
           .from('custom_domains')
           .insert({
             store_id: storeId,
             domain: domain,
-            dns_configured: isDnsVerified || false,
+            dns_configured: false, // Will be true after user configures DNS
             is_verified: false,
             ssl_status: 'automatic', // Vercel handles SSL automatically
             verification_token: verificationToken,
@@ -298,13 +328,78 @@ Deno.serve(async (req) => {
         result = {
           success: true,
           domain: newDomain,
-          verificationToken
+          verificationToken,
+          vercelCnameTarget,
+          instructions: {
+            type: 'CNAME',
+            name: domain.split('.')[0], // Extract subdomain
+            value: vercelCnameTarget,
+            description: `Add a CNAME record for ${domain} that points to ${vercelCnameTarget}`
+          }
         }
         console.log(`Domain ${domain} added successfully with ID: ${newDomain.id}`)
         break
 
-      default:
-        throw new Error('Invalid action')
+      case 'add_to_vercel':
+        // Add domain to Vercel project and get specific CNAME target
+        try {
+          // Add domain to Vercel project
+          const vercelResponse = await vercel.projects.addProjectDomain({
+            idOrName: Deno.env.get('VERCEL_PROJECT_NAME') || 'ecombuildr',
+            teamId: Deno.env.get('VERCEL_TEAM_ID'),
+            domain: domain,
+          })
+
+          console.log(`Domain ${domain} added to Vercel project:`, vercelResponse)
+
+          // Get domain info to get the specific CNAME target
+          const domainInfo = await vercel.projects.getProjectDomain({
+            idOrName: Deno.env.get('VERCEL_PROJECT_NAME') || 'ecombuildr',
+            teamId: Deno.env.get('VERCEL_TEAM_ID'),
+            domain: domain,
+          })
+
+          result = {
+            success: true,
+            vercelResponse,
+            cnameTarget: domainInfo.value?.cnameTarget,
+            instructions: {
+              type: 'CNAME',
+              name: domain.split('.')[0], // Extract subdomain
+              value: domainInfo.value?.cnameTarget || 'cname.vercel-dns.com',
+              description: `Add a CNAME record for ${domain} that points to ${domainInfo.value?.cnameTarget}`
+            }
+          }
+        } catch (vercelError) {
+          console.error('Failed to add domain to Vercel:', vercelError)
+          throw new Error(`Failed to add domain to Vercel: ${vercelError.message}`)
+        }
+        break
+
+      case 'get_vercel_cname':
+        // Get the specific CNAME target from Vercel for a domain
+        try {
+          const domainInfo = await vercel.projects.getProjectDomain({
+            idOrName: Deno.env.get('VERCEL_PROJECT_NAME') || 'ecombuildr',
+            teamId: Deno.env.get('VERCEL_TEAM_ID'),
+            domain: domain,
+          })
+
+          result = {
+            success: true,
+            cnameTarget: domainInfo.value?.cnameTarget || null,
+            instructions: {
+              type: 'CNAME',
+              name: domain.split('.')[0], // Extract subdomain
+              value: domainInfo.value?.cnameTarget || 'cname.vercel-dns.com',
+              description: `Add a CNAME record for ${domain} that points to ${domainInfo.value?.cnameTarget}`
+            }
+          }
+        } catch (vercelError) {
+          console.error('Failed to get Vercel CNAME:', vercelError)
+          throw new Error(`Failed to get Vercel CNAME: ${vercelError.message}`)
+        }
+        break
     }
 
     return new Response(JSON.stringify(result), {

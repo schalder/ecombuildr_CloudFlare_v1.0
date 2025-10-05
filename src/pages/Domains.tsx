@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ export default function Domains() {
     funnels, 
     loading, 
     addDomain, 
+    getVercelCNAME,
     removeDomain, 
     connectContent, 
     removeConnection, 
@@ -39,6 +40,33 @@ export default function Domains() {
     path: '/',
     isHomepage: false
   });
+
+  // Load Vercel CNAME targets for all domains
+  useEffect(() => {
+    const loadCnameTargets = async () => {
+      for (const domain of domains) {
+        try {
+          const cnameData = await getVercelCNAME(domain.domain);
+          const cnameTarget = cnameData.cnameTarget || 'cname.vercel-dns.com';
+          
+          const element = document.getElementById(`cname-target-${domain.id}`);
+          if (element) {
+            element.textContent = cnameTarget;
+          }
+        } catch (error) {
+          console.error(`Failed to load CNAME for ${domain.domain}:`, error);
+          const element = document.getElementById(`cname-target-${domain.id}`);
+          if (element) {
+            element.textContent = 'cname.vercel-dns.com';
+          }
+        }
+      }
+    };
+
+    if (domains.length > 0) {
+      loadCnameTargets();
+    }
+  }, [domains, getVercelCNAME]);
 
   const handleDomainAdded = async (domain: string) => {
     try {
@@ -74,27 +102,46 @@ export default function Domains() {
     }
   };
 
-  const copyDNSInstructions = (domain: string) => {
-    const instructions = `DNS Configuration for Vercel:
-
-A Record:
-Type: A
-Name: @ (or root domain)
-Value: 76.76.19.61
-TTL: 300 (or Auto)
+  const copyDNSInstructions = async (domain: string) => {
+    try {
+      // Get the Vercel-specific CNAME target for this domain
+      const cnameData = await getVercelCNAME(domain);
+      const cnameTarget = cnameData.cnameTarget || 'cname.vercel-dns.com';
+      
+      const instructions = `DNS Configuration for ${domain}:
 
 CNAME Record:
 Type: CNAME
-Name: www
+Name: ${domain.split('.')[0]} (or @ for root domain)
+Value: ${cnameTarget}
+TTL: 300 (or Auto)
+
+Note: This is the specific CNAME target provided by Vercel for your domain. SSL will be automatically issued once DNS is configured.`;
+      
+      navigator.clipboard.writeText(instructions);
+      toast({
+        title: "DNS Instructions Copied",
+        description: `The Vercel-specific DNS configuration for ${domain} has been copied to your clipboard.`
+      });
+    } catch (error) {
+      console.error('Failed to get Vercel CNAME:', error);
+      // Fallback to generic instructions
+      const instructions = `DNS Configuration for ${domain}:
+
+CNAME Record:
+Type: CNAME
+Name: ${domain.split('.')[0]} (or @ for root domain)
 Value: cname.vercel-dns.com
 TTL: 300 (or Auto)
 
-Note: Vercel will automatically issue SSL certificate once DNS is configured.`;
-    navigator.clipboard.writeText(instructions);
-    toast({
-      title: "DNS Instructions Copied",
-      description: "The Vercel DNS configuration has been copied to your clipboard."
-    });
+Note: Configure DNS to point to Vercel. SSL will be automatically issued.`;
+      
+      navigator.clipboard.writeText(instructions);
+      toast({
+        title: "DNS Instructions Copied",
+        description: "Generic Vercel DNS configuration has been copied to your clipboard."
+      });
+    }
   };
 
   const getStatusBadge = (domain: any) => {
@@ -273,26 +320,7 @@ Note: Vercel will automatically issue SSL certificate once DNS is configured.`;
                               
                               <div className="bg-white border p-3 rounded-lg space-y-3">
                                 <div className="space-y-2 font-mono text-xs">
-                                  <h6 className="font-semibold text-gray-800">A Record (Root Domain):</h6>
-                                  <div className="grid grid-cols-3 gap-4">
-                                    <span className="text-muted-foreground font-normal">Type:</span>
-                                    <span className="font-semibold">A</span>
-                                    <span></span>
-                                  </div>
-                                  <div className="grid grid-cols-3 gap-4">
-                                    <span className="text-muted-foreground font-normal">Name:</span>
-                                    <span className="font-semibold">@ (or root domain)</span>
-                                    <span></span>
-                                  </div>
-                                   <div className="grid grid-cols-3 gap-4">
-                                     <span className="text-muted-foreground font-normal">Value:</span>
-                                     <span className="font-semibold">76.76.19.61</span>
-                                     <span></span>
-                                   </div>
-                                </div>
-                                
-                                <div className="space-y-2 font-mono text-xs">
-                                  <h6 className="font-semibold text-gray-800">CNAME Record (WWW):</h6>
+                                  <h6 className="font-semibold text-gray-800">CNAME Record:</h6>
                                   <div className="grid grid-cols-3 gap-4">
                                     <span className="text-muted-foreground font-normal">Type:</span>
                                     <span className="font-semibold">CNAME</span>
@@ -300,12 +328,14 @@ Note: Vercel will automatically issue SSL certificate once DNS is configured.`;
                                   </div>
                                   <div className="grid grid-cols-3 gap-4">
                                     <span className="text-muted-foreground font-normal">Name:</span>
-                                    <span className="font-semibold">www</span>
+                                    <span className="font-semibold">{domain.domain.split('.')[0]} (or @ for root)</span>
                                     <span></span>
                                   </div>
                                    <div className="grid grid-cols-3 gap-4">
                                      <span className="text-muted-foreground font-normal">Value:</span>
-                                     <span className="font-semibold">cname.vercel-dns.com</span>
+                                     <span className="font-semibold text-blue-600" id={`cname-target-${domain.id}`}>
+                                       Loading Vercel CNAME...
+                                     </span>
                                      <span></span>
                                    </div>
                                 </div>

@@ -144,7 +144,7 @@ export const useDomainManagement = () => {
     if (!store?.id) throw new Error('No store found');
 
     try {
-      // Add domain to database via dns-domain-manager
+      // Add domain to Vercel project and database via dns-domain-manager
       const { data: dnsData, error: dnsError } = await supabase.functions.invoke(
         'dns-domain-manager',
         {
@@ -159,19 +159,42 @@ export const useDomainManagement = () => {
 
       if (dnsError) throw dnsError;
 
-      // Domain added successfully to database
-      // Vercel will automatically handle SSL certificates once DNS is configured
-      console.log('✅ Domain added successfully to database');
+      // Domain added successfully to Vercel and database
+      console.log('✅ Domain added successfully to Vercel and database');
+      console.log('Vercel CNAME target:', dnsData.vercelCnameTarget);
       
       toast({
         title: "Domain Added Successfully",
-        description: `${domain} has been added. Configure DNS to point to Vercel and SSL will be automatically issued.`,
+        description: `${domain} has been added to Vercel. Configure DNS to point to the provided CNAME target.`,
       });
 
       refetch();
       return dnsData;
     } catch (error) {
       console.error('Add domain failed:', error);
+      throw error;
+    }
+  };
+
+  const getVercelCNAME = async (domain: string): Promise<any> => {
+    if (!store?.id) throw new Error('No store found');
+
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        'dns-domain-manager',
+        {
+          body: {
+            action: 'get_vercel_cname',
+            domain: domain,
+            storeId: store.id
+          }
+        }
+      );
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Get Vercel CNAME failed:', error);
       throw error;
     }
   };
@@ -432,6 +455,7 @@ export const useDomainManagement = () => {
     error: error?.message || '',
     verifyDomainDNS,
     addDomain,
+    getVercelCNAME,
     removeDomain,
     connectContent,
     removeConnection,
