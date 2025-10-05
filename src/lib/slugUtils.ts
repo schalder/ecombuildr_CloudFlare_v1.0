@@ -1,10 +1,12 @@
 import { supabase } from '@/integrations/supabase/client';
+import { isWebsiteSystemRoute } from './websiteSystemRoutes';
 
 export interface SlugValidationResult {
   isAvailable: boolean;
   suggestedSlug: string;
   hasConflict: boolean;
   conflictMessage?: string;
+  conflictType?: 'website-system' | 'funnel' | 'error';
 }
 
 /**
@@ -30,6 +32,7 @@ export const generateUniqueSlug = (baseSlug: string): string => {
 /**
  * Validate if a funnel step slug is available across all funnels on the same domain
  * This prevents conflicts when multiple funnels use the same custom domain
+ * Also checks for conflicts with website system routes
  */
 export const validateFunnelStepSlug = async (
   slug: string, 
@@ -41,6 +44,18 @@ export const validateFunnelStepSlug = async (
       isAvailable: true,
       suggestedSlug: slug,
       hasConflict: false
+    };
+  }
+
+  // First check: Website system route conflicts
+  if (isWebsiteSystemRoute(slug)) {
+    const suggestedSlug = generateUniqueSlug(slug);
+    return {
+      isAvailable: false,
+      suggestedSlug,
+      hasConflict: true,
+      conflictType: 'website-system',
+      conflictMessage: `Slug "${slug}" is reserved for website pages. Using "${suggestedSlug}" instead`
     };
   }
 
@@ -104,6 +119,7 @@ export const validateFunnelStepSlug = async (
         isAvailable: false,
         suggestedSlug,
         hasConflict: true,
+        conflictType: 'funnel',
         conflictMessage: `Slug already exists. Using "${suggestedSlug}" instead`
       };
     }
@@ -120,6 +136,7 @@ export const validateFunnelStepSlug = async (
       isAvailable: false,
       suggestedSlug: generateUniqueSlug(slug),
       hasConflict: true,
+      conflictType: 'error',
       conflictMessage: 'Error checking slug. Using unique slug instead'
     };
   }
@@ -154,6 +171,7 @@ const validateSlugWithinFunnel = async (
         isAvailable: false,
         suggestedSlug,
         hasConflict: true,
+        conflictType: 'funnel',
         conflictMessage: `Slug already exists in this funnel. Using "${suggestedSlug}" instead`
       };
     }
@@ -170,6 +188,7 @@ const validateSlugWithinFunnel = async (
       isAvailable: false,
       suggestedSlug: generateUniqueSlug(slug),
       hasConflict: true,
+      conflictType: 'error',
       conflictMessage: 'Error checking slug. Using unique slug instead'
     };
   }

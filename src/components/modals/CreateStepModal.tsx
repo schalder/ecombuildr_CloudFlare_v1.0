@@ -52,6 +52,7 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
   const [suggestedSlug, setSuggestedSlug] = useState('');
   const [isSlugModified, setIsSlugModified] = useState(false);
   const [finalSlug, setFinalSlug] = useState('');
+  const [conflictType, setConflictType] = useState<'website-system' | 'funnel' | 'error' | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -68,15 +69,20 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
       if (validation.hasConflict) {
         setSuggestedSlug(validation.suggestedSlug);
         setFinalSlug(validation.suggestedSlug);
+        setConflictType(validation.conflictType || 'funnel');
         setSlugStatus('taken');
       } else {
         setFinalSlug(validation.suggestedSlug);
         setSuggestedSlug('');
+        setConflictType(null);
         setSlugStatus('available');
       }
     } catch (error) {
       console.error('Slug check error:', error);
       setSlugStatus('error');
+      setSuggestedSlug('');
+      setFinalSlug('');
+      setConflictType('error');
     }
   };
 
@@ -205,6 +211,7 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
       setSlugStatus('idle');
       setSuggestedSlug('');
       setFinalSlug('');
+      setConflictType(null);
       
       if (slug.trim()) {
         debouncedCheckSlug(slug);
@@ -221,6 +228,7 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
     setSlugStatus('idle');
     setSuggestedSlug('');
     setFinalSlug('');
+    setConflictType(null);
     
     if (slug.trim()) {
       debouncedCheckSlug(slug);
@@ -304,7 +312,10 @@ export const CreateStepModal: React.FC<CreateStepModalProps> = ({
             {slugStatus === 'taken' && suggestedSlug && (
               <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
-                Slug already exists. Using "{suggestedSlug}" instead
+                {conflictType === 'website-system' 
+                  ? `Slug "${formData.slug}" is reserved for website pages. Using "${suggestedSlug}" instead`
+                  : `Slug already exists. Using "${suggestedSlug}" instead`
+                }
               </p>
             )}
             {slugStatus === 'error' && (

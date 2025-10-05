@@ -56,6 +56,7 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
   const [suggestedSlug, setSuggestedSlug] = useState('');
   const [finalSlug, setFinalSlug] = useState('');
+  const [conflictType, setConflictType] = useState<'website-system' | 'funnel' | 'error' | null>(null);
   
   const { toast } = useToast();
 
@@ -151,15 +152,20 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
         setStep(prev => prev ? { ...prev, slug: validation.suggestedSlug } : null);
         setSuggestedSlug(validation.suggestedSlug);
         setFinalSlug(validation.suggestedSlug);
+        setConflictType(validation.conflictType || 'funnel');
         setSlugStatus('taken');
       } else {
         setFinalSlug(validation.suggestedSlug);
         setSuggestedSlug('');
+        setConflictType(null);
         setSlugStatus('available');
       }
     } catch (error) {
       console.error('Slug check error:', error);
       setSlugStatus('error');
+      setSuggestedSlug('');
+      setFinalSlug('');
+      setConflictType('error');
     }
   };
 
@@ -279,6 +285,7 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
                      setSlugStatus('idle');
                      setSuggestedSlug('');
                      setFinalSlug('');
+                     setConflictType(null);
                      if (slug.trim()) {
                        debouncedCheckSlug(slug);
                      }
@@ -300,6 +307,7 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
                      setSlugStatus('idle');
                      setSuggestedSlug('');
                      setFinalSlug('');
+                     setConflictType(null);
                      if (slug.trim()) {
                        debouncedCheckSlug(slug);
                      }
@@ -340,7 +348,10 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
              {slugStatus === 'taken' && suggestedSlug && (
                <p className="text-sm text-blue-600 mt-1 flex items-center gap-1">
                  <AlertCircle className="h-3 w-3" />
-                 Slug already exists. Using "{suggestedSlug}" instead
+                 {conflictType === 'website-system' 
+                   ? `Slug "${step.slug}" is reserved for website pages. Using "${suggestedSlug}" instead`
+                   : `Slug already exists. Using "${suggestedSlug}" instead`
+                 }
                </p>
              )}
              {slugStatus === 'error' && (

@@ -7,6 +7,7 @@ import CourseDomainRouter from './CourseDomainRouter';
 import { StoreProvider } from '@/contexts/StoreContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { CartDrawerProvider } from '@/contexts/CartDrawerContext';
+import { isWebsiteSystemRoute } from '@/lib/websiteSystemRoutes';
 
 // Domain-specific CartProvider wrapper with all necessary providers
 const DomainCartProvider: React.FC<{ children: React.ReactNode; storeId?: string; websiteId?: string }> = ({ children, storeId, websiteId }) => {
@@ -132,11 +133,17 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
             const pathSegments = currentPath.split('/').filter(Boolean);
             const potentialSlug = pathSegments[pathSegments.length - 1];
             
-            // Check if this is a system route
-            if (systemRoutes.includes(potentialSlug)) {
+            // Check if this is a website system route - prioritize website connection
+            if (isWebsiteSystemRoute(potentialSlug)) {
+              console.debug('DomainRouter: Website system route detected:', potentialSlug);
+              
+              // Website system routes ALWAYS prioritize website connection
+              selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
+              console.debug('DomainRouter: Routing website system route to website:', potentialSlug);
+            } else if (systemRoutes.includes(potentialSlug)) {
               console.debug('DomainRouter: System route detected:', potentialSlug);
               
-              // For system routes, prioritize funnel connection if it exists
+              // For other system routes, prioritize funnel connection if it exists
               const funnelConnection = connectionsArray.find(c => c.content_type === 'funnel');
               if (funnelConnection) {
                 selectedConnection = funnelConnection;
