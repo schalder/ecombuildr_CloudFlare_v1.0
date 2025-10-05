@@ -1,7 +1,7 @@
 {
   "version": 2,
   "functions": {
-    "api/social-meta/index.ts": {
+    "api/social-meta.ts": {
       "runtime": "edge"
     }
   },

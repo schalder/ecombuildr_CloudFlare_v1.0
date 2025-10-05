@@ -1,4 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4?target=deno';
 
 const SUPABASE_URL = "https://fhqwacmokbtbspkxjixf.supabase.co";
@@ -647,8 +646,8 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
   }
 }
 
-export default async function middleware(request: NextRequest): Promise<NextResponse> {
-  const url = request.nextUrl;
+export default async function handler(request: Request): Promise<Response> {
+  const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
   const domain = url.hostname;
   const pathname = url.pathname;
@@ -688,8 +687,7 @@ export default async function middleware(request: NextRequest): Promise<NextResp
           source: 'fallback_no_data'
         } as SEOData;
         const html = generateHTML(minimal, url.toString());
-        return new NextResponse(html, {
-          status: 200,
+        return new Response(html, {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
             'Cache-Control': 'public, max-age=120, s-maxage=120',
@@ -707,8 +705,7 @@ export default async function middleware(request: NextRequest): Promise<NextResp
       
       const html = generateHTML(seoData, url.toString());
       
-      return new NextResponse(html, {
-        status: 200,
+      return new Response(html, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=300, s-maxage=300',
@@ -729,24 +726,15 @@ export default async function middleware(request: NextRequest): Promise<NextResp
 
     } catch (error) {
       console.error('💥 SEO Handler error:', error);
-      return new NextResponse('Internal Server Error', { status: 500 });
+      return new Response('Internal Server Error', { status: 500 });
     }
   }
   
   // For non-social crawlers or system domains, pass through
   console.log('👤 Non-social crawler or system domain - passing through');
-  return NextResponse.next();
+  return new Response(null, { status: 200 });
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  runtime: 'edge',
 };
