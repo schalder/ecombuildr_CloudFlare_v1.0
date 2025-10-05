@@ -9,18 +9,10 @@
       }
     }
   ],
-  "functions": {
-    "api/[...catchall].ts": {
-      "runtime": "nodejs18.x"
-    },
-    "api/test.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/((?!api/).*)",
-      "destination": "/api/[...catchall]"
+      "destination": "/api/[...catchall].js"
     }
   ],
   "headers": [
