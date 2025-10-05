@@ -1,183 +1,96 @@
-# Supabase CLI
+# EcomBuildr
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+## 🚀 E-commerce Website Builder
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+Build Your E-commerce Empire In Minutes, Not Months.
 
-This repository contains all the functionality for Supabase CLI.
+Create conversion-driven online stores without coding. From landing pages to full e-commerce - everything you need to turn traffic into sales.
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+## ✨ Features
 
-## Getting started
+- **Unlimited Custom Domains** - Connect unlimited custom domains with automatic SSL
+- **Multi-Tenant Architecture** - Built for scalability and performance
+- **Page Builder** - Drag-and-drop website builder with pre-built templates
+- **Funnel Builder** - Create high-converting sales funnels
+- **E-commerce Integration** - Full e-commerce functionality with payment processing
+- **Course Platform** - Built-in course creation and management
+- **SEO Optimized** - Built-in SEO tools and optimization
 
-### Install the CLI
+## 🛠️ Tech Stack
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+- **Frontend**: React, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Edge Functions)
+- **Hosting**: Vercel (unlimited custom domains)
+- **Payments**: EPS, EB Pay, Cash on Delivery
+- **Deployment**: Automatic deployments with Vercel
 
-```bash
-npm i supabase --save-dev
-```
-
-To install the beta release channel:
-
-```bash
-npm i supabase@beta --save-dev
-```
-
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
-
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
-
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
-
-<details>
-  <summary><b>macOS</b></summary>
-
-  Available via [Homebrew](https://brew.sh). To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Windows</b></summary>
-
-  Available via [Scoop](https://scoop.sh). To install:
-
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
-
-  To upgrade:
-
-  ```powershell
-  scoop update supabase
-  ```
-</details>
-
-<details>
-  <summary><b>Linux</b></summary>
-
-  Available via [Homebrew](https://brew.sh) and Linux packages.
-
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
+## 📦 Installation
 
 ```bash
-supabase bootstrap
+# Clone the repository
+git clone https://github.com/schalder/ecombuildr.git
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+
+# Start development server
+npm run dev
 ```
 
-Or using npx:
+## 🌐 Custom Domain Setup
+
+### Unlimited Custom Domains with Vercel
+
+1. **Add your custom domain** in the dashboard
+2. **Configure DNS records**:
+   - **A Record**: `@` → `76.76.19.61` (Vercel IP)
+   - **CNAME**: `www` → `cname.vercel-dns.com`
+3. **Automatic SSL certificate** will be issued by Vercel
+4. **Your domain is ready to use!**
+
+### Vercel Deployment Benefits
+
+- ✅ **Unlimited custom domains** (no platform limits)
+- ✅ **Automatic SSL** (Let's Encrypt integration)
+- ✅ **Global CDN** (better performance)
+- ✅ **Edge Functions** (faster execution)
+- ✅ **Professional setup** (industry standard)
+
+## 🚀 Deployment
+
+### Vercel Deployment
+
+1. **Connect your GitHub repository** to Vercel
+2. **Set environment variables** in Vercel dashboard
+3. **Deploy automatically** on git push
+4. **Add custom domains** through Vercel dashboard
+
+### Environment Variables
+
+See `VERCEL_DEPLOYMENT.md` for complete environment variable setup.
+
+### Manual Deployment
 
 ```bash
-npx supabase bootstrap
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy to Vercel
+vercel --prod
 ```
 
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
+## 📄 License
 
-## Docs
+This project is licensed under the MIT License.
 
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
+## 🤝 Contributing
 
-## Breaking changes
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
+## 📞 Support
 
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
+For support, email support@ecombuildr.com or join our Discord community.
 
-## Developing
-
-To run from source:
-
-```sh
-# Go >= 1.22
-go run . help
-```

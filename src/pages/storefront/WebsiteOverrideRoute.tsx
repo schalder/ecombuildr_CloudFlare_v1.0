@@ -147,15 +147,8 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
   React.useEffect(() => {
     if (!page) return;
 
-    // ✅ PRIORITIZE PAGE SEO - Only fallback to page title if SEO title is empty
-    const title = (page.seo_title && page.seo_title.trim()) 
-      ? page.seo_title.trim() 
-      : (websiteMeta?.name ? `${page.title} - ${websiteMeta.name}` : page.title);
-    
-    // ✅ PRIORITIZE PAGE SEO DESCRIPTION - Only fallback if truly empty
-    const description = (page.seo_description && page.seo_description.trim())
-      ? page.seo_description.trim()
-      : undefined;
+    const title = page.seo_title || (websiteMeta?.name ? `${page.title} - ${websiteMeta.name}` : page.title);
+    const description = page.seo_description;
     const image = page.social_image_url || page.og_image;
     const canonical = page.canonical_url || buildCanonical(undefined, websiteMeta?.domain);
     const keywords = page.seo_keywords || [];

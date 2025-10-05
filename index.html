@@ -5,25 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#10B981" />
     
-    <!-- Dynamic SEO Meta Tags (injected by server-side handler) -->
-    <title>Loading...</title>
-    <meta name="description" content="Loading..." />
-    <meta name="keywords" content="" />
-    <meta name="author" content="" />
+    <!-- Fallback SEO Meta Tags (overridden by dynamic content) -->
+    <title>EcomBuildr - Build Beautiful Online Stores & Funnels</title>
+    <meta name="description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta name="keywords" content="website builder, ecommerce, online store, sales funnel, drag and drop" />
+    <meta name="author" content="EcomBuildr" />
     
-    <!-- Dynamic Open Graph Meta Tags -->
-    <meta property="og:title" content="Loading..." />
-    <meta property="og:description" content="Loading..." />
+    <!-- Fallback Open Graph Meta Tags -->
+    <meta property="og:title" content="EcomBuildr - Build Beautiful Online Stores & Funnels" />
+    <meta property="og:description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="" />
-    <meta property="og:site_name" content="" />
+    <meta property="og:image" content="https://res.cloudinary.com/dtkeyccga/image/upload/v1706878427/og-image_dcvqpc.png" />
+    <meta property="og:site_name" content="EcomBuildr" />
     <meta property="og:locale" content="en_US" />
     
-    <!-- Dynamic Twitter Card Meta Tags -->
+    <!-- Fallback Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Loading..." />
-    <meta name="twitter:description" content="Loading..." />
-    <meta name="twitter:image" content="" />
+    <meta name="twitter:title" content="EcomBuildr - Build Beautiful Online Stores & Funnels" />
+    <meta name="twitter:description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta name="twitter:image" content="https://res.cloudinary.com/dtkeyccga/image/upload/v1706878427/og-image_dcvqpc.png" />
     
     <!-- Performance optimizations -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -49,7 +49,7 @@
       img[width][height] { aspect-ratio: attr(width) / attr(height); }
     </style>
     
-    <!-- Social crawlers are handled by client-side SEO injection -->
+    <!-- Social crawlers are handled by Netlify Edge Function (social-meta) -->
     <!-- Client-side SEO is managed by individual pages/components -->
     
     <!-- Dynamic SEO tags are managed in code per-page via setSEO function -->
@@ -61,86 +61,6 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    
-    <!-- Client-side SEO Enhancement Script -->
-    <script>
-      // This script enhances SEO for regular users (not social crawlers)
-      // Social crawlers are handled by server-side rendering
-      
-      // Function to update meta tags
-      function updateMetaTag(property, content) {
-        let meta = document.querySelector(`meta[property="${property}"]`) || document.querySelector(`meta[name="${property}"]`);
-        if (!meta) {
-          meta = document.createElement('meta');
-          if (property.startsWith('og:')) {
-            meta.setAttribute('property', property);
-          } else {
-            meta.setAttribute('name', property);
-          }
-          document.head.appendChild(meta);
-        }
-        meta.setAttribute('content', content);
-      }
-      
-      // Function to update title
-      function updateTitle(title) {
-        document.title = title;
-      }
-      
-      // Get current domain and path
-      const domain = window.location.hostname;
-      const pathname = window.location.pathname;
-      
-      // Check if this is a custom domain
-      const isCustomDomain = !domain.includes('ecombuildr.com') && 
-                            !domain.includes('localhost') && 
-                            !domain.includes('lovable.dev') &&
-                            !domain.includes('lovable.app') &&
-                            !domain.includes('lovableproject.com');
-      
-      if (isCustomDomain) {
-        console.log('Custom domain detected, enhancing SEO:', domain);
-        
-        // Fetch SEO data from Supabase Edge Function for client-side enhancement
-        fetch(`https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-meta-injection?domain=${encodeURIComponent(domain)}&path=${encodeURIComponent(pathname)}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
-          }
-        })
-        .then(response => response.text())
-        .then(html => {
-          // Parse the HTML response to extract meta tags
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          
-          // Extract meta tags from the response
-          const title = doc.querySelector('title')?.textContent;
-          const description = doc.querySelector('meta[name="description"]')?.getAttribute('content');
-          const ogTitle = doc.querySelector('meta[property="og:title"]')?.getAttribute('content');
-          const ogDescription = doc.querySelector('meta[property="og:description"]')?.getAttribute('content');
-          const ogImage = doc.querySelector('meta[property="og:image"]')?.getAttribute('content');
-          const twitterTitle = doc.querySelector('meta[name="twitter:title"]')?.getAttribute('content');
-          const twitterDescription = doc.querySelector('meta[name="twitter:description"]')?.getAttribute('content');
-          const twitterImage = doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content');
-          
-          // Update meta tags with the fetched data
-          if (title) updateTitle(title);
-          if (description) updateMetaTag('description', description);
-          if (ogTitle) updateMetaTag('og:title', ogTitle);
-          if (ogDescription) updateMetaTag('og:description', ogDescription);
-          if (ogImage) updateMetaTag('og:image', ogImage);
-          if (twitterTitle) updateMetaTag('twitter:title', twitterTitle);
-          if (twitterDescription) updateMetaTag('twitter:description', twitterDescription);
-          if (twitterImage) updateMetaTag('twitter:image', twitterImage);
-          
-          console.log('SEO meta tags enhanced for regular user');
-        })
-        .catch(error => {
-          console.error('Error enhancing SEO data:', error);
-        });
-      }
-    </script>
     </head>
 
   <body>

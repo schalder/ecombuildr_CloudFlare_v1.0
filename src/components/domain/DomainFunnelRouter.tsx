@@ -128,15 +128,9 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
   useEffect(() => {
     if (!step || !funnel) return;
 
-    // ✅ PRIORITIZE STEP SEO - Only fallback to step title if SEO title is empty
-    const title = (step.seo_title && step.seo_title.trim()) 
-      ? step.seo_title.trim() 
-      : `${step.title} - ${funnel.name}`;
-    
-    // ✅ PRIORITIZE STEP SEO DESCRIPTION - Only fallback if truly empty
-    const description = (step.seo_description && step.seo_description.trim())
-      ? step.seo_description.trim()
-      : undefined;
+    // Use only step-level SEO - no funnel fallbacks
+    const title = step.seo_title || `${step.title} - ${funnel.name}`;
+    const description = step.seo_description;
     const image = step.social_image_url || step.og_image;
     const canonical = step.canonical_url;
     const keywords = step.seo_keywords || [];
