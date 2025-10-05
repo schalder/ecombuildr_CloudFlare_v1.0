@@ -7,20 +7,20 @@
       "config": {
         "distDir": "dist"
       }
-    },
-    {
-      "src": "api/[...catchall].ts",
-      "use": "@vercel/node"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/[...catchall]"
+  "functions": {
+    "api/[...catchall].ts": {
+      "runtime": "nodejs18.x"
     },
+    "api/test.ts": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
     {
-      "src": "/((?!api/).*)",
-      "dest": "/api/[...catchall]"
+      "source": "/((?!api/).*)",
+      "destination": "/api/[...catchall]"
     }
   ],
   "headers": [
