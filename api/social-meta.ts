@@ -205,8 +205,13 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     
     // Root path - use website SEO
     if (!cleanPath) {
+      // ✅ PRIORITIZE WEBSITE SEO - Only fallback to website name if SEO title is empty
+      const title = (websiteSeoTitle && websiteSeoTitle.trim()) 
+        ? websiteSeoTitle.trim() 
+        : website.name;
+      
       return {
-        title: websiteSeoTitle || website.name,
+        title,
         description: websiteSeoDescription,
         og_image: websiteImage,
         keywords: [],
@@ -222,23 +227,41 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       const productSlug = cleanPath.replace('product/', '');
       const { data: product } = await supabase
         .from('products')
-        .select('name, description, images, seo_title, seo_description, og_image')
+        .select(`
+          name, description, images, seo_title, seo_description, og_image,
+          seo_keywords, canonical_url, meta_robots, meta_author,
+          language_code, custom_meta_tags
+        `)
         .eq('slug', productSlug)
         .eq('is_active', true)
         .maybeSingle();
       
       if (product) {
         const contentDesc = extractContentDescription(product.description);
-        const description = product.seo_description || contentDesc || `${product.name} - Available at ${website.name}`;
-        const image = normalizeImageUrl(product.og_image || product.images?.[0] || websiteImage);
+        
+        // ✅ PRIORITIZE PRODUCT SEO - Only fallback to product name if SEO title is empty
+        const title = (product.seo_title && product.seo_title.trim()) 
+          ? product.seo_title.trim() 
+          : `${product.name} | ${website.name}`;
+        
+        // ✅ PRIORITIZE PRODUCT SEO DESCRIPTION - Only fallback if truly empty
+        const description = (product.seo_description && product.seo_description.trim())
+          ? product.seo_description.trim()
+          : (contentDesc || `${product.name} - Available at ${website.name}`);
+        
+        // ✅ PRIORITIZE PRODUCT IMAGES - Only fallback to website if product has no images
+        let image = product.og_image || product.images?.[0];
+        if (!image) {
+          image = websiteImage;
+        }
         
         return {
-          title: product.seo_title || `${product.name} | ${website.name}`,
+          title,
           description,
-          og_image: image,
-          keywords: [],
-          canonical: `https://${domain}${path}`,
-          robots: 'index, follow',
+          og_image: normalizeImageUrl(image),
+          keywords: product.seo_keywords || [],
+          canonical: product.canonical_url || `https://${domain}${path}`,
+          robots: product.meta_robots || 'index, follow',
           site_name: website.name,
           source: `product_page|website:${websiteId}|slug:${productSlug}`
         };
@@ -253,7 +276,11 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       
       const { data: funnel } = await supabase
         .from('funnels')
-        .select('id, name, seo_title, seo_description, og_image')
+        .select(`
+          id, name, seo_title, seo_description, og_image, social_image_url,
+          seo_keywords, canonical_url, meta_robots, meta_author,
+          language_code, custom_meta_tags
+        `)
         .eq('slug', funnelSlug)
         .eq('is_active', true)
         .eq('is_published', true)
@@ -264,7 +291,11 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
           // Funnel step
           const { data: step } = await supabase
             .from('funnel_steps')
-            .select('name, seo_title, seo_description, og_image, content')
+            .select(`
+              name, seo_title, seo_description, og_image, social_image_url,
+              seo_keywords, canonical_url, meta_robots, meta_author, 
+              language_code, custom_meta_tags, content
+            `)
             .eq('funnel_id', funnel.id)
             .eq('slug', stepSlug)
             .eq('is_published', true)
@@ -272,32 +303,56 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
           
           if (step) {
             const contentDesc = extractContentDescription(step.content);
-            const description = step.seo_description || contentDesc || `${step.name} - ${funnel.name}`;
-            const image = normalizeImageUrl(step.og_image || funnel.og_image);
+            
+            // ✅ PRIORITIZE STEP SEO - Only fallback to step name if SEO title is empty
+            const title = (step.seo_title && step.seo_title.trim()) 
+              ? step.seo_title.trim() 
+              : `${step.name} | ${funnel.name}`;
+            
+            // ✅ PRIORITIZE STEP SEO DESCRIPTION - Only fallback if truly empty
+            const description = (step.seo_description && step.seo_description.trim())
+              ? step.seo_description.trim()
+              : (contentDesc || `${step.name} - ${funnel.name}`);
+            
+            // ✅ PRIORITIZE STEP IMAGES - Only fallback to funnel if step has no images
+            let image = step.og_image || step.social_image_url;
+            if (!image) {
+              image = funnel.og_image;
+            }
             
             return {
-              title: step.seo_title || `${step.name} | ${funnel.name}`,
+              title,
               description,
-              og_image: image,
-              keywords: [],
-              canonical: `https://${domain}${path}`,
-              robots: 'index, follow',
+              og_image: normalizeImageUrl(image),
+              keywords: step.seo_keywords || [],
+              canonical: step.canonical_url || `https://${domain}${path}`,
+              robots: step.meta_robots || 'index, follow',
               site_name: funnel.name,
               source: `funnel_step|funnel:${funnel.id}|step:${stepSlug}`
             };
           }
         } else {
           // Funnel landing
-          const description = funnel.seo_description || `Sales funnel: ${funnel.name}`;
-          const image = normalizeImageUrl(funnel.og_image);
+          // ✅ PRIORITIZE FUNNEL SEO - Only fallback to funnel name if SEO title is empty
+          const title = (funnel.seo_title && funnel.seo_title.trim()) 
+            ? funnel.seo_title.trim() 
+            : funnel.name;
+          
+          // ✅ PRIORITIZE FUNNEL SEO DESCRIPTION - Only fallback if truly empty
+          const description = (funnel.seo_description && funnel.seo_description.trim())
+            ? funnel.seo_description.trim()
+            : `Sales funnel: ${funnel.name}`;
+          
+          // ✅ PRIORITIZE FUNNEL IMAGES
+          const image = normalizeImageUrl(funnel.social_image_url || funnel.og_image);
           
           return {
-            title: funnel.seo_title || funnel.name,
+            title,
             description,
             og_image: image,
-            keywords: [],
-            canonical: `https://${domain}${path}`,
-            robots: 'index, follow',
+            keywords: funnel.seo_keywords || [],
+            canonical: funnel.canonical_url || `https://${domain}${path}`,
+            robots: funnel.meta_robots || 'index, follow',
             site_name: funnel.name,
             source: `funnel_landing|funnel:${funnel.id}`
           };
@@ -311,7 +366,8 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       .select(`
         id, title, slug,
         seo_title, seo_description, og_image, social_image_url, preview_image_url,
-        seo_keywords, canonical_url, meta_robots, content
+        seo_keywords, canonical_url, meta_robots, meta_author, language_code,
+        custom_meta_tags, content
       `)
       .eq('website_id', websiteId)
       .eq('slug', cleanPath)
@@ -321,20 +377,32 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     if (page) {
       const contentDesc = extractContentDescription(page.content);
 
-      const rawTitle = (page.seo_title && page.seo_title.trim()) ? page.seo_title.trim() : page.title;
-      const titleSource = (page.seo_title && page.seo_title.trim()) ? 'page.seo_title' : 'page.title';
+      // ✅ PRIORITIZE PAGE SEO - Only fallback to page title if SEO title is empty
+      const rawTitle = (page.seo_title && page.seo_title.trim()) 
+        ? page.seo_title.trim() 
+        : `${page.title} - ${website.name}`;
+      const titleSource = (page.seo_title && page.seo_title.trim()) ? 'page.seo_title' : 'page.title_fallback';
 
+      // ✅ PRIORITIZE PAGE SEO DESCRIPTION - Only fallback if truly empty
       const rawDesc = (page.seo_description && page.seo_description.trim())
         ? page.seo_description.trim()
         : (contentDesc || `${page.title} - ${website.name}`);
       const descSource = (page.seo_description && page.seo_description.trim())
         ? 'page.seo_description'
-        : (contentDesc ? 'content_extracted' : 'fallback_title_website');
+        : (contentDesc ? 'content_extracted' : 'page.title_fallback');
 
-      let pickedImage = page.social_image_url || page.og_image || page.preview_image_url || websiteImage;
+      // ✅ PRIORITIZE PAGE IMAGES - Only fallback to website if page has no images
+      let pickedImage = page.social_image_url || page.og_image || page.preview_image_url;
       let imageSource = page.social_image_url
         ? 'page.social_image_url'
-        : (page.og_image ? 'page.og_image' : (page.preview_image_url ? 'page.preview_image_url' : 'website.settings_image'));
+        : (page.og_image ? 'page.og_image' : (page.preview_image_url ? 'page.preview_image_url' : 'none'));
+      
+      // Only fallback to website image if page has no images at all
+      if (!pickedImage) {
+        pickedImage = websiteImage;
+        imageSource = 'website.settings_image';
+      }
+      
       const image = normalizeImageUrl(pickedImage);
 
       console.log(`🔎 Page SEO resolved for slug="${cleanPath}" (page:${page.id}, website:${websiteId})`);
@@ -362,17 +430,22 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       };
     }
     
-    // Fallback to website SEO
-  return {
-    title: websiteSeoTitle || website.name,
-    description: websiteSeoDescription,
-    og_image: websiteImage,
-    keywords: [],
-    canonical: `https://${domain}${path}`,
-    robots: 'index, follow',
-    site_name: website.name,
-    source: `website_fallback|website:${websiteId}`
-  };
+    // Fallback to website SEO (when no specific page/route found)
+    // ✅ PRIORITIZE WEBSITE SEO - Only fallback to website name if SEO title is empty
+    const fallbackTitle = (websiteSeoTitle && websiteSeoTitle.trim()) 
+      ? websiteSeoTitle.trim() 
+      : website.name;
+    
+    return {
+      title: fallbackTitle,
+      description: websiteSeoDescription,
+      og_image: websiteImage,
+      keywords: [],
+      canonical: `https://${domain}${path}`,
+      robots: 'index, follow',
+      site_name: website.name,
+      source: `website_fallback|website:${websiteId}`
+    };
     
   } catch (error) {
     console.error('❌ SEO resolution error:', error);

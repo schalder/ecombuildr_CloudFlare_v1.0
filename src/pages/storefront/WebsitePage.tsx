@@ -176,17 +176,21 @@ export const WebsitePage: React.FC = () => {
   useEffect(() => {
     if (!page || !website) return;
 
-    // Use only page-level SEO - no website fallbacks
-    const title = page.seo_title || `${page.title} - ${website.name}`;
-    const description = page.seo_description;
-    const image = page.og_image;
-    const canonical = page.canonical_url;
+    // ✅ PRIORITIZE PAGE SEO - Only fallback to page title if SEO title is empty
+    const title = (page.seo_title && page.seo_title.trim()) 
+      ? page.seo_title.trim() 
+      : `${page.title} - ${website.name}`;
+    
+    // ✅ PRIORITIZE PAGE SEO DESCRIPTION - Only fallback if truly empty
+    const description = (page.seo_description && page.seo_description.trim())
+      ? page.seo_description.trim()
+      : undefined;
 
     setSEO({
       title: title || undefined,
       description,
-      image,
-      canonical,
+      image: page.social_image_url || page.og_image,
+      canonical: page.canonical_url,
       robots: isPreview ? 'noindex, nofollow' : (page.meta_robots || 'index, follow'),
       siteName: website.name,
       ogType: 'website',
@@ -202,7 +206,7 @@ export const WebsitePage: React.FC = () => {
         document.head.removeChild(scriptElement);
       };
     }
-  }, [page, website]);
+  }, [page, website, isPreview]);
 
   // Ensure global currency matches website settings on WebsitePage routes
   useEffect(() => {
