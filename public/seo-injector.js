@@ -94,31 +94,66 @@
   // Function to resolve SEO data
   const resolveSEOData = async () => {
     try {
-      // Get domain connection info
-      const connections = await fetchFromSupabase(`domain_connections?domain=eq.${domain}&select=content_type,content_id,store_id`);
+      // Get domain connection info by joining custom_domains and domain_connections
+      const connections = await fetchFromSupabase(`custom_domains?domain=eq.${domain}&select=id,domain`);
       if (!connections || connections.length === 0) {
-        console.log('No domain connection found for:', domain);
+        console.log('No custom domain found for:', domain);
         return null;
       }
 
-      const connection = connections[0];
-      console.log('Found domain connection:', connection);
+      const customDomain = connections[0];
+      console.log('Found custom domain:', customDomain);
 
-      // Route to appropriate resolver based on content type
-      switch (connection.content_type) {
-        case 'website':
-          return await resolveWebsiteSEO(connection.content_id, pathname);
-        case 'funnel':
-          return await resolveFunnelSEO(connection.content_id, pathname);
-        case 'course_area':
-          return await resolveCourseAreaSEO(domain);
-        default:
-          console.log('Unknown content type:', connection.content_type);
-          return null;
+      // Get domain connections for this domain
+      const domainConnections = await fetchFromSupabase(`domain_connections?domain_id=eq.${customDomain.id}&select=content_type,content_id,store_id,is_homepage`);
+      if (!domainConnections || domainConnections.length === 0) {
+        console.log('No domain connections found for:', domain);
+        return null;
       }
+
+      // For root path, find the homepage connection
+      if (pathname === '/' || pathname === '') {
+        const homepageConnection = domainConnections.find(conn => conn.is_homepage);
+        if (homepageConnection) {
+          console.log('Found homepage connection:', homepageConnection);
+          return await resolveByContentType(homepageConnection, pathname);
+        }
+      }
+
+      // For other paths, try to find matching content type
+      // For now, prioritize website over funnel
+      const websiteConnection = domainConnections.find(conn => conn.content_type === 'website');
+      if (websiteConnection) {
+        console.log('Found website connection:', websiteConnection);
+        return await resolveByContentType(websiteConnection, pathname);
+      }
+
+      const funnelConnection = domainConnections.find(conn => conn.content_type === 'funnel');
+      if (funnelConnection) {
+        console.log('Found funnel connection:', funnelConnection);
+        return await resolveByContentType(funnelConnection, pathname);
+      }
+
+      console.log('No suitable connection found');
+      return null;
     } catch (error) {
       console.error('Error resolving SEO data:', error);
       return null;
+    }
+  };
+
+  // Helper function to resolve by content type
+  const resolveByContentType = async (connection, pathname) => {
+    switch (connection.content_type) {
+      case 'website':
+        return await resolveWebsiteSEO(connection.content_id, pathname);
+      case 'funnel':
+        return await resolveFunnelSEO(connection.content_id, pathname);
+      case 'course_area':
+        return await resolveCourseAreaSEO(domain);
+      default:
+        console.log('Unknown content type:', connection.content_type);
+        return null;
     }
   };
 
