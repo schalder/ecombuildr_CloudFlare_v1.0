@@ -16,7 +16,7 @@ export function OnboardingGate() {
   const location = useLocation();
   const [showWelcome, setShowWelcome] = useState(false);
 
-  // Show welcome dialog for users with no websites AND no funnels (including users without a store yet)
+  // Show welcome dialog ONLY for website creation onboarding when user has no websites
   useEffect(() => {
     // Wait until profile and store finished loading
     if (profileLoading || storeLoading) return;
@@ -24,17 +24,13 @@ export function OnboardingGate() {
     // Don't show for read-only accounts
     if (userProfile?.account_status === 'read_only') return;
 
-    // If there's no store yet, user clearly has no websites or funnels
-    if (!store?.id) {
+    // Only show welcome dialog on website creation page when user has no websites
+    if (location.pathname === '/dashboard/websites/create' && !websitesLoading && websites.length === 0) {
       setShowWelcome(true);
-      return;
+    } else {
+      setShowWelcome(false);
     }
-
-    // If store exists, check both websites and funnels once loaded
-    if (!websitesLoading && !funnelsLoading && websites.length === 0 && funnels.length === 0) {
-      setShowWelcome(true);
-    }
-  }, [store?.id, storeLoading, websites.length, funnels.length, websitesLoading, funnelsLoading, profileLoading, userProfile?.account_status]);
+  }, [location.pathname, store?.id, storeLoading, websites.length, websitesLoading, profileLoading, userProfile?.account_status]);
 
 
   // Redirect if not authenticated
@@ -55,10 +51,12 @@ export function OnboardingGate() {
   if (location.pathname === '/dashboard/websites/create' || location.pathname === '/dashboard/funnels/create') {
     return (
       <>
-        <WelcomeDialog 
-          open={showWelcome} 
-          onOpenChange={setShowWelcome} 
-        />
+        {location.pathname === '/dashboard/websites/create' && (
+          <WelcomeDialog 
+            open={showWelcome} 
+            onOpenChange={setShowWelcome} 
+          />
+        )}
         <Outlet />
       </>
     );
@@ -82,13 +80,5 @@ export function OnboardingGate() {
   }
 
   // User is authenticated and has websites or funnels, proceed normally
-  return (
-    <>
-      <WelcomeDialog 
-        open={showWelcome} 
-        onOpenChange={setShowWelcome} 
-      />
-      <Outlet />
-    </>
-  );
+  return <Outlet />;
 }
