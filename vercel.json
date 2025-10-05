@@ -9,14 +9,14 @@
       }
     },
     {
-      "src": "api/[...catchall].ts",
+      "src": "api/seo-handler.ts",
       "use": "@vercel/node"
     }
   ],
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/[...catchall]"
+      "destination": "/api/seo-handler"
     }
   ],
   "headers": [
