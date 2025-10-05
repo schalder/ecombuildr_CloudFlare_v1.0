@@ -3,6 +3,9 @@
   "functions": {
     "api/social-meta/index.ts": {
       "runtime": "edge"
+    },
+    "api/seo-data.ts": {
+      "runtime": "edge"
     }
   },
   "builds": [
