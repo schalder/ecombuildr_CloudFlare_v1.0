@@ -1,9 +1,6 @@
 {
   "version": 2,
   "functions": {
-    "api/social-meta/index.ts": {
-      "runtime": "edge"
-    },
     "api/seo-data.ts": {
       "runtime": "edge"
     }
@@ -15,12 +12,6 @@
       "config": {
         "distDir": "dist"
       }
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/((?!api/).*)",
-      "destination": "/api/social-meta"
     }
   ],
   "headers": [
