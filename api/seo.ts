@@ -340,12 +340,18 @@ export default async function handler(req: NextRequest) {
                           !host.includes('lovableproject.com');
 
     if (!isSocialCrawler || !isCustomDomain) {
-      // For non-crawlers or non-custom domains, serve the static React app
-      const staticHtmlPath = process.cwd() + '/dist/index.html';
-      const staticHtml = await require('fs/promises').readFile(staticHtmlPath, 'utf-8');
-      return new NextResponse(staticHtml, {
-        headers: { 'Content-Type': 'text/html' }
-      });
+      // For non-crawlers or non-custom domains, fetch and serve the main app
+      try {
+        const mainAppUrl = `https://f-commerce-builder-git-main-schalder.vercel.app${pathname}${url.search}`;
+        const response = await fetch(mainAppUrl);
+        const html = await response.text();
+        return new NextResponse(html, {
+          headers: { 'Content-Type': 'text/html' }
+        });
+      } catch (error) {
+        console.error('Error fetching main app:', error);
+        return new NextResponse('Error loading page', { status: 500 });
+      }
     }
 
     // Initialize Supabase client
