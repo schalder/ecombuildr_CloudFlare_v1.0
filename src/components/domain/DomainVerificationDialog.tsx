@@ -312,7 +312,7 @@ Vercel will automatically issue SSL certificate once DNS is configured.`;
                     <Alert variant="destructive">
                       <XCircle className="h-4 w-4" />
                       <AlertDescription>
-                        {verificationStatus.status?.errorMessage || 'DNS record not found. Please check your configuration.'}
+                        {verificationStatus.status?.errorMessage || 'DNS must point to Vercel (A record: 76.76.19.61 or CNAME: cname.vercel-dns.com)'}
                       </AlertDescription>
                     </Alert>
                   )}

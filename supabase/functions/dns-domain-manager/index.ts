@@ -214,7 +214,8 @@ Deno.serve(async (req) => {
             isVerified,
             isAccessible,
             cnameTarget: cnameTarget || null,
-            message: isVerified ? 'Domain verified and ready!' : 'DNS configured, waiting for SSL certificate'
+            message: isVerified ? 'Domain verified and ready!' : 'DNS configured, waiting for SSL certificate',
+            errorMessage: !dnsConfigured ? 'DNS must point to Vercel (A record: 76.76.19.61 or CNAME: cname.vercel-dns.com)' : null
           }
         }
         console.log(`Domain ${domain} verification result:`, result.status)
