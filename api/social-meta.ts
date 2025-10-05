@@ -203,9 +203,75 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
 
     // Step 4: Route-specific resolution
     
-    // Root path - use website SEO
+    // Root path - use homepage page SEO
     if (!cleanPath) {
-      // ✅ PRIORITIZE WEBSITE SEO - Only fallback to website name if SEO title is empty
+      // First try to find the homepage page
+      const { data: homepagePage } = await supabase
+        .from('website_pages')
+        .select(`
+          id, title, slug,
+          seo_title, seo_description, og_image, social_image_url, preview_image_url,
+          seo_keywords, canonical_url, meta_robots, meta_author, language_code,
+          custom_meta_tags, content
+        `)
+        .eq('website_id', websiteId)
+        .eq('is_homepage', true)
+        .eq('is_published', true)
+        .maybeSingle();
+      
+      if (homepagePage) {
+        const contentDesc = extractContentDescription(homepagePage.content);
+        
+        // ✅ PRIORITIZE HOMEPAGE PAGE SEO - Only fallback to page title if SEO title is empty
+        const title = (homepagePage.seo_title && homepagePage.seo_title.trim()) 
+          ? homepagePage.seo_title.trim() 
+          : `${homepagePage.title} - ${website.name}`;
+        
+        // ✅ PRIORITIZE HOMEPAGE PAGE SEO DESCRIPTION - Only fallback if truly empty
+        const description = (homepagePage.seo_description && homepagePage.seo_description.trim())
+          ? homepagePage.seo_description.trim()
+          : (contentDesc || `${homepagePage.title} - ${website.name}`);
+        
+        // ✅ PRIORITIZE HOMEPAGE PAGE IMAGES - Only fallback to website if page has no images
+        let pickedImage = homepagePage.social_image_url || homepagePage.og_image || homepagePage.preview_image_url;
+        let imageSource = homepagePage.social_image_url
+          ? 'homepage.social_image_url'
+          : (homepagePage.og_image ? 'homepage.og_image' : (homepagePage.preview_image_url ? 'homepage.preview_image_url' : 'none'));
+        
+        // Only fallback to website image if homepage has no images at all
+        if (!pickedImage) {
+          pickedImage = websiteImage;
+          imageSource = 'website.settings_image';
+        }
+        
+        const image = normalizeImageUrl(pickedImage);
+        
+        console.log(`🏠 Homepage SEO resolved for ${domain} (page:${homepagePage.id}, website:${websiteId})`);
+        console.log(`   • title="${title}" [homepage.seo_title]`);
+        console.log(`   • description="${description}" [homepage.seo_description]`);
+        console.log(`   • image="${image}" [${imageSource}]`);
+        
+        return {
+          title,
+          description,
+          og_image: image,
+          keywords: homepagePage.seo_keywords || [],
+          canonical: homepagePage.canonical_url || `https://${domain}/`,
+          robots: homepagePage.meta_robots || 'index, follow',
+          site_name: website.name,
+          source: `homepage_page|website:${websiteId}|page:${homepagePage.id}`,
+          debug: {
+            titleSource: 'homepage.seo_title',
+            descSource: 'homepage.seo_description',
+            imageSource,
+            websiteId,
+            pageId: homepagePage.id,
+            slug: homepagePage.slug
+          }
+        };
+      }
+      
+      // Fallback to website-level SEO if no homepage page found
       const title = (websiteSeoTitle && websiteSeoTitle.trim()) 
         ? websiteSeoTitle.trim() 
         : website.name;
@@ -218,7 +284,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         canonical: `https://${domain}/`,
         robots: 'index, follow',
         site_name: website.name,
-        source: `website_root|website:${websiteId}`
+        source: `website_root_fallback|website:${websiteId}`
       };
     }
     
@@ -589,120 +655,84 @@ export default async function handler(request: Request): Promise<Response> {
   
   console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
   
-  // NEW: Detect if this is a custom domain (not ecombuildr.com or localhost)
+  // Detect if this is a custom domain (not ecombuildr.com or localhost)
   const isCustomDomain = !domain.includes('ecombuildr.com') && 
                         !domain.includes('localhost') && 
                         !domain.includes('lovable.dev') &&
                         !domain.includes('lovable.app') &&
                         !domain.includes('lovableproject.com');
   
-  if (isCustomDomain) {
-    console.log(`🏠 Custom domain detected: ${domain}`);
+  // Check if this is a social crawler
+  const isSocialBot = isSocialCrawler(userAgent);
+  
+  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | Social Bot: ${isSocialBot}`);
+  
+  // For custom domains, always handle social crawlers with SEO
+  if (isCustomDomain && isSocialBot) {
+    console.log(`🤖 Social crawler on custom domain - generating SEO HTML`);
     
-    // NEW: Get routing context for custom domain
-    const routingContext = await getRoutingContext(domain, pathname);
-    
-    if (routingContext) {
-      console.log(`✅ Routing context found:`, routingContext);
+    try {
+      const seoData = await resolveSEOData(domain, pathname);
       
-      // NEW: Inject routing context into request headers
-      const modifiedRequest = new Request(request.url, {
-        method: request.method,
-        headers: {
-          ...Object.fromEntries(request.headers.entries()),
-          'X-Routing-Context': JSON.stringify(routingContext)
-        },
-        body: request.body
-      });
-      
-      // NEW: Add routing context to HTML head for React app to read
-      const response = await fetch(modifiedRequest);
-      
-      if (response && response.body) {
-        const html = await response.text();
-        const modifiedHtml = html.replace(
-          '<head>',
-          `<head><meta name="routing-context" content='${JSON.stringify(routingContext)}'>`
-        );
-        
-        return new Response(modifiedHtml, {
-          status: response.status,
-          statusText: response.statusText,
-          headers: response.headers
+      if (!seoData) {
+        console.log(`[${traceId}] ❌ No SEO data found - rendering minimal fallback`);
+        const minimal = {
+          title: domain,
+          description: `Preview of ${domain}`,
+          og_image: undefined,
+          keywords: [],
+          canonical: url.toString(),
+          robots: 'index, follow',
+          site_name: domain,
+          source: 'fallback_no_data'
+        } as SEOData;
+        const html = generateHTML(minimal, url.toString());
+        return new Response(html, {
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, max-age=120, s-maxage=120',
+            'X-Trace-Id': traceId,
+            'X-SEO-Source': 'fallback_no_data',
+            'X-SEO-Website': domain,
+            'X-SEO-Page': domain,
+            'X-SEO-Domain': domain,
+            'X-SEO-Path': pathname
+          },
         });
       }
       
-      return response;
-    } else {
-      console.log(`❌ No routing context found for custom domain: ${domain}`);
-    }
-  }
-  
-  // Only handle social crawlers for SEO
-  if (!isSocialCrawler(userAgent)) {
-    console.log('👤 Human visitor - passing through to React app');
-    return new Response(null, { status: 200 });
-  }
-  
-  console.log('🤖 Social crawler detected - generating SEO HTML');
-  
-  try {
-    const seoData = await resolveSEOData(domain, pathname);
-    
-    if (!seoData) {
-      console.log(`[${traceId}] ❌ No SEO data found - rendering minimal fallback`);
-      const minimal = {
-        title: domain,
-        description: `Preview of ${domain}`,
-        og_image: undefined,
-        keywords: [],
-        canonical: url.toString(),
-        robots: 'index, follow',
-        site_name: domain,
-        source: 'fallback_no_data'
-      } as SEOData;
-      const html = generateHTML(minimal, url.toString());
+      console.log(`✅ SEO resolved via ${seoData.source}: ${seoData.title}`);
+      
+      const html = generateHTML(seoData, url.toString());
+      
       return new Response(html, {
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'public, max-age=120, s-maxage=120',
+          'Cache-Control': 'public, max-age=300, s-maxage=300',
           'X-Trace-Id': traceId,
-          'X-SEO-Source': 'fallback_no_data',
-          'X-SEO-Website': domain,
-          'X-SEO-Page': domain,
+          'X-SEO-Source': seoData.source || 'unknown',
+          'X-SEO-Website': seoData.site_name,
+          'X-SEO-Page': seoData.title,
           'X-SEO-Domain': domain,
-          'X-SEO-Path': pathname
+          'X-SEO-Path': pathname,
+          ...(seoData.debug?.websiteId ? { 'X-SEO-Website-Id': seoData.debug.websiteId } : {}),
+          ...(seoData.debug?.pageId ? { 'X-SEO-Page-Id': seoData.debug.pageId } : {}),
+          ...(seoData.debug?.slug ? { 'X-SEO-Slug': seoData.debug.slug } : {}),
+          ...(seoData.debug?.titleSource ? { 'X-SEO-Title-Source': seoData.debug.titleSource } : {}),
+          ...(seoData.debug?.descSource ? { 'X-SEO-Desc-Source': seoData.debug.descSource } : {}),
+          ...(seoData.debug?.imageSource ? { 'X-SEO-Image-Source': seoData.debug.imageSource } : {}),
         },
       });
-    }
-    
-    console.log(`✅ SEO resolved via ${seoData.source}: ${seoData.title}`);
-    
-    const html = generateHTML(seoData, url.toString());
-    
-    return new Response(html, {
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=300, s-maxage=300',
-        'X-Trace-Id': traceId,
-        'X-SEO-Source': seoData.source || 'unknown',
-        'X-SEO-Website': seoData.site_name,
-        'X-SEO-Page': seoData.title,
-        'X-SEO-Domain': domain,
-        'X-SEO-Path': pathname,
-        ...(seoData.debug?.websiteId ? { 'X-SEO-Website-Id': seoData.debug.websiteId } : {}),
-        ...(seoData.debug?.pageId ? { 'X-SEO-Page-Id': seoData.debug.pageId } : {}),
-        ...(seoData.debug?.slug ? { 'X-SEO-Slug': seoData.debug.slug } : {}),
-        ...(seoData.debug?.titleSource ? { 'X-SEO-Title-Source': seoData.debug.titleSource } : {}),
-        ...(seoData.debug?.descSource ? { 'X-SEO-Desc-Source': seoData.debug.descSource } : {}),
-        ...(seoData.debug?.imageSource ? { 'X-SEO-Image-Source': seoData.debug.imageSource } : {}),
-      },
-    });
 
-  } catch (error) {
-    console.error('💥 Handler error:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    } catch (error) {
+      console.error('💥 SEO Handler error:', error);
+      return new Response('Internal Server Error', { status: 500 });
+    }
   }
+  
+  // For non-social crawlers or system domains, pass through
+  console.log('👤 Non-social crawler or system domain - passing through');
+  return new Response(null, { status: 200 });
 }
 
 export const config = {
