@@ -507,7 +507,7 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
   }
 }
 
-export default async function handler(request: Request, context: any): Promise<Response | undefined> {
+export default async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
   const domain = url.hostname;
@@ -543,7 +543,7 @@ export default async function handler(request: Request, context: any): Promise<R
       });
       
       // NEW: Add routing context to HTML head for React app to read
-      const response = await context.next(modifiedRequest);
+      const response = await fetch(modifiedRequest);
       
       if (response && response.body) {
         const html = await response.text();
@@ -568,7 +568,7 @@ export default async function handler(request: Request, context: any): Promise<R
   // Only handle social crawlers for SEO
   if (!isSocialCrawler(userAgent)) {
     console.log('👤 Human visitor - passing through to React app');
-    return context.next();
+    return new Response(null, { status: 200 });
   }
   
   console.log('🤖 Social crawler detected - generating SEO HTML');
@@ -633,5 +633,5 @@ export default async function handler(request: Request, context: any): Promise<R
 }
 
 export const config = {
-  path: "/*"
+  runtime: 'edge',
 };

@@ -42,12 +42,45 @@ npm run dev
 
 ## 🌐 Custom Domain Setup
 
-1. Add your custom domain in the dashboard
-2. Configure DNS records:
-   - A Record: `@` → `76.76.19.61` (Vercel IP)
-   - CNAME: `www` → `cname.vercel-dns.com`
-3. Automatic SSL certificate will be issued
-4. Your domain is ready to use!
+### Unlimited Custom Domains with Vercel
+
+1. **Add your custom domain** in the dashboard
+2. **Configure DNS records**:
+   - **A Record**: `@` → `76.76.19.61` (Vercel IP)
+   - **CNAME**: `www` → `cname.vercel-dns.com`
+3. **Automatic SSL certificate** will be issued by Vercel
+4. **Your domain is ready to use!**
+
+### Vercel Deployment Benefits
+
+- ✅ **Unlimited custom domains** (no platform limits)
+- ✅ **Automatic SSL** (Let's Encrypt integration)
+- ✅ **Global CDN** (better performance)
+- ✅ **Edge Functions** (faster execution)
+- ✅ **Professional setup** (industry standard)
+
+## 🚀 Deployment
+
+### Vercel Deployment
+
+1. **Connect your GitHub repository** to Vercel
+2. **Set environment variables** in Vercel dashboard
+3. **Deploy automatically** on git push
+4. **Add custom domains** through Vercel dashboard
+
+### Environment Variables
+
+See `VERCEL_DEPLOYMENT.md` for complete environment variable setup.
+
+### Manual Deployment
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy to Vercel
+vercel --prod
+```
 
 ## 📄 License
 
