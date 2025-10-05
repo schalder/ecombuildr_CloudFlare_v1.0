@@ -7,10 +7,6 @@
       "config": {
         "distDir": "dist"
       }
-    },
-    {
-      "src": "middleware.ts",
-      "use": "@vercel/edge"
     }
   ],
   "headers": [

@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const config = {
   runtime: 'edge',
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
 
-export default async function handler(req: NextRequest) {
-  const { pathname, hostname } = req.nextUrl;
-  const userAgent = req.headers.get('user-agent') || '';
+export default async function middleware(request: NextRequest) {
+  const { pathname, hostname } = request.nextUrl;
+  const userAgent = request.headers.get('user-agent') || '';
 
   // Check if this is a social crawler
   const isSocialCrawler = /bot|crawler|spider|crawling|facebookexternalhit|twitterbot|whatsapp|linkedinbot|slackbot|discordbot|telegrambot|skypeuripreview|facebookcatalog/i.test(userAgent);
@@ -20,7 +30,7 @@ export default async function handler(req: NextRequest) {
                         !hostname.includes('vercel.app') &&
                         !hostname.includes('netlify.app');
 
-  console.log('Edge Function called:', {
+  console.log('Middleware called:', {
     hostname,
     pathname,
     userAgent,
