@@ -16,8 +16,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('Error parsing URL:', error);
   }
 
-  // Check if this is a social crawler
-  const isSocialCrawler = /bot|crawler|spider|crawling|facebookexternalhit|twitterbot|whatsapp|linkedinbot|slackbot|discordbot|telegrambot|skypeuripreview|facebookcatalog/i.test(userAgent);
+  // Check if this is a social crawler (including Facebook)
+  const isSocialCrawler = /bot|crawler|spider|crawling|facebookexternalhit|twitterbot|whatsapp|linkedinbot|slackbot|discordbot|telegrambot|skypeuripreview|facebookcatalog|facebook|meta/i.test(userAgent);
 
   // Check if this is a custom domain (not our main domains)
   const isCustomDomain = !host.includes('ecombuildr.com') && 
