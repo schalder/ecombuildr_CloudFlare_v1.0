@@ -75,11 +75,25 @@ export default function Domains() {
   };
 
   const copyDNSInstructions = (domain: string) => {
-    const instructions = `CNAME Record:\nName: ${domain}\nValue: ecombuildr.com`;
+    const instructions = `DNS Configuration for Vercel:
+
+A Record:
+Type: A
+Name: @ (or root domain)
+Value: 76.76.19.61
+TTL: 300 (or Auto)
+
+CNAME Record:
+Type: CNAME
+Name: www
+Value: cname.vercel-dns.com
+TTL: 300 (or Auto)
+
+Note: Vercel will automatically issue SSL certificate once DNS is configured.`;
     navigator.clipboard.writeText(instructions);
     toast({
       title: "DNS Instructions Copied",
-      description: "The DNS configuration has been copied to your clipboard."
+      description: "The Vercel DNS configuration has been copied to your clipboard."
     });
   };
 
@@ -254,11 +268,31 @@ export default function Domains() {
                             <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
                               <h5 className="font-semibold text-amber-800 mb-2">Manual DNS Setup</h5>
                               <p className="text-sm text-amber-700 mb-3">
-                                If automatic setup isn't working, add this CNAME record in your DNS provider:
+                                If automatic setup isn't working, add these DNS records in your DNS provider:
                               </p>
                               
-                              <div className="bg-white border p-3 rounded-lg">
+                              <div className="bg-white border p-3 rounded-lg space-y-3">
                                 <div className="space-y-2 font-mono text-xs">
+                                  <h6 className="font-semibold text-gray-800">A Record (Root Domain):</h6>
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <span className="text-muted-foreground font-normal">Type:</span>
+                                    <span className="font-semibold">A</span>
+                                    <span></span>
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-4">
+                                    <span className="text-muted-foreground font-normal">Name:</span>
+                                    <span className="font-semibold">@ (or root domain)</span>
+                                    <span></span>
+                                  </div>
+                                   <div className="grid grid-cols-3 gap-4">
+                                     <span className="text-muted-foreground font-normal">Value:</span>
+                                     <span className="font-semibold">76.76.19.61</span>
+                                     <span></span>
+                                   </div>
+                                </div>
+                                
+                                <div className="space-y-2 font-mono text-xs">
+                                  <h6 className="font-semibold text-gray-800">CNAME Record (WWW):</h6>
                                   <div className="grid grid-cols-3 gap-4">
                                     <span className="text-muted-foreground font-normal">Type:</span>
                                     <span className="font-semibold">CNAME</span>
@@ -266,12 +300,12 @@ export default function Domains() {
                                   </div>
                                   <div className="grid grid-cols-3 gap-4">
                                     <span className="text-muted-foreground font-normal">Name:</span>
-                                    <span className="font-semibold">@ (or {domain.domain.split('.')[0]})</span>
+                                    <span className="font-semibold">www</span>
                                     <span></span>
                                   </div>
                                    <div className="grid grid-cols-3 gap-4">
-                                     <span className="text-muted-foreground font-normal">Target:</span>
-                                     <span className="font-semibold">ecombuildr.com</span>
+                                     <span className="text-muted-foreground font-normal">Value:</span>
+                                     <span className="font-semibold">cname.vercel-dns.com</span>
                                      <span></span>
                                    </div>
                                 </div>
