@@ -1,183 +1,154 @@
-# Supabase CLI
+# EcomBuildr
 
-[![Coverage Status](https://coveralls.io/repos/github/supabase/cli/badge.svg?branch=main)](https://coveralls.io/github/supabase/cli?branch=main) [![Bitbucket Pipelines](https://img.shields.io/bitbucket/pipelines/supabase-cli/setup-cli/master?style=flat-square&label=Bitbucket%20Canary)](https://bitbucket.org/supabase-cli/setup-cli/pipelines) [![Gitlab Pipeline Status](https://img.shields.io/gitlab/pipeline-status/sweatybridge%2Fsetup-cli?label=Gitlab%20Canary)
-](https://gitlab.com/sweatybridge/setup-cli/-/pipelines)
+A powerful e-commerce platform builder built with React, TypeScript, Tailwind CSS, and Lovable Cloud (Supabase).
 
-[Supabase](https://supabase.io) is an open source Firebase alternative. We're building the features of Firebase using enterprise-grade open source tools.
+## Features
 
-This repository contains all the functionality for Supabase CLI.
+### Store Management
+- Multi-store support with custom domains
+- Customizable store themes and branding
+- Store settings and configuration
 
-- [x] Running Supabase locally
-- [x] Managing database migrations
-- [x] Creating and deploying Supabase Functions
-- [x] Generating types directly from your database schema
-- [x] Making authenticated HTTP requests to [Management API](https://supabase.com/docs/reference/api/introduction)
+### Product Management
+- Product catalog with categories
+- Product variations and inventory tracking
+- Image galleries and descriptions
+- Featured products and flash sales
 
-## Getting started
+### Page Builder
+- Drag-and-drop block-based page builder
+- Pre-built theme blocks (hero sections, product grids, testimonials, etc.)
+- Element registry system for extensibility
+- Real-time preview
 
-### Install the CLI
+### E-commerce Features
+- Shopping cart functionality
+- Checkout process with multiple payment gateways
+- Order management and tracking
+- Customer accounts and authentication
+- Newsletter subscriptions
 
-Available via [NPM](https://www.npmjs.com) as dev dependency. To install:
+### Payment Integrations
+- bKash
+- EBPay
+- Nagad
+- EPS
+- Stripe support
+
+### Backend (Edge Functions)
+- Order processing and creation
+- Payment verification webhooks
+- Email notifications
+- Shipping integration (Steadfast)
+- Image transformation
+- Contact form handling
+- Admin impersonation
+
+### Marketing & Analytics
+- Pixel tracking (Facebook, TikTok, Google)
+- FOMO notifications (recent orders)
+- Top sellers tracking
+- Contact form submissions
+
+## Tech Stack
+
+- **Frontend**: React 18, TypeScript, Vite
+- **Styling**: Tailwind CSS with custom design system
+- **UI Components**: Radix UI, shadcn/ui
+- **Backend**: Lovable Cloud (Supabase)
+  - PostgreSQL database
+  - Edge Functions (Deno)
+  - Authentication
+  - Storage
+- **State Management**: React Context, TanStack Query
+- **Forms**: React Hook Form with Zod validation
+- **Rich Text**: TipTap
+- **Drag & Drop**: @hello-pangea/dnd
+
+## Project Structure
+
+```
+├── src/
+│   ├── components/
+│   │   ├── blocks/          # Page builder blocks
+│   │   ├── storefront/      # Customer-facing components
+│   │   ├── page-builder/    # Builder interface
+│   │   └── ui/              # Reusable UI components
+│   ├── contexts/            # React contexts
+│   ├── hooks/               # Custom React hooks
+│   ├── lib/                 # Utilities and helpers
+│   └── pages/               # Route components
+├── supabase/
+│   ├── functions/           # Edge functions
+│   └── migrations/          # Database migrations
+└── scripts/                 # Deployment scripts
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- npm or bun
+
+### Installation
 
 ```bash
-npm i supabase --save-dev
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-To install the beta release channel:
+### Database Setup
+
+The project uses Lovable Cloud (Supabase) for backend services.
 
 ```bash
-npm i supabase@beta --save-dev
+# Sync database migrations
+npx supabase db push
+
+# Deploy edge functions
+npm run sync:functions
 ```
 
-When installing with yarn 4, you need to disable experimental fetch with the following nodejs config.
+### Environment Variables
 
-```
-NODE_OPTIONS=--no-experimental-fetch yarn add supabase
-```
+The project uses Lovable Cloud's built-in secret management. No `.env` file is needed for development.
 
-> **Note**
-For Bun versions below v1.0.17, you must add `supabase` as a [trusted dependency](https://bun.sh/guides/install/trusted) before running `bun add -D supabase`.
+## Deployment Scripts
 
-<details>
-  <summary><b>macOS</b></summary>
+- `npm run sync:supabase` - Sync database and edge functions
+- `npm run sync:db` - Sync database migrations only
+- `npm run sync:functions` - Deploy edge functions only
 
-  Available via [Homebrew](https://brew.sh). To install:
+## Development
 
-  ```sh
-  brew install supabase/tap/supabase
-  ```
+### Design System
 
-  To install the beta release channel:
-  
-  ```sh
-  brew install supabase/tap/supabase-beta
-  brew link --overwrite supabase-beta
-  ```
-  
-  To upgrade:
+The project uses a semantic token-based design system defined in:
+- `src/index.css` - CSS custom properties
+- `tailwind.config.ts` - Tailwind configuration
 
-  ```sh
-  brew upgrade supabase
-  ```
-</details>
+Always use semantic tokens (e.g., `bg-primary`, `text-foreground`) instead of direct colors.
 
-<details>
-  <summary><b>Windows</b></summary>
+### Adding New Blocks
 
-  Available via [Scoop](https://scoop.sh). To install:
+1. Create block component in `src/components/blocks/`
+2. Register in `src/components/blocks/index.ts`
+3. Define block settings (category, icon, title)
 
-  ```powershell
-  scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
-  scoop install supabase
-  ```
+### Adding New Elements
 
-  To upgrade:
+1. Create element in `src/components/page-builder/elements/`
+2. Register in element category file
+3. Update `src/components/page-builder/elements/index.ts`
 
-  ```powershell
-  scoop update supabase
-  ```
-</details>
+## Contributing
 
-<details>
-  <summary><b>Linux</b></summary>
+This project was built with Lovable and synced to GitHub for version control and deployment.
 
-  Available via [Homebrew](https://brew.sh) and Linux packages.
+## License
 
-  #### via Homebrew
-
-  To install:
-
-  ```sh
-  brew install supabase/tap/supabase
-  ```
-
-  To upgrade:
-
-  ```sh
-  brew upgrade supabase
-  ```
-
-  #### via Linux packages
-
-  Linux packages are provided in [Releases](https://github.com/supabase/cli/releases). To install, download the `.apk`/`.deb`/`.rpm`/`.pkg.tar.zst` file depending on your package manager and run the respective commands.
-
-  ```sh
-  sudo apk add --allow-untrusted <...>.apk
-  ```
-
-  ```sh
-  sudo dpkg -i <...>.deb
-  ```
-
-  ```sh
-  sudo rpm -i <...>.rpm
-  ```
-
-  ```sh
-  sudo pacman -U <...>.pkg.tar.zst
-  ```
-</details>
-
-<details>
-  <summary><b>Other Platforms</b></summary>
-
-  You can also install the CLI via [go modules](https://go.dev/ref/mod#go-install) without the help of package managers.
-
-  ```sh
-  go install github.com/supabase/cli@latest
-  ```
-
-  Add a symlink to the binary in `$PATH` for easier access:
-
-  ```sh
-  ln -s "$(go env GOPATH)/bin/cli" /usr/bin/supabase
-  ```
-
-  This works on other non-standard Linux distros.
-</details>
-
-<details>
-  <summary><b>Community Maintained Packages</b></summary>
-
-  Available via [pkgx](https://pkgx.sh/). Package script [here](https://github.com/pkgxdev/pantry/blob/main/projects/supabase.com/cli/package.yml).
-  To install in your working directory:
-
-  ```bash
-  pkgx install supabase
-  ```
-
-  Available via [Nixpkgs](https://nixos.org/). Package script [here](https://github.com/NixOS/nixpkgs/blob/master/pkgs/development/tools/supabase-cli/default.nix).
-</details>
-
-### Run the CLI
-
-```bash
-supabase bootstrap
-```
-
-Or using npx:
-
-```bash
-npx supabase bootstrap
-```
-
-The bootstrap command will guide you through the process of setting up a Supabase project using one of the [starter](https://github.com/supabase-community/supabase-samples/blob/main/samples.json) templates.
-
-## Docs
-
-Command & config reference can be found [here](https://supabase.com/docs/reference/cli/about).
-
-## Breaking changes
-
-We follow semantic versioning for changes that directly impact CLI commands, flags, and configurations.
-
-However, due to dependencies on other service images, we cannot guarantee that schema migrations, seed.sql, and generated types will always work for the same CLI major version. If you need such guarantees, we encourage you to pin a specific version of CLI in package.json.
-
-## Developing
-
-To run from source:
-
-```sh
-# Go >= 1.22
-go run . help
-```
+Proprietary - All rights reserved
