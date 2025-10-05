@@ -10,7 +10,10 @@
     "start": "vite preview",
     "vercel-build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sync:supabase": "./scripts/sync-supabase.sh",
+    "sync:db": "./scripts/sync-db.sh",
+    "sync:functions": "./scripts/sync-functions.sh"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",
