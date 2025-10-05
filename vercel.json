@@ -7,6 +7,16 @@
       "config": {
         "distDir": "dist"
       }
+    },
+    {
+      "src": "api/seo-handler.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/((?!api/).*)",
+      "dest": "/api/seo-handler"
     }
   ],
   "headers": [
