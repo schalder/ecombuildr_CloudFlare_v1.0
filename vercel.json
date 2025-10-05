@@ -9,10 +9,15 @@
       }
     }
   ],
+  "functions": {
+    "api/seo.ts": {
+      "runtime": "edge"
+    }
+  },
   "rewrites": [
     {
       "source": "/((?!api/).*)",
-      "destination": "/index.html"
+      "destination": "/api/seo"
     }
   ],
   "headers": [
