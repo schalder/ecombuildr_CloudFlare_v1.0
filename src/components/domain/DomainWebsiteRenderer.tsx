@@ -71,6 +71,13 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
         };
 
         setWebsite(combinedWebsiteData as WebsiteData);
+        console.log('🏠 DomainWebsiteRenderer: Website data loaded:', {
+          websiteId,
+          websiteName: websiteData.name,
+          websiteSlug: websiteData.slug,
+          isPublished: websiteData.is_published,
+          isActive: websiteData.is_active
+        });
 
         // Load the store into context
         if (storeData) {

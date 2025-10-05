@@ -38,6 +38,8 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
   websiteId, 
   fallback 
 }) => {
+  console.log('🚀 DynamicHomePage: Component initialized with websiteId:', websiteId);
+  
   const [homePage, setHomePage] = useState<HomePageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
