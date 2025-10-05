@@ -730,9 +730,93 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
   
-  // For non-social crawlers or system domains, pass through
-  console.log('👤 Non-social crawler or system domain - passing through');
-  return new Response(null, { status: 200 });
+  // For non-social crawlers or system domains, serve the React app
+  console.log('👤 Non-social crawler or system domain - serving React app');
+  
+  // Return the static HTML for React app
+  const staticHTML = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#10B981" />
+    
+    <!-- Fallback SEO Meta Tags (overridden by dynamic content) -->
+    <title>EcomBuildr - Build Beautiful Online Stores & Funnels</title>
+    <meta name="description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta name="keywords" content="website builder, ecommerce, online store, sales funnel, drag and drop" />
+    <meta name="author" content="EcomBuildr" />
+    
+    <!-- Fallback Open Graph Meta Tags -->
+    <meta property="og:title" content="EcomBuildr - Build Beautiful Online Stores & Funnels" />
+    <meta property="og:description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://res.cloudinary.com/dtkeyccga/image/upload/v1706878427/og-image_dcvqpc.png" />
+    <meta property="og:site_name" content="EcomBuildr" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Fallback Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="EcomBuildr - Build Beautiful Online Stores & Funnels" />
+    <meta name="twitter:description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta name="twitter:image" content="https://res.cloudinary.com/dtkeyccga/image/upload/v1706878427/og-image_dcvqpc.png" />
+    
+    <!-- Performance optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+    
+    <!-- Critical resource hints -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    
+    <!-- Critical CSS for image optimization -->
+    <style>
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      .image-container { position: relative; overflow: hidden; background-color: hsl(var(--muted)); }
+      .image-container::before { content: ''; display: block; width: 100%; height: 0; padding-bottom: var(--aspect-ratio, 56.25%); }
+      .image-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -o-object-fit: cover; object-fit: cover; transition: opacity 0.3s ease; }
+      .loading-shimmer { background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.1) 50%, hsl(var(--muted)) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+      picture { display: block; width: 100%; height: 100%; }
+      img[width][height] { aspect-ratio: attr(width) / attr(height); }
+    </style>
+    
+    <!-- Font Awesome for icon lists -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <script type="module" crossorigin src="/assets/index-L329u5QQ.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/react-vendor-CeYc4tiK.js">
+    <link rel="modulepreload" crossorigin href="/assets/chart-vendor-Bfzb-huE.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-libs-COW4yPD2.js">
+    <link rel="modulepreload" crossorigin href="/assets/ui-vendor-CCE0z0LV.js">
+    <link rel="modulepreload" crossorigin href="/assets/page-builder-YQoEA8C7.js">
+    <link rel="modulepreload" crossorigin href="/assets/date-vendor-CQ923hJe.js">
+    <link rel="modulepreload" crossorigin href="/assets/form-vendor-CzNr-oSg.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-CZB-H0bA.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`;
+
+  return new Response(staticHTML, {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'X-Trace-Id': traceId,
+      'X-SEO-Source': 'react_app',
+      'X-SEO-Domain': domain,
+      'X-SEO-Path': pathname
+    },
+  });
 }
 
 export const config = {
