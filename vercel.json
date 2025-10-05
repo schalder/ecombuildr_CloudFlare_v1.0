@@ -7,12 +7,10 @@
       "config": {
         "distDir": "dist"
       }
-    }
-  ],
-  "rewrites": [
+    },
     {
-      "source": "/seo-meta",
-      "destination": "https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/seo-meta-injection"
+      "src": "middleware.ts",
+      "use": "@vercel/edge"
     }
   ],
   "headers": [
