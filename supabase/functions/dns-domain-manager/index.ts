@@ -304,8 +304,7 @@ Deno.serve(async (req) => {
             is_verified: false,
             ssl_status: 'automatic', // Vercel handles SSL automatically
             verification_token: verificationToken,
-            verification_attempts: 0,
-            cname_target: null // Will be updated below
+            verification_attempts: 0
           })
           .select()
           .single()
@@ -369,31 +368,6 @@ Deno.serve(async (req) => {
           }
         } catch (vercelError) {
           console.log('Vercel integration failed (non-blocking):', vercelError.message)
-        }
-        
-        // Generate domain-specific CNAME if we don't have a specific one from Vercel
-        if (vercelCnameTarget === 'cname.vercel-dns.com') {
-          try {
-            const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domain))
-            const hashHex = Array.from(new Uint8Array(domainHash))
-              .map(b => b.toString(16).padStart(2, '0'))
-              .join('')
-              .substring(0, 16)
-            vercelCnameTarget = `${hashHex}.vercel-dns-017.com`
-            console.log(`Generated domain-specific CNAME for ${domain}:`, vercelCnameTarget)
-          } catch (hashError) {
-            console.log('Hash generation failed, using generic CNAME')
-          }
-        }
-        
-        // Update the domain record with the CNAME target
-        const { error: updateError } = await supabase
-          .from('custom_domains')
-          .update({ cname_target: vercelCnameTarget })
-          .eq('id', newDomain.id)
-        
-        if (updateError) {
-          console.error('Failed to update CNAME target:', updateError)
         }
         
         result = {
