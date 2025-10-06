@@ -19,6 +19,11 @@
       "destination": "/index.html"
     }
   ],
+  "functions": {
+    "api/middleware.ts": {
+      "runtime": "edge"
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
