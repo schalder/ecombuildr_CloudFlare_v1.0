@@ -143,8 +143,18 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
       };
       
       console.log('🚀 Calling setSEO with:', seoData);
-      setSEO(seoData);
-      console.log('✅ setSEO called successfully');
+      
+      // Force immediate SEO update
+      setTimeout(() => {
+        setSEO(seoData);
+        console.log('✅ setSEO called successfully');
+        
+        // Double-check that title was updated
+        setTimeout(() => {
+          console.log('🔍 Final page title:', document.title);
+          console.log('🔍 Final meta description:', document.querySelector('meta[name="description"]')?.getAttribute('content'));
+        }, 100);
+      }, 100);
     }
   }, [homePage, websiteMeta]);
 

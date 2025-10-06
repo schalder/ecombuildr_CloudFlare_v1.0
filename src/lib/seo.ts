@@ -79,6 +79,7 @@ export function setSEO(input: SEOConfig) {
   // Title
   if (cfg.title) {
     document.title = cfg.title;
+    console.log('✅ Title set to:', cfg.title);
     upsertMeta('meta[property="og:title"]', { property: 'og:title', content: cfg.title });
     upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: cfg.title });
   }
