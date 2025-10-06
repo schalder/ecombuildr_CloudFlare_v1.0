@@ -12,13 +12,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/[...catchall]",
-      "has": [
-        {
-          "type": "host",
-          "value": "(?!.*ecombuildr\\.com$).*"
-        }
-      ]
+      "destination": "/api/[...catchall]"
     }
   ]
 }

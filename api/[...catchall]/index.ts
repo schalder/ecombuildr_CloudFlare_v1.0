@@ -81,6 +81,8 @@ export default async function handler(request: Request): Promise<Response> {
                         !domain.includes('lovable.app') &&
                         !domain.includes('lovableproject.com');
   
+  console.log(`🔍 Domain detection: ${domain} -> Custom: ${isCustomDomain}`);
+  
   // For custom domains, serve dynamic HTML with SEO
   if (isCustomDomain) {
     console.log(`🏠 Custom domain detected - generating dynamic HTML with SEO`);
