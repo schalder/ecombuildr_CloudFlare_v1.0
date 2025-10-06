@@ -9,6 +9,11 @@
       }
     }
   ],
+  "functions": {
+    "api/[...catchall]/index.ts": {
+      "runtime": "edge"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
