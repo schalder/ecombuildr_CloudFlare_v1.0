@@ -9,11 +9,6 @@
       }
     }
   ],
-  "functions": {
-    "api/middleware.ts": {
-      "runtime": "edge"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
