@@ -630,6 +630,7 @@ export default async function handler(request: Request): Promise<Response> {
   const traceId = crypto.randomUUID();
   
   console.log(`[${traceId}] 🌐 Request: ${domain}${pathname}`);
+  console.log(`[${traceId}] 🔍 Edge Function is being called!`);
   
   // Detect if this is a custom domain (not ecombuildr.com or localhost)
   const isCustomDomain = !domain.includes('ecombuildr.com') && 
