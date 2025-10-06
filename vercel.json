@@ -9,18 +9,10 @@
       }
     }
   ],
-  "functions": {
-    "api/test/index.ts": {
-      "runtime": "edge"
-    },
-    "api/catchall/index.ts": {
-      "runtime": "edge"
-    }
-  },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/catchall",
+      "destination": "/api/[...catchall]",
       "has": [
         {
           "type": "host",
