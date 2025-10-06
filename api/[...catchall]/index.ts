@@ -14,29 +14,29 @@ function generateHTML(seoData: any, url: string): string {
 
   return `<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
+<head>
+  <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
     <!-- Dynamic SEO Meta Tags -->
-    <title>${title}</title>
-    <meta name="description" content="${description}" />
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
+  <title>${title}</title>
+  <meta name="description" content="${description}" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
     <meta property="og:url" content="${url}" />
-    <meta property="og:title" content="${title}" />
-    <meta property="og:description" content="${description}" />
+  <meta property="og:title" content="${title}" />
+  <meta property="og:description" content="${description}" />
     ${image ? `<meta property="og:image" content="${image}" />` : ''}
-    <meta property="og:site_name" content="${siteName}" />
-    <meta property="og:locale" content="en_US" />
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
+  <meta property="og:site_name" content="${siteName}" />
+  <meta property="og:locale" content="en_US" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="${url}" />
-    <meta name="twitter:title" content="${title}" />
-    <meta name="twitter:description" content="${description}" />
+  <meta name="twitter:title" content="${title}" />
+  <meta name="twitter:description" content="${description}" />
     ${image ? `<meta name="twitter:image" content="${image}" />` : ''}
     
     <!-- React App Loading -->
@@ -49,20 +49,20 @@ function generateHTML(seoData: any, url: string): string {
     <link rel="modulepreload" crossorigin href="/assets/date-vendor-CQ923hJe.js">
     <link rel="modulepreload" crossorigin href="/assets/form-vendor-CzNr-oSg.js">
     <link rel="stylesheet" crossorigin href="/assets/index-CZB-H0bA.css">
-  </head>
-  <body>
-    <div id="root">
+</head>
+<body>
+  <div id="root">
       <!-- Fallback content while React loads -->
       <div style="padding: 20px; text-align: center; font-family: Inter, sans-serif;">
-        <h1>${title}</h1>
-        <p>${description}</p>
+    <h1>${title}</h1>
+    <p>${description}</p>
         <p>Loading...</p>
       </div>
     </div>
     <script>
       console.log('Server-side SEO loaded - React app will take over');
     </script>
-  </body>
+</body>
 </html>`;
 }
 
@@ -162,7 +162,7 @@ export default async function handler(request: Request): Promise<Response> {
           'X-SEO-Description': seoData.description
         },
       });
-      
+
     } catch (error) {
       console.error('💥 SEO Handler error:', error);
       const html = generateHTML({
@@ -240,3 +240,7 @@ export default async function handler(request: Request): Promise<Response> {
     },
   });
 }
+
+export const config = {
+  runtime: 'edge',
+};
