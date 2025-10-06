@@ -160,18 +160,16 @@ export const useDomainManagement = () => {
       if (dnsError) throw dnsError;
 
       // Domain added successfully to Vercel and database
-      console.log('✅ Domain added successfully to Vercel and database');
-      console.log('Vercel CNAME target:', dnsData.vercelCnameTarget);
       
       toast({
         title: "Domain Added Successfully",
-        description: `${domain} has been added to Vercel. Configure DNS to point to the provided CNAME target.`,
+        description: `${domain} has been added. Configure DNS to point to the provided CNAME target.`,
       });
 
       refetch();
       return dnsData;
     } catch (error) {
-      console.error('Add domain failed:', error);
+      
       throw error;
     }
   };
@@ -194,7 +192,7 @@ export const useDomainManagement = () => {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Get Vercel CNAME failed:', error);
+      
       throw error;
     }
   };
@@ -222,12 +220,12 @@ export const useDomainManagement = () => {
         throw new Error(data.error || 'Failed to remove domain');
       }
 
-      console.log('Domain removal result:', data);
+      
       
       // Show success message with details
       const message = data.vercelRemoved 
-        ? `Domain ${domain.domain} removed from both Vercel and database successfully`
-        : `Domain ${domain.domain} removed from database successfully (Vercel removal skipped)`;
+        ? `Domain ${domain.domain} removed from database successfully`
+        : `Domain ${domain.domain} removed from database successfully (Host removal skipped)`;
       
       toast({
         title: "Domain Removed",
@@ -307,7 +305,7 @@ export const useDomainManagement = () => {
 
       if (setError) throw setError;
     } catch (error) {
-      console.error('Error setting homepage:', error);
+      
       throw error;
     }
     
@@ -437,7 +435,7 @@ export const useDomainManagement = () => {
       refetch();
       return data;
     } catch (error) {
-      console.error('Error connecting course content to domain:', error);
+      
       throw error;
     }
   };
@@ -453,7 +451,7 @@ export const useDomainManagement = () => {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error checking course slug availability:', error);
+      
       throw error;
     }
   };
@@ -472,7 +470,7 @@ export const useDomainManagement = () => {
       
       refetch();
     } catch (error) {
-      console.error('Error clearing course connections:', error);
+      
       throw error;
     }
   };
