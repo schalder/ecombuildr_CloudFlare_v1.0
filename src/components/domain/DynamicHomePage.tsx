@@ -121,9 +121,16 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         homePageTitle: homePage.title,
         homePageSeoDescription: homePage.seo_description,
         homePageOgImage: homePage.og_image,
+        homePageSocialImage: homePage.social_image_url,
+        homePagePreviewImage: homePage.preview_image_url,
         homePageKeywords: homePage.seo_keywords,
-        websiteName: websiteMeta.name
+        websiteName: websiteMeta.name,
+        websiteDomain: websiteMeta.domain,
+        websiteSettings: websiteMeta.settings
       });
+      
+      console.log('📊 Full homePage object:', homePage);
+      console.log('📊 Full websiteMeta object:', websiteMeta);
       
       setSEO({
         title: homePage.seo_title || homePage.title || websiteMeta.name,
