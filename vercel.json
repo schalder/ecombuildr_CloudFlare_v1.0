@@ -12,7 +12,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/hello-ts",
+      "destination": "/api/edge-test",
       "has": [
         {
           "type": "host",
