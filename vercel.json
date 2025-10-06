@@ -7,6 +7,16 @@
       "config": {
         "distDir": "dist"
       }
+    },
+    {
+      "src": "api/[...catchall]/index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/((?!assets|favicon\\.ico|robots\\.txt|.*\\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)).*)",
+      "destination": "/api/[...catchall]"
     }
   ]
 }
