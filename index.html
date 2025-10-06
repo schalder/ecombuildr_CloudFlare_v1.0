@@ -23,17 +23,34 @@
         if (isCustomDomain) {
           console.log('🌐 Custom domain detected:', window.location.hostname);
           
-          // Fetch SEO data from Supabase
-          fetch('https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/websites?select=name,settings,domain&domain=eq.' + window.location.hostname, {
+          // Fetch SEO data from Supabase - use custom_domains table
+          fetch('https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/custom_domains?select=id,domain,store_id&domain=eq.' + window.location.hostname, {
             headers: {
               'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM',
               'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
             }
           })
           .then(response => response.json())
-          .then(data => {
-            if (data && data.length > 0) {
-              const website = data[0];
+          .then(customDomains => {
+            if (customDomains && customDomains.length > 0) {
+              const customDomain = customDomains[0];
+              console.log('✅ Custom domain found:', customDomain);
+              
+              // Now fetch website data using store_id
+              return fetch('https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/websites?select=id,name,settings&store_id=eq.' + customDomain.store_id + '&is_active=eq.true&is_published=eq.true', {
+                headers: {
+                  'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM',
+                  'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
+                }
+              });
+            } else {
+              throw new Error('No custom domain found');
+            }
+          })
+          .then(response => response.json())
+          .then(websites => {
+            if (websites && websites.length > 0) {
+              const website = websites[0];
               console.log('✅ Website data loaded:', website);
               
               // Update title immediately
@@ -78,6 +95,8 @@
                 description: description,
                 ogTitle: ogTitle
               });
+            } else {
+              console.log('❌ No website found for this domain');
             }
           })
           .catch(error => {
