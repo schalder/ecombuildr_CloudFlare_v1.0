@@ -84,11 +84,15 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         }
 
         // Fetch website meta for currency and SEO
-        const { data: websiteData } = await supabase
+        const { data: websiteData, error: websiteError } = await supabase
           .from('websites')
           .select('name, settings, domain, favicon')
           .eq('id', websiteId)
           .maybeSingle();
+        
+        if (websiteError) {
+          console.error('❌ DynamicHomePage: Error fetching website data:', websiteError);
+        }
         
         if (websiteData) {
           setWebsiteMeta(websiteData);
