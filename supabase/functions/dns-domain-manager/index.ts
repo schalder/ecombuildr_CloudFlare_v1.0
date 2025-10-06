@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
             const aRecords = aData.Answer?.filter((record: any) => record.type === 1) || []
             
             // Check if A records point to Vercel IPs
-            const vercelIPs = ['76.76.19.61', '76.76.21.61'] // Vercel IPs
+            const vercelIPs = ['76.76.19.61', '76.76.21.61', '216.198.79.193'] // Current Vercel IPs
             for (const record of aRecords) {
               if (vercelIPs.includes(record.data)) {
                 preVerifyDnsConfigured = true
@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
             dnsConfigured: preVerifyDnsConfigured,
             cnameTarget: preVerifyCnameTarget || null,
             requiresVercel: !preVerifyDnsConfigured,
-            errorMessage: !preVerifyDnsConfigured ? 'DNS must point to Vercel (A record: 76.76.19.61 or CNAME: cname.vercel-dns.com)' : null
+            errorMessage: !preVerifyDnsConfigured ? 'DNS must point to Vercel (A record: 76.76.19.61 or CNAME: vercel-dns.com)' : null
           }
         }
         console.log(`Domain ${domain} pre-verification result:`, result.status)
@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
             const aRecords = aData.Answer?.filter((record: any) => record.type === 1) || []
             
             // Check if A records point to Vercel IPs
-            const vercelIPs = ['76.76.19.61', '76.76.21.61'] // Vercel IPs
+            const vercelIPs = ['76.76.19.61', '76.76.21.61', '216.198.79.193'] // Current Vercel IPs
             for (const record of aRecords) {
               if (vercelIPs.includes(record.data)) {
                 dnsConfigured = true
@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
             isAccessible,
             cnameTarget: cnameTarget || null,
             message: isVerified ? 'Domain verified and ready!' : 'DNS configured, waiting for SSL certificate',
-            errorMessage: !dnsConfigured ? 'DNS must point to Vercel (A record: 76.76.19.61 or CNAME: cname.vercel-dns.com)' : null
+            errorMessage: !dnsConfigured ? 'DNS must point to Vercel (A record: 76.76.19.61 or CNAME: vercel-dns.com)' : null
           }
         }
         console.log(`Domain ${domain} verification result:`, result.status)
@@ -329,8 +329,8 @@ Deno.serve(async (req) => {
             vercelCnameTarget = domainInfo.cnameTarget
             console.log(`Vercel CNAME target for ${domain}:`, vercelCnameTarget)
           } else {
-            vercelCnameTarget = 'cname.vercel-dns.com'
-            console.log(`Using fallback CNAME target for ${domain}:`, vercelCnameTarget)
+            console.error(`Failed to get domain info for ${domain}: ${domainInfoResponse.status}`)
+            throw new Error(`Failed to get Vercel CNAME target for ${domain}`)
           }
         } catch (vercelError) {
           console.error('Failed to add domain to Vercel:', vercelError)
@@ -526,6 +526,15 @@ Deno.serve(async (req) => {
           }
         }
         break
+
+      default:
+        result = {
+          success: false,
+          error: 'Invalid action',
+          message: 'Action not supported'
+        }
+        break
+    }
 
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

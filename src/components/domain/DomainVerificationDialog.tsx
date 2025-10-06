@@ -85,7 +85,7 @@ Name: ${domain.split('.')[0]} (or @ for root domain)
 Value: ${cnameTarget}
 TTL: 300 (or Auto)
 
-Note: This is the specific CNAME target provided by Vercel for your domain. SSL will be automatically issued once DNS is configured.`;
+Note: This is the domain-specific CNAME target provided by Vercel. SSL will be automatically issued once DNS is configured.`;
     
     navigator.clipboard.writeText(instructions);
     toast({
@@ -302,7 +302,7 @@ Note: This is the specific CNAME target provided by Vercel for your domain. SSL 
         {step === 'verify' && (
           <div className="space-y-4">
             <div>
-              <h4 className="font-medium mb-2">Verifying DNS for {domain}</h4>
+              <h4 className="font-medium mb-2">Verifying DNS for <strong>{domain}</strong></h4>
               
               {verificationStatus && (
                 <div className="space-y-3">
@@ -330,7 +330,7 @@ Note: This is the specific CNAME target provided by Vercel for your domain. SSL 
                     <Alert variant="destructive">
                       <XCircle className="h-4 w-4" />
                       <AlertDescription>
-                        {verificationStatus.status?.errorMessage || `DNS must point to Vercel. Please add CNAME record: ${domain} -> ${vercelCnameTarget || 'cname.vercel-dns.com'}`}
+                        {verificationStatus.status?.errorMessage || `DNS must point to Vercel. Please add CNAME record: ${domain} -> ${vercelCnameTarget || 'vercel-dns.com'}`}
                       </AlertDescription>
                     </Alert>
                   )}
