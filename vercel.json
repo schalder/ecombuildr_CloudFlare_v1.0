@@ -29,7 +29,7 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/test-node",
+      "destination": "/api/[...catchall]",
       "has": [
         {
           "type": "host",
