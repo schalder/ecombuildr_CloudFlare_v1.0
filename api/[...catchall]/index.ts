@@ -119,7 +119,9 @@ export default async function handler(request: Request): Promise<Response> {
   const pathname = url.pathname;
   const userAgent = request.headers.get('user-agent') || '';
   
+  console.log(`🚀 VERCEL EDGE FUNCTION TRIGGERED!`);
   console.log(`🌐 Request: ${domain}${pathname} | User-Agent: ${userAgent}`);
+  console.log(`🔍 Full URL: ${url.toString()}`);
   
   // Detect if this is a custom domain
   const isCustomDomain = !domain.includes('ecombuildr.com') && 
