@@ -109,7 +109,7 @@ Deno.serve(async (req) => {
             dnsConfigured: preVerifyDnsConfigured,
             cnameTarget: preVerifyCnameTarget || null,
             requiresVercel: !preVerifyDnsConfigured,
-            errorMessage: !preVerifyDnsConfigured ? 'DNS must point to Vercel (A record: 76.76.19.61 or CNAME: vercel-dns.com)' : null
+            errorMessage: !preVerifyDnsConfigured ? `DNS must point to Vercel. Expected CNAME: ${preVerifyCnameTarget || 'vercel-dns.com'} or A record: 76.76.19.61` : null
           }
         }
         console.log(`Domain ${domain} pre-verification result:`, result.status)
@@ -215,7 +215,7 @@ Deno.serve(async (req) => {
             isAccessible,
             cnameTarget: cnameTarget || null,
             message: isVerified ? 'Domain verified and ready!' : 'DNS configured, waiting for SSL certificate',
-            errorMessage: !dnsConfigured ? 'DNS must point to Vercel (A record: 76.76.19.61 or CNAME: vercel-dns.com)' : null
+            errorMessage: !dnsConfigured ? `DNS must point to Vercel. Expected CNAME: ${cnameTarget || 'vercel-dns.com'} or A record: 76.76.19.61` : null
           }
         }
         console.log(`Domain ${domain} verification result:`, result.status)

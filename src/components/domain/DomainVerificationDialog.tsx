@@ -264,8 +264,10 @@ Note: This is the domain-specific CNAME target provided by Vercel. SSL will be a
                     <div className="font-mono bg-background px-2 py-1 rounded mt-1">
                       {isLoadingCname ? (
                         <span className="text-muted-foreground">Loading Vercel CNAME...</span>
+                      ) : vercelCnameTarget ? (
+                        vercelCnameTarget
                       ) : (
-                        vercelCnameTarget || 'cname.vercel-dns.com'
+                        <span className="text-red-500">Failed to get CNAME target</span>
                       )}
                     </div>
                   </div>
