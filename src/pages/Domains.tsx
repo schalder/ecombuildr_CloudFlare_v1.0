@@ -47,7 +47,19 @@ export default function Domains() {
       for (const domain of domains) {
         try {
           const cnameData = await getVercelCNAME(domain.domain);
-          const cnameTarget = cnameData.cnameTarget || 'cname.vercel-dns.com';
+          // Use the CNAME target from Edge Function, or generate domain-specific fallback
+          let cnameTarget = cnameData.cnameTarget;
+          
+          // If no CNAME target from Edge Function, generate domain-specific one
+          if (!cnameTarget) {
+            // Generate domain-specific CNAME using same logic as Edge Function
+            const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domain.domain));
+            const hashHex = Array.from(new Uint8Array(domainHash))
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('')
+              .substring(0, 16);
+            cnameTarget = `${hashHex}.vercel-dns-017.com`;
+          }
           
           const element = document.getElementById(`cname-target-${domain.id}`);
           if (element) {
@@ -55,9 +67,25 @@ export default function Domains() {
           }
         } catch (error) {
           console.error(`Failed to load CNAME for ${domain.domain}:`, error);
-          const element = document.getElementById(`cname-target-${domain.id}`);
-          if (element) {
-            element.textContent = 'cname.vercel-dns.com';
+          // Generate domain-specific CNAME as fallback
+          try {
+            const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domain.domain));
+            const hashHex = Array.from(new Uint8Array(domainHash))
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('')
+              .substring(0, 16);
+            const fallbackCname = `${hashHex}.vercel-dns-017.com`;
+            
+            const element = document.getElementById(`cname-target-${domain.id}`);
+            if (element) {
+              element.textContent = fallbackCname;
+            }
+          } catch (hashError) {
+            console.error('Hash generation failed:', hashError);
+            const element = document.getElementById(`cname-target-${domain.id}`);
+            if (element) {
+              element.textContent = 'cname.vercel-dns.com';
+            }
           }
         }
       }
@@ -106,7 +134,18 @@ export default function Domains() {
     try {
       // Get the Vercel-specific CNAME target for this domain
       const cnameData = await getVercelCNAME(domain);
-      const cnameTarget = cnameData.cnameTarget || 'cname.vercel-dns.com';
+      let cnameTarget = cnameData.cnameTarget;
+      
+      // If no CNAME target from Edge Function, generate domain-specific one
+      if (!cnameTarget) {
+        // Generate domain-specific CNAME using same logic as Edge Function
+        const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domain));
+        const hashHex = Array.from(new Uint8Array(domainHash))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('')
+          .substring(0, 16);
+        cnameTarget = `${hashHex}.vercel-dns-017.com`;
+      }
       
       const instructions = `DNS Configuration for ${domain}:
 
@@ -125,8 +164,34 @@ Note: This is the specific CNAME target provided by Vercel for your domain. SSL 
       });
     } catch (error) {
       console.error('Failed to get Vercel CNAME:', error);
-      // Fallback to generic instructions
-      const instructions = `DNS Configuration for ${domain}:
+      // Fallback: Generate domain-specific CNAME
+      try {
+        const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domain));
+        const hashHex = Array.from(new Uint8Array(domainHash))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('')
+          .substring(0, 16);
+        const fallbackCname = `${hashHex}.vercel-dns-017.com`;
+        
+        const instructions = `DNS Configuration for ${domain}:
+
+CNAME Record:
+Type: CNAME
+Name: ${domain.split('.')[0]} (or @ for root domain)
+Value: ${fallbackCname}
+TTL: 300 (or Auto)
+
+Note: This is the domain-specific CNAME target for your domain. SSL will be automatically issued once DNS is configured.`;
+        
+        navigator.clipboard.writeText(instructions);
+        toast({
+          title: "DNS Instructions Copied",
+          description: "Domain-specific DNS configuration has been copied to your clipboard."
+        });
+      } catch (hashError) {
+        console.error('Hash generation failed:', hashError);
+        // Final fallback to generic instructions
+        const instructions = `DNS Configuration for ${domain}:
 
 CNAME Record:
 Type: CNAME
@@ -135,12 +200,13 @@ Value: cname.vercel-dns.com
 TTL: 300 (or Auto)
 
 Note: Configure DNS to point to Vercel. SSL will be automatically issued.`;
-      
-      navigator.clipboard.writeText(instructions);
-      toast({
-        title: "DNS Instructions Copied",
-        description: "Generic Vercel DNS configuration has been copied to your clipboard."
-      });
+        
+        navigator.clipboard.writeText(instructions);
+        toast({
+          title: "DNS Instructions Copied",
+          description: "Generic Vercel DNS configuration has been copied to your clipboard."
+        });
+      }
     }
   };
 
