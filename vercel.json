@@ -1,5 +1,6 @@
 {
   "version": 2,
+  "framework": "vite",
   "builds": [
     {
       "src": "package.json",
@@ -11,12 +12,24 @@
     {
       "src": "api/**/*.ts",
       "use": "@vercel/node"
+    },
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node"
     }
   ],
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    },
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/edge-test",
+      "destination": "/api/test-node",
       "has": [
         {
           "type": "host",
