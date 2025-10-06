@@ -16,11 +16,11 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/api/seo"
     }
   ],
   "functions": {
-    "middleware.ts": {
+    "api/seo/index.ts": {
       "runtime": "edge"
     }
   },

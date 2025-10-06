@@ -86,156 +86,6 @@ interface SEOData {
   };
 }
 
-// Helper function to resolve system domain SEO (ecombuildr.com/store/website-slug/page-slug)
-async function resolveSystemDomainSEO(domain: string, path: string, cleanPath: string): Promise<SEOData | null> {
-  try {
-    console.log(`🏠 System domain SEO resolution for: ${domain}${path}`);
-    
-    // Parse system domain path: /store/website-slug/page-slug
-    const pathParts = cleanPath.split('/');
-    if (pathParts.length < 2 || pathParts[0] !== 'store') {
-      console.log('❌ Invalid system domain path structure');
-      return null;
-    }
-    
-    const websiteSlug = pathParts[1];
-    const pageSlug = pathParts[2] || 'home';
-    
-    console.log(`📦 Parsed: websiteSlug=${websiteSlug}, pageSlug=${pageSlug}`);
-    
-    // Find website by slug
-    const { data: website } = await supabase
-      .from('websites')
-      .select('id, name, seo_title, seo_description, og_image, seo_keywords')
-      .eq('slug', websiteSlug)
-      .eq('is_active', true)
-      .eq('is_published', true)
-      .maybeSingle();
-    
-    if (!website) {
-      console.log('❌ Website not found');
-      return null;
-    }
-    
-    console.log(`✅ Found website: ${website.name}`);
-    
-    // Find page by slug
-    const { data: page } = await supabase
-      .from('website_pages')
-      .select('id, title, seo_title, seo_description, og_image, seo_keywords, content')
-      .eq('website_id', website.id)
-      .eq('slug', pageSlug)
-      .eq('is_published', true)
-      .maybeSingle();
-    
-    if (!page) {
-      console.log('❌ Page not found');
-      return null;
-    }
-    
-    console.log(`✅ Found page: ${page.title}`);
-    
-    // Build SEO data
-    const title = page.seo_title || page.title || website.name;
-    const description = page.seo_description || extractContentDescription(page.content) || website.seo_description || `Visit ${website.name}`;
-    const image = normalizeImageUrl(page.og_image || website.og_image, domain);
-    const keywords = page.seo_keywords || website.seo_keywords || [];
-    const canonical = `https://${domain}${path}`;
-    
-    return {
-      title,
-      description,
-      og_image: image,
-      keywords: Array.isArray(keywords) ? keywords : [],
-      canonical,
-      robots: 'index, follow',
-      site_name: website.name,
-      source: 'system_domain_page',
-      debug: {
-        websiteId: website.id,
-        pageId: page.id,
-        slug: pageSlug,
-        titleSource: page.seo_title ? 'page' : 'website',
-        descSource: page.seo_description ? 'page' : 'website',
-        imageSource: page.og_image ? 'page' : 'website'
-      }
-    };
-    
-  } catch (error) {
-    console.error('❌ System domain SEO resolution error:', error);
-    return null;
-  }
-}
-
-// Helper function to resolve funnel SEO
-async function resolveFunnelSEO(funnelId: string, stepSlug: string, domain: string, path: string): Promise<SEOData | null> {
-  try {
-    console.log(`🎯 Funnel SEO resolution for: ${funnelId}/${stepSlug}`);
-    
-    // Get funnel data
-    const { data: funnel } = await supabase
-      .from('funnels')
-      .select('id, name, seo_title, seo_description, og_image, seo_keywords')
-      .eq('id', funnelId)
-      .eq('is_active', true)
-      .eq('is_published', true)
-      .maybeSingle();
-    
-    if (!funnel) {
-      console.log('❌ Funnel not found');
-      return null;
-    }
-    
-    console.log(`✅ Found funnel: ${funnel.name}`);
-    
-    // Get step data
-    const { data: step } = await supabase
-      .from('funnel_steps')
-      .select('id, title, seo_title, seo_description, og_image, seo_keywords, content')
-      .eq('funnel_id', funnelId)
-      .eq('slug', stepSlug)
-      .eq('is_published', true)
-      .maybeSingle();
-    
-    if (!step) {
-      console.log('❌ Step not found');
-      return null;
-    }
-    
-    console.log(`✅ Found step: ${step.title}`);
-    
-    // Build SEO data
-    const title = step.seo_title || step.title || funnel.name;
-    const description = step.seo_description || extractContentDescription(step.content) || funnel.seo_description || `Visit ${funnel.name}`;
-    const image = normalizeImageUrl(step.og_image || funnel.og_image, domain);
-    const keywords = step.seo_keywords || funnel.seo_keywords || [];
-    const canonical = `https://${domain}${path}`;
-    
-    return {
-      title,
-      description,
-      og_image: image,
-      keywords: Array.isArray(keywords) ? keywords : [],
-      canonical,
-      robots: 'index, follow',
-      site_name: funnel.name,
-      source: 'funnel_step',
-      debug: {
-        websiteId: funnelId,
-        pageId: step.id,
-        slug: stepSlug,
-        titleSource: step.seo_title ? 'step' : 'funnel',
-        descSource: step.seo_description ? 'step' : 'funnel',
-        imageSource: step.og_image ? 'step' : 'funnel'
-      }
-    };
-    
-  } catch (error) {
-    console.error('❌ Funnel SEO resolution error:', error);
-    return null;
-  }
-}
-
 // Helper function to resolve website homepage SEO
 async function resolveWebsiteHomepageSEO(websiteId: string, domain: string, path: string): Promise<SEOData | null> {
   try {
@@ -305,7 +155,7 @@ async function resolveWebsiteHomepageSEO(websiteId: string, domain: string, path
   }
 }
 
-// Main SEO data resolution - handles both custom domains and system domains
+// Main SEO data resolution
 async function resolveSEOData(domain: string, path: string): Promise<SEOData | null> {
   try {
     console.log(`🔍 Resolving SEO for ${domain}${path}`);
@@ -314,15 +164,6 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     const apexDomain = domain.replace(/^www\./, '');
     const domainVariants = [domain, apexDomain, `www.${apexDomain}`];
     const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
-
-    // Check if this is a system domain (ecombuildr.com with store/funnel paths)
-    const isSystemDomain = domain.includes('ecombuildr.com') &&
-                          (path.startsWith('/store/') || path.startsWith('/funnel/'));
-
-    if (isSystemDomain) {
-      console.log(`🏠 System domain detected - parsing URL structure`);
-      return await resolveSystemDomainSEO(domain, path, cleanPath);
-    }
 
     // Custom domain handling
     console.log(`🌐 Custom domain detected - using domain connections`);
@@ -341,30 +182,23 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
 
     console.log(`✅ Found custom domain: ${customDomain.domain} -> store ${customDomain.store_id}`);
 
-    // Step 2: Find ALL connections (website AND funnel)
+    // Step 2: Find website connection
     const { data: connections } = await supabase
       .from('domain_connections')
       .select('content_type, content_id')
       .eq('domain_id', customDomain.id);
 
     const websiteConnection = connections?.find(c => c.content_type === 'website');
-    const funnelConnection = connections?.find(c => c.content_type === 'funnel');
 
     let websiteId: string | null = null;
-    let funnelId: string | null = null;
 
     if (websiteConnection) {
       websiteId = websiteConnection.content_id;
       console.log(`✅ Found website connection: ${websiteId}`);
     }
 
-    if (funnelConnection) {
-      funnelId = funnelConnection.content_id;
-      console.log(`✅ Found funnel connection: ${funnelId}`);
-    }
-
     // If no connections found, fallback to store content
-    if (!websiteConnection && !funnelConnection) {
+    if (!websiteConnection) {
       console.log('⚠️ No domain connections found. Falling back to store content');
 
       // Try to find website by domain match
@@ -380,34 +214,8 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         websiteId = exactMatch?.id || storeWebsites[0].id;
         console.log(`📦 Using store website fallback: ${websiteId}`);
       }
-
-      // Try to find funnel by domain match
-      const { data: storeFunnels } = await supabase
-        .from('funnels')
-        .select('id, domain')
-        .eq('store_id', customDomain.store_id)
-        .eq('is_active', true)
-        .eq('is_published', true);
-
-      if (storeFunnels && storeFunnels.length > 0) {
-        const exactMatch = storeFunnels.find(f => f.domain && f.domain.replace(/^www\./, '') === apexDomain);
-        funnelId = exactMatch?.id || storeFunnels[0].id;
-        console.log(`📦 Using store funnel fallback: ${funnelId}`);
-      }
     }
 
-    if (!websiteId && !funnelId) {
-      console.log('❌ No website or funnel resolved after fallback');
-      return null;
-    }
-
-    // Step 3: Handle funnel connections first (they take priority)
-    if (funnelId) {
-      console.log(`🎯 Processing funnel connection: ${funnelId}`);
-      return await resolveFunnelSEO(funnelId, cleanPath, domain, path);
-    }
-
-    // Step 4: Handle website connections (if no funnel connection)
     if (!websiteId) {
       console.log('❌ No website ID available');
       return null;
@@ -524,7 +332,7 @@ export default async function handler(request: Request): Promise<Response> {
   const pathname = url.pathname;
   const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
 
-  console.log(`[${traceId}] 🌐 MIDDLEWARE TRIGGERED: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
+  console.log(`[${traceId}] 🌐 SEO EDGE FUNCTION TRIGGERED: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
 
   // Detect if this is a custom domain (not ecombuildr.com or localhost)
   const isCustomDomain = !domain.includes('ecombuildr.com') &&
@@ -533,18 +341,14 @@ export default async function handler(request: Request): Promise<Response> {
                         !domain.includes('lovable.app') &&
                         !domain.includes('lovableproject.com');
 
-  // Detect if this is a system domain that needs SEO (ecombuildr.com with store/funnel paths)
-  const isSystemDomain = domain.includes('ecombuildr.com') &&
-                         (pathname.startsWith('/store/') || pathname.startsWith('/funnel/'));
-
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);
 
-  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | System: ${isSystemDomain} | Social Bot: ${isSocialBot}`);
+  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | Social Bot: ${isSocialBot}`);
 
-  // For custom domains AND system domains, provide SEO for ALL visitors
-  if (isCustomDomain || isSystemDomain) {
-    console.log(`🌐 ${isCustomDomain ? 'Custom' : 'System'} domain request - generating SEO HTML for ${isSocialBot ? 'social crawler' : 'regular visitor'}`);
+  // For custom domains, provide SEO for ALL visitors
+  if (isCustomDomain) {
+    console.log(`🌐 Custom domain request - generating SEO HTML for ${isSocialBot ? 'social crawler' : 'regular visitor'}`);
 
     try {
       const seoData = await resolveSEOData(domain, pathname);
@@ -559,7 +363,7 @@ export default async function handler(request: Request): Promise<Response> {
           canonical: `https://${domain}${pathname}`,
           robots: 'noindex, nofollow',
           site_name: 'EcomBuildr Preview',
-          source: 'middleware_minimal_fallback'
+          source: 'edge_function_minimal_fallback'
         };
         return new Response(generateHTML(minimal, url.toString()), {
           headers: { 'Content-Type': 'text/html' },
@@ -590,11 +394,11 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
 
-  // For system domains (ecombuildr.com, localhost), pass through
-  console.log('🏠 System domain - passing through to React app');
-  return new Response(null, { status: 200 });
+  // For system domains, return 404 to let Vercel handle routing
+  console.log('🏠 System domain - returning 404 to let Vercel handle routing');
+  return new Response('Not Found', { status: 404 });
 }
 
 export const config = {
   runtime: 'edge',
-};// Force deployment Mon Oct  6 07:41:59 +06 2025
+};
