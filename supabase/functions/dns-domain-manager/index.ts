@@ -91,8 +91,10 @@ Deno.serve(async (req) => {
               
               for (const record of cnameRecords) {
                 preVerifyCnameTarget = record.data.replace(/\.$/, '') // Remove trailing dot
-                if (preVerifyCnameTarget.includes('vercel-dns.com') || preVerifyCnameTarget.includes('vercel.app')) {
+                console.log(`Pre-verification checking CNAME: ${preVerifyCnameTarget}`)
+                if (preVerifyCnameTarget.includes('vercel-dns.com') || preVerifyCnameTarget.includes('vercel.app') || preVerifyCnameTarget.includes('vercel-dns-017.com')) {
                   preVerifyDnsConfigured = true
+                  console.log(`Pre-verification CNAME passed: ${preVerifyCnameTarget}`)
                   break
                 }
               }
@@ -148,8 +150,10 @@ Deno.serve(async (req) => {
               
               for (const record of cnameRecords) {
                 cnameTarget = record.data.replace(/\.$/, '') // Remove trailing dot
-                if (cnameTarget.includes('vercel-dns.com') || cnameTarget.includes('vercel.app')) {
+                console.log(`Checking CNAME record: ${cnameTarget}`)
+                if (cnameTarget.includes('vercel-dns.com') || cnameTarget.includes('vercel.app') || cnameTarget.includes('vercel-dns-017.com')) {
                   dnsConfigured = true
+                  console.log(`CNAME verification passed for: ${cnameTarget}`)
                   break
                 }
               }

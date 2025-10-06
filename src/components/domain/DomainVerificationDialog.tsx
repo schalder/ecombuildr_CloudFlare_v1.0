@@ -50,11 +50,15 @@ export const DomainVerificationDialog: React.FC<DomainVerificationDialogProps> =
 
       if (addError) throw addError;
       
+      console.log('Edge Function response:', addData);
+      
       if (addData.success) {
         // Always set the CNAME target, whether it's specific or generic
-        setVercelCnameTarget(addData.vercelCnameTarget || 'cname.vercel-dns.com');
-        console.log(`Domain ${domainName} added with CNAME:`, addData.vercelCnameTarget || 'cname.vercel-dns.com');
+        const cnameTarget = addData.vercelCnameTarget || 'cname.vercel-dns.com';
+        setVercelCnameTarget(cnameTarget);
+        console.log(`Domain ${domainName} added with CNAME:`, cnameTarget);
       } else {
+        console.error('Edge Function returned success: false', addData);
         setVercelCnameTarget('cname.vercel-dns.com');
       }
     } catch (error) {
