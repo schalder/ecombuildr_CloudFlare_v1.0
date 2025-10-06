@@ -28,7 +28,8 @@ export default async function middleware(request: Request) {
     });
   }
   
-  // For all other requests, continue normally
+  // For all other requests, serve the React app by returning null
+  // This allows Vercel to serve the static files normally
   return new Response(null);
 }
 
