@@ -603,27 +603,111 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     
   } catch (error) {
     console.error('❌ SEO resolution error:', error);
-    return null;
+      return null;
   }
 }
 
 // Generate complete HTML for crawlers
 function generateHTML(seo: SEOData, url: string): string {
-    const websiteSeoTitle: string | undefined = (ws.seo && ws.seo.title) || undefined;
-    const websiteSeoDescription: string = (ws.seo && ws.seo.description) || (website as any).description || `Welcome to ${website.name}`;
-    const websiteImage = normalizeImageUrl(
-      (ws.seo && (ws.seo.og_image || ws.seo.social_image_url)) ||
-      (ws.branding && (ws.branding.social_image_url || ws.branding.logo)) ||
-      ws.favicon
-    );
+  const title = seo.title;
+  const description = seo.description;
+  const image = seo.og_image || '';
+  const canonical = seo.canonical;
+  const siteName = seo.site_name;
+  const robots = seo.robots;
+  const keywords = Array.isArray(seo.keywords) ? seo.keywords.join(', ') : '';
 
-    // Step 4: Route-specific resolution
-    
-    // Root path - use homepage page SEO
-    if (!cleanPath) {
-      // First try to find the homepage page
-      const { data: homepagePage } = await supabase
-        .from('website_pages')
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#10B981" />
+  
+  <title>${title}</title>
+  <meta name="description" content="${description}" />
+  ${keywords ? `<meta name="keywords" content="${keywords}" />` : ''}
+  <meta name="robots" content="${robots}" />
+  <meta name="author" content="${siteName}" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="${canonical}" />
+  <meta property="og:title" content="${title}" />
+  <meta property="og:description" content="${description}" />
+  ${image ? `<meta property="og:image" content="${image}" />` : ''}
+  ${image ? `<meta property="og:image:type" content="image/png" />` : ''}
+  <meta property="og:site_name" content="${siteName}" />
+  <meta property="og:locale" content="en_US" />
+  
+  <!-- Twitter Card -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="${canonical}" />
+  <meta property="twitter:title" content="${title}" />
+  <meta property="twitter:description" content="${description}" />
+  ${image ? `<meta property="twitter:image" content="${image}" />` : ''}
+  
+  <!-- Performance optimizations -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+  
+  <!-- Critical resource hints -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  
+  <!-- Critical CSS for image optimization -->
+  <style>
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .image-container { position: relative; overflow: hidden; background-color: hsl(var(--muted)); }
+    .image-container::before { content: ''; display: block; width: 100%; height: 0; padding-bottom: var(--aspect-ratio, 56.25%); }
+    .image-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; -o-object-fit: cover; object-fit: cover; transition: opacity 0.3s ease; }
+    .loading-shimmer { background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.1) 50%, hsl(var(--muted)) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+    picture { display: block; width: 100%; height: 100%; }
+    img[width][height] { aspect-ratio: attr(width) / attr(height); }
+  </style>
+  
+  <!-- Font Awesome for icon lists -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+</head>
+<body>
+  <div id="root">
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: system-ui, -apple-system, sans-serif;">
+      <h1 style="margin-bottom: 1rem; color: #333;">${title}</h1>
+      <p style="color: #666; text-align: center; max-width: 600px;">${description}</p>
+      ${image ? `<img src="${image}" alt="${title}" style="max-width: 100%; height: auto; margin-top: 2rem; border-radius: 8px;" />` : ''}
+    </div>
+  </div>
+  
+  <!-- Load the React app -->
+  <script type="module" crossorigin src="/assets/index-DOA10Uc1.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/react-vendor-CeYc4tiK.js">
+  <link rel="modulepreload" crossorigin href="/assets/chart-vendor-Bfzb-huE.js">
+  <link rel="modulepreload" crossorigin href="/assets/ui-libs-COW4yPD2.js">
+  <link rel="modulepreload" crossorigin href="/assets/ui-vendor-CCE0z0LV.js">
+  <link rel="modulepreload" crossorigin href="/assets/page-builder-YQoEA8C7.js">
+  <link rel="modulepreload" crossorigin href="/assets/date-vendor-CQ923hJe.js">
+  <link rel="modulepreload" crossorigin href="/assets/form-vendor-CzNr-oSg.js">
+  <link rel="stylesheet" crossorigin href="/assets/index-CZB-H0bA.css">
+</body>
+</html>`;
+}
+
+export default async function handler(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const userAgent = request.headers.get('user-agent') || '';
+  const domain = url.hostname;
+  const pathname = url.pathname;
+  const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
         .select(`
           id, title, slug,
           seo_title, seo_description, og_image, social_image_url, preview_image_url,
