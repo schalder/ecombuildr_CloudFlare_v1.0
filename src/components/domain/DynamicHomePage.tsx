@@ -86,7 +86,7 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         // Fetch website meta for currency and SEO
         const { data: websiteData, error: websiteError } = await supabase
           .from('websites')
-          .select('name, settings, domain, favicon')
+          .select('name, settings, domain')
           .eq('id', websiteId)
           .maybeSingle();
         
@@ -114,6 +114,7 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
   useEffect(() => {
     if (homePage && websiteMeta) {
       const canonical = buildCanonical('/', websiteMeta.domain);
+      const favicon = websiteMeta.settings?.branding?.favicon || websiteMeta.settings?.favicon;
       setSEO({
         title: homePage.seo_title || homePage.title || websiteMeta.name,
         description: homePage.seo_description || `Visit ${websiteMeta.name}`,
@@ -121,7 +122,7 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         keywords: homePage.seo_keywords || [],
         canonical,
         siteName: websiteMeta.name,
-        favicon: websiteMeta.favicon
+        favicon: favicon
       });
     }
   }, [homePage, websiteMeta]);
