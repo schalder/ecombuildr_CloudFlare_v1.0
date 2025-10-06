@@ -129,18 +129,60 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
     })();
   }, [resolvedWebsiteId]);
 
-  // SEO is now handled by server-side middleware for custom domains
-  // Only handle custom scripts here to avoid SEO conflicts
+  // Provisional website-level SEO (runs as soon as website meta loads)
   React.useEffect(() => {
-    if (!page?.custom_scripts) return;
+    if (!websiteMeta) return;
+    const canonical = buildCanonical(undefined, websiteMeta?.domain);
+    setSEO({
+      title: websiteMeta?.name,
+      canonical,
+      robots: isPreview ? 'noindex, nofollow' : 'index, follow',
+      siteName: websiteMeta?.name,
+      ogType: 'website',
+      favicon: websiteMeta?.settings?.favicon_url,
+    });
+  }, [websiteMeta, isPreview]);
 
-    const scriptElement = document.createElement('div');
-    scriptElement.innerHTML = page.custom_scripts;
-    document.head.appendChild(scriptElement);
-    return () => {
-      document.head.removeChild(scriptElement);
-    };
-  }, [page?.custom_scripts]);
+  // SEO handling using centralized utility
+  React.useEffect(() => {
+    if (!page) return;
+
+    const title = page.seo_title || (websiteMeta?.name ? `${page.title} - ${websiteMeta.name}` : page.title);
+    const description = page.seo_description;
+    const image = page.social_image_url || page.og_image;
+    const canonical = page.canonical_url || buildCanonical(undefined, websiteMeta?.domain);
+    const keywords = page.seo_keywords || [];
+    const author = page.meta_author;
+    const robots = page.meta_robots || 'index, follow';
+    const languageCode = page.language_code || 'en';
+    const customMetaTags = Object.entries((page.custom_meta_tags as Record<string, string>) || {}).map(([name, content]) => ({ name, content }));
+
+    setSEO({
+      title,
+      description,
+      image,
+      socialImageUrl: page.social_image_url,
+      keywords,
+      canonical,
+      robots: isPreview ? 'noindex, nofollow' : robots,
+      author,
+      languageCode,
+      customMetaTags,
+      siteName: websiteMeta?.name,
+      ogType: 'website',
+      favicon: websiteMeta?.settings?.favicon_url,
+    });
+
+    // Custom scripts are now handled by ScriptManager for storefront renderer
+    if (!useStorefront && page.custom_scripts) {
+      const scriptElement = document.createElement('div');
+      scriptElement.innerHTML = page.custom_scripts;
+      document.head.appendChild(scriptElement);
+      return () => {
+        document.head.removeChild(scriptElement);
+      };
+    }
+  }, [page, websiteMeta, isPreview]);
 
   if (isCourseOrderOverride) {
     console.log('[WebsiteOverrideRoute] rendering CourseOrderConfirmation override');

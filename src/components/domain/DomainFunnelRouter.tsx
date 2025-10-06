@@ -7,13 +7,13 @@ import { StorefrontPageBuilder } from '@/components/storefront/renderer/Storefro
 import { ScriptManager } from '@/components/storefront/optimized/ScriptManager';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
+import { setSEO } from '@/lib/seo';
 import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
 import { useStore } from '@/contexts/StoreContext';
 import { optimizedFunnelStepQuery } from '@/components/storefront/optimized/DataOptimizer';
 import { PerformanceMonitor } from '@/components/storefront/optimized/PerformanceMonitor';
 import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
-import { setSEO, buildCanonical } from '@/lib/seo';
 import { PaymentProcessing } from '@/pages/storefront/PaymentProcessing';
 import { OrderConfirmation } from '@/pages/storefront/OrderConfirmation';
 
@@ -124,32 +124,37 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
     }
   }, [funnel.id, stepSlug, isPreview]);
 
-  // Set SEO for funnel steps (client-side fallback)
+  // SEO management - using only step-level SEO data
   useEffect(() => {
-    if (step && funnel) {
-      const canonical = buildCanonical(`/${stepSlug}`, funnel.canonical_domain || funnel.domain);
-      
-      console.log('🔍 Setting SEO for funnel step:', {
-        stepSeoTitle: step.seo_title,
-        stepTitle: step.title,
-        stepSeoDescription: step.seo_description,
-        stepOgImage: step.og_image,
-        stepSocialImage: step.social_image_url,
-        stepKeywords: step.seo_keywords,
-        funnelName: funnel.name
-      });
-      
-      setSEO({
-        title: step.seo_title || step.title || funnel.name,
-        description: step.seo_description || `Visit ${funnel.name}`,
-        image: step.social_image_url || step.preview_image_url || funnel.og_image,
-        keywords: step.seo_keywords || funnel.seo_keywords || [],
-        canonical,
-        siteName: funnel.name,
-        favicon: funnel.settings?.branding?.favicon || funnel.settings?.favicon
-      });
-    }
-  }, [step, funnel, stepSlug]);
+    if (!step || !funnel) return;
+
+    // Use only step-level SEO - no funnel fallbacks
+    const title = step.seo_title || `${step.title} - ${funnel.name}`;
+    const description = step.seo_description;
+    const image = step.social_image_url || step.og_image;
+    const canonical = step.canonical_url;
+    const keywords = step.seo_keywords || [];
+    const author = step.meta_author;
+    const robots = step.meta_robots || 'index, follow';
+    const languageCode = step.language_code || 'en';
+    const customMetaTags = Object.entries((step.custom_meta_tags as Record<string, string>) || {}).map(([name, content]) => ({ name, content }));
+
+    setSEO({
+      title: title || undefined,
+      description,
+      image,
+      socialImageUrl: step.social_image_url,
+      keywords,
+      canonical,
+      robots,
+      author,
+      languageCode,
+      customMetaTags,
+      siteName: funnel.name,
+      ogType: 'website',
+      favicon: funnel?.settings?.favicon_url || store?.favicon_url,
+    });
+  }, [step, funnel, store]);
 
   if (loading) {
     return (

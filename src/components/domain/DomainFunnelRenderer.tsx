@@ -88,8 +88,36 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
     fetchFunnelData();
   }, [funnelId, loadStoreById]);
 
-  // SEO is now handled by server-side middleware for custom domains
-  // No client-side SEO needed here to avoid conflicts
+  // Set up SEO metadata
+  useEffect(() => {
+    if (!funnel) return;
+
+    const title = funnel.seo_title || funnel.name || undefined;
+    const description = funnel.seo_description || funnel.description || undefined;
+    const image = funnel.social_image_url || funnel.og_image;
+    const canonical = funnel.canonical_url || buildCanonical(undefined, customDomain);
+    const keywords = funnel.seo_keywords || [];
+    const author = funnel.meta_author;
+    const robots = funnel.meta_robots || 'index, follow';
+    const languageCode = funnel.language_code || 'en';
+    const customMetaTags = Object.entries((funnel.custom_meta_tags as Record<string, string>) || {}).map(([name, content]) => ({ name, content }));
+
+    setSEO({
+      title,
+      description,
+      image,
+      socialImageUrl: funnel.social_image_url,
+      keywords,
+      canonical,
+      robots,
+      author,
+      languageCode,
+      customMetaTags,
+      siteName: funnel.name,
+      ogType: 'website',
+      favicon: funnel?.settings?.favicon_url || store?.favicon_url,
+    });
+  }, [funnel, customDomain, store]);
 
   if (loading) {
     return (

@@ -84,15 +84,11 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         }
 
         // Fetch website meta for currency and SEO
-        const { data: websiteData, error: websiteError } = await supabase
+        const { data: websiteData } = await supabase
           .from('websites')
           .select('name, settings, domain')
           .eq('id', websiteId)
           .maybeSingle();
-        
-        if (websiteError) {
-          console.error('❌ DynamicHomePage: Error fetching website data:', websiteError);
-        }
         
         if (websiteData) {
           setWebsiteMeta(websiteData);
@@ -110,51 +106,22 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
     fetchHomePage();
   }, [websiteId]);
 
-  // Set SEO for custom domains (client-side fallback)
+  // Set SEO when home page data is available
   useEffect(() => {
     if (homePage && websiteMeta) {
-      const canonical = buildCanonical('/', websiteMeta.domain);
-      const favicon = websiteMeta.settings?.branding?.favicon || websiteMeta.settings?.favicon;
-      
-      console.log('🔍 Setting SEO for homepage:', {
-        homePageSeoTitle: homePage.seo_title,
-        homePageTitle: homePage.title,
-        homePageSeoDescription: homePage.seo_description,
-        homePageOgImage: homePage.og_image,
-        homePageSocialImage: homePage.social_image_url,
-        homePagePreviewImage: homePage.preview_image_url,
-        homePageKeywords: homePage.seo_keywords,
-        websiteName: websiteMeta.name,
-        websiteDomain: websiteMeta.domain,
-        websiteSettings: websiteMeta.settings
-      });
-      
-      console.log('📊 Full homePage object:', homePage);
-      console.log('📊 Full websiteMeta object:', websiteMeta);
-      
       const seoData = {
-        title: homePage.seo_title || homePage.title || websiteMeta.name,
-        description: homePage.seo_description || `Visit ${websiteMeta.name}`,
-        image: homePage.social_image_url || homePage.preview_image_url,
-        keywords: homePage.seo_keywords || [],
-        canonical,
-        siteName: websiteMeta.name,
-        favicon: favicon
+        title: homePage.seo_title || homePage.title,
+        description: homePage.seo_description || '',
+        image: homePage.og_image || homePage.social_image_url,
+        url: buildCanonical(websiteMeta.domain || ''),
+        keywords: homePage.seo_keywords,
+        author: homePage.meta_author,
+        robots: homePage.meta_robots,
+        language: homePage.language_code,
+        customTags: homePage.custom_meta_tags
       };
       
-      console.log('🚀 Calling setSEO with:', seoData);
-      
-      // Force immediate SEO update
-      setTimeout(() => {
-        setSEO(seoData);
-        console.log('✅ setSEO called successfully');
-        
-        // Double-check that title was updated
-        setTimeout(() => {
-          console.log('🔍 Final page title:', document.title);
-          console.log('🔍 Final meta description:', document.querySelector('meta[name="description"]')?.getAttribute('content'));
-        }, 100);
-      }, 100);
+      setSEO(seoData);
     }
   }, [homePage, websiteMeta]);
 

@@ -2,14 +2,69 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- SEO will be injected by Edge Function -->
-    <title>Loading...</title>
-    <meta name="description" content="Loading..." />
-    <script type="module" src="/src/main.tsx"></script>
-  </head>
+    <meta name="theme-color" content="#10B981" />
+    
+    <!-- Fallback SEO Meta Tags (overridden by dynamic content) -->
+    <title>EcomBuildr - Build Beautiful Online Stores & Funnels</title>
+    <meta name="description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta name="keywords" content="website builder, ecommerce, online store, sales funnel, drag and drop" />
+    <meta name="author" content="EcomBuildr" />
+    
+    <!-- Fallback Open Graph Meta Tags -->
+    <meta property="og:title" content="EcomBuildr - Build Beautiful Online Stores & Funnels" />
+    <meta property="og:description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://res.cloudinary.com/dtkeyccga/image/upload/v1706878427/og-image_dcvqpc.png" />
+    <meta property="og:site_name" content="EcomBuildr" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- Fallback Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="EcomBuildr - Build Beautiful Online Stores & Funnels" />
+    <meta name="twitter:description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta name="twitter:image" content="https://res.cloudinary.com/dtkeyccga/image/upload/v1706878427/og-image_dcvqpc.png" />
+    
+    <!-- Performance optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+    
+    <!-- Critical resource hints -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    
+    <!-- Critical CSS for image optimization -->
+    <style>
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      .image-container { position: relative; overflow: hidden; background-color: hsl(var(--muted)); }
+      .image-container::before { content: ''; display: block; width: 100%; height: 0; padding-bottom: var(--aspect-ratio, 56.25%); }
+      .image-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s ease; }
+      .loading-shimmer { background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.1) 50%, hsl(var(--muted)) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+      picture { display: block; width: 100%; height: 100%; }
+      img[width][height] { aspect-ratio: attr(width) / attr(height); }
+    </style>
+    
+    <!-- Social crawlers are handled by Netlify Edge Function (social-meta) -->
+    <!-- Client-side SEO is managed by individual pages/components -->
+    
+    <!-- Dynamic SEO tags are managed in code per-page via setSEO function -->
+    <!-- Favicon is set dynamically per website/funnel in setSEO() function -->
+    <!-- Font Awesome for icon lists -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    </head>
+
   <body>
     <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
