@@ -142,7 +142,7 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       setSEO({
         title: step.seo_title || step.title || funnel.name,
         description: step.seo_description || `Visit ${funnel.name}`,
-        image: step.og_image || step.social_image_url || step.preview_image_url || funnel.og_image,
+        image: step.social_image_url || step.preview_image_url || funnel.og_image,
         keywords: step.seo_keywords || funnel.seo_keywords || [],
         canonical,
         siteName: funnel.name,

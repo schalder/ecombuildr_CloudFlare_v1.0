@@ -224,7 +224,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
           : (contentDesc || `${homepagePage.title} - ${website.name}`);
         
         // ✅ PRIORITIZE HOMEPAGE PAGE IMAGES - Only fallback to website if page has no images
-        let pickedImage = homepagePage.social_image_url || homepagePage.og_image || homepagePage.preview_image_url;
+        let pickedImage = homepagePage.social_image_url || homepagePage.preview_image_url;
         
         // Only fallback to website image if homepage has no images at all
         if (!pickedImage) {
@@ -295,7 +295,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         : (contentDesc || `${page.title} - ${website.name}`);
 
       // ✅ PRIORITIZE PAGE IMAGES - Only fallback to website if page has no images
-      let pickedImage = page.social_image_url || page.og_image || page.preview_image_url;
+      let pickedImage = page.social_image_url || page.preview_image_url;
       
       // Only fallback to website image if page has no images at all
       if (!pickedImage) {
