@@ -7,6 +7,88 @@
     <!-- SEO will be injected by Edge Function -->
     <title>Loading...</title>
     <meta name="description" content="Loading..." />
+    
+    <!-- Dynamic SEO Injection Script - Runs BEFORE React -->
+    <script>
+      (function() {
+        console.log('🚀 Dynamic SEO injection starting...');
+        
+        // Detect if this is a custom domain
+        const isCustomDomain = !window.location.hostname.includes('ecombuildr.com') && 
+                              !window.location.hostname.includes('localhost') && 
+                              !window.location.hostname.includes('lovable.dev') &&
+                              !window.location.hostname.includes('lovable.app') &&
+                              !window.location.hostname.includes('lovableproject.com');
+        
+        if (isCustomDomain) {
+          console.log('🌐 Custom domain detected:', window.location.hostname);
+          
+          // Fetch SEO data from Supabase
+          fetch('https://fhqwacmokbtbspkxjixf.supabase.co/rest/v1/websites?select=name,settings,domain&domain=eq.' + window.location.hostname, {
+            headers: {
+              'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM',
+              'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM'
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            if (data && data.length > 0) {
+              const website = data[0];
+              console.log('✅ Website data loaded:', website);
+              
+              // Update title immediately
+              document.title = website.name || 'Loading...';
+              
+              // Update meta description
+              const description = website.settings?.seo?.description || `Welcome to ${website.name}`;
+              let descMeta = document.querySelector('meta[name="description"]');
+              if (descMeta) {
+                descMeta.setAttribute('content', description);
+              } else {
+                descMeta = document.createElement('meta');
+                descMeta.setAttribute('name', 'description');
+                descMeta.setAttribute('content', description);
+                document.head.appendChild(descMeta);
+              }
+              
+              // Update OG tags
+              const ogTitle = website.settings?.seo?.title || website.name;
+              let ogTitleMeta = document.querySelector('meta[property="og:title"]');
+              if (ogTitleMeta) {
+                ogTitleMeta.setAttribute('content', ogTitle);
+              } else {
+                ogTitleMeta = document.createElement('meta');
+                ogTitleMeta.setAttribute('property', 'og:title');
+                ogTitleMeta.setAttribute('content', ogTitle);
+                document.head.appendChild(ogTitleMeta);
+              }
+              
+              let ogDescMeta = document.querySelector('meta[property="og:description"]');
+              if (ogDescMeta) {
+                ogDescMeta.setAttribute('content', description);
+              } else {
+                ogDescMeta = document.createElement('meta');
+                ogDescMeta.setAttribute('property', 'og:description');
+                ogDescMeta.setAttribute('content', description);
+                document.head.appendChild(ogDescMeta);
+              }
+              
+              console.log('✅ SEO injected into HTML:', {
+                title: document.title,
+                description: description,
+                ogTitle: ogTitle
+              });
+            }
+          })
+          .catch(error => {
+            console.error('❌ Error loading SEO data:', error);
+          });
+        } else {
+          console.log('🏢 System domain - using default SEO');
+        }
+      })();
+    </script>
+    
     <script type="module" src="/src/main.tsx"></script>
   </head>
   <body>
