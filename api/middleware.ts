@@ -38,7 +38,7 @@ interface SEOData {
   canonical: string;
   robots: string;
   site_name: string;
-  source?: string; // Debug info
+  source?: string;
   debug?: {
     titleSource?: string;
     descSource?: string;
@@ -53,7 +53,6 @@ function extractContentDescription(content: any): string {
   try {
     if (!content || typeof content !== 'object') return '';
     
-    // Handle different content structures
     if (content.sections && Array.isArray(content.sections)) {
       for (const section of content.sections) {
         if (section.type === 'text' && section.content) {
@@ -79,17 +78,14 @@ function extractContentDescription(content: any): string {
 function normalizeImageUrl(imageUrl: string | null | undefined): string | undefined {
   if (!imageUrl) return undefined;
   
-  // Handle relative URLs
   if (imageUrl.startsWith('/')) {
     return `https://ecombuildr.com${imageUrl}`;
   }
   
-  // Handle Cloudinary URLs
   if (imageUrl.includes('cloudinary.com')) {
     return imageUrl;
   }
   
-  // Handle other absolute URLs
   if (imageUrl.startsWith('http')) {
     return imageUrl;
   }
@@ -97,14 +93,118 @@ function normalizeImageUrl(imageUrl: string | null | undefined): string | undefi
   return undefined;
 }
 
-// Helper function to resolve system domain SEO (ecombuildr.com/store/website-slug/page-slug)
+async function resolveSEOData(domain: string, path: string): Promise<SEOData | null> {
+  try {
+    console.log(`🔍 Resolving SEO for ${domain}${path}`);
+    
+    const apexDomain = domain.replace(/^www\./, '');
+    const domainVariants = [domain, apexDomain, `www.${apexDomain}`];
+    const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
+    
+    // Check if this is a system domain (ecombuildr.com with store/funnel paths)
+    const isSystemDomain = domain.includes('ecombuildr.com') && 
+                          (path.startsWith('/store/') || path.startsWith('/funnel/'));
+    
+    if (isSystemDomain) {
+      console.log(`🏠 System domain detected - parsing URL structure`);
+      return await resolveSystemDomainSEO(domain, path, cleanPath);
+    }
+    
+    // Custom domain handling
+    console.log(`🌐 Custom domain detected - using domain connections`);
+    
+    const { data: customDomain } = await supabase
+      .from('custom_domains')
+      .select('id, domain, store_id')
+      .in('domain', domainVariants)
+      .maybeSingle();
+    
+    if (!customDomain) {
+      console.log('❌ No custom domain found');
+      return null;
+    }
+    
+    console.log(`✅ Found custom domain: ${customDomain.domain} -> store ${customDomain.store_id}`);
+    
+    const { data: connections } = await supabase
+      .from('domain_connections')
+      .select('content_type, content_id')
+      .eq('domain_id', customDomain.id);
+    
+    const websiteConnection = connections?.find(c => c.content_type === 'website');
+    const funnelConnection = connections?.find(c => c.content_type === 'funnel');
+    
+    let websiteId: string | null = null;
+    let funnelId: string | null = null;
+    
+    if (websiteConnection) {
+      websiteId = websiteConnection.content_id;
+      console.log(`✅ Found website connection: ${websiteId}`);
+    }
+    
+    if (funnelConnection) {
+      funnelId = funnelConnection.content_id;
+      console.log(`✅ Found funnel connection: ${funnelId}`);
+    }
+    
+    if (!websiteConnection && !funnelConnection) {
+      console.log('⚠️ No domain connections found. Falling back to store content');
+      
+      const { data: storeWebsites } = await supabase
+        .from('websites')
+        .select('id, domain')
+        .eq('store_id', customDomain.store_id)
+        .eq('is_active', true)
+        .eq('is_published', true);
+      
+      if (storeWebsites && storeWebsites.length > 0) {
+        const exactMatch = storeWebsites.find(w => w.domain && w.domain.replace(/^www\./, '') === apexDomain);
+        websiteId = exactMatch?.id || storeWebsites[0].id;
+        console.log(`📦 Using store website fallback: ${websiteId}`);
+      }
+      
+      const { data: storeFunnels } = await supabase
+        .from('funnels')
+        .select('id, domain')
+        .eq('store_id', customDomain.store_id)
+        .eq('is_active', true)
+        .eq('is_published', true);
+      
+      if (storeFunnels && storeFunnels.length > 0) {
+        const exactMatch = storeFunnels.find(f => f.domain && f.domain.replace(/^www\./, '') === apexDomain);
+        funnelId = exactMatch?.id || storeFunnels[0].id;
+        console.log(`📦 Using store funnel fallback: ${funnelId}`);
+      }
+    }
+    
+    if (!websiteId && !funnelId) {
+      console.log('❌ No website or funnel resolved after fallback');
+      return null;
+    }
+    
+    if (funnelId) {
+      console.log(`🎯 Processing funnel connection: ${funnelId}`);
+      return await resolveFunnelSEO(funnelId, cleanPath, domain, path);
+    }
+    
+    if (!websiteId) {
+      console.log('❌ No website ID available');
+      return null;
+    }
+    
+    return await resolveWebsiteHomepageSEO(websiteId, domain, path);
+    
+  } catch (error) {
+    console.error('❌ SEO resolution error:', error);
+    return null;
+  }
+}
+
 async function resolveSystemDomainSEO(domain: string, path: string, cleanPath: string): Promise<SEOData | null> {
   try {
     console.log(`🏠 Resolving system domain SEO for ${path}`);
     
-    // Parse system domain URLs
     if (path.startsWith('/store/')) {
-      // Format: /store/website-slug/page-slug
       const pathParts = cleanPath.split('/');
       if (pathParts.length < 2) {
         console.log('❌ Invalid store URL format');
@@ -116,7 +216,6 @@ async function resolveSystemDomainSEO(domain: string, path: string, cleanPath: s
       
       console.log(`📦 Store URL: website="${websiteSlug}", page="${pageSlug}"`);
       
-      // Find website by slug
       const { data: website } = await supabase
         .from('websites')
         .select('id, name, description, settings')
@@ -132,12 +231,10 @@ async function resolveSystemDomainSEO(domain: string, path: string, cleanPath: s
       
       console.log(`✅ Found website: ${website.name} (${website.id})`);
       
-      // If no page slug, return website homepage
       if (!pageSlug) {
         return await resolveWebsiteHomepageSEO(website.id, domain, path);
       }
       
-      // Find specific page
       const { data: page } = await supabase
         .from('website_pages')
         .select(`
@@ -160,17 +257,14 @@ async function resolveSystemDomainSEO(domain: string, path: string, cleanPath: s
       
       const contentDesc = extractContentDescription(page.content);
       
-      // ✅ PRIORITIZE PAGE SEO - Only fallback to page name if SEO title is empty
       const title = (page.seo_title && page.seo_title.trim()) 
         ? page.seo_title.trim() 
         : `${page.title} - ${website.name}`;
       
-      // ✅ PRIORITIZE PAGE SEO DESCRIPTION - Only fallback if truly empty
       const description = (page.seo_description && page.seo_description.trim())
         ? page.seo_description.trim()
         : (contentDesc || `${page.title} - ${website.name}`);
       
-      // ✅ PRIORITIZE PAGE IMAGES - Only fallback to website if page has no images
       let image = page.social_image_url || page.og_image || page.preview_image_url;
       if (!image) {
         const ws: any = (website as any).settings || {};
@@ -207,7 +301,6 @@ async function resolveSystemDomainSEO(domain: string, path: string, cleanPath: s
     }
     
     if (path.startsWith('/funnel/')) {
-      // Format: /funnel/funnel-id/step-slug
       const pathParts = cleanPath.split('/');
       if (pathParts.length < 2) {
         console.log('❌ Invalid funnel URL format');
@@ -230,7 +323,6 @@ async function resolveSystemDomainSEO(domain: string, path: string, cleanPath: s
   }
 }
 
-// Helper function to resolve funnel SEO
 async function resolveFunnelSEO(funnelId: string, stepSlug: string, domain: string, path: string): Promise<SEOData | null> {
   try {
     console.log(`🎯 Resolving funnel SEO for funnel:${funnelId}, step:${stepSlug}`);
@@ -253,7 +345,6 @@ async function resolveFunnelSEO(funnelId: string, stepSlug: string, domain: stri
       return null;
     }
     
-    // Derive funnel-level SEO from settings JSON
     const fs: any = (funnel as any).settings || {};
     const funnelSeoTitle: string | undefined = (fs.seo && fs.seo.title) || funnel.seo_title || undefined;
     const funnelSeoDescription: string = (fs.seo && fs.seo.description) || funnel.seo_description || (funnel as any).description || `Welcome to ${funnel.name}`;
@@ -264,7 +355,6 @@ async function resolveFunnelSEO(funnelId: string, stepSlug: string, domain: stri
       fs.favicon
     );
     
-    // Check if this is a specific funnel step
     if (stepSlug) {
       const { data: step } = await supabase
         .from('funnel_steps')
@@ -282,17 +372,14 @@ async function resolveFunnelSEO(funnelId: string, stepSlug: string, domain: stri
       if (step) {
         const contentDesc = extractContentDescription(step.content);
         
-        // ✅ PRIORITIZE STEP SEO - Only fallback to step name if SEO title is empty
         const title = (step.seo_title && step.seo_title.trim()) 
           ? step.seo_title.trim() 
           : `${step.name} | ${funnel.name}`;
         
-        // ✅ PRIORITIZE STEP SEO DESCRIPTION - Only fallback if truly empty
         const description = (step.seo_description && step.seo_description.trim())
           ? step.seo_description.trim()
           : (contentDesc || `${step.name} - ${funnel.name}`);
         
-        // ✅ PRIORITIZE STEP IMAGES - Only fallback to funnel if step has no images
         let image = step.social_image_url || step.og_image || step.preview_image_url;
         if (!image) {
           image = funnelImage;
@@ -324,13 +411,10 @@ async function resolveFunnelSEO(funnelId: string, stepSlug: string, domain: stri
       }
     }
     
-    // Funnel homepage (root path or no step found)
-    // ✅ PRIORITIZE FUNNEL SEO - Only fallback to funnel name if SEO title is empty
     const title = (funnelSeoTitle && funnelSeoTitle.trim()) 
       ? funnelSeoTitle.trim() 
       : funnel.name;
     
-    // ✅ PRIORITIZE FUNNEL SEO DESCRIPTION - Only fallback if truly empty
     const description = (funnelSeoDescription && funnelSeoDescription.trim())
       ? funnelSeoDescription.trim()
       : `Sales funnel: ${funnel.name}`;
@@ -351,7 +435,6 @@ async function resolveFunnelSEO(funnelId: string, stepSlug: string, domain: stri
   }
 }
 
-// Helper function to resolve website homepage SEO
 async function resolveWebsiteHomepageSEO(websiteId: string, domain: string, path: string): Promise<SEOData | null> {
   try {
     console.log(`🏠 Resolving website homepage SEO for website:${websiteId}`);
@@ -367,7 +450,6 @@ async function resolveWebsiteHomepageSEO(websiteId: string, domain: string, path
       return null;
     }
     
-    // First try to find the homepage page
     const { data: homepagePage } = await supabase
       .from('website_pages')
       .select(`
@@ -384,17 +466,14 @@ async function resolveWebsiteHomepageSEO(websiteId: string, domain: string, path
     if (homepagePage) {
       const contentDesc = extractContentDescription(homepagePage.content);
       
-      // ✅ PRIORITIZE HOMEPAGE PAGE SEO - Only fallback to page name if SEO title is empty
       const title = (homepagePage.seo_title && homepagePage.seo_title.trim()) 
         ? homepagePage.seo_title.trim() 
         : `${homepagePage.title} - ${website.name}`;
       
-      // ✅ PRIORITIZE HOMEPAGE PAGE SEO DESCRIPTION - Only fallback if truly empty
       const description = (homepagePage.seo_description && homepagePage.seo_description.trim())
         ? homepagePage.seo_description.trim()
         : (contentDesc || `${homepagePage.title} - ${website.name}`);
       
-      // ✅ PRIORITIZE HOMEPAGE PAGE IMAGES - Only fallback to website if page has no images
       let image = homepagePage.social_image_url || homepagePage.og_image || homepagePage.preview_image_url;
       if (!image) {
         const ws: any = (website as any).settings || {};
@@ -430,7 +509,6 @@ async function resolveWebsiteHomepageSEO(websiteId: string, domain: string, path
       };
     }
     
-    // Fallback to website-level SEO
     const ws: any = (website as any).settings || {};
     const websiteSeoTitle: string | undefined = (ws.seo && ws.seo.title) || undefined;
     const websiteSeoDescription: string = (ws.seo && ws.seo.description) || (website as any).description || `Welcome to ${website.name}`;
@@ -440,12 +518,10 @@ async function resolveWebsiteHomepageSEO(websiteId: string, domain: string, path
       ws.favicon
     );
     
-    // ✅ PRIORITIZE WEBSITE SEO - Only fallback to website name if SEO title is empty
     const title = (websiteSeoTitle && websiteSeoTitle.trim()) 
       ? websiteSeoTitle.trim() 
       : website.name;
     
-    // ✅ PRIORITIZE WEBSITE SEO DESCRIPTION - Only fallback if truly empty
     const description = (websiteSeoDescription && websiteSeoDescription.trim())
       ? websiteSeoDescription.trim()
       : `Welcome to ${website.name}`;
@@ -466,124 +542,6 @@ async function resolveWebsiteHomepageSEO(websiteId: string, domain: string, path
   }
 }
 
-// Main SEO data resolution - handles both custom domains and system domains
-async function resolveSEOData(domain: string, path: string): Promise<SEOData | null> {
-  try {
-    console.log(`🔍 Resolving SEO for ${domain}${path}`);
-    
-    // Normalize domain variants
-    const apexDomain = domain.replace(/^www\./, '');
-    const domainVariants = [domain, apexDomain, `www.${apexDomain}`];
-    const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
-    
-    // Check if this is a system domain (ecombuildr.com with store/funnel paths)
-    const isSystemDomain = domain.includes('ecombuildr.com') && 
-                          (path.startsWith('/store/') || path.startsWith('/funnel/'));
-    
-    if (isSystemDomain) {
-      console.log(`🏠 System domain detected - parsing URL structure`);
-      return await resolveSystemDomainSEO(domain, path, cleanPath);
-    }
-    
-    // Custom domain handling
-    console.log(`🌐 Custom domain detected - using domain connections`);
-    
-    // Step 1: Find custom domain mapping  
-    const { data: customDomain } = await supabase
-      .from('custom_domains')
-      .select('id, domain, store_id')
-      .in('domain', domainVariants)
-      .maybeSingle();
-    
-    if (!customDomain) {
-      console.log('❌ No custom domain found');
-      return null;
-    }
-    
-    console.log(`✅ Found custom domain: ${customDomain.domain} -> store ${customDomain.store_id}`);
-    
-    // Step 2: Find ALL connections (website AND funnel)
-    const { data: connections } = await supabase
-      .from('domain_connections')
-      .select('content_type, content_id')
-      .eq('domain_id', customDomain.id);
-    
-    const websiteConnection = connections?.find(c => c.content_type === 'website');
-    const funnelConnection = connections?.find(c => c.content_type === 'funnel');
-    
-    let websiteId: string | null = null;
-    let funnelId: string | null = null;
-    
-    if (websiteConnection) {
-      websiteId = websiteConnection.content_id;
-      console.log(`✅ Found website connection: ${websiteId}`);
-    }
-    
-    if (funnelConnection) {
-      funnelId = funnelConnection.content_id;
-      console.log(`✅ Found funnel connection: ${funnelId}`);
-    }
-    
-    // If no connections found, fallback to store content
-    if (!websiteConnection && !funnelConnection) {
-      console.log('⚠️ No domain connections found. Falling back to store content');
-      
-      // Try to find website by domain match
-      const { data: storeWebsites } = await supabase
-        .from('websites')
-        .select('id, domain')
-        .eq('store_id', customDomain.store_id)
-        .eq('is_active', true)
-        .eq('is_published', true);
-      
-      if (storeWebsites && storeWebsites.length > 0) {
-        const exactMatch = storeWebsites.find(w => w.domain && w.domain.replace(/^www\./, '') === apexDomain);
-        websiteId = exactMatch?.id || storeWebsites[0].id;
-        console.log(`📦 Using store website fallback: ${websiteId}`);
-      }
-      
-      // Try to find funnel by domain match
-      const { data: storeFunnels } = await supabase
-        .from('funnels')
-        .select('id, domain')
-        .eq('store_id', customDomain.store_id)
-        .eq('is_active', true)
-        .eq('is_published', true);
-      
-      if (storeFunnels && storeFunnels.length > 0) {
-        const exactMatch = storeFunnels.find(f => f.domain && f.domain.replace(/^www\./, '') === apexDomain);
-        funnelId = exactMatch?.id || storeFunnels[0].id;
-        console.log(`📦 Using store funnel fallback: ${funnelId}`);
-      }
-    }
-    
-    if (!websiteId && !funnelId) {
-      console.log('❌ No website or funnel resolved after fallback');
-      return null;
-    }
-    
-    // Step 3: Handle funnel connections first (they take priority)
-    if (funnelId) {
-      console.log(`🎯 Processing funnel connection: ${funnelId}`);
-      return await resolveFunnelSEO(funnelId, cleanPath, domain, path);
-    }
-    
-    // Step 4: Handle website connections (if no funnel connection)
-    if (!websiteId) {
-      console.log('❌ No website ID available');
-      return null;
-    }
-    
-    // Use the helper function for website SEO resolution
-    return await resolveWebsiteHomepageSEO(websiteId, domain, path);
-    
-  } catch (error) {
-    console.error('❌ SEO resolution error:', error);
-    return null;
-  }
-}
-
-// Generate complete HTML for crawlers
 function generateHTML(seo: SEOData, url: string): string {
   const title = seo.title;
   const description = seo.description;
