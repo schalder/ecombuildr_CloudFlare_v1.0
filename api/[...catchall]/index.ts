@@ -629,10 +629,20 @@ export default async function handler(request: Request): Promise<Response> {
   const pathname = url.pathname;
   const traceId = crypto.randomUUID();
   
-  console.log(`[${traceId}] 🌐 Custom Domain Request: ${domain}${pathname}`);
+  console.log(`[${traceId}] 🌐 Request: ${domain}${pathname}`);
   
-  // This Edge Function only handles custom domains (system domains use static files)
-  console.log(`🏠 Custom domain detected - generating dynamic HTML with SEO`);
+  // Detect if this is a custom domain (not ecombuildr.com or localhost)
+  const isCustomDomain = !domain.includes('ecombuildr.com') && 
+                        !domain.includes('localhost') && 
+                        !domain.includes('lovable.dev') &&
+                        !domain.includes('lovable.app') &&
+                        !domain.includes('lovableproject.com');
+  
+  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain}`);
+  
+  // For custom domains, generate dynamic HTML with correct SEO
+  if (isCustomDomain) {
+    console.log(`🏠 Custom domain detected - generating dynamic HTML with SEO`);
   
   try {
     const seoData = await resolveSEOData(domain, pathname);
@@ -685,6 +695,93 @@ export default async function handler(request: Request): Promise<Response> {
     console.error('💥 SEO Handler error:', error);
     return new Response('Internal Server Error', { status: 500 });
   }
+  }
+  
+  // For system domains, serve the standard eComBuildr React app
+  console.log('🏢 System domain - serving eComBuildr React app');
+  
+  const systemHtml = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#10B981" />
+    
+    <!-- eComBuildr App SEO Meta Tags -->
+    <title>EcomBuildr - Build Beautiful Online Stores & Funnels</title>
+    <meta name="description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta name="keywords" content="website builder, ecommerce, online store, sales funnel, drag and drop" />
+    <meta name="author" content="EcomBuildr" />
+    
+    <!-- eComBuildr App Open Graph Meta Tags -->
+    <meta property="og:title" content="EcomBuildr - Build Beautiful Online Stores & Funnels" />
+    <meta property="og:description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://res.cloudinary.com/dtkeyccga/image/upload/v1706878427/og-image_dcvqpc.png" />
+    <meta property="og:site_name" content="EcomBuildr" />
+    <meta property="og:locale" content="en_US" />
+    
+    <!-- eComBuildr App Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="EcomBuildr - Build Beautiful Online Stores & Funnels" />
+    <meta name="twitter:description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
+    <meta name="twitter:image" content="https://res.cloudinary.com/dtkeyccga/image/upload/v1706878427/og-image_dcvqpc.png" />
+    
+    <!-- Performance optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+    
+    <!-- Critical resource hints -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    
+    <!-- Critical CSS for image optimization -->
+    <style>
+      .image-optimization {
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+      }
+    </style>
+    
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    
+    <!-- React App Loading -->
+    <script type="module" crossorigin src="/assets/index.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index.css">
+  </head>
+  <body>
+    <div id="root">
+      <!-- Fallback content while React loads -->
+      <div style="padding: 20px; text-align: center; font-family: Inter, sans-serif;">
+        <h1>EcomBuildr - Build Beautiful Online Stores & Funnels</h1>
+        <p>Create stunning websites, online stores, and sales funnels with EcomBuildr.</p>
+        <p>Loading...</p>
+      </div>
+    </div>
+    <script>
+      // React will replace the fallback content
+      console.log('eComBuildr app loading...');
+    </script>
+  </body>
+</html>`;
+  
+  return new Response(systemHtml, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=0, s-maxage=86400',
+      'X-Trace-Id': traceId,
+      'X-Served-By': 'system-app'
+    },
+  });
 }
 
 export const config = {
