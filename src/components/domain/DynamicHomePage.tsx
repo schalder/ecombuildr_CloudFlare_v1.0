@@ -135,7 +135,7 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
       setSEO({
         title: homePage.seo_title || homePage.title || websiteMeta.name,
         description: homePage.seo_description || `Visit ${websiteMeta.name}`,
-        image: homePage.og_image || homePage.social_image_url || homePage.preview_image_url,
+        image: homePage.social_image_url || homePage.og_image || homePage.preview_image_url,
         keywords: homePage.seo_keywords || [],
         canonical,
         siteName: websiteMeta.name,
