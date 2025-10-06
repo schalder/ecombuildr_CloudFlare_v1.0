@@ -1,14 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server';
-
-export function middleware(request: NextRequest) {
-  const url = request.nextUrl;
-  const domain = request.headers.get('host') || '';
+export default async function middleware(request: Request) {
+  const url = new URL(request.url);
+  const domain = url.hostname;
   
   console.log(`🧪 VERCEL MIDDLEWARE: ${domain}${url.pathname}`);
   
   // If this is shop.ghlmax.com, return a test response
   if (domain === 'shop.ghlmax.com') {
-    return new NextResponse(`
+    return new Response(`
       <!DOCTYPE html>
       <html>
       <head>
@@ -23,7 +21,7 @@ export function middleware(request: NextRequest) {
       </body>
       </html>
     `, {
-      headers: {
+          headers: {
         'Content-Type': 'text/html',
         'X-Test': 'vercel-middleware-working'
       }
@@ -31,7 +29,7 @@ export function middleware(request: NextRequest) {
   }
   
   // For all other requests, continue normally
-  return NextResponse.next();
+  return new Response(null);
 }
 
 export const config = {
