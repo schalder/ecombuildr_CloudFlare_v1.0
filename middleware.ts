@@ -685,7 +685,32 @@ export default async function handler(request: Request): Promise<Response> {
   const pathname = url.pathname;
   const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
   
-  console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
+  console.log(`[${traceId}] 🌐 MIDDLEWARE TRIGGERED: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
+  
+  // TEST: If this is shop.ghlmax.com, return a test response to verify middleware is working
+  if (domain === 'shop.ghlmax.com') {
+    console.log(`[${traceId}] 🧪 TEST: Custom domain detected - returning test SEO`);
+    return new Response(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>TEST: Custom SEO for ${domain}</title>
+        <meta name="description" content="This is a test to verify middleware is working for custom domains" />
+      </head>
+      <body>
+        <h1>Middleware Test</h1>
+        <p>If you see this, the middleware is working!</p>
+        <p>Domain: ${domain}</p>
+        <p>Path: ${pathname}</p>
+      </body>
+      </html>
+    `, {
+      headers: {
+        'Content-Type': 'text/html',
+        'X-Test': 'middleware-working'
+      }
+    });
+  }
   
   // Detect if this is a custom domain (not ecombuildr.com or localhost)
   const isCustomDomain = !domain.includes('ecombuildr.com') && 
