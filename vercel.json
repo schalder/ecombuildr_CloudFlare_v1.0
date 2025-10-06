@@ -10,14 +10,14 @@
     }
   ],
   "functions": {
-    "api/[...catchall]/index.ts": {
+    "api/catchall/index.ts": {
       "runtime": "edge"
     }
   },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/api/[...catchall]",
+      "destination": "/api/catchall",
       "has": [
         {
           "type": "host",
