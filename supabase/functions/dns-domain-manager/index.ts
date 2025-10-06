@@ -286,8 +286,9 @@ Deno.serve(async (req) => {
           console.log(`VERCEL_PROJECT_ID value: ${vercelProjectId}`)
           
           if (!vercelToken || !vercelProjectId) {
-            throw new Error('Vercel configuration missing - VERCEL_TOKEN or VERCEL_PROJECT_ID not set')
-          }
+            console.log('Vercel environment variables not configured, using generic CNAME')
+            vercelCnameTarget = 'cname.vercel-dns.com'
+          } else {
 
           console.log(`Adding domain ${domain} to Vercel project ${vercelProjectId}`)
 
@@ -330,11 +331,14 @@ Deno.serve(async (req) => {
             console.log(`Vercel CNAME target for ${domain}:`, vercelCnameTarget)
           } else {
             console.error(`Failed to get domain info for ${domain}: ${domainInfoResponse.status}`)
-            throw new Error(`Failed to get Vercel CNAME target for ${domain}`)
+            vercelCnameTarget = 'cname.vercel-dns.com'
+            console.log(`Using fallback CNAME target for ${domain}:`, vercelCnameTarget)
+          }
           }
         } catch (vercelError) {
           console.error('Failed to add domain to Vercel:', vercelError)
-          throw new Error(`Failed to add domain to Vercel: ${vercelError.message}`)
+          vercelCnameTarget = 'cname.vercel-dns.com'
+          console.log(`Using fallback CNAME target for ${domain}:`, vercelCnameTarget)
         }
         
         // Insert new domain to database
