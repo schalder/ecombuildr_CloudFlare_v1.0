@@ -16,14 +16,9 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/api/seo"
+      "destination": "/api/[...catchall]"
     }
   ],
-  "functions": {
-    "api/seo/index.ts": {
-      "runtime": "edge"
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",

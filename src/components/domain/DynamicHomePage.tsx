@@ -86,7 +86,7 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         // Fetch website meta for currency and SEO
         const { data: websiteData } = await supabase
           .from('websites')
-          .select('name, settings, domain')
+          .select('name, settings, domain, favicon')
           .eq('id', websiteId)
           .maybeSingle();
         
@@ -106,8 +106,21 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
     fetchHomePage();
   }, [websiteId]);
 
-  // SEO is now handled by server-side middleware for custom domains
-  // No client-side SEO needed here to avoid conflicts
+  // Set SEO for custom domains (client-side fallback)
+  useEffect(() => {
+    if (homePage && websiteMeta) {
+      const canonical = buildCanonical('/', websiteMeta.domain);
+      setSEO({
+        title: homePage.seo_title || homePage.title || websiteMeta.name,
+        description: homePage.seo_description || `Visit ${websiteMeta.name}`,
+        image: homePage.og_image,
+        keywords: homePage.seo_keywords || [],
+        canonical,
+        siteName: websiteMeta.name,
+        favicon: websiteMeta.favicon
+      });
+    }
+  }, [homePage, websiteMeta]);
 
   // Show loading state
   if (loading) {

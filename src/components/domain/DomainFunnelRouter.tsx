@@ -7,13 +7,13 @@ import { StorefrontPageBuilder } from '@/components/storefront/renderer/Storefro
 import { ScriptManager } from '@/components/storefront/optimized/ScriptManager';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
-import { setSEO } from '@/lib/seo';
 import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
 import { useStore } from '@/contexts/StoreContext';
 import { optimizedFunnelStepQuery } from '@/components/storefront/optimized/DataOptimizer';
 import { PerformanceMonitor } from '@/components/storefront/optimized/PerformanceMonitor';
 import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
+import { setSEO, buildCanonical } from '@/lib/seo';
 import { PaymentProcessing } from '@/pages/storefront/PaymentProcessing';
 import { OrderConfirmation } from '@/pages/storefront/OrderConfirmation';
 
@@ -124,8 +124,21 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
     }
   }, [funnel.id, stepSlug, isPreview]);
 
-  // SEO is now handled by server-side middleware for custom domains
-  // No client-side SEO needed here to avoid conflicts
+  // Set SEO for funnel steps (client-side fallback)
+  useEffect(() => {
+    if (step && funnel) {
+      const canonical = buildCanonical(`/${stepSlug}`, funnel.canonical_domain || funnel.domain);
+      setSEO({
+        title: step.seo_title || step.title || funnel.name,
+        description: step.seo_description || `Visit ${funnel.name}`,
+        image: step.og_image || funnel.og_image,
+        keywords: step.seo_keywords || funnel.seo_keywords || [],
+        canonical,
+        siteName: funnel.name,
+        favicon: funnel.favicon
+      });
+    }
+  }, [step, funnel, stepSlug]);
 
   if (loading) {
     return (
