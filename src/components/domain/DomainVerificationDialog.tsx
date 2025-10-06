@@ -39,30 +39,30 @@ export const DomainVerificationDialog: React.FC<DomainVerificationDialogProps> =
     
     setIsLoadingCname(true);
     try {
-      // First, add the domain to Vercel project
-      const { data: addData, error: addError } = await supabase.functions.invoke('dns-domain-manager', {
+      // Get the CNAME target for this domain
+      const { data: cnameData, error: cnameError } = await supabase.functions.invoke('dns-domain-manager', {
         body: {
-          action: 'add_domain',
+          action: 'get_vercel_cname',
           domain: domainName,
           storeId: store.id
         }
       });
 
-      if (addError) throw addError;
+      if (cnameError) throw cnameError;
       
-      console.log('Edge Function response:', addData);
+      console.log('CNAME response:', cnameData);
       
-      if (addData.success) {
-        // Always set the CNAME target, whether it's specific or generic
-        const cnameTarget = addData.vercelCnameTarget || 'cname.vercel-dns.com';
+      if (cnameData.success) {
+        // Use the CNAME target from the Edge Function response
+        const cnameTarget = cnameData.cnameTarget || 'cname.vercel-dns.com';
         setVercelCnameTarget(cnameTarget);
-        console.log(`Domain ${domainName} added with CNAME:`, cnameTarget);
+        console.log(`Domain ${domainName} CNAME target:`, cnameTarget);
       } else {
-        console.error('Edge Function returned success: false', addData);
+        console.error('Edge Function returned success: false', cnameData);
         setVercelCnameTarget('cname.vercel-dns.com');
       }
     } catch (error) {
-      console.error('Failed to add domain to Vercel:', error);
+      console.error('Failed to get Vercel CNAME:', error);
       setVercelCnameTarget('cname.vercel-dns.com');
     } finally {
       setIsLoadingCname(false);
