@@ -289,51 +289,50 @@ Deno.serve(async (req) => {
             console.log('Vercel environment variables not configured, using generic CNAME')
             vercelCnameTarget = 'cname.vercel-dns.com'
           } else {
+            console.log(`Adding domain ${domain} to Vercel project ${vercelProjectId}`)
 
-          console.log(`Adding domain ${domain} to Vercel project ${vercelProjectId}`)
-
-          // Add domain to Vercel project using direct API call
-          const vercelResponse = await fetch(`https://api.vercel.com/v10/projects/${vercelProjectId}/domains`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${vercelToken}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              name: domain
+            // Add domain to Vercel project using direct API call
+            const vercelResponse = await fetch(`https://api.vercel.com/v10/projects/${vercelProjectId}/domains`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${vercelToken}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                name: domain
+              })
             })
-          })
 
-          console.log(`Vercel API response status: ${vercelResponse.status}`)
-          console.log(`Vercel API response headers:`, Object.fromEntries(vercelResponse.headers.entries()))
+            console.log(`Vercel API response status: ${vercelResponse.status}`)
+            console.log(`Vercel API response headers:`, Object.fromEntries(vercelResponse.headers.entries()))
 
-          if (!vercelResponse.ok) {
-            const errorText = await vercelResponse.text()
-            console.error('Vercel API error:', errorText)
-            throw new Error(`Vercel API error: ${vercelResponse.status} - ${errorText}`)
-          }
-
-          const vercelData = await vercelResponse.json()
-          console.log(`Domain ${domain} added to Vercel successfully:`, vercelData)
-
-          // Get domain info to get the specific CNAME target
-          const domainInfoResponse = await fetch(`https://api.vercel.com/v10/projects/${vercelProjectId}/domains/${domain}`, {
-            headers: {
-              'Authorization': `Bearer ${vercelToken}`
+            if (!vercelResponse.ok) {
+              const errorText = await vercelResponse.text()
+              console.error('Vercel API error:', errorText)
+              throw new Error(`Vercel API error: ${vercelResponse.status} - ${errorText}`)
             }
-          })
 
-          console.log(`Domain info response status: ${domainInfoResponse.status}`)
+            const vercelData = await vercelResponse.json()
+            console.log(`Domain ${domain} added to Vercel successfully:`, vercelData)
 
-          if (domainInfoResponse.ok) {
-            const domainInfo = await domainInfoResponse.json()
-            vercelCnameTarget = domainInfo.cnameTarget
-            console.log(`Vercel CNAME target for ${domain}:`, vercelCnameTarget)
-          } else {
-            console.error(`Failed to get domain info for ${domain}: ${domainInfoResponse.status}`)
-            vercelCnameTarget = 'cname.vercel-dns.com'
-            console.log(`Using fallback CNAME target for ${domain}:`, vercelCnameTarget)
-          }
+            // Get domain info to get the specific CNAME target
+            const domainInfoResponse = await fetch(`https://api.vercel.com/v10/projects/${vercelProjectId}/domains/${domain}`, {
+              headers: {
+                'Authorization': `Bearer ${vercelToken}`
+              }
+            })
+
+            console.log(`Domain info response status: ${domainInfoResponse.status}`)
+
+            if (domainInfoResponse.ok) {
+              const domainInfo = await domainInfoResponse.json()
+              vercelCnameTarget = domainInfo.cnameTarget
+              console.log(`Vercel CNAME target for ${domain}:`, vercelCnameTarget)
+            } else {
+              console.error(`Failed to get domain info for ${domain}: ${domainInfoResponse.status}`)
+              vercelCnameTarget = 'cname.vercel-dns.com'
+              console.log(`Using fallback CNAME target for ${domain}:`, vercelCnameTarget)
+            }
           }
         } catch (vercelError) {
           console.error('Failed to add domain to Vercel:', vercelError)

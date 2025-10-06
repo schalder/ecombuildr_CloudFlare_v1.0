@@ -50,15 +50,16 @@ export const DomainVerificationDialog: React.FC<DomainVerificationDialogProps> =
 
       if (addError) throw addError;
       
-      if (addData.success && addData.vercelCnameTarget) {
-        setVercelCnameTarget(addData.vercelCnameTarget);
-        console.log(`Domain ${domainName} added to Vercel with CNAME:`, addData.vercelCnameTarget);
+      if (addData.success) {
+        // Always set the CNAME target, whether it's specific or generic
+        setVercelCnameTarget(addData.vercelCnameTarget || 'cname.vercel-dns.com');
+        console.log(`Domain ${domainName} added with CNAME:`, addData.vercelCnameTarget || 'cname.vercel-dns.com');
       } else {
-        setVercelCnameTarget(null);
+        setVercelCnameTarget('cname.vercel-dns.com');
       }
     } catch (error) {
       console.error('Failed to add domain to Vercel:', error);
-      setVercelCnameTarget(null);
+      setVercelCnameTarget('cname.vercel-dns.com');
     } finally {
       setIsLoadingCname(false);
     }
