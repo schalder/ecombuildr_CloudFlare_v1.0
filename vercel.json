@@ -26,10 +26,10 @@
       "runtime": "nodejs18.x"
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/((?!assets|favicon\\.ico|robots\\.txt|.*\\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)).*)",
-      "destination": "/api/[...catchall]",
+      "src": "/((?!assets|favicon\\.ico|robots\\.txt|.*\\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)).*)",
+      "dest": "/api/[...catchall]",
       "has": [
         {
           "type": "host",
