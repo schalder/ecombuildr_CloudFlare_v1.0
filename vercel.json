@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/[...catchall]/index.ts": {
+      "runtime": "edge"
+    }
+  },
   "builds": [
     {
       "src": "package.json",
@@ -7,10 +12,6 @@
       "config": {
         "distDir": "dist"
       }
-    },
-    {
-      "src": "api/[...catchall]/index.ts",
-      "use": "@vercel/edge"
     }
   ],
   "rewrites": [
@@ -19,7 +20,7 @@
       "destination": "/api/$1"
     },
     {
-      "source": "/((?!assets|favicon\\.ico|robots\\.txt|.*\\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)).*)",
+      "source": "/(.*)",
       "destination": "/api/[...catchall]"
     }
   ],
