@@ -1,10 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "api/[...catchall]/index.ts": {
-      "runtime": "edge"
-    }
-  },
   "builds": [
     {
       "src": "package.json",
@@ -12,6 +7,10 @@
       "config": {
         "distDir": "dist"
       }
+    },
+    {
+      "src": "api/[...catchall]/index.ts",
+      "use": "@vercel/edge"
     }
   ],
   "rewrites": [
