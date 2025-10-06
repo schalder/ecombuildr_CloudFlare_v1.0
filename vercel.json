@@ -11,8 +11,14 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!assets|favicon\\.ico|robots\\.txt|.*\\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot|ico)).*)",
-      "destination": "/api/[...catchall]"
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?!.*ecombuildr\\.com$).*"
+        }
+      ]
     }
   ]
 }
