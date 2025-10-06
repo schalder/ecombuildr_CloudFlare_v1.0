@@ -7,7 +7,7 @@ const corsHeaders = {
 }
 
 interface DomainRequest {
-  action: 'verify' | 'check_ssl' | 'pre_verify' | 'add_domain' | 'get_vercel_cname' | 'add_to_vercel' | 'test_vercel_connection'
+  action: 'verify' | 'check_ssl' | 'pre_verify' | 'add_domain' | 'get_vercel_cname' | 'add_to_vercel' | 'test_vercel_connection' | 'remove_domain'
   domain: string
   storeId: string
   isDnsVerified?: boolean
@@ -598,6 +598,65 @@ Deno.serve(async (req) => {
             error: vercelError.message,
             message: 'Vercel connection failed'
           }
+        }
+        break
+
+      case 'remove_domain':
+        // Remove domain from both Vercel and database
+        try {
+          const vercelToken = Deno.env.get('VERCEL_TOKEN')
+          const vercelProjectId = Deno.env.get('VERCEL_PROJECT_ID')
+          
+          console.log(`Attempting to remove domain ${domain} from Vercel project ${vercelProjectId}`)
+          
+          // First, try to remove from Vercel (if credentials are available)
+          let vercelRemoved = false
+          if (vercelToken && vercelProjectId) {
+            try {
+              const deleteResponse = await fetch(`https://api.vercel.com/v10/projects/${vercelProjectId}/domains/${domain}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${vercelToken}`
+                }
+              })
+              
+              if (deleteResponse.ok) {
+                vercelRemoved = true
+                console.log(`Domain ${domain} removed from Vercel successfully`)
+              } else {
+                const errorText = await deleteResponse.text()
+                console.log(`Vercel domain removal failed (non-blocking): ${deleteResponse.status} - ${errorText}`)
+              }
+            } catch (vercelError) {
+              console.log('Vercel domain removal failed (non-blocking):', vercelError.message)
+            }
+          } else {
+            console.log('Vercel configuration missing - skipping Vercel removal')
+          }
+          
+          // Remove from database (this should always succeed)
+          const { error: deleteError } = await supabase
+            .from('custom_domains')
+            .delete()
+            .eq('domain', domain)
+            .eq('store_id', storeId)
+          
+          if (deleteError) {
+            console.error('Failed to remove domain from database:', deleteError)
+            throw new Error(`Failed to remove domain from database: ${deleteError.message}`)
+          }
+          
+          console.log(`Domain ${domain} removed from database successfully`)
+          
+          result = {
+            success: true,
+            message: `Domain ${domain} removed successfully`,
+            vercelRemoved,
+            databaseRemoved: true
+          }
+        } catch (error) {
+          console.error('Domain removal failed:', error)
+          throw new Error(`Failed to remove domain: ${error.message}`)
         }
         break
 

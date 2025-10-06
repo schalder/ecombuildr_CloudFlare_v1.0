@@ -200,17 +200,48 @@ export const useDomainManagement = () => {
   };
 
   const removeDomain = async (domainId: string): Promise<void> => {
+    if (!store?.id) throw new Error('No store found');
+
+    // Get domain info before removal
+    const domain = domains.find(d => d.id === domainId);
+    if (!domain) throw new Error('Domain not found');
+
     try {
-      const { error } = await supabase
-        .from('custom_domains')
-        .delete()
-        .eq('id', domainId);
+      // Call Edge Function to remove domain from both Vercel and database
+      const { data, error } = await supabase.functions.invoke('dns-domain-manager', {
+        body: {
+          action: 'remove_domain',
+          domain: domain.domain,
+          storeId: store.id
+        }
+      });
 
       if (error) throw error;
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to remove domain');
+      }
+
+      console.log('Domain removal result:', data);
+      
+      // Show success message with details
+      const message = data.vercelRemoved 
+        ? `Domain ${domain.domain} removed from both Vercel and database successfully`
+        : `Domain ${domain.domain} removed from database successfully (Vercel removal skipped)`;
+      
+      toast({
+        title: "Domain Removed",
+        description: message
+      });
       
       refetch();
     } catch (error) {
       console.error('Error removing domain:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to remove domain",
+        variant: "destructive"
+      });
       throw error;
     }
   };
