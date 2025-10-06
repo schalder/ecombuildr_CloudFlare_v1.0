@@ -132,7 +132,7 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
       console.log('📊 Full homePage object:', homePage);
       console.log('📊 Full websiteMeta object:', websiteMeta);
       
-      setSEO({
+      const seoData = {
         title: homePage.seo_title || homePage.title || websiteMeta.name,
         description: homePage.seo_description || `Visit ${websiteMeta.name}`,
         image: homePage.social_image_url || homePage.preview_image_url,
@@ -140,7 +140,11 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         canonical,
         siteName: websiteMeta.name,
         favicon: favicon
-      });
+      };
+      
+      console.log('🚀 Calling setSEO with:', seoData);
+      setSEO(seoData);
+      console.log('✅ setSEO called successfully');
     }
   }, [homePage, websiteMeta]);
 
