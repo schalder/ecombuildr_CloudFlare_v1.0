@@ -128,14 +128,25 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
   useEffect(() => {
     if (step && funnel) {
       const canonical = buildCanonical(`/${stepSlug}`, funnel.canonical_domain || funnel.domain);
+      
+      console.log('🔍 Setting SEO for funnel step:', {
+        stepSeoTitle: step.seo_title,
+        stepTitle: step.title,
+        stepSeoDescription: step.seo_description,
+        stepOgImage: step.og_image,
+        stepSocialImage: step.social_image_url,
+        stepKeywords: step.seo_keywords,
+        funnelName: funnel.name
+      });
+      
       setSEO({
         title: step.seo_title || step.title || funnel.name,
         description: step.seo_description || `Visit ${funnel.name}`,
-        image: step.og_image || funnel.og_image,
+        image: step.og_image || step.social_image_url || step.preview_image_url || funnel.og_image,
         keywords: step.seo_keywords || funnel.seo_keywords || [],
         canonical,
         siteName: funnel.name,
-        favicon: funnel.favicon
+        favicon: funnel.settings?.branding?.favicon || funnel.settings?.favicon
       });
     }
   }, [step, funnel, stepSlug]);

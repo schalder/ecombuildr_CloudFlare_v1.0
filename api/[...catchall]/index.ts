@@ -182,7 +182,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       return null;
     }
     
-    // Derive website-level SEO from settings JSON
+    // Get website-level SEO from settings JSON
     const ws: any = (website as any).settings || {};
     const websiteSeoTitle: string | undefined = (ws.seo && ws.seo.title) || undefined;
     const websiteSeoDescription: string = (ws.seo && ws.seo.description) || (website as any).description || `Welcome to ${website.name}`;

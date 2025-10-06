@@ -115,10 +115,20 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
     if (homePage && websiteMeta) {
       const canonical = buildCanonical('/', websiteMeta.domain);
       const favicon = websiteMeta.settings?.branding?.favicon || websiteMeta.settings?.favicon;
+      
+      console.log('🔍 Setting SEO for homepage:', {
+        homePageSeoTitle: homePage.seo_title,
+        homePageTitle: homePage.title,
+        homePageSeoDescription: homePage.seo_description,
+        homePageOgImage: homePage.og_image,
+        homePageKeywords: homePage.seo_keywords,
+        websiteName: websiteMeta.name
+      });
+      
       setSEO({
         title: homePage.seo_title || homePage.title || websiteMeta.name,
         description: homePage.seo_description || `Visit ${websiteMeta.name}`,
-        image: homePage.og_image,
+        image: homePage.og_image || homePage.social_image_url || homePage.preview_image_url,
         keywords: homePage.seo_keywords || [],
         canonical,
         siteName: websiteMeta.name,
