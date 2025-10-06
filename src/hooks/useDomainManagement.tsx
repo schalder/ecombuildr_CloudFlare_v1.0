@@ -17,6 +17,7 @@ interface CustomDomain {
   last_checked_at?: string;
   dns_verified_at?: string;
   verification_attempts: number;
+  cname_target?: string;
 }
 
 interface DomainConnection {
