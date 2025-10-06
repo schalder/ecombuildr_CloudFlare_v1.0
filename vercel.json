@@ -10,7 +10,7 @@
     },
     {
       "src": "api/[...catchall]/index.ts",
-      "use": "@vercel/edge"
+      "use": "@vercel/node"
     }
   ],
   "rewrites": [
