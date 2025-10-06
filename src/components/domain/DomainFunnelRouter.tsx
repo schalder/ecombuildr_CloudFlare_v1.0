@@ -124,37 +124,8 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
     }
   }, [funnel.id, stepSlug, isPreview]);
 
-  // SEO management - using only step-level SEO data
-  useEffect(() => {
-    if (!step || !funnel) return;
-
-    // Use only step-level SEO - no funnel fallbacks
-    const title = step.seo_title || `${step.title} - ${funnel.name}`;
-    const description = step.seo_description;
-    const image = step.social_image_url || step.og_image;
-    const canonical = step.canonical_url;
-    const keywords = step.seo_keywords || [];
-    const author = step.meta_author;
-    const robots = step.meta_robots || 'index, follow';
-    const languageCode = step.language_code || 'en';
-    const customMetaTags = Object.entries((step.custom_meta_tags as Record<string, string>) || {}).map(([name, content]) => ({ name, content }));
-
-    setSEO({
-      title: title || undefined,
-      description,
-      image,
-      socialImageUrl: step.social_image_url,
-      keywords,
-      canonical,
-      robots,
-      author,
-      languageCode,
-      customMetaTags,
-      siteName: funnel.name,
-      ogType: 'website',
-      favicon: funnel?.settings?.favicon_url || store?.favicon_url,
-    });
-  }, [step, funnel, store]);
+  // SEO is now handled by server-side middleware for custom domains
+  // No client-side SEO needed here to avoid conflicts
 
   if (loading) {
     return (

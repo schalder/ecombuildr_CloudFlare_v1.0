@@ -667,9 +667,9 @@ export default async function handler(request: Request): Promise<Response> {
   
   console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | Social Bot: ${isSocialBot}`);
   
-  // For custom domains, always handle social crawlers with SEO
-  if (isCustomDomain && isSocialBot) {
-    console.log(`🤖 Social crawler on custom domain - generating SEO HTML`);
+  // For custom domains, provide SEO for ALL visitors (not just social crawlers)
+  if (isCustomDomain) {
+    console.log(`🌐 Custom domain request - generating SEO HTML for ${isSocialBot ? 'social crawler' : 'regular visitor'}`);
     
     try {
       const seoData = await resolveSEOData(domain, pathname);
@@ -730,8 +730,8 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
   
-  // For non-social crawlers or system domains, pass through
-  console.log('👤 Non-social crawler or system domain - passing through');
+  // For system domains (ecombuildr.com, localhost), pass through
+  console.log('🏠 System domain - passing through to React app');
   return new Response(null, { status: 200 });
 }
 

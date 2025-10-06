@@ -106,24 +106,8 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
     fetchHomePage();
   }, [websiteId]);
 
-  // Set SEO when home page data is available
-  useEffect(() => {
-    if (homePage && websiteMeta) {
-      const seoData = {
-        title: homePage.seo_title || homePage.title,
-        description: homePage.seo_description || '',
-        image: homePage.og_image || homePage.social_image_url,
-        url: buildCanonical(websiteMeta.domain || ''),
-        keywords: homePage.seo_keywords,
-        author: homePage.meta_author,
-        robots: homePage.meta_robots,
-        language: homePage.language_code,
-        customTags: homePage.custom_meta_tags
-      };
-      
-      setSEO(seoData);
-    }
-  }, [homePage, websiteMeta]);
+  // SEO is now handled by server-side middleware for custom domains
+  // No client-side SEO needed here to avoid conflicts
 
   // Show loading state
   if (loading) {
