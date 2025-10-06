@@ -597,4 +597,4 @@ export default async function handler(request: Request): Promise<Response> {
 
 export const config = {
   runtime: 'edge',
-};
+};// Force deployment Mon Oct  6 07:41:59 +06 2025
