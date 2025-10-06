@@ -13,8 +13,17 @@
     {
       "source": "/api/(.*)",
       "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/seo"
     }
   ],
+  "functions": {
+    "api/seo/index.ts": {
+      "runtime": "edge"
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
