@@ -785,4 +785,6 @@ export default async function handler(request: Request): Promise<Response> {
   });
 }
 
-// Using Node.js runtime for better compatibility
+export const config = {
+  runtime: 'edge',
+};
