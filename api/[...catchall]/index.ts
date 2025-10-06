@@ -5,17 +5,30 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Social media crawler detection
-const SOCIAL_CRAWLERS = [
+// Enhanced crawler detection for ALL crawlers
+const ALL_CRAWLERS = [
+  // Social Media Crawlers
   'facebookexternalhit', 'Twitterbot', 'LinkedInBot', 'WhatsApp', 'Slackbot',
   'DiscordBot', 'TelegramBot', 'SkypeUriPreview', 'facebookcatalog', 
-  'facebookplatform', 'Facebot', 'FacebookBot', 'Googlebot', 'Bingbot',
-  'bot', 'crawler', 'spider'
+  'facebookplatform', 'Facebot', 'FacebookBot',
+  
+  // Search Engine Crawlers
+  'Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider', 'YandexBot',
+  'Applebot', 'ia_archiver', 'archive.org_bot',
+  
+  // General Bot Patterns
+  'bot', 'crawler', 'spider', 'scraper', 'indexer', 'fetcher',
+  
+  // SEO Tools
+  'AhrefsBot', 'MJ12bot', 'DotBot', 'SemrushBot', 'MegaIndex',
+  
+  // Analytics & Monitoring
+  'UptimeRobot', 'Pingdom', 'GTmetrix', 'PageSpeed', 'Lighthouse'
 ];
 
-function isSocialCrawler(userAgent: string): boolean {
+function isCrawler(userAgent: string): boolean {
   const ua = userAgent.toLowerCase();
-  return SOCIAL_CRAWLERS.some(crawler => ua.includes(crawler.toLowerCase()));
+  return ALL_CRAWLERS.some(crawler => ua.includes(crawler.toLowerCase()));
 }
 
 interface SEOData {
@@ -344,7 +357,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
   }
 }
 
-// Generate complete HTML for crawlers
+// Generate complete HTML for crawlers with React app integration
 function generateHTML(seo: SEOData, url: string): string {
   const title = seo.title;
   const description = seo.description;
@@ -408,19 +421,25 @@ function generateHTML(seo: SEOData, url: string): string {
     }
   }
   </script>
+  
+  <!-- React App Loading -->
+  <script type="module" crossorigin src="/assets/index.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index.css">
 </head>
 <body>
   <div id="root">
+    <!-- Fallback content for crawlers -->
     <h1>${title}</h1>
     <p>${description}</p>
-    <p>Please enable JavaScript to view the full content.</p>
-    <script>
-      // Redirect to React app after a short delay for crawlers that execute JS
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    </script>
+    <p>Loading...</p>
   </div>
+  <script>
+    // For crawlers that execute JS, let React take over
+    if (typeof window !== 'undefined') {
+      // React will replace this content
+      console.log('Crawler detected - React app will load');
+    }
+  </script>
 </body>
 </html>`;
 }
@@ -441,14 +460,14 @@ export default async function handler(request: Request): Promise<Response> {
                         !domain.includes('lovable.app') &&
                         !domain.includes('lovableproject.com');
   
-  // Check if this is a social crawler
-  const isSocialBot = isSocialCrawler(userAgent);
+  // Check if this is any crawler
+  const isBot = isCrawler(userAgent);
   
-  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | Social Bot: ${isSocialBot}`);
+  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | Crawler: ${isBot}`);
   
-  // For custom domains, always handle social crawlers with SEO
-  if (isCustomDomain && isSocialBot) {
-    console.log(`🤖 Social crawler on custom domain - generating SEO HTML`);
+  // For custom domains, always handle ALL crawlers with SEO
+  if (isCustomDomain && isBot) {
+    console.log(`🤖 Crawler detected on custom domain - generating dynamic SEO HTML`);
     
     try {
       const seoData = await resolveSEOData(domain, pathname);
@@ -505,8 +524,8 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
   
-  // For non-social crawlers or system domains, serve the React app
-  console.log('👤 Non-social crawler or system domain - serving React app');
+  // For non-crawlers or system domains, serve the React app
+  console.log('👤 Non-crawler or system domain - serving React app');
   
   // Return the index.html content for regular users
   const indexHtml = `<!DOCTYPE html>
