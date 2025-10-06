@@ -16,6 +16,14 @@ interface SEOData {
   robots: string;
   site_name: string;
   source?: string;
+  debug?: {
+    titleSource?: string;
+    descSource?: string;
+    imageSource?: string;
+    websiteId?: string;
+    pageId?: string;
+    slug?: string;
+  };
 }
 
 // Extract meaningful description from page content
@@ -159,6 +167,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       return null;
     }
     
+    
     // Step 3: Get website data
     const { data: website } = await supabase
       .from('websites')
@@ -214,10 +223,14 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         
         // ✅ PRIORITIZE HOMEPAGE PAGE IMAGES - Only fallback to website if page has no images
         let pickedImage = homepagePage.social_image_url || homepagePage.preview_image_url;
+        let imageSource = homepagePage.social_image_url
+          ? 'homepage.social_image_url'
+          : (homepagePage.preview_image_url ? 'homepage.preview_image_url' : 'none');
         
         // Only fallback to website image if homepage has no images at all
         if (!pickedImage) {
           pickedImage = websiteImage;
+          imageSource = 'website.settings_image';
         }
         
         const image = normalizeImageUrl(pickedImage);
@@ -225,7 +238,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         console.log(`🏠 Homepage SEO resolved for ${domain} (page:${homepagePage.id}, website:${websiteId})`);
         console.log(`   • title="${title}" [homepage.seo_title]`);
         console.log(`   • description="${description}" [homepage.seo_description]`);
-        console.log(`   • image="${image}" [homepage images]`);
+        console.log(`   • image="${image}" [${imageSource}]`);
         
         return {
           title,
@@ -235,7 +248,15 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
           canonical: homepagePage.canonical_url || `https://${domain}/`,
           robots: homepagePage.meta_robots || 'index, follow',
           site_name: website.name,
-          source: `homepage_page|website:${websiteId}|page:${homepagePage.id}`
+          source: `homepage_page|website:${websiteId}|page:${homepagePage.id}`,
+          debug: {
+            titleSource: 'homepage.seo_title',
+            descSource: 'homepage.seo_description',
+            imageSource,
+            websiteId,
+            pageId: homepagePage.id,
+            slug: homepagePage.slug
+          }
         };
       }
       
@@ -254,6 +275,144 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         site_name: website.name,
         source: `website_root_fallback|website:${websiteId}`
       };
+    }
+    
+    // Product pages
+    if (cleanPath.startsWith('product/')) {
+      const productSlug = cleanPath.replace('product/', '');
+      const { data: product } = await supabase
+        .from('products')
+        .select(`
+          name, description, images, seo_title, seo_description, og_image,
+          seo_keywords, canonical_url, meta_robots, meta_author,
+          language_code, custom_meta_tags
+        `)
+        .eq('slug', productSlug)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (product) {
+        const contentDesc = extractContentDescription(product.description);
+        
+        // ✅ PRIORITIZE PRODUCT SEO - Only fallback to product name if SEO title is empty
+        const title = (product.seo_title && product.seo_title.trim()) 
+          ? product.seo_title.trim() 
+          : `${product.name} | ${website.name}`;
+        
+        // ✅ PRIORITIZE PRODUCT SEO DESCRIPTION - Only fallback if truly empty
+        const description = (product.seo_description && product.seo_description.trim())
+          ? product.seo_description.trim()
+          : (contentDesc || `${product.name} - Available at ${website.name}`);
+        
+        // ✅ PRIORITIZE PRODUCT IMAGES - Only fallback to website if product has no images
+        let image = product.og_image || product.images?.[0];
+        if (!image) {
+          image = websiteImage;
+        }
+        
+        return {
+          title,
+          description,
+          og_image: normalizeImageUrl(image),
+          keywords: product.seo_keywords || [],
+          canonical: product.canonical_url || `https://${domain}${path}`,
+          robots: product.meta_robots || 'index, follow',
+          site_name: website.name,
+          source: `product_page|website:${websiteId}|slug:${productSlug}`
+        };
+      }
+    }
+    
+    // Funnel routes
+    if (cleanPath.startsWith('funnel/')) {
+      const pathParts = cleanPath.split('/');
+      const funnelSlug = pathParts[1];
+      const stepSlug = pathParts[2];
+      
+      const { data: funnel } = await supabase
+        .from('funnels')
+        .select(`
+          id, name, seo_title, seo_description, og_image, social_image_url,
+          seo_keywords, canonical_url, meta_robots, meta_author,
+          language_code, custom_meta_tags
+        `)
+        .eq('slug', funnelSlug)
+        .eq('is_active', true)
+        .eq('is_published', true)
+        .maybeSingle();
+      
+      if (funnel) {
+        if (stepSlug) {
+          // Funnel step
+          const { data: step } = await supabase
+            .from('funnel_steps')
+            .select(`
+              name, seo_title, seo_description, og_image, social_image_url,
+              seo_keywords, canonical_url, meta_robots, meta_author, 
+              language_code, custom_meta_tags, content
+            `)
+            .eq('funnel_id', funnel.id)
+            .eq('slug', stepSlug)
+            .eq('is_published', true)
+            .maybeSingle();
+          
+          if (step) {
+            const contentDesc = extractContentDescription(step.content);
+            
+            // ✅ PRIORITIZE STEP SEO - Only fallback to step name if SEO title is empty
+            const title = (step.seo_title && step.seo_title.trim()) 
+              ? step.seo_title.trim() 
+              : `${step.name} | ${funnel.name}`;
+            
+            // ✅ PRIORITIZE STEP SEO DESCRIPTION - Only fallback if truly empty
+            const description = (step.seo_description && step.seo_description.trim())
+              ? step.seo_description.trim()
+              : (contentDesc || `${step.name} - ${funnel.name}`);
+            
+            // ✅ PRIORITIZE STEP IMAGES - Only fallback to funnel if step has no images
+            let image = step.social_image_url || step.og_image;
+            if (!image) {
+              image = funnel.og_image;
+            }
+            
+            return {
+              title,
+              description,
+              og_image: normalizeImageUrl(image),
+              keywords: step.seo_keywords || [],
+              canonical: step.canonical_url || `https://${domain}${path}`,
+              robots: step.meta_robots || 'index, follow',
+              site_name: funnel.name,
+              source: `funnel_step|funnel:${funnel.id}|step:${stepSlug}`
+            };
+          }
+        } else {
+          // Funnel landing
+          // ✅ PRIORITIZE FUNNEL SEO - Only fallback to funnel name if SEO title is empty
+          const title = (funnel.seo_title && funnel.seo_title.trim()) 
+            ? funnel.seo_title.trim() 
+            : funnel.name;
+          
+          // ✅ PRIORITIZE FUNNEL SEO DESCRIPTION - Only fallback if truly empty
+          const description = (funnel.seo_description && funnel.seo_description.trim())
+            ? funnel.seo_description.trim()
+            : `Sales funnel: ${funnel.name}`;
+          
+          // ✅ PRIORITIZE FUNNEL IMAGES
+          const image = normalizeImageUrl(funnel.social_image_url || funnel.og_image);
+          
+          return {
+            title,
+            description,
+            og_image: image,
+            keywords: funnel.seo_keywords || [],
+            canonical: funnel.canonical_url || `https://${domain}${path}`,
+            robots: funnel.meta_robots || 'index, follow',
+            site_name: funnel.name,
+            source: `funnel_landing|funnel:${funnel.id}`
+          };
+        }
+      }
     }
     
     // Website pages - try exact slug match first
@@ -277,26 +436,34 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       const rawTitle = (page.seo_title && page.seo_title.trim()) 
         ? page.seo_title.trim() 
         : `${page.title} - ${website.name}`;
+      const titleSource = (page.seo_title && page.seo_title.trim()) ? 'page.seo_title' : 'page.title_fallback';
 
       // ✅ PRIORITIZE PAGE SEO DESCRIPTION - Only fallback if truly empty
       const rawDesc = (page.seo_description && page.seo_description.trim())
         ? page.seo_description.trim()
         : (contentDesc || `${page.title} - ${website.name}`);
+      const descSource = (page.seo_description && page.seo_description.trim())
+        ? 'page.seo_description'
+        : (contentDesc ? 'content_extracted' : 'page.title_fallback');
 
       // ✅ PRIORITIZE PAGE IMAGES - Only fallback to website if page has no images
       let pickedImage = page.social_image_url || page.preview_image_url;
+      let imageSource = page.social_image_url
+        ? 'page.social_image_url'
+        : (page.preview_image_url ? 'page.preview_image_url' : 'none');
       
       // Only fallback to website image if page has no images at all
       if (!pickedImage) {
         pickedImage = websiteImage;
+        imageSource = 'website.settings_image';
       }
       
       const image = normalizeImageUrl(pickedImage);
 
       console.log(`🔎 Page SEO resolved for slug="${cleanPath}" (page:${page.id}, website:${websiteId})`);
-      console.log(`   • title="${rawTitle}" [page.seo_title]`);
-      console.log(`   • description="${rawDesc}" [page.seo_description]`);
-      console.log(`   • image="${image}" [page images]`);
+      console.log(`   • title="${rawTitle}" [${titleSource}]`);
+      console.log(`   • description="${rawDesc}" [${descSource}]`);
+      console.log(`   • image="${image}" [${imageSource}]`);
       
       return {
         title: rawTitle,
@@ -306,7 +473,15 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         canonical: page.canonical_url || `https://${domain}${path}`,
         robots: page.meta_robots || 'index, follow',
         site_name: website.name,
-        source: `website_page|website:${websiteId}|slug:${cleanPath}`
+        source: `website_page|website:${websiteId}|slug:${cleanPath}`,
+        debug: {
+          titleSource,
+          descSource,
+          imageSource,
+          websiteId,
+          pageId: page.id,
+          slug: cleanPath
+        }
       };
     }
     
@@ -454,158 +629,62 @@ export default async function handler(request: Request): Promise<Response> {
   const pathname = url.pathname;
   const traceId = crypto.randomUUID();
   
-  console.log(`[${traceId}] 🌐 Request: ${domain}${pathname}`);
+  console.log(`[${traceId}] 🌐 Custom Domain Request: ${domain}${pathname}`);
   
-  // Detect if this is a custom domain (not ecombuildr.com or localhost)
-  const isCustomDomain = !domain.includes('ecombuildr.com') && 
-                        !domain.includes('localhost') && 
-                        !domain.includes('lovable.dev') &&
-                        !domain.includes('lovable.app') &&
-                        !domain.includes('lovableproject.com');
+  // This Edge Function only handles custom domains (system domains use static files)
+  console.log(`🏠 Custom domain detected - generating dynamic HTML with SEO`);
   
-  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain}`);
-  
-  // For custom domains, ALWAYS serve dynamic HTML with correct SEO
-  if (isCustomDomain) {
-    console.log(`🏠 Custom domain detected - generating dynamic HTML with SEO`);
+  try {
+    const seoData = await resolveSEOData(domain, pathname);
     
-    try {
-      const seoData = await resolveSEOData(domain, pathname);
-      
-      if (!seoData) {
-        console.log(`[${traceId}] ❌ No SEO data found - serving fallback`);
-        const fallback = {
-          title: domain,
-          description: `Welcome to ${domain}`,
-          og_image: undefined,
-          keywords: [],
-          canonical: url.toString(),
-          robots: 'index, follow',
-          site_name: domain,
-          source: 'fallback_no_data'
-        } as SEOData;
-        const html = generateDynamicHTML(fallback, url.toString());
-        return new Response(html, {
-          status: 200,
-          headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'public, max-age=300, s-maxage=300',
-            'X-Trace-Id': traceId,
-            'X-SEO-Source': 'fallback_no_data',
-            'X-Served-By': 'dynamic-html'
-          },
-        });
-      }
-      
-      console.log(`✅ SEO resolved via ${seoData.source}: ${seoData.title}`);
-      
-      const html = generateDynamicHTML(seoData, url.toString());
-      
+    if (!seoData) {
+      console.log(`[${traceId}] ❌ No SEO data found - serving fallback`);
+      const fallback = {
+        title: domain,
+        description: `Welcome to ${domain}`,
+        og_image: undefined,
+        keywords: [],
+        canonical: url.toString(),
+        robots: 'index, follow',
+        site_name: domain,
+        source: 'fallback_no_data'
+      } as SEOData;
+      const html = generateDynamicHTML(fallback, url.toString());
       return new Response(html, {
         status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=300, s-maxage=300',
           'X-Trace-Id': traceId,
-          'X-SEO-Source': seoData.source || 'unknown',
-          'X-SEO-Website': seoData.site_name,
-          'X-SEO-Page': seoData.title,
-          'X-SEO-Domain': domain,
-          'X-SEO-Path': pathname,
+          'X-SEO-Source': 'fallback_no_data',
           'X-Served-By': 'dynamic-html'
         },
       });
-
-    } catch (error) {
-      console.error('💥 SEO Handler error:', error);
-      return new Response('Internal Server Error', { status: 500 });
     }
-  }
-  
-  // For system domains, serve the standard React app
-  console.log('🏢 System domain - serving standard React app');
-  
-  // Return the index.html content for regular users
-  const indexHtml = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#10B981" />
     
-    <!-- Fallback SEO Meta Tags (overridden by server-side middleware for custom domains) -->
-    <title>EcomBuildr - Build Beautiful Online Stores & Funnels</title>
-    <meta name="description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
-    <meta name="keywords" content="website builder, ecommerce, online store, sales funnel, drag and drop" />
-    <meta name="author" content="EcomBuildr" />
+    console.log(`✅ SEO resolved via ${seoData.source}: ${seoData.title}`);
     
-    <!-- Fallback Open Graph Meta Tags (overridden by server-side middleware for custom domains) -->
-    <meta property="og:title" content="EcomBuildr - Build Beautiful Online Stores & Funnels" />
-    <meta property="og:description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://res.cloudinary.com/dtkeyccga/image/upload/v1706878427/og-image_dcvqpc.png" />
-    <meta property="og:site_name" content="EcomBuildr" />
-    <meta property="og:locale" content="en_US" />
+    const html = generateDynamicHTML(seoData, url.toString());
     
-    <!-- Fallback Twitter Card Meta Tags (overridden by server-side middleware for custom domains) -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="EcomBuildr - Build Beautiful Online Stores & Funnels" />
-    <meta name="twitter:description" content="Create stunning websites, online stores, and sales funnels with EcomBuildr. Drag & drop builder, custom domains, and powerful e-commerce features." />
-    <meta name="twitter:image" content="https://res.cloudinary.com/dtkeyccga/image/upload/v1706878427/og-image_dcvqpc.png" />
-    
-    <!-- Performance optimizations -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
-    
-    <!-- Critical resource hints -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    
-    <!-- Critical CSS for image optimization -->
-    <style>
-      @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-      }
-      .image-container { position: relative; overflow: hidden; background-color: hsl(var(--muted)); }
-      .image-container::before { content: ''; display: block; width: 100%; height: 0; padding-bottom: var(--aspect-ratio, 56.25%); }
-      .image-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s ease; }
-      .loading-shimmer { background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.1) 50%, hsl(var(--muted)) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
-      picture { display: block; width: 100%; height: 100%; }
-      img[width][height] { aspect-ratio: attr(width) / attr(height); }
-    </style>
-    
-    <!-- Social crawlers are handled by Netlify Edge Function (social-meta) -->
-    <!-- Client-side SEO is managed by individual pages/components -->
-    
-    <!-- Dynamic SEO tags are managed in code per-page via setSEO function -->
-    <!-- Favicon is set dynamically per website/funnel in setSEO() function -->
-    <!-- Font Awesome for icon lists -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
-    />
-    </head>
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, s-maxage=300',
+        'X-Trace-Id': traceId,
+        'X-SEO-Source': seoData.source || 'unknown',
+        'X-SEO-Website': seoData.site_name,
+        'X-SEO-Page': seoData.title,
+        'X-SEO-Domain': domain,
+        'X-SEO-Path': pathname,
+        'X-Served-By': 'dynamic-html'
+      },
+    });
 
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>`;
-  
-  return new Response(indexHtml, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'public, max-age=0, s-maxage=0',
-      'X-Trace-Id': traceId,
-      'X-SEO-Source': 'react_app_fallback'
-    },
-  });
+  } catch (error) {
+    console.error('💥 SEO Handler error:', error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
 }
 
 export const config = {

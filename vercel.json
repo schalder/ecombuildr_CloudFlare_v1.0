@@ -16,7 +16,13 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/api/[...catchall]"
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?!.*ecombuildr\\.com$)(?!.*localhost)(?!.*lovable\\.dev)(?!.*lovable\\.app)(?!.*lovableproject\\.com).*"
+        }
+      ]
     }
   ],
   "headers": [
