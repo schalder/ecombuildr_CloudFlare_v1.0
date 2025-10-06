@@ -5,31 +5,7 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Enhanced crawler detection for ALL crawlers
-const ALL_CRAWLERS = [
-  // Social Media Crawlers
-  'facebookexternalhit', 'Twitterbot', 'LinkedInBot', 'WhatsApp', 'Slackbot',
-  'DiscordBot', 'TelegramBot', 'SkypeUriPreview', 'facebookcatalog', 
-  'facebookplatform', 'Facebot', 'FacebookBot',
-  
-  // Search Engine Crawlers
-  'Googlebot', 'Bingbot', 'Slurp', 'DuckDuckBot', 'Baiduspider', 'YandexBot',
-  'Applebot', 'ia_archiver', 'archive.org_bot',
-  
-  // General Bot Patterns
-  'bot', 'crawler', 'spider', 'scraper', 'indexer', 'fetcher',
-  
-  // SEO Tools
-  'AhrefsBot', 'MJ12bot', 'DotBot', 'SemrushBot', 'MegaIndex',
-  
-  // Analytics & Monitoring
-  'UptimeRobot', 'Pingdom', 'GTmetrix', 'PageSpeed', 'Lighthouse'
-];
-
-function isCrawler(userAgent: string): boolean {
-  const ua = userAgent.toLowerCase();
-  return ALL_CRAWLERS.some(crawler => ua.includes(crawler.toLowerCase()));
-}
+// Simplified approach: Always serve dynamic HTML for custom domains
 
 interface SEOData {
   title: string;
@@ -357,8 +333,8 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
   }
 }
 
-// Generate complete HTML for crawlers with React app integration
-function generateHTML(seo: SEOData, url: string): string {
+// Generate complete HTML for custom domains with React app integration
+function generateDynamicHTML(seo: SEOData, url: string): string {
   const title = seo.title;
   const description = seo.description;
   const image = seo.og_image || '';
@@ -372,13 +348,16 @@ function generateHTML(seo: SEOData, url: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#10B981" />
+  
+  <!-- Dynamic SEO Meta Tags -->
   <title>${title}</title>
   <meta name="description" content="${description}" />
   ${keywords ? `<meta name="keywords" content="${keywords}" />` : ''}
   <meta name="robots" content="${robots}" />
   <meta name="author" content="${siteName}" />
   
-  <!-- Open Graph / Facebook -->
+  <!-- Dynamic Open Graph / Facebook -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="${canonical}" />
   <meta property="og:title" content="${title}" />
@@ -391,7 +370,7 @@ function generateHTML(seo: SEOData, url: string): string {
   <meta property="og:site_name" content="${siteName}" />
   <meta property="og:locale" content="en_US" />
   
-  <!-- Twitter Card -->
+  <!-- Dynamic Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:url" content="${canonical}" />
   <meta name="twitter:title" content="${title}" />
@@ -422,23 +401,48 @@ function generateHTML(seo: SEOData, url: string): string {
   }
   </script>
   
+  <!-- Performance optimizations -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
+  <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+  
+  <!-- Critical resource hints -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  
+  <!-- Critical CSS for image optimization -->
+  <style>
+    .image-optimization {
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+    }
+  </style>
+  
+  <!-- Font Awesome -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  
   <!-- React App Loading -->
   <script type="module" crossorigin src="/assets/index.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index.css">
 </head>
 <body>
   <div id="root">
-    <!-- Fallback content for crawlers -->
-    <h1>${title}</h1>
-    <p>${description}</p>
-    <p>Loading...</p>
+    <!-- Fallback content while React loads -->
+    <div style="padding: 20px; text-align: center; font-family: Inter, sans-serif;">
+      <h1>${title}</h1>
+      <p>${description}</p>
+      <p>Loading...</p>
+    </div>
   </div>
   <script>
-    // For crawlers that execute JS, let React take over
-    if (typeof window !== 'undefined') {
-      // React will replace this content
-      console.log('Crawler detected - React app will load');
-    }
+    // React will replace the fallback content
+    console.log('Dynamic SEO loaded - React app will take over');
   </script>
 </body>
 </html>`;
@@ -446,12 +450,11 @@ function generateHTML(seo: SEOData, url: string): string {
 
 export default async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
-  const userAgent = request.headers.get('user-agent') || '';
   const domain = url.hostname;
   const pathname = url.pathname;
   const traceId = crypto.randomUUID();
   
-  console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
+  console.log(`[${traceId}] 🌐 Request: ${domain}${pathname}`);
   
   // Detect if this is a custom domain (not ecombuildr.com or localhost)
   const isCustomDomain = !domain.includes('ecombuildr.com') && 
@@ -460,23 +463,20 @@ export default async function handler(request: Request): Promise<Response> {
                         !domain.includes('lovable.app') &&
                         !domain.includes('lovableproject.com');
   
-  // Check if this is any crawler
-  const isBot = isCrawler(userAgent);
+  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain}`);
   
-  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | Crawler: ${isBot}`);
-  
-  // For custom domains, always handle ALL crawlers with SEO
-  if (isCustomDomain && isBot) {
-    console.log(`🤖 Crawler detected on custom domain - generating dynamic SEO HTML`);
+  // For custom domains, ALWAYS serve dynamic HTML with correct SEO
+  if (isCustomDomain) {
+    console.log(`🏠 Custom domain detected - generating dynamic HTML with SEO`);
     
     try {
       const seoData = await resolveSEOData(domain, pathname);
       
       if (!seoData) {
-        console.log(`[${traceId}] ❌ No SEO data found - rendering minimal fallback`);
-        const minimal = {
+        console.log(`[${traceId}] ❌ No SEO data found - serving fallback`);
+        const fallback = {
           title: domain,
-          description: `Preview of ${domain}`,
+          description: `Welcome to ${domain}`,
           og_image: undefined,
           keywords: [],
           canonical: url.toString(),
@@ -484,25 +484,22 @@ export default async function handler(request: Request): Promise<Response> {
           site_name: domain,
           source: 'fallback_no_data'
         } as SEOData;
-        const html = generateHTML(minimal, url.toString());
+        const html = generateDynamicHTML(fallback, url.toString());
         return new Response(html, {
           status: 200,
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'public, max-age=120, s-maxage=120',
+            'Cache-Control': 'public, max-age=300, s-maxage=300',
             'X-Trace-Id': traceId,
             'X-SEO-Source': 'fallback_no_data',
-            'X-SEO-Website': domain,
-            'X-SEO-Page': domain,
-            'X-SEO-Domain': domain,
-            'X-SEO-Path': pathname
+            'X-Served-By': 'dynamic-html'
           },
         });
       }
       
       console.log(`✅ SEO resolved via ${seoData.source}: ${seoData.title}`);
       
-      const html = generateHTML(seoData, url.toString());
+      const html = generateDynamicHTML(seoData, url.toString());
       
       return new Response(html, {
         status: 200,
@@ -514,7 +511,8 @@ export default async function handler(request: Request): Promise<Response> {
           'X-SEO-Website': seoData.site_name,
           'X-SEO-Page': seoData.title,
           'X-SEO-Domain': domain,
-          'X-SEO-Path': pathname
+          'X-SEO-Path': pathname,
+          'X-Served-By': 'dynamic-html'
         },
       });
 
@@ -524,8 +522,8 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
   
-  // For non-crawlers or system domains, serve the React app
-  console.log('👤 Non-crawler or system domain - serving React app');
+  // For system domains, serve the standard React app
+  console.log('🏢 System domain - serving standard React app');
   
   // Return the index.html content for regular users
   const indexHtml = `<!DOCTYPE html>
