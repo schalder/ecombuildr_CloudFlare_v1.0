@@ -73,7 +73,7 @@ function extractContentDescription(content: any): string {
     return '';
   }
   
-  return '';
+  return undefined;
 }
 
 function normalizeImageUrl(imageUrl: string | null | undefined): string | undefined {
