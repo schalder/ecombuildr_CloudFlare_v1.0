@@ -34,40 +34,6 @@ export const DomainVerificationDialog: React.FC<DomainVerificationDialogProps> =
   
   const { store } = useUserStore();
 
-  const fetchVercelCname = async (domainName: string) => {
-    if (!store?.id) return;
-    
-    setIsLoadingCname(true);
-    try {
-      // Get the CNAME target for this domain
-      const { data: cnameData, error: cnameError } = await supabase.functions.invoke('dns-domain-manager', {
-        body: {
-          action: 'get_vercel_cname',
-          domain: domainName,
-          storeId: store.id
-        }
-      });
-
-      if (cnameError) throw cnameError;
-      
-      console.log('CNAME response:', cnameData);
-      
-      if (cnameData.success) {
-        // Use the CNAME target from the Edge Function response
-        const cnameTarget = cnameData.cnameTarget || 'cname.vercel-dns.com';
-        setVercelCnameTarget(cnameTarget);
-        console.log(`Domain ${domainName} CNAME target:`, cnameTarget);
-      } else {
-        console.error('Edge Function returned success: false', cnameData);
-        setVercelCnameTarget('cname.vercel-dns.com');
-      }
-    } catch (error) {
-      console.error('Failed to get Vercel CNAME:', error);
-      setVercelCnameTarget('cname.vercel-dns.com');
-    } finally {
-      setIsLoadingCname(false);
-    }
-  };
 
   const handleDomainSubmit = async () => {
     if (!domain.trim()) return;
@@ -76,8 +42,20 @@ export const DomainVerificationDialog: React.FC<DomainVerificationDialogProps> =
     setDomain(cleanDomain);
     setStep('setup');
     
-    // Fetch Vercel CNAME target for this domain
-    await fetchVercelCname(cleanDomain);
+    // Generate domain-specific CNAME target (same logic as Edge Function)
+    try {
+      const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(cleanDomain));
+      const hashHex = Array.from(new Uint8Array(domainHash))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+        .substring(0, 16);
+      const generatedCname = `${hashHex}.vercel-dns-017.com`;
+      setVercelCnameTarget(generatedCname);
+      console.log(`Generated domain-specific CNAME for ${cleanDomain}:`, generatedCname);
+    } catch (error) {
+      console.error('Failed to generate CNAME:', error);
+      setVercelCnameTarget('cname.vercel-dns.com');
+    }
   };
 
   const copyDNSInstructions = () => {
