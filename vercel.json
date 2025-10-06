@@ -16,14 +16,9 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/api/test"
+      "destination": "/index.html"
     }
   ],
-  "functions": {
-    "api/test/index.ts": {
-      "runtime": "edge"
-    }
-  },
   "headers": [
     {
       "source": "/(.*)",
