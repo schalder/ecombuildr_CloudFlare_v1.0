@@ -269,14 +269,29 @@ Deno.serve(async (req) => {
         const verificationToken = crypto.randomUUID()
         
         // Check if domain already exists
-        const { data: existingDomain } = await supabase
+        const { data: existingDomain, error: existingError } = await supabase
           .from('custom_domains')
-          .select('id')
+          .select('*')
           .eq('domain', domain)
-          .single()
+          .eq('store_id', storeId)
+          .maybeSingle()
         
         if (existingDomain) {
-          throw new Error('Domain already exists')
+          console.log(`Domain ${domain} already exists, returning existing info`)
+          result = {
+            success: true,
+            domain: existingDomain,
+            verificationToken: existingDomain.verification_token,
+            vercelCnameTarget: 'cname.vercel-dns.com', // Use generic for existing domains
+            instructions: {
+              type: 'CNAME',
+              name: domain.split('.')[0],
+              value: 'cname.vercel-dns.com',
+              description: `Add a CNAME record for ${domain} that points to cname.vercel-dns.com`
+            }
+          }
+          console.log(`Returning existing domain info for ${domain}`)
+          break
         }
         
         let vercelCnameTarget = null
