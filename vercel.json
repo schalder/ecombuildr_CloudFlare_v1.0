@@ -20,7 +20,7 @@
     }
   ],
   "functions": {
-    "api/middleware.ts": {
+    "middleware.ts": {
       "runtime": "edge"
     }
   },
