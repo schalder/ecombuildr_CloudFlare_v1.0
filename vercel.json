@@ -7,10 +7,6 @@
       "config": {
         "distDir": "dist"
       }
-    },
-    {
-      "src": "api/[...catchall]/index.ts",
-      "use": "@vercel/node"
     }
   ],
   "rewrites": [
