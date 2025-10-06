@@ -16,7 +16,7 @@
       "has": [
         {
           "type": "host",
-          "value": "(?!.*ecombuildr\\.com$).*"
+          "value": "shop.ghlmax.com"
         }
       ]
     }
