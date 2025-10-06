@@ -56,8 +56,8 @@
               // Update title immediately
               document.title = website.name || 'Loading...';
               
-              // Update meta description
-              const description = website.settings?.seo?.description || `Welcome to ${website.name}`;
+              // Update meta description - use website name as fallback
+              const description = `Welcome to ${website.name} - Your trusted online store for quality products`;
               let descMeta = document.querySelector('meta[name="description"]');
               if (descMeta) {
                 descMeta.setAttribute('content', description);
@@ -69,7 +69,7 @@
               }
               
               // Update OG tags
-              const ogTitle = website.settings?.seo?.title || website.name;
+              const ogTitle = website.name;
               let ogTitleMeta = document.querySelector('meta[property="og:title"]');
               if (ogTitleMeta) {
                 ogTitleMeta.setAttribute('content', ogTitle);
@@ -88,6 +88,23 @@
                 ogDescMeta.setAttribute('property', 'og:description');
                 ogDescMeta.setAttribute('content', description);
                 document.head.appendChild(ogDescMeta);
+              }
+              
+              // Add OG type and URL
+              let ogTypeMeta = document.querySelector('meta[property="og:type"]');
+              if (!ogTypeMeta) {
+                ogTypeMeta = document.createElement('meta');
+                ogTypeMeta.setAttribute('property', 'og:type');
+                ogTypeMeta.setAttribute('content', 'website');
+                document.head.appendChild(ogTypeMeta);
+              }
+              
+              let ogUrlMeta = document.querySelector('meta[property="og:url"]');
+              if (!ogUrlMeta) {
+                ogUrlMeta = document.createElement('meta');
+                ogUrlMeta.setAttribute('property', 'og:url');
+                ogUrlMeta.setAttribute('content', window.location.href);
+                document.head.appendChild(ogUrlMeta);
               }
               
               console.log('✅ SEO injected into HTML:', {
