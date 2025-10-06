@@ -22,7 +22,6 @@ export default function Domains() {
     funnels, 
     loading, 
     addDomain, 
-    getVercelCNAME,
     removeDomain, 
     connectContent, 
     removeConnection, 
@@ -40,61 +39,6 @@ export default function Domains() {
     path: '/',
     isHomepage: false
   });
-
-  // Load Vercel CNAME targets for all domains
-  useEffect(() => {
-    const loadCnameTargets = async () => {
-      for (const domain of domains) {
-        try {
-          const cnameData = await getVercelCNAME(domain.domain);
-          // Use the CNAME target from Edge Function, or generate domain-specific fallback
-          let cnameTarget = cnameData.cnameTarget;
-          
-          // If no CNAME target from Edge Function, generate domain-specific one
-          if (!cnameTarget) {
-            // Generate domain-specific CNAME using same logic as Edge Function
-            const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domain.domain));
-            const hashHex = Array.from(new Uint8Array(domainHash))
-              .map(b => b.toString(16).padStart(2, '0'))
-              .join('')
-              .substring(0, 16);
-            cnameTarget = `${hashHex}.vercel-dns-017.com`;
-          }
-          
-          const element = document.getElementById(`cname-target-${domain.id}`);
-          if (element) {
-            element.textContent = cnameTarget;
-          }
-        } catch (error) {
-          console.error(`Failed to load CNAME for ${domain.domain}:`, error);
-          // Generate domain-specific CNAME as fallback
-          try {
-            const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domain.domain));
-            const hashHex = Array.from(new Uint8Array(domainHash))
-              .map(b => b.toString(16).padStart(2, '0'))
-              .join('')
-              .substring(0, 16);
-            const fallbackCname = `${hashHex}.vercel-dns-017.com`;
-            
-            const element = document.getElementById(`cname-target-${domain.id}`);
-            if (element) {
-              element.textContent = fallbackCname;
-            }
-          } catch (hashError) {
-            console.error('Hash generation failed:', hashError);
-            const element = document.getElementById(`cname-target-${domain.id}`);
-            if (element) {
-              element.textContent = 'cname.vercel-dns.com';
-            }
-          }
-        }
-      }
-    };
-
-    if (domains.length > 0) {
-      loadCnameTargets();
-    }
-  }, [domains, getVercelCNAME]);
 
   const handleDomainAdded = async (domain: string) => {
     try {
@@ -127,86 +71,6 @@ export default function Domains() {
         description: error instanceof Error ? error.message : "Failed to connect content",
         variant: "destructive"
       });
-    }
-  };
-
-  const copyDNSInstructions = async (domain: string) => {
-    try {
-      // Get the Vercel-specific CNAME target for this domain
-      const cnameData = await getVercelCNAME(domain);
-      let cnameTarget = cnameData.cnameTarget;
-      
-      // If no CNAME target from Edge Function, generate domain-specific one
-      if (!cnameTarget) {
-        // Generate domain-specific CNAME using same logic as Edge Function
-        const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domain));
-        const hashHex = Array.from(new Uint8Array(domainHash))
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('')
-          .substring(0, 16);
-        cnameTarget = `${hashHex}.vercel-dns-017.com`;
-      }
-      
-      const instructions = `DNS Configuration for ${domain}:
-
-CNAME Record:
-Type: CNAME
-Name: ${domain.split('.')[0]} (or @ for root domain)
-Value: ${cnameTarget}
-TTL: 300 (or Auto)
-
-Note: This is the specific CNAME target provided by Vercel for your domain. SSL will be automatically issued once DNS is configured.`;
-      
-      navigator.clipboard.writeText(instructions);
-      toast({
-        title: "DNS Instructions Copied",
-        description: `The Vercel-specific DNS configuration for ${domain} has been copied to your clipboard.`
-      });
-    } catch (error) {
-      console.error('Failed to get Vercel CNAME:', error);
-      // Fallback: Generate domain-specific CNAME
-      try {
-        const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domain));
-        const hashHex = Array.from(new Uint8Array(domainHash))
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('')
-          .substring(0, 16);
-        const fallbackCname = `${hashHex}.vercel-dns-017.com`;
-        
-        const instructions = `DNS Configuration for ${domain}:
-
-CNAME Record:
-Type: CNAME
-Name: ${domain.split('.')[0]} (or @ for root domain)
-Value: ${fallbackCname}
-TTL: 300 (or Auto)
-
-Note: This is the domain-specific CNAME target for your domain. SSL will be automatically issued once DNS is configured.`;
-        
-        navigator.clipboard.writeText(instructions);
-        toast({
-          title: "DNS Instructions Copied",
-          description: "Domain-specific DNS configuration has been copied to your clipboard."
-        });
-      } catch (hashError) {
-        console.error('Hash generation failed:', hashError);
-        // Final fallback to generic instructions
-        const instructions = `DNS Configuration for ${domain}:
-
-CNAME Record:
-Type: CNAME
-Name: ${domain.split('.')[0]} (or @ for root domain)
-Value: cname.vercel-dns.com
-TTL: 300 (or Auto)
-
-Note: Configure DNS to point to Vercel. SSL will be automatically issued.`;
-        
-        navigator.clipboard.writeText(instructions);
-        toast({
-          title: "DNS Instructions Copied",
-          description: "Generic Vercel DNS configuration has been copied to your clipboard."
-        });
-      }
     }
   };
 
@@ -370,58 +234,6 @@ Note: Configure DNS to point to Vercel. SSL will be automatically issued.`;
                           )}
                         </div>
                       </div>
-
-                      {/* Manual Setup Fallback - Only show if needed */}
-                      {!domain.dns_configured && (
-                        <details className="group">
-                          <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
-                            Need to set up manually? Click here for instructions
-                          </summary>
-                          <div className="mt-4 space-y-4">
-                            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg">
-                              <h5 className="font-semibold text-amber-800 mb-2">Manual DNS Setup</h5>
-                              <p className="text-sm text-amber-700 mb-3">
-                                If automatic setup isn't working, add these DNS records in your DNS provider:
-                              </p>
-                              
-                              <div className="bg-white border p-3 rounded-lg space-y-3">
-                                <div className="space-y-2 font-mono text-xs">
-                                  <h6 className="font-semibold text-gray-800">CNAME Record:</h6>
-                                  <div className="grid grid-cols-3 gap-4">
-                                    <span className="text-muted-foreground font-normal">Type:</span>
-                                    <span className="font-semibold">CNAME</span>
-                                    <span></span>
-                                  </div>
-                                  <div className="grid grid-cols-3 gap-4">
-                                    <span className="text-muted-foreground font-normal">Name:</span>
-                                    <span className="font-semibold">{domain.domain.split('.')[0]} (or @ for root)</span>
-                                    <span></span>
-                                  </div>
-                                   <div className="grid grid-cols-3 gap-4">
-                                     <span className="text-muted-foreground font-normal">Value:</span>
-                                     <span className="font-semibold text-blue-600" id={`cname-target-${domain.id}`}>
-                                       Loading Vercel CNAME...
-                                     </span>
-                                     <span></span>
-                                   </div>
-                                </div>
-                              </div>
-                              
-                              <div className="mt-3">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => copyDNSInstructions(domain.domain)}
-                                  className="text-xs"
-                                >
-                                  <Copy className="mr-2 h-3 w-3" />
-                                  Copy DNS Config
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </details>
-                      )}
                     </div>
                   </TabsContent>
                   
