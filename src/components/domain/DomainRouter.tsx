@@ -236,11 +236,50 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
               console.log('🌐 DomainRouter: System domain routing to funnel:', funnel.slug);
             }
           }
+        } else {
+          // Handle naked paths on system domain (e.g., /products, /cart, etc.)
+          console.log('🌐 DomainRouter: Naked path detected on system domain:', currentPath);
+          
+          // Find the first active website to use as default
+          const { data: defaultWebsite } = await supabase
+            .from('websites')
+            .select('id, slug, store_id')
+            .eq('is_active', true)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+            
+          if (defaultWebsite) {
+            console.log('🌐 DomainRouter: Using default website:', defaultWebsite.slug);
+            
+            // Create a mock custom domain for system domain routing
+            const mockDomain = {
+              id: `system-default-${defaultWebsite.id}`,
+              domain: currentHost,
+              store_id: defaultWebsite.store_id,
+              is_verified: true,
+              dns_configured: true
+            };
+            
+            setCustomDomain(mockDomain);
+            
+            // Create a mock connection for the website
+            const mockConnection = {
+              id: `system-default-conn-${defaultWebsite.id}`,
+              content_type: 'website',
+              content_id: defaultWebsite.id,
+              path: '',
+              is_homepage: true,
+              store_id: defaultWebsite.store_id
+            };
+            
+            setAllConnections([mockConnection]);
+            setSelectedConnection(mockConnection);
+            console.log('🌐 DomainRouter: System domain routing to default website:', defaultWebsite.slug);
+          } else {
+            console.log('🌐 DomainRouter: No active websites found for system domain');
+          }
         }
-        
-        setLoading(false);
-        return;
-      }
       
       // Skip if we're on other staging domains
       if (currentHost === 'localhost' || 
