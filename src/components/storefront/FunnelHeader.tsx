@@ -46,7 +46,7 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { itemCount } = useCart();
-  const paths = useEcomPaths();
+  const paths = useEcomPaths({ funnelId: funnel.id });
 
   const fontSizeClass = useMemo(() => {
     switch (cfg?.font_size) {

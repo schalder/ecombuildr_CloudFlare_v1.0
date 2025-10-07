@@ -41,7 +41,7 @@ interface GlobalFooterConfig {
 
 export const FunnelFooter: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
   const cfg = (funnel.settings?.global_footer as GlobalFooterConfig | undefined);
-  const paths = useEcomPaths();
+  const paths = useEcomPaths({ funnelId: funnel.id });
   if (!cfg?.enabled) return null;
 
   const styleVars = useMemo(() => ({
