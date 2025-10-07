@@ -129,6 +129,10 @@ const getBackgroundImageProperties = (mode: BackgroundImageMode = 'full-center',
 export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
+  // Device-aware spacing styles - check for new responsive spacing first (moved outside if block for scope)
+  const marginByDevice = section.styles?.marginByDevice as ResponsiveSpacing | undefined;
+  const paddingByDevice = section.styles?.paddingByDevice as ResponsiveSpacing | undefined;
+  
   if (section.styles) {
     // FIXED: No mixing of shorthand and individual properties
     
@@ -144,10 +148,6 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     if (section.styles.borderStyle) styles.borderStyle = section.styles.borderStyle;
     if (section.styles.borderColor) styles.borderColor = section.styles.borderColor;
     if (section.styles.borderRadius) styles.borderRadius = section.styles.borderRadius;
-    
-    // Device-aware spacing styles - check for new responsive spacing first
-    const marginByDevice = section.styles?.marginByDevice as ResponsiveSpacing | undefined;
-    const paddingByDevice = section.styles?.paddingByDevice as ResponsiveSpacing | undefined;
     
     if (marginByDevice || paddingByDevice) {
       // Use device-aware spacing
@@ -252,6 +252,10 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
 export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
+  // Device-aware spacing styles - check for new responsive spacing first (moved outside if block for scope)
+  const marginByDevice = row.styles?.marginByDevice as ResponsiveSpacing | undefined;
+  const paddingByDevice = row.styles?.paddingByDevice as ResponsiveSpacing | undefined;
+  
   if (row.styles) {
     // Background styles will be applied after responsive merge
     
@@ -265,10 +269,6 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     if (row.styles.borderStyle) styles.borderStyle = row.styles.borderStyle;
     if (row.styles.borderColor) styles.borderColor = row.styles.borderColor;
     if (row.styles.borderRadius) styles.borderRadius = row.styles.borderRadius;
-    
-    // Device-aware spacing styles - check for new responsive spacing first
-    const marginByDevice = row.styles?.marginByDevice as ResponsiveSpacing | undefined;
-    const paddingByDevice = row.styles?.paddingByDevice as ResponsiveSpacing | undefined;
     
     if (marginByDevice || paddingByDevice) {
       // Use device-aware spacing
@@ -364,6 +364,10 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
 export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
+  // Device-aware spacing styles - check for new responsive spacing first (moved outside if block for scope)
+  const marginByDevice = column.styles?.marginByDevice as ResponsiveSpacing | undefined;
+  const paddingByDevice = column.styles?.paddingByDevice as ResponsiveSpacing | undefined;
+  
   if (column.styles) {
     // Background styles will be applied after responsive merge
     
@@ -399,10 +403,6 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
         styles.gap = column.styles.contentGap;
       }
     }
-    
-    // Device-aware spacing styles - check for new responsive spacing first
-    const marginByDevice = column.styles?.marginByDevice as ResponsiveSpacing | undefined;
-    const paddingByDevice = column.styles?.paddingByDevice as ResponsiveSpacing | undefined;
     
     if (marginByDevice || paddingByDevice) {
       // Use device-aware spacing
