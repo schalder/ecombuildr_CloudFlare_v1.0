@@ -35,7 +35,7 @@ export const ResponsiveSpacingSliders: React.FC<ResponsiveSpacingSlidersProps> =
   const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
 
   // Get current spacing values with proper defaults and inheritance
-  const getCurrentSpacing = (spacingByDevice?: ResponsiveSpacing, type: 'margin' | 'padding' = 'margin'): SpacingValues => {
+  const getCurrentSpacing = (spacingByDevice?: ResponsiveSpacing): SpacingValues => {
     if (!spacingByDevice) {
       return { top: 0, right: 0, bottom: 0, left: 0 };
     }
@@ -64,8 +64,8 @@ export const ResponsiveSpacingSliders: React.FC<ResponsiveSpacingSlidersProps> =
     return { top: 0, right: 0, bottom: 0, left: 0 };
   };
 
-  const currentMargin = getCurrentSpacing(marginByDevice, 'margin');
-  const currentPadding = getCurrentSpacing(paddingByDevice, 'padding');
+  const currentMargin = getCurrentSpacing(marginByDevice);
+  const currentPadding = getCurrentSpacing(paddingByDevice);
 
   const clampNumber = (value: number): number => {
     return Math.max(0, Math.min(200, value));
@@ -79,52 +79,15 @@ export const ResponsiveSpacingSliders: React.FC<ResponsiveSpacingSlidersProps> =
     onPaddingChange(responsiveTab, property, clampNumber(value));
   };
 
-  const handleInputChange = (property: string, value: string, type: 'margin' | 'padding') => {
+  const handleMarginInputChange = (property: 'top' | 'right' | 'bottom' | 'left', value: string) => {
     const numValue = clampNumber(parseInt(value) || 0);
-    const spacingProperty = property.replace(type, '').toLowerCase() as 'top' | 'right' | 'bottom' | 'left';
-    
-    if (type === 'margin') {
-      handleMarginChange(spacingProperty, numValue);
-    } else {
-      handlePaddingChange(spacingProperty, numValue);
-    }
+    handleMarginChange(property, numValue);
   };
 
-  const SpacingControl = ({ 
-    label, 
-    value, 
-    onChange, 
-    type 
-  }: { 
-    label: string; 
-    value: number; 
-    onChange: (value: number) => void; 
-    type: 'margin' | 'padding';
-  }) => (
-    <div className="space-y-2">
-      <Label className="text-xs">{label}</Label>
-      <div className="space-y-2">
-        <Slider
-          value={[value]}
-          onValueChange={([newValue]) => onChange(newValue)}
-          max={200}
-          step={1}
-          className="w-full"
-        />
-        <div className="flex items-center space-x-2">
-          <Input
-            type="number"
-            value={value}
-            onChange={(e) => handleInputChange(`${type}${label}`, e.target.value, type)}
-            className="h-8 w-16 text-xs"
-            min={0}
-            max={200}
-          />
-          <span className="text-xs text-muted-foreground">px</span>
-        </div>
-      </div>
-    </div>
-  );
+  const handlePaddingInputChange = (property: 'top' | 'right' | 'bottom' | 'left', value: string) => {
+    const numValue = clampNumber(parseInt(value) || 0);
+    handlePaddingChange(property, numValue);
+  };
 
   return (
     <div className="space-y-4">
@@ -157,64 +120,176 @@ export const ResponsiveSpacingSliders: React.FC<ResponsiveSpacingSlidersProps> =
       </div>
 
       {/* Margin Controls */}
-      <div className="space-y-3">
-        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Margin</Label>
-        <div className="grid grid-cols-2 gap-3">
-          <SpacingControl
-            label="Top"
-            value={currentMargin.top}
-            onChange={(value) => handleMarginChange('top', value)}
-            type="margin"
-          />
-          <SpacingControl
-            label="Right"
-            value={currentMargin.right}
-            onChange={(value) => handleMarginChange('right', value)}
-            type="margin"
-          />
-          <SpacingControl
-            label="Bottom"
-            value={currentMargin.bottom}
-            onChange={(value) => handleMarginChange('bottom', value)}
-            type="margin"
-          />
-          <SpacingControl
-            label="Left"
-            value={currentMargin.left}
-            onChange={(value) => handleMarginChange('left', value)}
-            type="margin"
-          />
+      <div>
+        <Label className="text-xs font-medium mb-3 block">Margin</Label>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs w-12">Top</Label>
+            <Slider
+              value={[currentMargin.top]}
+              onValueChange={(value) => handleMarginChange('top', value[0])}
+              max={200}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={currentMargin.top}
+              onChange={(e) => handleMarginInputChange('top', e.target.value)}
+              min={0}
+              max={200}
+              step={1}
+              className="w-16 h-7 text-xs"
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs w-12">Right</Label>
+            <Slider
+              value={[currentMargin.right]}
+              onValueChange={(value) => handleMarginChange('right', value[0])}
+              max={200}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={currentMargin.right}
+              onChange={(e) => handleMarginInputChange('right', e.target.value)}
+              min={0}
+              max={200}
+              step={1}
+              className="w-16 h-7 text-xs"
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs w-12">Bottom</Label>
+            <Slider
+              value={[currentMargin.bottom]}
+              onValueChange={(value) => handleMarginChange('bottom', value[0])}
+              max={200}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={currentMargin.bottom}
+              onChange={(e) => handleMarginInputChange('bottom', e.target.value)}
+              min={0}
+              max={200}
+              step={1}
+              className="w-16 h-7 text-xs"
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs w-12">Left</Label>
+            <Slider
+              value={[currentMargin.left]}
+              onValueChange={(value) => handleMarginChange('left', value[0])}
+              max={200}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={currentMargin.left}
+              onChange={(e) => handleMarginInputChange('left', e.target.value)}
+              min={0}
+              max={200}
+              step={1}
+              className="w-16 h-7 text-xs"
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
         </div>
       </div>
 
       {/* Padding Controls */}
-      <div className="space-y-3">
-        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Padding</Label>
-        <div className="grid grid-cols-2 gap-3">
-          <SpacingControl
-            label="Top"
-            value={currentPadding.top}
-            onChange={(value) => handlePaddingChange('top', value)}
-            type="padding"
-          />
-          <SpacingControl
-            label="Right"
-            value={currentPadding.right}
-            onChange={(value) => handlePaddingChange('right', value)}
-            type="padding"
-          />
-          <SpacingControl
-            label="Bottom"
-            value={currentPadding.bottom}
-            onChange={(value) => handlePaddingChange('bottom', value)}
-            type="padding"
-          />
-          <SpacingControl
-            label="Left"
-            value={currentPadding.left}
-            onChange={(value) => handlePaddingChange('left', value)}
-            type="padding"
-          />
+      <div>
+        <Label className="text-xs font-medium mb-3 block">Padding</Label>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Label className="text-xs w-12">Top</Label>
+            <Slider
+              value={[currentPadding.top]}
+              onValueChange={(value) => handlePaddingChange('top', value[0])}
+              max={200}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={currentPadding.top}
+              onChange={(e) => handlePaddingInputChange('top', e.target.value)}
+              min={0}
+              max={200}
+              step={1}
+              className="w-16 h-7 text-xs"
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs w-12">Right</Label>
+            <Slider
+              value={[currentPadding.right]}
+              onValueChange={(value) => handlePaddingChange('right', value[0])}
+              max={200}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={currentPadding.right}
+              onChange={(e) => handlePaddingInputChange('right', e.target.value)}
+              min={0}
+              max={200}
+              step={1}
+              className="w-16 h-7 text-xs"
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs w-12">Bottom</Label>
+            <Slider
+              value={[currentPadding.bottom]}
+              onValueChange={(value) => handlePaddingChange('bottom', value[0])}
+              max={200}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={currentPadding.bottom}
+              onChange={(e) => handlePaddingInputChange('bottom', e.target.value)}
+              min={0}
+              max={200}
+              step={1}
+              className="w-16 h-7 text-xs"
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-xs w-12">Left</Label>
+            <Slider
+              value={[currentPadding.left]}
+              onValueChange={(value) => handlePaddingChange('left', value[0])}
+              max={200}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={currentPadding.left}
+              onChange={(e) => handlePaddingInputChange('left', e.target.value)}
+              min={0}
+              max={200}
+              step={1}
+              className="w-16 h-7 text-xs"
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
         </div>
       </div>
     </div>

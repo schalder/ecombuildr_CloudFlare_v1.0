@@ -83,14 +83,14 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     const { marginByDevice } = getCurrentSpacingByDevice();
     const updated = { ...marginByDevice };
     updated[device] = { ...updated[device], [property]: value };
-    onUpdate('marginByDevice', updated);
+    handleStyleUpdate('marginByDevice', updated);
   };
 
   const handlePaddingChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
     const { paddingByDevice } = getCurrentSpacingByDevice();
     const updated = { ...paddingByDevice };
     updated[device] = { ...updated[device], [property]: value };
-    onUpdate('paddingByDevice', updated);
+    handleStyleUpdate('paddingByDevice', updated);
   };
   const getSectionEffectiveWidth = (deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
     const responsiveStyles = section.styles?.responsive;
