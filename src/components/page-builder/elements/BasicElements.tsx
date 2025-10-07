@@ -1005,7 +1005,7 @@ export const registerBasicElements = () => {
   // Paragraph
   elementRegistry.register({
     id: 'text',
-    name: 'Text Editor',
+    name: 'Paragraph',
     category: 'basic',
     icon: Type,
     component: ParagraphElement,

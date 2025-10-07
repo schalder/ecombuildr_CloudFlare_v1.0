@@ -17,6 +17,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { CompactMediaSelector } from './CompactMediaSelector';
 import { CollapsibleGroup } from './ElementStyles/_shared/CollapsibleGroup';
 import { SpacingSliders } from './ElementStyles/_shared/SpacingSliders';
+import { ResponsiveSpacingSliders } from './ElementStyles/_shared/ResponsiveSpacingSliders';
 import { getEffectiveResponsiveValue, hasResponsiveOverride, getInheritanceSource, getInheritanceLabel, clearResponsiveOverride } from '../utils/responsiveHelpers';
 import { useDevicePreview } from '../contexts/DevicePreviewContext';
 
@@ -37,7 +38,60 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     spacing: false
   });
 
-  // Helper functions for responsive width handling specific to sections
+  // Helper functions for device-aware spacing conversion
+  const parsePixelValue = (value: string | undefined): number => {
+    if (!value) return 0;
+    return parseInt(value.replace('px', '')) || 0;
+  };
+
+  const getCurrentSpacingByDevice = () => {
+    const marginByDevice = section.styles?.marginByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+    
+    const paddingByDevice = section.styles?.paddingByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+
+    // Convert legacy spacing to device-aware if needed
+    if (!section.styles?.marginByDevice && (section.styles?.marginTop || section.styles?.marginRight || section.styles?.marginBottom || section.styles?.marginLeft)) {
+      marginByDevice.desktop = {
+        top: parsePixelValue(section.styles?.marginTop),
+        right: parsePixelValue(section.styles?.marginRight),
+        bottom: parsePixelValue(section.styles?.marginBottom),
+        left: parsePixelValue(section.styles?.marginLeft)
+      };
+    }
+
+    if (!section.styles?.paddingByDevice && (section.styles?.paddingTop || section.styles?.paddingRight || section.styles?.paddingBottom || section.styles?.paddingLeft)) {
+      paddingByDevice.desktop = {
+        top: parsePixelValue(section.styles?.paddingTop),
+        right: parsePixelValue(section.styles?.paddingRight),
+        bottom: parsePixelValue(section.styles?.paddingBottom),
+        left: parsePixelValue(section.styles?.paddingLeft)
+      };
+    }
+
+    return { marginByDevice, paddingByDevice };
+  };
+
+  const handleMarginChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { marginByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...marginByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onUpdate('marginByDevice', updated);
+  };
+
+  const handlePaddingChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { paddingByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...paddingByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onUpdate('paddingByDevice', updated);
+  };
   const getSectionEffectiveWidth = (deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
     const responsiveStyles = section.styles?.responsive;
     if (!responsiveStyles) return '100%';
@@ -656,17 +710,11 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
         isOpen={openCards.spacing}
         onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, spacing: isOpen }))}
       >
-        <SpacingSliders
-          marginTop={section.styles?.marginTop}
-          marginRight={section.styles?.marginRight}
-          marginBottom={section.styles?.marginBottom}
-          marginLeft={section.styles?.marginLeft}
-          paddingTop={section.styles?.paddingTop}
-          paddingRight={section.styles?.paddingRight}
-          paddingBottom={section.styles?.paddingBottom}
-          paddingLeft={section.styles?.paddingLeft}
-          onMarginChange={(property, value) => handleStyleUpdate(property, value)}
-          onPaddingChange={(property, value) => handleStyleUpdate(property, value)}
+        <ResponsiveSpacingSliders
+          marginByDevice={getCurrentSpacingByDevice().marginByDevice}
+          paddingByDevice={getCurrentSpacingByDevice().paddingByDevice}
+          onMarginChange={handleMarginChange}
+          onPaddingChange={handlePaddingChange}
         />
       </CollapsibleGroup>
 
@@ -749,6 +797,61 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
     border: false,
     spacing: false
   });
+
+  // Helper functions for device-aware spacing conversion
+  const parsePixelValue = (value: string | undefined): number => {
+    if (!value) return 0;
+    return parseInt(value.replace('px', '')) || 0;
+  };
+
+  const getCurrentSpacingByDevice = () => {
+    const marginByDevice = row.styles?.marginByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+    
+    const paddingByDevice = row.styles?.paddingByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+
+    // Convert legacy spacing to device-aware if needed
+    if (!row.styles?.marginByDevice && (row.styles?.marginTop || row.styles?.marginRight || row.styles?.marginBottom || row.styles?.marginLeft)) {
+      marginByDevice.desktop = {
+        top: parsePixelValue(row.styles?.marginTop),
+        right: parsePixelValue(row.styles?.marginRight),
+        bottom: parsePixelValue(row.styles?.marginBottom),
+        left: parsePixelValue(row.styles?.marginLeft)
+      };
+    }
+
+    if (!row.styles?.paddingByDevice && (row.styles?.paddingTop || row.styles?.paddingRight || row.styles?.paddingBottom || row.styles?.paddingLeft)) {
+      paddingByDevice.desktop = {
+        top: parsePixelValue(row.styles?.paddingTop),
+        right: parsePixelValue(row.styles?.paddingRight),
+        bottom: parsePixelValue(row.styles?.paddingBottom),
+        left: parsePixelValue(row.styles?.paddingLeft)
+      };
+    }
+
+    return { marginByDevice, paddingByDevice };
+  };
+
+  const handleMarginChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { marginByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...marginByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onUpdate({ styles: { ...row.styles, marginByDevice: updated } });
+  };
+
+  const handlePaddingChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { paddingByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...paddingByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onUpdate({ styles: { ...row.styles, paddingByDevice: updated } });
+  };
 
   // Helper functions for responsive width handling specific to rows
   const getRowEffectiveWidth = (deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -1158,17 +1261,11 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
         isOpen={openCards.spacing}
         onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, spacing: isOpen }))}
       >
-        <SpacingSliders
-          marginTop={row.styles?.marginTop}
-          marginRight={row.styles?.marginRight}
-          marginBottom={row.styles?.marginBottom}
-          marginLeft={row.styles?.marginLeft}
-          paddingTop={row.styles?.paddingTop}
-          paddingRight={row.styles?.paddingRight}
-          paddingBottom={row.styles?.paddingBottom}
-          paddingLeft={row.styles?.paddingLeft}
-          onMarginChange={(property, value) => handleStyleUpdate(property, value)}
-          onPaddingChange={(property, value) => handleStyleUpdate(property, value)}
+        <ResponsiveSpacingSliders
+          marginByDevice={getCurrentSpacingByDevice().marginByDevice}
+          paddingByDevice={getCurrentSpacingByDevice().paddingByDevice}
+          onMarginChange={handleMarginChange}
+          onPaddingChange={handlePaddingChange}
         />
       </CollapsibleGroup>
 
@@ -1252,6 +1349,61 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
     spacing: false,
     content: false
   });
+
+  // Helper functions for device-aware spacing conversion
+  const parsePixelValue = (value: string | undefined): number => {
+    if (!value) return 0;
+    return parseInt(value.replace('px', '')) || 0;
+  };
+
+  const getCurrentSpacingByDevice = () => {
+    const marginByDevice = column.styles?.marginByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+    
+    const paddingByDevice = column.styles?.paddingByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+
+    // Convert legacy spacing to device-aware if needed
+    if (!column.styles?.marginByDevice && (column.styles?.marginTop || column.styles?.marginRight || column.styles?.marginBottom || column.styles?.marginLeft)) {
+      marginByDevice.desktop = {
+        top: parsePixelValue(column.styles?.marginTop),
+        right: parsePixelValue(column.styles?.marginRight),
+        bottom: parsePixelValue(column.styles?.marginBottom),
+        left: parsePixelValue(column.styles?.marginLeft)
+      };
+    }
+
+    if (!column.styles?.paddingByDevice && (column.styles?.paddingTop || column.styles?.paddingRight || column.styles?.paddingBottom || column.styles?.paddingLeft)) {
+      paddingByDevice.desktop = {
+        top: parsePixelValue(column.styles?.paddingTop),
+        right: parsePixelValue(column.styles?.paddingRight),
+        bottom: parsePixelValue(column.styles?.paddingBottom),
+        left: parsePixelValue(column.styles?.paddingLeft)
+      };
+    }
+
+    return { marginByDevice, paddingByDevice };
+  };
+
+  const handleMarginChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { marginByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...marginByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onUpdate({ styles: { ...column.styles, marginByDevice: updated } });
+  };
+
+  const handlePaddingChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { paddingByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...paddingByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onUpdate({ styles: { ...column.styles, paddingByDevice: updated } });
+  };
 
   // Helper functions for responsive width handling specific to columns
   const getColumnEffectiveWidth = (deviceType: 'desktop' | 'tablet' | 'mobile'): string => {
@@ -1627,17 +1779,11 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
         isOpen={openCards.spacing}
         onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, spacing: isOpen }))}
       >
-        <SpacingSliders
-          marginTop={column.styles?.marginTop}
-          marginRight={column.styles?.marginRight}
-          marginBottom={column.styles?.marginBottom}
-          marginLeft={column.styles?.marginLeft}
-          paddingTop={column.styles?.paddingTop}
-          paddingRight={column.styles?.paddingRight}
-          paddingBottom={column.styles?.paddingBottom}
-          paddingLeft={column.styles?.paddingLeft}
-          onMarginChange={(property, value) => handleStyleUpdate(property, value)}
-          onPaddingChange={(property, value) => handleStyleUpdate(property, value)}
+        <ResponsiveSpacingSliders
+          marginByDevice={getCurrentSpacingByDevice().marginByDevice}
+          paddingByDevice={getCurrentSpacingByDevice().paddingByDevice}
+          onMarginChange={handleMarginChange}
+          onPaddingChange={handlePaddingChange}
         />
       </CollapsibleGroup>
 

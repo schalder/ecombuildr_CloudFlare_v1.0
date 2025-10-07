@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 import { SpacingSliders } from './_shared/SpacingSliders';
+import { ResponsiveSpacingSliders } from './_shared/ResponsiveSpacingSliders';
 
 interface LayoutElementStylesProps {
   element: PageBuilderElement;
@@ -15,6 +16,60 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
   element,
   onStyleUpdate,
 }) => {
+  // Helper functions for device-aware spacing conversion
+  const parsePixelValue = (value: string | undefined): number => {
+    if (!value) return 0;
+    return parseInt(value.replace('px', '')) || 0;
+  };
+
+  const getCurrentSpacingByDevice = () => {
+    const marginByDevice = element.styles?.marginByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+    
+    const paddingByDevice = element.styles?.paddingByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+
+    // Convert legacy spacing to device-aware if needed
+    if (!element.styles?.marginByDevice && (element.styles?.marginTop || element.styles?.marginRight || element.styles?.marginBottom || element.styles?.marginLeft)) {
+      marginByDevice.desktop = {
+        top: parsePixelValue(element.styles?.marginTop),
+        right: parsePixelValue(element.styles?.marginRight),
+        bottom: parsePixelValue(element.styles?.marginBottom),
+        left: parsePixelValue(element.styles?.marginLeft)
+      };
+    }
+
+    if (!element.styles?.paddingByDevice && (element.styles?.paddingTop || element.styles?.paddingRight || element.styles?.paddingBottom || element.styles?.paddingLeft)) {
+      paddingByDevice.desktop = {
+        top: parsePixelValue(element.styles?.paddingTop),
+        right: parsePixelValue(element.styles?.paddingRight),
+        bottom: parsePixelValue(element.styles?.paddingBottom),
+        left: parsePixelValue(element.styles?.paddingLeft)
+      };
+    }
+
+    return { marginByDevice, paddingByDevice };
+  };
+
+  const handleMarginChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { marginByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...marginByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onStyleUpdate('marginByDevice', updated);
+  };
+
+  const handlePaddingChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { paddingByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...paddingByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onStyleUpdate('paddingByDevice', updated);
+  };
   const parseSpacingProperty = (value: string | undefined, property: 'margin' | 'padding'): { top: string; right: string; bottom: string; left: string } => {
     if (!value) return { top: '0px', right: '0px', bottom: '0px', left: '0px' };
     
@@ -161,25 +216,12 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
       <div className="space-y-3">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
         
-        {(() => {
-          const marginSpacing = parseSpacingProperty(element.styles?.margin, 'margin');
-          const paddingSpacing = parseSpacingProperty(element.styles?.padding, 'padding');
-
-          return (
-            <SpacingSliders
-              marginTop={marginSpacing.top}
-              marginRight={marginSpacing.right}
-              marginBottom={marginSpacing.bottom}
-              marginLeft={marginSpacing.left}
-              paddingTop={paddingSpacing.top}
-              paddingRight={paddingSpacing.right}
-              paddingBottom={paddingSpacing.bottom}
-              paddingLeft={paddingSpacing.left}
-              onMarginChange={(direction, value) => updateSpacingProperty('margin', direction, value)}
-              onPaddingChange={(direction, value) => updateSpacingProperty('padding', direction, value)}
-            />
-          );
-        })()}
+        <ResponsiveSpacingSliders
+          marginByDevice={getCurrentSpacingByDevice().marginByDevice}
+          paddingByDevice={getCurrentSpacingByDevice().paddingByDevice}
+          onMarginChange={handleMarginChange}
+          onPaddingChange={handlePaddingChange}
+        />
       </div>
     </div>
   );

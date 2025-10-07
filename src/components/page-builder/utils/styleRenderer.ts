@@ -3,6 +3,78 @@ import { mergeResponsiveStyles } from './responsiveStyles';
 import { applyColorOpacity, applyGradientOpacity } from './backgroundOpacity';
 import { buildBackgroundStyles } from './backgroundStyleBuilder';
 
+// Device-aware spacing interfaces
+interface SpacingValues {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+interface ResponsiveSpacing {
+  desktop: SpacingValues;
+  tablet: SpacingValues;
+  mobile: SpacingValues;
+}
+
+// Helper function to get device-aware spacing values with inheritance
+const getDeviceAwareSpacing = (
+  spacingByDevice?: ResponsiveSpacing,
+  deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'
+): SpacingValues => {
+  if (!spacingByDevice) {
+    return { top: 0, right: 0, bottom: 0, left: 0 };
+  }
+
+  // Current device value
+  const currentValue = spacingByDevice[deviceType];
+  if (currentValue) {
+    return currentValue;
+  }
+
+  // Inheritance logic: mobile -> tablet -> desktop
+  if (deviceType === 'mobile') {
+    const tabletValue = spacingByDevice.tablet;
+    if (tabletValue) {
+      return tabletValue;
+    }
+  }
+  
+  if (deviceType === 'mobile' || deviceType === 'tablet') {
+    const desktopValue = spacingByDevice.desktop;
+    if (desktopValue) {
+      return desktopValue;
+    }
+  }
+
+  return { top: 0, right: 0, bottom: 0, left: 0 };
+};
+
+// Helper function to apply device-aware spacing to styles
+const applyDeviceAwareSpacing = (
+  styles: React.CSSProperties,
+  marginByDevice?: ResponsiveSpacing,
+  paddingByDevice?: ResponsiveSpacing,
+  deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'
+): React.CSSProperties => {
+  const margin = getDeviceAwareSpacing(marginByDevice, deviceType);
+  const padding = getDeviceAwareSpacing(paddingByDevice, deviceType);
+
+  // Apply margin
+  if (margin.top > 0) styles.marginTop = `${margin.top}px`;
+  if (margin.right > 0) styles.marginRight = `${margin.right}px`;
+  if (margin.bottom > 0) styles.marginBottom = `${margin.bottom}px`;
+  if (margin.left > 0) styles.marginLeft = `${margin.left}px`;
+
+  // Apply padding
+  if (padding.top > 0) styles.paddingTop = `${padding.top}px`;
+  if (padding.right > 0) styles.paddingRight = `${padding.right}px`;
+  if (padding.bottom > 0) styles.paddingBottom = `${padding.bottom}px`;
+  if (padding.left > 0) styles.paddingLeft = `${padding.left}px`;
+
+  return styles;
+};
+
 // Helper function to get background image properties based on mode
 const getBackgroundImageProperties = (mode: BackgroundImageMode = 'full-center', deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
   const responsiveMode = deviceType === 'mobile' ? mode : mode;
@@ -73,23 +145,32 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     if (section.styles.borderColor) styles.borderColor = section.styles.borderColor;
     if (section.styles.borderRadius) styles.borderRadius = section.styles.borderRadius;
     
-    // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
-    if (section.styles.paddingTop || section.styles.paddingRight || section.styles.paddingBottom || section.styles.paddingLeft) {
-      if (section.styles.paddingTop) styles.paddingTop = section.styles.paddingTop;
-      if (section.styles.paddingRight) styles.paddingRight = section.styles.paddingRight;
-      if (section.styles.paddingBottom) styles.paddingBottom = section.styles.paddingBottom;
-      if (section.styles.paddingLeft) styles.paddingLeft = section.styles.paddingLeft;
-    } else if (section.styles.padding) {
-      styles.padding = section.styles.padding;
-    }
+    // Device-aware spacing styles - check for new responsive spacing first
+    const marginByDevice = section.styles?.marginByDevice as ResponsiveSpacing | undefined;
+    const paddingByDevice = section.styles?.paddingByDevice as ResponsiveSpacing | undefined;
     
-    if (section.styles.marginTop || section.styles.marginRight || section.styles.marginBottom || section.styles.marginLeft) {
-      if (section.styles.marginTop) styles.marginTop = section.styles.marginTop;
-      if (section.styles.marginRight) styles.marginRight = section.styles.marginRight;
-      if (section.styles.marginBottom) styles.marginBottom = section.styles.marginBottom;
-      if (section.styles.marginLeft) styles.marginLeft = section.styles.marginLeft;
-    } else if (section.styles.margin) {
-      styles.margin = section.styles.margin;
+    if (marginByDevice || paddingByDevice) {
+      // Use device-aware spacing
+      applyDeviceAwareSpacing(styles, marginByDevice, paddingByDevice, deviceType);
+    } else {
+      // Fallback to legacy spacing styles - prioritize individual properties over shorthand to prevent conflicts
+      if (section.styles.paddingTop || section.styles.paddingRight || section.styles.paddingBottom || section.styles.paddingLeft) {
+        if (section.styles.paddingTop) styles.paddingTop = section.styles.paddingTop;
+        if (section.styles.paddingRight) styles.paddingRight = section.styles.paddingRight;
+        if (section.styles.paddingBottom) styles.paddingBottom = section.styles.paddingBottom;
+        if (section.styles.paddingLeft) styles.paddingLeft = section.styles.paddingLeft;
+      } else if (section.styles.padding) {
+        styles.padding = section.styles.padding;
+      }
+      
+      if (section.styles.marginTop || section.styles.marginRight || section.styles.marginBottom || section.styles.marginLeft) {
+        if (section.styles.marginTop) styles.marginTop = section.styles.marginTop;
+        if (section.styles.marginRight) styles.marginRight = section.styles.marginRight;
+        if (section.styles.marginBottom) styles.marginBottom = section.styles.marginBottom;
+        if (section.styles.marginLeft) styles.marginLeft = section.styles.marginLeft;
+      } else if (section.styles.margin) {
+        styles.margin = section.styles.margin;
+      }
     }
     
     // Width
@@ -170,23 +251,32 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     if (row.styles.borderColor) styles.borderColor = row.styles.borderColor;
     if (row.styles.borderRadius) styles.borderRadius = row.styles.borderRadius;
     
-    // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
-    if (row.styles.paddingTop || row.styles.paddingRight || row.styles.paddingBottom || row.styles.paddingLeft) {
-      if (row.styles.paddingTop) styles.paddingTop = row.styles.paddingTop;
-      if (row.styles.paddingRight) styles.paddingRight = row.styles.paddingRight;
-      if (row.styles.paddingBottom) styles.paddingBottom = row.styles.paddingBottom;
-      if (row.styles.paddingLeft) styles.paddingLeft = row.styles.paddingLeft;
-    } else if (row.styles.padding) {
-      styles.padding = row.styles.padding;
-    }
+    // Device-aware spacing styles - check for new responsive spacing first
+    const marginByDevice = row.styles?.marginByDevice as ResponsiveSpacing | undefined;
+    const paddingByDevice = row.styles?.paddingByDevice as ResponsiveSpacing | undefined;
     
-    if (row.styles.marginTop || row.styles.marginRight || row.styles.marginBottom || row.styles.marginLeft) {
-      if (row.styles.marginTop) styles.marginTop = row.styles.marginTop;
-      if (row.styles.marginRight) styles.marginRight = row.styles.marginRight;
-      if (row.styles.marginBottom) styles.marginBottom = row.styles.marginBottom;
-      if (row.styles.marginLeft) styles.marginLeft = row.styles.marginLeft;
-    } else if (row.styles.margin) {
-      styles.margin = row.styles.margin;
+    if (marginByDevice || paddingByDevice) {
+      // Use device-aware spacing
+      applyDeviceAwareSpacing(styles, marginByDevice, paddingByDevice, deviceType);
+    } else {
+      // Fallback to legacy spacing styles - prioritize individual properties over shorthand to prevent conflicts
+      if (row.styles.paddingTop || row.styles.paddingRight || row.styles.paddingBottom || row.styles.paddingLeft) {
+        if (row.styles.paddingTop) styles.paddingTop = row.styles.paddingTop;
+        if (row.styles.paddingRight) styles.paddingRight = row.styles.paddingRight;
+        if (row.styles.paddingBottom) styles.paddingBottom = row.styles.paddingBottom;
+        if (row.styles.paddingLeft) styles.paddingLeft = row.styles.paddingLeft;
+      } else if (row.styles.padding) {
+        styles.padding = row.styles.padding;
+      }
+      
+      if (row.styles.marginTop || row.styles.marginRight || row.styles.marginBottom || row.styles.marginLeft) {
+        if (row.styles.marginTop) styles.marginTop = row.styles.marginTop;
+        if (row.styles.marginRight) styles.marginRight = row.styles.marginRight;
+        if (row.styles.marginBottom) styles.marginBottom = row.styles.marginBottom;
+        if (row.styles.marginLeft) styles.marginLeft = row.styles.marginLeft;
+      } else if (row.styles.margin) {
+        styles.margin = row.styles.margin;
+      }
     }
     
     // Width
@@ -280,23 +370,32 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       }
     }
     
-    // Spacing styles - prioritize individual properties over shorthand to prevent conflicts
-    if (column.styles.paddingTop || column.styles.paddingRight || column.styles.paddingBottom || column.styles.paddingLeft) {
-      if (column.styles.paddingTop) styles.paddingTop = column.styles.paddingTop;
-      if (column.styles.paddingRight) styles.paddingRight = column.styles.paddingRight;
-      if (column.styles.paddingBottom) styles.paddingBottom = column.styles.paddingBottom;
-      if (column.styles.paddingLeft) styles.paddingLeft = column.styles.paddingLeft;
-    } else if (column.styles.padding) {
-      styles.padding = column.styles.padding;
-    }
+    // Device-aware spacing styles - check for new responsive spacing first
+    const marginByDevice = column.styles?.marginByDevice as ResponsiveSpacing | undefined;
+    const paddingByDevice = column.styles?.paddingByDevice as ResponsiveSpacing | undefined;
     
-    if (column.styles.marginTop || column.styles.marginRight || column.styles.marginBottom || column.styles.marginLeft) {
-      if (column.styles.marginTop) styles.marginTop = column.styles.marginTop;
-      if (column.styles.marginRight) styles.marginRight = column.styles.marginRight;
-      if (column.styles.marginBottom) styles.marginBottom = column.styles.marginBottom;
-      if (column.styles.marginLeft) styles.marginLeft = column.styles.marginLeft;
-    } else if (column.styles.margin) {
-      styles.margin = column.styles.margin;
+    if (marginByDevice || paddingByDevice) {
+      // Use device-aware spacing
+      applyDeviceAwareSpacing(styles, marginByDevice, paddingByDevice, deviceType);
+    } else {
+      // Fallback to legacy spacing styles - prioritize individual properties over shorthand to prevent conflicts
+      if (column.styles.paddingTop || column.styles.paddingRight || column.styles.paddingBottom || column.styles.paddingLeft) {
+        if (column.styles.paddingTop) styles.paddingTop = column.styles.paddingTop;
+        if (column.styles.paddingRight) styles.paddingRight = column.styles.paddingRight;
+        if (column.styles.paddingBottom) styles.paddingBottom = column.styles.paddingBottom;
+        if (column.styles.paddingLeft) styles.paddingLeft = column.styles.paddingLeft;
+      } else if (column.styles.padding) {
+        styles.padding = column.styles.padding;
+      }
+      
+      if (column.styles.marginTop || column.styles.marginRight || column.styles.marginBottom || column.styles.marginLeft) {
+        if (column.styles.marginTop) styles.marginTop = column.styles.marginTop;
+        if (column.styles.marginRight) styles.marginRight = column.styles.marginRight;
+        if (column.styles.marginBottom) styles.marginBottom = column.styles.marginBottom;
+        if (column.styles.marginLeft) styles.marginLeft = column.styles.marginLeft;
+      } else if (column.styles.margin) {
+        styles.margin = column.styles.margin;
+      }
     }
     
     // Width - handle horizontal margins by adjusting width
@@ -383,14 +482,26 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
       styles.boxShadow = element.styles.boxShadow;
     }
     
-    // Spacing styles - ONLY apply padding, margins are handled by ElementRenderer wrapper
-    if (element.styles.paddingTop || element.styles.paddingRight || element.styles.paddingBottom || element.styles.paddingLeft) {
-      if (element.styles.paddingTop) styles.paddingTop = element.styles.paddingTop;
-      if (element.styles.paddingRight) styles.paddingRight = element.styles.paddingRight;
-      if (element.styles.paddingBottom) styles.paddingBottom = element.styles.paddingBottom;
-      if (element.styles.paddingLeft) styles.paddingLeft = element.styles.paddingLeft;
-    } else if (element.styles.padding) {
-      styles.padding = element.styles.padding;
+    // Device-aware spacing styles - ONLY apply padding, margins are handled by ElementRenderer wrapper
+    const paddingByDevice = element.styles?.paddingByDevice as ResponsiveSpacing | undefined;
+    
+    if (paddingByDevice) {
+      // Use device-aware padding
+      const padding = getDeviceAwareSpacing(paddingByDevice, deviceType);
+      if (padding.top > 0) styles.paddingTop = `${padding.top}px`;
+      if (padding.right > 0) styles.paddingRight = `${padding.right}px`;
+      if (padding.bottom > 0) styles.paddingBottom = `${padding.bottom}px`;
+      if (padding.left > 0) styles.paddingLeft = `${padding.left}px`;
+    } else {
+      // Fallback to legacy padding styles
+      if (element.styles.paddingTop || element.styles.paddingRight || element.styles.paddingBottom || element.styles.paddingLeft) {
+        if (element.styles.paddingTop) styles.paddingTop = element.styles.paddingTop;
+        if (element.styles.paddingRight) styles.paddingRight = element.styles.paddingRight;
+        if (element.styles.paddingBottom) styles.paddingBottom = element.styles.paddingBottom;
+        if (element.styles.paddingLeft) styles.paddingLeft = element.styles.paddingLeft;
+      } else if (element.styles.padding) {
+        styles.padding = element.styles.padding;
+      }
     }
     
   // NOTE: Margins are intentionally excluded here since they're handled by ElementRenderer wrapper

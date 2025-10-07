@@ -7,6 +7,7 @@ import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { SpacingSliders } from './_shared/SpacingSliders';
+import { ResponsiveSpacingSliders } from './_shared/ResponsiveSpacingSliders';
 
 interface FormElementStylesProps {
   element: PageBuilderElement;
@@ -34,6 +35,63 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
 
   const formatMarginPadding = (top: string, right: string, bottom: string, left: string) => {
     return `${top} ${right} ${bottom} ${left}`;
+  };
+
+  // Helper functions for device-aware spacing conversion
+  const parsePixelValue = (value: string | undefined): number => {
+    if (!value) return 0;
+    return parseInt(value.replace('px', '')) || 0;
+  };
+
+  const getCurrentSpacingByDevice = () => {
+    const marginByDevice = element.styles?.marginByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+    
+    const paddingByDevice = element.styles?.paddingByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+
+    // Convert legacy spacing to device-aware if needed
+    if (!element.styles?.marginByDevice && element.styles?.margin) {
+      const margin = parseMarginPadding(element.styles.margin);
+      marginByDevice.desktop = {
+        top: parsePixelValue(margin.top),
+        right: parsePixelValue(margin.right),
+        bottom: parsePixelValue(margin.bottom),
+        left: parsePixelValue(margin.left)
+      };
+    }
+
+    if (!element.styles?.paddingByDevice && element.styles?.padding) {
+      const padding = parseMarginPadding(element.styles.padding);
+      paddingByDevice.desktop = {
+        top: parsePixelValue(padding.top),
+        right: parsePixelValue(padding.right),
+        bottom: parsePixelValue(padding.bottom),
+        left: parsePixelValue(padding.left)
+      };
+    }
+
+    return { marginByDevice, paddingByDevice };
+  };
+
+  const handleMarginChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { marginByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...marginByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onStyleUpdate('marginByDevice', updated);
+  };
+
+  const handlePaddingChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { paddingByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...paddingByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onStyleUpdate('paddingByDevice', updated);
   };
 
   const margin = parseMarginPadding(element.styles?.margin as string);
@@ -117,27 +175,11 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
 
       {/* Spacing */}
       <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>
-        <SpacingSliders
-          marginTop={margin.top}
-          marginRight={margin.right}
-          marginBottom={margin.bottom}
-          marginLeft={margin.left}
-          paddingTop={padding.top}
-          paddingRight={padding.right}
-          paddingBottom={padding.bottom}
-          paddingLeft={padding.left}
-          onMarginChange={(property, value) => {
-            const current = parseMarginPadding(element.styles?.margin as string);
-            const key = property.replace('margin', '').toLowerCase();
-            const updated = { ...current, [key]: value };
-            onStyleUpdate('margin', formatMarginPadding(updated.top, updated.right, updated.bottom, updated.left));
-          }}
-          onPaddingChange={(property, value) => {
-            const current = parseMarginPadding(element.styles?.padding as string);
-            const key = property.replace('padding', '').toLowerCase();
-            const updated = { ...current, [key]: value };
-            onStyleUpdate('padding', formatMarginPadding(updated.top, updated.right, updated.bottom, updated.left));
-          }}
+        <ResponsiveSpacingSliders
+          marginByDevice={getCurrentSpacingByDevice().marginByDevice}
+          paddingByDevice={getCurrentSpacingByDevice().paddingByDevice}
+          onMarginChange={handleMarginChange}
+          onPaddingChange={handlePaddingChange}
         />
       </CollapsibleGroup>
     </div>
