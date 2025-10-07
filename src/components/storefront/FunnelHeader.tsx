@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Menu, Search, ShoppingCart } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTrigger } from '@/components/ui/sheet';
@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { supabase } from '@/integrations/supabase/client';
 
 const isCustomDomain = () => {
   const currentHost = window.location.hostname;
@@ -57,6 +58,30 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
   const navigate = useNavigate();
   const { itemCount } = useCart();
   const paths = useEcomPaths();
+  const [firstStepSlug, setFirstStepSlug] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchFirstStep = async () => {
+      try {
+        const { data: firstStep } = await supabase
+          .from('funnel_steps')
+          .select('slug')
+          .eq('funnel_id', funnel.id)
+          .eq('is_published', true)
+          .order('step_order', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        
+        if (firstStep?.slug) {
+          setFirstStepSlug(firstStep.slug);
+        }
+      } catch (error) {
+        console.error('Error fetching first step:', error);
+      }
+    };
+
+    fetchFirstStep();
+  }, [funnel.id]);
 
   const fontSizeClass = useMemo(() => {
     switch (cfg?.font_size) {
@@ -116,6 +141,11 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
     );
   };
 
+  // Calculate logo href to avoid redirect flash
+  const logoHref = firstStepSlug 
+    ? (isCustomDomain() ? `/${firstStepSlug}` : `/funnel/${funnel.id}/${firstStepSlug}`)
+    : paths.home;
+
   const handleSearch = () => {
     // For funnels, search functionality might be disabled or redirect to store
     
@@ -135,7 +165,7 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
         `}</style>
       )}
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <a href={paths.home} className="flex items-center gap-3">
+        <a href={logoHref} className="flex items-center gap-3">
            {cfg?.logo_url ? (
              <img src={cfg.logo_url} alt={`${funnel.name} logo`} className="h-8 w-auto object-contain" />
            ) : (
