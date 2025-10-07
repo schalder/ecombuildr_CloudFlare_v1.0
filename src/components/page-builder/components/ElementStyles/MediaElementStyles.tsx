@@ -11,6 +11,16 @@ import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { SpacingSliders } from './_shared/SpacingSliders';
 import { useDevicePreview } from '../../contexts/DevicePreviewContext';
 
+// Width presets for image elements
+const WIDTH_PRESETS = [
+  { label: 'Full Width', value: '100%' },
+  { label: '3/4 Width', value: '75%' },
+  { label: 'Half Width', value: '50%' },
+  { label: '1/3 Width', value: '33.333%' },
+  { label: '1/4 Width', value: '25%' },
+  { label: 'Auto', value: 'auto' }
+];
+
 interface MediaElementStylesProps {
   element: PageBuilderElement;
   onStyleUpdate: (property: string, value: any) => void;
@@ -29,6 +39,7 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
   const [spacingOpen, setSpacingOpen] = React.useState(false);
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
   const currentStyles = (responsiveStyles as any)[responsiveTab] || {};
+  
   const handleResponsiveUpdate = (property: string, value: any) => {
     const updatedResponsive = {
       ...responsiveStyles,
@@ -39,6 +50,29 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
     };
     onStyleUpdate('responsive', updatedResponsive);
   };
+
+  // Helper function to get current width value
+  const getCurrentWidth = () => {
+    return (currentStyles.width || element.styles?.width || '100%') as string;
+  };
+
+  // Helper function to check if current width is a preset
+  const isPresetWidth = (width: string) => {
+    return WIDTH_PRESETS.some(preset => preset.value === width);
+  };
+
+  // Helper function to get preset label for current width
+  const getCurrentPresetLabel = () => {
+    const currentWidth = getCurrentWidth();
+    const preset = WIDTH_PRESETS.find(p => p.value === currentWidth);
+    return preset ? preset.label : 'Full Width';
+  };
+
+  // Helper function to handle width preset change
+  const handleWidthPresetChange = (value: string) => {
+    handleResponsiveUpdate('width', value);
+  };
+
   return (
     <div className="space-y-4">
       {/* Device Toggle */}
@@ -57,15 +91,26 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
       {/* Dimensions - Hide for video elements */}
       {element.type !== 'video' && (
         <CollapsibleGroup title="Dimensions" isOpen={dimensionsOpen} onToggle={setDimensionsOpen}>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="space-y-2">
             <div>
               <Label className="text-xs">Width</Label>
-              <Input
-                value={(currentStyles.width || element.styles?.width || '') as string}
-                onChange={(e) => handleResponsiveUpdate('width', e.target.value)}
-                placeholder="e.g., 100%, 75%, 50%, auto"
-              />
+              <Select
+                value={isPresetWidth(getCurrentWidth()) ? getCurrentWidth() : '100%'}
+                onValueChange={handleWidthPresetChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select width preset" />
+                </SelectTrigger>
+                <SelectContent>
+                  {WIDTH_PRESETS.map((preset) => (
+                    <SelectItem key={preset.value} value={preset.value}>
+                      {preset.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
+            
             <div>
               <Label className="text-xs">Height</Label>
               <Input
