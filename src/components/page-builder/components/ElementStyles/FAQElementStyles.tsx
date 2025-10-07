@@ -163,6 +163,7 @@ export const FAQElementStyles: React.FC<FAQElementStylesProps> = ({
   const [isBackgroundOpen, setIsBackgroundOpen] = React.useState(false);
   const [isBorderOpen, setIsBorderOpen] = React.useState(false);
   const [isSpacingOpen, setIsSpacingOpen] = React.useState(false);
+  const [isGapOpen, setIsGapOpen] = React.useState(false);
   
   const styles = element.styles || {};
 
@@ -384,6 +385,29 @@ export const FAQElementStyles: React.FC<FAQElementStylesProps> = ({
           onMarginChange={handleMarginChange}
           onPaddingChange={handlePaddingChange}
         />
+      </CollapsibleGroup>
+
+      {/* FAQ Gap Section */}
+      <CollapsibleGroup
+        title="FAQ Gap"
+        isOpen={isGapOpen}
+        onToggle={setIsGapOpen}
+      >
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs">Gap Between FAQ Items</Label>
+            <div className="space-y-1">
+              <Slider
+                value={[parseInt(currentStyles.faqGap) || 16]}
+                onValueChange={(value) => handleResponsiveUpdate('faqGap', `${value[0]}px`)}
+                max={100}
+                min={0}
+                step={1}
+              />
+              <span className="text-xs text-muted-foreground">{parseInt(currentStyles.faqGap) || 16}px</span>
+            </div>
+          </div>
+        </div>
       </CollapsibleGroup>
     </div>
   );

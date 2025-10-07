@@ -194,6 +194,9 @@ const FAQElement: React.FC<{
   // Get current responsive styles for hover effects
   const currentResponsiveStyles = element.styles?.responsive?.[deviceKey] || {};
   
+  // Get FAQ gap from responsive styles
+  const faqGap = currentResponsiveStyles.faqGap || '16px';
+  
   // Create inline styles for questions and answers
   const questionInlineStyles = {
     fontSize: questionStyles.fontSize,
@@ -217,8 +220,13 @@ const FAQElement: React.FC<{
     <>
       {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
       <div 
-        className={`element-${element.id} ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'} space-y-4`} 
-        style={containerStyles}
+        className={`element-${element.id} ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} 
+        style={{
+          ...containerStyles,
+          gap: faqGap,
+          display: 'flex',
+          flexDirection: 'column'
+        }}
       >
         <h3 className="text-xl font-semibold mb-4">
           <InlineEditor
