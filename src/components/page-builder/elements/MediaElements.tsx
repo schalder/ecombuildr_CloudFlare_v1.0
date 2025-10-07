@@ -7,6 +7,7 @@ import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
+import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 
 // Image Gallery Element
 const ImageGalleryElement: React.FC<{
@@ -117,6 +118,10 @@ const ImageCarouselElement: React.FC<{
   const showDots = element.content.showDots !== false;
   const height = element.content.height || 384;
   const imageFit = element.content.imageFit || 'cover';
+  
+  // Get visibleImages with device-aware support from content
+  const visibleImagesByDevice = element.content.visibleImagesByDevice || { desktop: 1, tablet: 1, mobile: 1 };
+  const visibleImages = visibleImagesByDevice[deviceType] || 1;
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [api, setApi] = useState<CarouselApi | null>(null);
@@ -150,6 +155,12 @@ const ImageCarouselElement: React.FC<{
     }
   };
 
+  // Group images into slides based on visibleImages count
+  const groupedImages = [];
+  for (let i = 0; i < images.length; i += visibleImages) {
+    groupedImages.push(images.slice(i, i + visibleImages));
+  }
+
   return (
     <div 
       className="max-w-4xl mx-auto" 
@@ -158,25 +169,34 @@ const ImageCarouselElement: React.FC<{
       <div className="relative">
         <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>
           <CarouselContent>
-            {images.map((image: string, index: number) => {
-              if (!image) return null;
-              return (
-                <CarouselItem key={index}>
-                  <div className="p-1">
-                    <img
-                      src={image}
-                      alt={`Carousel image ${index + 1}`}
-                      className="w-full"
-                      style={{
-                        height: `${height}px`,
-                        objectFit: imageFit as 'cover' | 'contain',
-                        borderRadius: 'inherit'
-                      }}
-                    />
-                  </div>
-                </CarouselItem>
-              );
-            })}
+            {groupedImages.map((imageGroup: string[], slideIndex: number) => (
+              <CarouselItem key={slideIndex}>
+                <div className={`p-1 grid gap-2 ${
+                  visibleImages === 1 ? 'grid-cols-1' :
+                  visibleImages === 2 ? 'grid-cols-2' :
+                  visibleImages === 3 ? 'grid-cols-3' :
+                  'grid-cols-4'
+                }`}>
+                  {imageGroup.map((image: string, imageIndex: number) => {
+                    if (!image) return null;
+                    return (
+                      <div key={imageIndex} className="relative">
+                        <img
+                          src={image}
+                          alt={`Carousel image ${slideIndex * visibleImages + imageIndex + 1}`}
+                          className="w-full"
+                          style={{
+                            height: `${height}px`,
+                            objectFit: imageFit as 'cover' | 'contain',
+                            borderRadius: 'inherit'
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </CarouselItem>
+            ))}
           </CarouselContent>
           {showArrows && (
             <>
@@ -186,9 +206,9 @@ const ImageCarouselElement: React.FC<{
           )}
         </Carousel>
         
-        {showDots && images.length > 1 && (
+        {showDots && groupedImages.length > 1 && (
           <div className="flex justify-center mt-4 space-x-2">
-            {images.map((_, index) => (
+            {groupedImages.map((_, index) => (
               <button
                 key={index}
                 className={`w-2 h-2 rounded-full transition-colors ${
@@ -335,7 +355,12 @@ export const registerMediaElements = () => {
         'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=400&fit=crop',
         'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=400&fit=crop',
         'https://images.unsplash.com/photo-1475924156734-496f6cac6ec1?w=800&h=400&fit=crop'
-      ]
+      ],
+      visibleImagesByDevice: {
+        desktop: 1,
+        tablet: 1,
+        mobile: 1
+      }
     },
     description: 'Sliding image carousel'
   });

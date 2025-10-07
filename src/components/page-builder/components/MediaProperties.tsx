@@ -7,8 +7,9 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { MediaSelector } from './MediaSelector';
 import { CompactMediaSelector } from './CompactMediaSelector';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Monitor, Tablet, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../types';
+import { useDevicePreview } from '../contexts/DevicePreviewContext';
 
 interface MediaPropertiesProps {
   element: PageBuilderElement;
@@ -139,6 +140,8 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
   element,
   onUpdate
 }) => {
+  const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
+  
   const images = element.content.images || [];
   const autoPlay = element.content.autoPlay || false;
   const autoPlayDelay = element.content.autoPlayDelay || 3000;
@@ -147,6 +150,24 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
   const pauseOnHover = element.content.pauseOnHover !== false;
   const height = element.content.height || 384;
   const imageFit = element.content.imageFit || 'cover';
+
+  // Get current visibleImagesByDevice with proper defaults
+  const currentVisibleImagesByDevice = React.useMemo(() => {
+    const existing = (element.content as any).visibleImagesByDevice || {};
+    return {
+      desktop: existing.desktop || 1,
+      tablet: existing.tablet || 1,
+      mobile: existing.mobile || 1
+    };
+  }, [(element.content as any).visibleImagesByDevice]);
+
+  const handleVisibleImagesByDeviceChange = (device: 'desktop' | 'tablet' | 'mobile', value: number) => {
+    const updated = { ...currentVisibleImagesByDevice, [device]: value };
+    onUpdate('visibleImagesByDevice', updated);
+  };
+
+  // Get the current visible images for the selected device
+  const currentDeviceVisibleImages = currentVisibleImagesByDevice[responsiveTab] || 1;
 
   const addImage = () => {
     const newImages = [...images, ''];
@@ -190,6 +211,56 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
             <SelectItem value="contain">Contain (fit full image)</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Visible Images Control */}
+      <div>
+        <Label>Visible Images</Label>
+        <div className="space-y-3">
+          {/* Device Selector */}
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+            <Button
+              variant={responsiveTab === 'desktop' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setResponsiveTab('desktop')}
+              className="h-8 px-2"
+            >
+              <Monitor className="h-3 w-3" />
+            </Button>
+            <Button
+              variant={responsiveTab === 'tablet' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setResponsiveTab('tablet')}
+              className="h-8 px-2"
+            >
+              <Tablet className="h-3 w-3" />
+            </Button>
+            <Button
+              variant={responsiveTab === 'mobile' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setResponsiveTab('mobile')}
+              className="h-8 px-2"
+            >
+              <Smartphone className="h-3 w-3" />
+            </Button>
+          </div>
+          
+          {/* Visible Images Selector */}
+          <Select 
+            value={currentDeviceVisibleImages.toString()} 
+            onValueChange={(value) => handleVisibleImagesByDeviceChange(responsiveTab, parseInt(value))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select visible images" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">1 Image</SelectItem>
+              <SelectItem value="2">2 Images</SelectItem>
+              <SelectItem value="3">3 Images</SelectItem>
+              <SelectItem value="4">4 Images</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="flex items-center space-x-2">
