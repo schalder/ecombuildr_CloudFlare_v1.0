@@ -1022,8 +1022,28 @@ export const RelatedProductsContentProperties: React.FC<EcommerceContentProperti
           <Label className="text-xs">Show Title</Label>
         </div>
         <div className="mt-3">
+          <Label className="text-xs">CTA Behavior</Label>
+          <Select
+            value={element.content.ctaBehavior || 'view'}
+            onValueChange={(value) => onUpdate('ctaBehavior', value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="view">View Product</SelectItem>
+              <SelectItem value="add_to_cart">Add to Cart</SelectItem>
+              <SelectItem value="buy_now">Buy Now</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="mt-3">
           <Label className="text-xs">Button Label</Label>
-          <Input value={element.content.ctaText || 'View'} onChange={(e) => onUpdate('ctaText', e.target.value)} placeholder="View" />
+          <Input 
+            value={element.content.ctaText || ''} 
+            onChange={(e) => onUpdate('ctaText', e.target.value)} 
+            placeholder={element.content.ctaBehavior === 'buy_now' ? 'Buy Now' : element.content.ctaBehavior === 'add_to_cart' ? 'Add to Cart' : 'View'} 
+          />
         </div>
       </div>
 

@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/contexts/CartContext';
+import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useStore } from '@/contexts/StoreContext';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -269,6 +270,7 @@ const ProductDetailElement: React.FC<{ element: PageBuilderElement }> = ({ eleme
 // Related Products (simple grid)
 const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile'; }> = ({ element, deviceType = 'desktop' }) => {
   const { websiteId: urlWebsiteId } = useParams<{ websiteId?: string }>();
+  const { addToCart } = useAddToCart();
   
   // Resolve websiteId for filtering (inline logic to avoid import issues)
   const resolvedWebsiteId = React.useMemo(() => {
@@ -300,6 +302,42 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
   const elementStyles = renderElementStyles(element, deviceType);
+
+  // Handle button click based on CTA behavior
+  const handleButtonClick = (product: any) => {
+    const ctaBehavior = element.content?.ctaBehavior || 'view';
+    
+    switch (ctaBehavior) {
+      case 'add_to_cart':
+        addToCart(product, 1, false);
+        break;
+      case 'buy_now':
+        addToCart(product, 1, true);
+        break;
+      case 'view':
+      default:
+        window.location.href = paths.productDetail(product.slug || product.id);
+        break;
+    }
+  };
+
+  // Get button text based on CTA behavior
+  const getButtonText = () => {
+    const ctaBehavior = element.content?.ctaBehavior || 'view';
+    const customText = element.content?.ctaText;
+    
+    if (customText) return customText;
+    
+    switch (ctaBehavior) {
+      case 'add_to_cart':
+        return 'Add to Cart';
+      case 'buy_now':
+        return 'Buy Now';
+      case 'view':
+      default:
+        return 'View';
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -333,7 +371,7 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
                </div>
               <div className="text-sm font-medium" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{p.name}</div>
               <div className="text-sm">{formatCurrency(Number(p.price))}</div>
-              <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={() => (window.location.href = paths.productDetail(p.slug || p.id))}>{element.content?.ctaText || 'View'}</Button>
+              <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={() => handleButtonClick(p)}>{getButtonText()}</Button>
             </CardContent>
           </Card>
         ))}
@@ -1981,8 +2019,8 @@ export const registerEcommerceSystemElements = () => {
     category: 'ecommerce',
     icon: Star,
     component: RelatedProductsElement,
-    defaultContent: { limit: 8, title: 'Related Products', columns: 4, tabletColumns: 2, mobileColumns: 1, categoryIds: [], ctaText: 'View' },
-    description: 'Show a small grid of products.'
+    defaultContent: { limit: 8, title: 'Related Products', columns: 4, tabletColumns: 2, mobileColumns: 1, categoryIds: [], ctaBehavior: 'view', ctaText: 'View' },
+    description: 'Show a small grid of products with customizable CTA behavior (View, Add to Cart, Buy Now).'
   });
 
   elementRegistry.register({
