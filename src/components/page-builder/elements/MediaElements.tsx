@@ -155,12 +155,6 @@ const ImageCarouselElement: React.FC<{
     }
   };
 
-  // Group images into slides based on visibleImages count
-  const groupedImages = [];
-  for (let i = 0; i < images.length; i += visibleImages) {
-    groupedImages.push(images.slice(i, i + visibleImages));
-  }
-
   return (
     <div 
       className="max-w-4xl mx-auto" 
@@ -169,34 +163,25 @@ const ImageCarouselElement: React.FC<{
       <div className="relative">
         <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>
           <CarouselContent>
-            {groupedImages.map((imageGroup: string[], slideIndex: number) => (
-              <CarouselItem key={slideIndex}>
-                <div className={`p-1 grid gap-2 ${
-                  visibleImages === 1 ? 'grid-cols-1' :
-                  visibleImages === 2 ? 'grid-cols-2' :
-                  visibleImages === 3 ? 'grid-cols-3' :
-                  'grid-cols-4'
-                }`}>
-                  {imageGroup.map((image: string, imageIndex: number) => {
-                    if (!image) return null;
-                    return (
-                      <div key={imageIndex} className="relative">
-                        <img
-                          src={image}
-                          alt={`Carousel image ${slideIndex * visibleImages + imageIndex + 1}`}
-                          className="w-full"
-                          style={{
-                            height: `${height}px`,
-                            objectFit: imageFit as 'cover' | 'contain',
-                            borderRadius: 'inherit'
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </CarouselItem>
-            ))}
+            {images.map((image: string, index: number) => {
+              if (!image) return null;
+              return (
+                <CarouselItem key={index} style={{ flexBasis: `${100/visibleImages}%` }}>
+                  <div className="p-1">
+                    <img
+                      src={image}
+                      alt={`Carousel image ${index + 1}`}
+                      className="w-full"
+                      style={{
+                        height: `${height}px`,
+                        objectFit: imageFit as 'cover' | 'contain',
+                        borderRadius: 'inherit'
+                      }}
+                    />
+                  </div>
+                </CarouselItem>
+              );
+            })}
           </CarouselContent>
           {showArrows && (
             <>
@@ -206,9 +191,9 @@ const ImageCarouselElement: React.FC<{
           )}
         </Carousel>
         
-        {showDots && groupedImages.length > 1 && (
+        {showDots && images.length > visibleImages && (
           <div className="flex justify-center mt-4 space-x-2">
-            {groupedImages.map((_, index) => (
+            {Array.from({ length: Math.max(1, images.length - visibleImages + 1) }).map((_, index) => (
               <button
                 key={index}
                 className={`w-2 h-2 rounded-full transition-colors ${
