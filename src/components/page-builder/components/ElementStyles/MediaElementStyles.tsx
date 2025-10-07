@@ -9,6 +9,7 @@ import { Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { SpacingSliders } from './_shared/SpacingSliders';
+import { ResponsiveSpacingSliders } from './_shared/ResponsiveSpacingSliders';
 import { useDevicePreview } from '../../contexts/DevicePreviewContext';
 
 // Width presets for image elements
@@ -54,6 +55,61 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
   // Helper function to get current width value
   const getCurrentWidth = () => {
     return (currentStyles.width || element.styles?.width || '100%') as string;
+  };
+
+  // Helper functions for device-aware spacing conversion
+  const parsePixelValue = (value: string | undefined): number => {
+    if (!value) return 0;
+    return parseInt(value.replace('px', '')) || 0;
+  };
+
+  const getCurrentSpacingByDevice = () => {
+    const marginByDevice = (element.styles as any)?.marginByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+    
+    const paddingByDevice = (element.styles as any)?.paddingByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+
+    // Convert legacy spacing to device-aware if needed
+    if (!(element.styles as any)?.marginByDevice && (element.styles?.marginTop || element.styles?.marginRight || element.styles?.marginBottom || element.styles?.marginLeft)) {
+      marginByDevice.desktop = {
+        top: parsePixelValue(element.styles?.marginTop),
+        right: parsePixelValue(element.styles?.marginRight),
+        bottom: parsePixelValue(element.styles?.marginBottom),
+        left: parsePixelValue(element.styles?.marginLeft)
+      };
+    }
+
+    if (!(element.styles as any)?.paddingByDevice && (element.styles?.paddingTop || element.styles?.paddingRight || element.styles?.paddingBottom || element.styles?.paddingLeft)) {
+      paddingByDevice.desktop = {
+        top: parsePixelValue(element.styles?.paddingTop),
+        right: parsePixelValue(element.styles?.paddingRight),
+        bottom: parsePixelValue(element.styles?.paddingBottom),
+        left: parsePixelValue(element.styles?.paddingLeft)
+      };
+    }
+
+    return { marginByDevice, paddingByDevice };
+  };
+
+  const handleMarginChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { marginByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...marginByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onStyleUpdate('marginByDevice', updated);
+  };
+
+  const handlePaddingChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { paddingByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...paddingByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onStyleUpdate('paddingByDevice', updated);
   };
 
   // Helper function to check if current width is a preset
@@ -220,17 +276,11 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
 
       {/* Spacing */}
       <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>
-        <SpacingSliders
-          marginTop={element.styles?.marginTop as string}
-          marginRight={element.styles?.marginRight as string}
-          marginBottom={element.styles?.marginBottom as string}
-          marginLeft={element.styles?.marginLeft as string}
-          paddingTop={element.styles?.paddingTop as string}
-          paddingRight={element.styles?.paddingRight as string}
-          paddingBottom={element.styles?.paddingBottom as string}
-          paddingLeft={element.styles?.paddingLeft as string}
-          onMarginChange={(property, value) => onStyleUpdate(property, value)}
-          onPaddingChange={(property, value) => onStyleUpdate(property, value)}
+        <ResponsiveSpacingSliders
+          marginByDevice={getCurrentSpacingByDevice().marginByDevice}
+          paddingByDevice={getCurrentSpacingByDevice().paddingByDevice}
+          onMarginChange={handleMarginChange}
+          onPaddingChange={handlePaddingChange}
         />
       </CollapsibleGroup>
     </div>

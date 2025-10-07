@@ -10,6 +10,7 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { SpacingSliders } from './_shared/SpacingSliders';
+import { ResponsiveSpacingSliders } from './_shared/ResponsiveSpacingSliders';
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 
 interface TestimonialElementStylesProps {
@@ -48,6 +49,56 @@ export const TestimonialElementStyles: React.FC<TestimonialElementStylesProps> =
   const parsePixelValue = (value: string | undefined): number => {
     if (!value) return 0;
     return parseInt(value.replace('px', '')) || 0;
+  };
+
+  // Helper functions for device-aware spacing conversion
+  const getCurrentSpacingByDevice = () => {
+    const marginByDevice = element.styles?.marginByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+    
+    const paddingByDevice = element.styles?.paddingByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+
+    // Convert legacy spacing to device-aware if needed
+    if (!element.styles?.marginByDevice && (element.styles?.marginTop || element.styles?.marginRight || element.styles?.marginBottom || element.styles?.marginLeft)) {
+      marginByDevice.desktop = {
+        top: parsePixelValue(element.styles?.marginTop),
+        right: parsePixelValue(element.styles?.marginRight),
+        bottom: parsePixelValue(element.styles?.marginBottom),
+        left: parsePixelValue(element.styles?.marginLeft)
+      };
+    }
+
+    if (!element.styles?.paddingByDevice && (element.styles?.paddingTop || element.styles?.paddingRight || element.styles?.paddingBottom || element.styles?.paddingLeft)) {
+      paddingByDevice.desktop = {
+        top: parsePixelValue(element.styles?.paddingTop),
+        right: parsePixelValue(element.styles?.paddingRight),
+        bottom: parsePixelValue(element.styles?.paddingBottom),
+        left: parsePixelValue(element.styles?.paddingLeft)
+      };
+    }
+
+    return { marginByDevice, paddingByDevice };
+  };
+
+  const handleMarginChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { marginByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...marginByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onStyleUpdate('marginByDevice', updated);
+  };
+
+  const handlePaddingChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { paddingByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...paddingByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onStyleUpdate('paddingByDevice', updated);
   };
 
   const handleSpacingChange = (property: string, value: string) => {
@@ -299,17 +350,11 @@ export const TestimonialElementStyles: React.FC<TestimonialElementStylesProps> =
           <ChevronDown className={`h-4 w-4 transition-transform ${spacingOpen ? 'rotate-180' : ''}`} />
         </CollapsibleTrigger>
         <CollapsibleContent className="space-y-4 pt-2">
-          <SpacingSliders
-            marginTop={currentStyles.marginTop || element.styles?.marginTop}
-            marginRight={currentStyles.marginRight || element.styles?.marginRight}
-            marginBottom={currentStyles.marginBottom || element.styles?.marginBottom}
-            marginLeft={currentStyles.marginLeft || element.styles?.marginLeft}
-            paddingTop={currentStyles.paddingTop || element.styles?.paddingTop}
-            paddingRight={currentStyles.paddingRight || element.styles?.paddingRight}
-            paddingBottom={currentStyles.paddingBottom || element.styles?.paddingBottom}
-            paddingLeft={currentStyles.paddingLeft || element.styles?.paddingLeft}
-            onMarginChange={handleSpacingChange}
-            onPaddingChange={handleSpacingChange}
+          <ResponsiveSpacingSliders
+            marginByDevice={getCurrentSpacingByDevice().marginByDevice}
+            paddingByDevice={getCurrentSpacingByDevice().paddingByDevice}
+            onMarginChange={handleMarginChange}
+            onPaddingChange={handlePaddingChange}
           />
         </CollapsibleContent>
       </Collapsible>

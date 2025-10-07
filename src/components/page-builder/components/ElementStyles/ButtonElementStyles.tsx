@@ -11,6 +11,7 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { PageBuilderElement } from '../../types';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { SpacingSliders } from './_shared/SpacingSliders';
+import { ResponsiveSpacingSliders } from './_shared/ResponsiveSpacingSliders';
 import { IconPicker } from '@/components/ui/icon-picker';
 import { ResponsiveStyleControl, ResponsiveTabs } from './_shared/ResponsiveStyleControl';
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
@@ -41,6 +42,61 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
       ...element.content,
       icon: iconName
     });
+  };
+
+  // Helper functions for device-aware spacing conversion
+  const parsePixelValue = (value: string | undefined): number => {
+    if (!value) return 0;
+    return parseInt(value.replace('px', '')) || 0;
+  };
+
+  const getCurrentSpacingByDevice = () => {
+    const marginByDevice = element.styles?.marginByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+    
+    const paddingByDevice = element.styles?.paddingByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+
+    // Convert legacy spacing to device-aware if needed
+    if (!element.styles?.marginByDevice && (element.styles?.marginTop || element.styles?.marginRight || element.styles?.marginBottom || element.styles?.marginLeft)) {
+      marginByDevice.desktop = {
+        top: parsePixelValue(element.styles?.marginTop),
+        right: parsePixelValue(element.styles?.marginRight),
+        bottom: parsePixelValue(element.styles?.marginBottom),
+        left: parsePixelValue(element.styles?.marginLeft)
+      };
+    }
+
+    if (!element.styles?.paddingByDevice && (element.styles?.paddingTop || element.styles?.paddingRight || element.styles?.paddingBottom || element.styles?.paddingLeft)) {
+      paddingByDevice.desktop = {
+        top: parsePixelValue(element.styles?.paddingTop),
+        right: parsePixelValue(element.styles?.paddingRight),
+        bottom: parsePixelValue(element.styles?.paddingBottom),
+        left: parsePixelValue(element.styles?.paddingLeft)
+      };
+    }
+
+    return { marginByDevice, paddingByDevice };
+  };
+
+  const handleMarginChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { marginByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...marginByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onStyleUpdate('marginByDevice', updated);
+  };
+
+  const handlePaddingChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+    const { paddingByDevice } = getCurrentSpacingByDevice();
+    const updated = { ...paddingByDevice };
+    updated[device] = { ...updated[device], [property]: value };
+    onStyleUpdate('paddingByDevice', updated);
   };
 
   const fontOptions = React.useMemo(() => {
@@ -413,17 +469,11 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
 
       {/* Spacing */}
       <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>
-        <SpacingSliders
-          marginTop={element.styles?.marginTop}
-          marginRight={element.styles?.marginRight}
-          marginBottom={element.styles?.marginBottom}
-          marginLeft={element.styles?.marginLeft}
-          paddingTop={element.styles?.paddingTop}
-          paddingRight={element.styles?.paddingRight}
-          paddingBottom={element.styles?.paddingBottom}
-          paddingLeft={element.styles?.paddingLeft}
-          onMarginChange={(property, value) => onStyleUpdate(property, value)}
-          onPaddingChange={(property, value) => onStyleUpdate(property, value)}
+        <ResponsiveSpacingSliders
+          marginByDevice={getCurrentSpacingByDevice().marginByDevice}
+          paddingByDevice={getCurrentSpacingByDevice().paddingByDevice}
+          onMarginChange={handleMarginChange}
+          onPaddingChange={handlePaddingChange}
         />
       </CollapsibleGroup>
     </div>

@@ -107,19 +107,38 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
     const marginSpacing = parseSpacingProperty(element.styles?.margin, 'margin');
     const paddingSpacing = parseSpacingProperty(element.styles?.padding, 'padding');
 
+    // Convert to device-aware format
+    const marginByDevice = {
+      desktop: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left },
+      tablet: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left },
+      mobile: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left }
+    };
+    
+    const paddingByDevice = {
+      desktop: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left },
+      tablet: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left },
+      mobile: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left }
+    };
+
+    const handleMarginChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+      const updated = { ...marginByDevice };
+      updated[device] = { ...updated[device], [property]: value };
+      onStyleUpdate('marginByDevice', updated);
+    };
+
+    const handlePaddingChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
+      const updated = { ...paddingByDevice };
+      updated[device] = { ...updated[device], [property]: value };
+      onStyleUpdate('paddingByDevice', updated);
+    };
+
     return (
       <div className="space-y-4">
-        <SpacingSliders
-          marginTop={marginSpacing.top}
-          marginRight={marginSpacing.right}
-          marginBottom={marginSpacing.bottom}
-          marginLeft={marginSpacing.left}
-          paddingTop={paddingSpacing.top}
-          paddingRight={paddingSpacing.right}
-          paddingBottom={paddingSpacing.bottom}
-          paddingLeft={paddingSpacing.left}
-          onMarginChange={(direction, value) => updateSpacingProperty('margin', direction, value)}
-          onPaddingChange={(direction, value) => updateSpacingProperty('padding', direction, value)}
+        <ResponsiveSpacingSliders
+          marginByDevice={marginByDevice}
+          paddingByDevice={paddingByDevice}
+          onMarginChange={handleMarginChange}
+          onPaddingChange={handlePaddingChange}
         />
       </div>
     );
@@ -149,17 +168,27 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
         <div className="space-y-3">
           <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Spacing</h4>
           
-          <SpacingSliders
-            marginTop={marginSpacing.top}
-            marginRight={marginSpacing.right}
-            marginBottom={marginSpacing.bottom}
-            marginLeft={marginSpacing.left}
-            paddingTop={paddingSpacing.top}
-            paddingRight={paddingSpacing.right}
-            paddingBottom={paddingSpacing.bottom}
-            paddingLeft={paddingSpacing.left}
-            onMarginChange={(direction, value) => updateSpacingProperty('margin', direction, value)}
-            onPaddingChange={(direction, value) => updateSpacingProperty('padding', direction, value)}
+          <ResponsiveSpacingSliders
+            marginByDevice={{
+              desktop: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left },
+              tablet: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left },
+              mobile: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left }
+            }}
+            paddingByDevice={{
+              desktop: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left },
+              tablet: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left },
+              mobile: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left }
+            }}
+            onMarginChange={(device, property, value) => {
+              const updated = { ...marginSpacing, [property]: value };
+              const spacingString = `${updated.top} ${updated.right} ${updated.bottom} ${updated.left}`;
+              onStyleUpdate('margin', spacingString);
+            }}
+            onPaddingChange={(device, property, value) => {
+              const updated = { ...paddingSpacing, [property]: value };
+              const spacingString = `${updated.top} ${updated.right} ${updated.bottom} ${updated.left}`;
+              onStyleUpdate('padding', spacingString);
+            }}
           />
         </div>
       </div>
