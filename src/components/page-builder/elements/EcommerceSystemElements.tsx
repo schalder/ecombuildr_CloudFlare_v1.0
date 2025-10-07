@@ -303,8 +303,14 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
 
   const elementStyles = renderElementStyles(element, deviceType);
 
+  // Handle card click - always navigate to product detail
+  const handleCardClick = (product: any) => {
+    window.location.href = paths.productDetail(product.slug || product.id);
+  };
+
   // Handle button click based on CTA behavior
-  const handleButtonClick = (product: any) => {
+  const handleButtonClick = (product: any, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent card click when button is clicked
     const ctaBehavior = element.content?.ctaBehavior || 'view';
     
     switch (ctaBehavior) {
@@ -351,14 +357,19 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
       )}
       <div className={gridClass}>
         {products.map((p) => (
-          <Card key={p.id} className="group/card" style={{
-            backgroundColor: elementStyles.backgroundColor,
-            borderColor: elementStyles.borderColor,
-            borderWidth: elementStyles.borderWidth as any,
-            borderStyle: elementStyles.borderWidth ? 'solid' : undefined,
-            borderRadius: elementStyles.borderRadius as any,
-            // NOTE: Margins removed - handled by ElementRenderer wrapper to prevent double application
-          }}>
+          <Card 
+            key={p.id} 
+            className="group/card cursor-pointer hover:shadow-lg transition-shadow" 
+            onClick={() => handleCardClick(p)}
+            style={{
+              backgroundColor: elementStyles.backgroundColor,
+              borderColor: elementStyles.borderColor,
+              borderWidth: elementStyles.borderWidth as any,
+              borderStyle: elementStyles.borderWidth ? 'solid' : undefined,
+              borderRadius: elementStyles.borderRadius as any,
+              // NOTE: Margins removed - handled by ElementRenderer wrapper to prevent double application
+            }}
+          >
             <CardContent className="p-3" style={{
               padding: elementStyles.padding as any,
               paddingTop: elementStyles.paddingTop as any,
@@ -371,7 +382,7 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
                </div>
               <div className="text-sm font-medium" style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, textAlign: elementStyles.textAlign, lineHeight: elementStyles.lineHeight, fontWeight: elementStyles.fontWeight }}>{p.name}</div>
               <div className="text-sm">{formatCurrency(Number(p.price))}</div>
-              <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={() => handleButtonClick(p)}>{getButtonText()}</Button>
+              <Button variant="outline" size="sm" className="mt-2 w-full" style={buttonStyles as React.CSSProperties} onClick={(e) => handleButtonClick(p, e)}>{getButtonText()}</Button>
             </CardContent>
           </Card>
         ))}
