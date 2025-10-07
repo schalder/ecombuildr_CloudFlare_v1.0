@@ -41,7 +41,7 @@ interface GlobalFooterConfig {
 
 export const FunnelFooter: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
   const cfg = (funnel.settings?.global_footer as GlobalFooterConfig | undefined);
-  const paths = useEcomPaths({ funnelId: funnel.id });
+  const paths = useEcomPaths();
   if (!cfg?.enabled) return null;
 
   const styleVars = useMemo(() => ({
@@ -123,7 +123,7 @@ export const FunnelFooter: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
                         )
                       ) : (
                         <a 
-                          href={link.step_slug ? `${paths.base}/${link.step_slug}` : paths.home} 
+                          href={link.step_slug ? `/${link.step_slug}` : paths.home} 
                           className="text-sm transition-colors" 
                           style={{ color: cfg?.style?.text_color || undefined }}
                         >

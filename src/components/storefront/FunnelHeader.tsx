@@ -46,7 +46,7 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { itemCount } = useCart();
-  const paths = useEcomPaths({ funnelId: funnel.id });
+  const paths = useEcomPaths();
 
   const fontSizeClass = useMemo(() => {
     switch (cfg?.font_size) {
@@ -88,8 +88,8 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
       }
     }
     const stepSlug = item.step_slug || '';
-    // Use full system domain path for proper routing
-    const to = stepSlug ? `${paths.base}/${stepSlug}` : paths.home;
+    // Use clean URL for custom domains, fallback to full funnel path
+    const to = stepSlug ? `/${stepSlug}` : paths.home;
     return (
       <a href={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</a>
     );

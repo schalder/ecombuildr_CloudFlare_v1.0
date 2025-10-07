@@ -1,6 +1,5 @@
 import { useParams, useLocation } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
-import { useWebsiteContext } from '@/contexts/WebsiteContext';
 
 const isCustomDomain = () => {
   const currentHost = window.location.hostname;
@@ -12,29 +11,21 @@ const isCustomDomain = () => {
   );
 };
 
-interface EcomPathsContext {
-  websiteSlug?: string;
-  websiteId?: string;
-  funnelId?: string;
-  storeId?: string;
-}
-
-export const useEcomPaths = (context?: EcomPathsContext) => {
+export const useEcomPaths = () => {
   const params = useParams();
   const location = useLocation();
   const { store } = useStore();
-  const websiteContext = useWebsiteContext();
   const slug = store?.slug;
   
-  // Get websiteId, websiteSlug, and funnelId from context first, then website context, then params, then parse from pathname
-  let websiteId = context?.websiteId || websiteContext.websiteId || (params as any).websiteId as string | undefined;
-  let websiteSlug = context?.websiteSlug || websiteContext.websiteSlug || (params as any).websiteSlug as string | undefined;
-  let funnelId = context?.funnelId || (params as any).funnelId as string | undefined;
+  // Get websiteId, websiteSlug, and funnelId from params, or parse from current pathname if params are empty
+  let websiteId = (params as any).websiteId as string | undefined;
+  let websiteSlug = (params as any).websiteSlug as string | undefined;
+  let funnelId = (params as any).funnelId as string | undefined;
   
   // Parse storeId for course routes
-  let storeId = context?.storeId || (params as any).storeId as string | undefined;
+  let storeId = (params as any).storeId as string | undefined;
 
-  // If still empty (e.g., when AddToCartProvider is mounted higher in tree), 
+  // If params are empty (e.g., when AddToCartProvider is mounted higher in tree), 
   // parse from current pathname
   if (!websiteId && !websiteSlug && !funnelId && !storeId) {
     const pathname = location.pathname;
