@@ -30,9 +30,6 @@ interface FunnelStep {
   on_success_step_id?: string;
   on_accept_step_id?: string;
   on_decline_step_id?: string;
-  on_success_custom_url?: string;
-  on_accept_custom_url?: string;
-  on_decline_custom_url?: string;
   offer_product_id?: string;
   offer_price?: number;
   offer_quantity?: number;
@@ -47,11 +44,7 @@ interface Product {
 interface StepNavigationProps {
   label: string;
   stepId?: string;
-  customUrl?: string;
-  navType: 'step' | 'url';
-  onNavTypeChange: (type: 'step' | 'url') => void;
   onStepChange: (stepId: string) => void;
-  onUrlChange: (url: string) => void;
   funnelSteps: FunnelStep[];
   currentStepId: string;
 }
@@ -59,67 +52,30 @@ interface StepNavigationProps {
 const StepNavigation: React.FC<StepNavigationProps> = ({
   label,
   stepId,
-  customUrl,
-  navType,
-  onNavTypeChange,
   onStepChange,
-  onUrlChange,
   funnelSteps,
   currentStepId
 }) => {
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      
-      {/* Navigation Type Toggle */}
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          variant={navType === 'step' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => onNavTypeChange('step')}
-        >
-          Funnel Step
-        </Button>
-        <Button
-          type="button"
-          variant={navType === 'url' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => onNavTypeChange('url')}
-        >
-          Custom URL
-        </Button>
-      </div>
-      
-      {/* Step Selection */}
-      {navType === 'step' && (
-        <Select
-          value={stepId || ''}
-          onValueChange={onStepChange}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select next step" />
-          </SelectTrigger>
-          <SelectContent>
-            {funnelSteps
-              .filter(s => s.id !== currentStepId)
-              .map((funnelStep) => (
-                <SelectItem key={funnelStep.id} value={funnelStep.id}>
-                  {funnelStep.title} ({funnelStep.step_type})
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
-      )}
-      
-      {/* Custom URL Input */}
-      {navType === 'url' && (
-        <Input
-          value={customUrl || ''}
-          onChange={(e) => onUrlChange(e.target.value)}
-          placeholder="https://example.com"
-        />
-      )}
+      <Select
+        value={stepId || ''}
+        onValueChange={onStepChange}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select next step" />
+        </SelectTrigger>
+        <SelectContent>
+          {funnelSteps
+            .filter(s => s.id !== currentStepId)
+            .map((funnelStep) => (
+              <SelectItem key={funnelStep.id} value={funnelStep.id}>
+                {funnelStep.title} ({funnelStep.step_type})
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };
@@ -140,11 +96,6 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
   const [suggestedSlug, setSuggestedSlug] = useState('');
   const [finalSlug, setFinalSlug] = useState('');
   const [conflictType, setConflictType] = useState<'website-system' | 'funnel' | 'error' | null>(null);
-  
-  // Navigation type state
-  const [successNavType, setSuccessNavType] = useState<'step' | 'url'>('step');
-  const [acceptNavType, setAcceptNavType] = useState<'step' | 'url'>('step');
-  const [declineNavType, setDeclineNavType] = useState<'step' | 'url'>('step');
   
   const { toast } = useToast();
 
@@ -171,11 +122,6 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
 
       if (stepError) throw stepError;
       setStep(stepData);
-      
-      // Initialize navigation type state based on existing data
-      setSuccessNavType(stepData.on_success_custom_url ? 'url' : 'step');
-      setAcceptNavType(stepData.on_accept_custom_url ? 'url' : 'step');
-      setDeclineNavType(stepData.on_decline_custom_url ? 'url' : 'step');
 
       // Load all funnel steps for navigation
       const { data: stepsData, error: stepsError } = await supabase
@@ -549,18 +495,7 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
             <StepNavigation
               label={step.step_type === 'landing' ? 'On Success (After Checkout)' : 'On Success (After Payment)'}
               stepId={step.on_success_step_id}
-              customUrl={step.on_success_custom_url}
-              navType={successNavType}
-              onNavTypeChange={(type) => {
-                setSuccessNavType(type);
-                if (type === 'step') {
-                  setStep({ ...step, on_success_custom_url: undefined });
-                } else {
-                  setStep({ ...step, on_success_step_id: undefined });
-                }
-              }}
               onStepChange={(stepId) => setStep({ ...step, on_success_step_id: stepId })}
-              onUrlChange={(url) => setStep({ ...step, on_success_custom_url: url })}
               funnelSteps={funnelSteps}
               currentStepId={stepId}
             />
@@ -571,18 +506,7 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
               <StepNavigation
                 label="On Accept (Go To Step)"
                 stepId={step.on_accept_step_id}
-                customUrl={step.on_accept_custom_url}
-                navType={acceptNavType}
-                onNavTypeChange={(type) => {
-                  setAcceptNavType(type);
-                  if (type === 'step') {
-                    setStep({ ...step, on_accept_custom_url: undefined });
-                  } else {
-                    setStep({ ...step, on_accept_step_id: undefined });
-                  }
-                }}
                 onStepChange={(stepId) => setStep({ ...step, on_accept_step_id: stepId })}
-                onUrlChange={(url) => setStep({ ...step, on_accept_custom_url: url })}
                 funnelSteps={funnelSteps}
                 currentStepId={stepId}
               />
@@ -590,18 +514,7 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
               <StepNavigation
                 label="On Decline (Go To Step)"
                 stepId={step.on_decline_step_id}
-                customUrl={step.on_decline_custom_url}
-                navType={declineNavType}
-                onNavTypeChange={(type) => {
-                  setDeclineNavType(type);
-                  if (type === 'step') {
-                    setStep({ ...step, on_decline_custom_url: undefined });
-                  } else {
-                    setStep({ ...step, on_decline_step_id: undefined });
-                  }
-                }}
                 onStepChange={(stepId) => setStep({ ...step, on_decline_step_id: stepId })}
-                onUrlChange={(url) => setStep({ ...step, on_decline_custom_url: url })}
                 funnelSteps={funnelSteps}
                 currentStepId={stepId}
               />
