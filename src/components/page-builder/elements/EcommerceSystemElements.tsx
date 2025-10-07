@@ -403,28 +403,18 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
   
   // Apply discount code
   const applyDiscountCode = async () => {
-    console.log('🔍 applyDiscountCode called with:', { discountCodeInput, store: store?.id });
-    
     if (!discountCodeInput.trim()) {
-      console.log('❌ No discount code entered');
       toast.error('Please enter a discount code');
       return;
     }
     
     if (!store) {
-      console.log('❌ No store context available');
       toast.error('Store not available. Please refresh the page.');
       return;
     }
 
     setDiscountLoading(true);
     try {
-      console.log('🔍 Querying discount_codes table for:', {
-        store_id: store.id,
-        code: discountCodeInput.toUpperCase(),
-        is_active: true
-      });
-      
       const { data: discountCodeData, error } = await supabase
         .from('discount_codes' as any)
         .select('*')
@@ -433,17 +423,13 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
         .eq('is_active', true)
         .maybeSingle();
 
-      console.log('🔍 Supabase response:', { data: discountCodeData, error });
-
       if (error) {
-        console.log('❌ Supabase error:', error);
         toast.error(`Database error: ${error.message}`);
         clearDiscount();
         return;
       }
       
       if (!discountCodeData) {
-        console.log('❌ No discount code found');
         toast.error('Invalid discount code');
         clearDiscount();
         return;
@@ -451,11 +437,9 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
 
       // Type assertion for the discount code object
       const discount = discountCodeData as any;
-      console.log('✅ Discount code found:', discount);
 
       // Check if discount is expired
       if (discount.expires_at && new Date(discount.expires_at) < new Date()) {
-        console.log('❌ Discount expired:', discount.expires_at);
         toast.error('Discount code has expired');
         clearDiscount();
         return;
@@ -463,7 +447,6 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
 
       // Check if discount hasn't started yet
       if (discount.starts_at && new Date(discount.starts_at) > new Date()) {
-        console.log('❌ Discount not started yet:', discount.starts_at);
         toast.error('Discount code is not active yet');
         clearDiscount();
         return;
@@ -471,7 +454,6 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
 
       // Check usage limit
       if (discount.usage_limit && discount.used_count >= discount.usage_limit) {
-        console.log('❌ Usage limit reached:', { used: discount.used_count, limit: discount.usage_limit });
         toast.error('Discount code usage limit reached');
         clearDiscount();
         return;
@@ -479,7 +461,6 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
 
       // Check minimum amount
       if (discount.minimum_amount && total < discount.minimum_amount) {
-        console.log('❌ Minimum amount not met:', { total, minimum: discount.minimum_amount });
         toast.error(`Minimum order amount is ${formatCurrency(discount.minimum_amount)} for this discount`);
         clearDiscount();
         return;
@@ -487,41 +468,26 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
 
       // Calculate discount amount
       let discountValue = 0;
-      console.log('🔍 Calculating discount:', { type: discount.type, value: discount.value, total });
       
       if (discount.type === 'percentage') {
         discountValue = (total * discount.value) / 100;
-        console.log('📊 Percentage discount:', { percentage: discount.value, calculated: discountValue });
       } else if (discount.type === 'fixed') {
         discountValue = discount.value;
-        console.log('💰 Fixed discount:', discountValue);
       }
 
       // Ensure discount doesn't exceed total
       discountValue = Math.min(discountValue, total);
-      console.log('✅ Final discount amount:', discountValue);
       
       // Apply discount to context
       applyDiscount(discountCodeInput.toUpperCase(), discountValue);
       toast.success(`Discount applied! You saved ${formatCurrency(discountValue)}`);
     } catch (error) {
-      console.error('❌ Error applying discount code:', error);
+      console.error('Error applying discount code:', error);
       toast.error(`Failed to apply discount code: ${error.message || 'Unknown error'}`);
       clearDiscount();
     } finally {
       setDiscountLoading(false);
     }
-  };
-
-  // Debug function to check store context
-  const debugStoreContext = () => {
-    console.log('🔍 Store Context Debug:', {
-      store: store,
-      storeId: store?.id,
-      storeName: store?.name,
-      items: items,
-      total: total
-    });
   };
 
   // Calculate final total with discount
@@ -883,16 +849,6 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                       {discountLoading ? 'Applying...' : 'Apply'}
                     </Button>
                   </div>
-                  
-                  {/* Debug Button - Remove after testing */}
-                  <Button 
-                    variant="secondary" 
-                    size="sm"
-                    onClick={debugStoreContext}
-                    className="text-xs"
-                  >
-                    🔍 Debug Store Context
-                  </Button>
                 </div>
 
                 {/* Order Totals */}
