@@ -62,7 +62,7 @@ import {
   SECTION_WIDTHS 
 } from './types';
 import { elementRegistry } from './elements';
-import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackground, hasUserShadow } from './utils/styleRenderer';
+import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackground, hasUserShadow, getDeviceAwareSpacing } from './utils/styleRenderer';
 import { SectionDropZone } from './components/SectionDropZone';
 import { RowDropZone } from './components/RowDropZone';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -2204,12 +2204,16 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
   // Compute merged responsive styles for the element
   const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
   
-  // Extract margins for the wrapper
+  // Handle device-aware spacing
+  const marginByDevice = (element.styles as any)?.marginByDevice;
+  const deviceAwareMargin = marginByDevice ? getDeviceAwareSpacing(marginByDevice, deviceType) : null;
+  
+  // Extract margins for the wrapper - prioritize device-aware margins
   const wrapperMargins = {
-    marginTop: mergedStyles.marginTop,
-    marginRight: mergedStyles.marginRight,
-    marginBottom: mergedStyles.marginBottom,
-    marginLeft: mergedStyles.marginLeft
+    marginTop: deviceAwareMargin?.top ? `${deviceAwareMargin.top}px` : mergedStyles.marginTop,
+    marginRight: deviceAwareMargin?.right ? `${deviceAwareMargin.right}px` : mergedStyles.marginRight,
+    marginBottom: deviceAwareMargin?.bottom ? `${deviceAwareMargin.bottom}px` : mergedStyles.marginBottom,
+    marginLeft: deviceAwareMargin?.left ? `${deviceAwareMargin.left}px` : mergedStyles.marginLeft
   };
 
   // Element drag functionality
