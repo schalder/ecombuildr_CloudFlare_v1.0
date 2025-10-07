@@ -1177,7 +1177,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 export const registerInlineCheckoutElements = () => {
   elementRegistry.register({
     id: 'checkout-inline',
-    name: 'Checkout (Inline)',
+    name: 'Funnel Checkout',
     category: 'ecommerce',
     icon: CreditCard,
     component: InlineCheckoutElement,

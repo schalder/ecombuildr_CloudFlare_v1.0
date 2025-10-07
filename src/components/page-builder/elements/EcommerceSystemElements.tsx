@@ -1997,7 +1997,7 @@ export const registerEcommerceSystemElements = () => {
 
   elementRegistry.register({
     id: 'checkout-full',
-    name: 'Checkout (Full)',
+    name: 'Site Checkout',
     category: 'ecommerce',
     icon: CreditCard,
     component: CheckoutFullElement,
