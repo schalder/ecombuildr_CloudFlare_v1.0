@@ -7,6 +7,16 @@ import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/contexts/CartContext';
 import { useEcomPaths } from '@/lib/pathResolver';
 
+const isCustomDomain = () => {
+  const currentHost = window.location.hostname;
+  return !(
+    currentHost === 'ecombuildr.com' || 
+    currentHost === 'localhost' || 
+    currentHost.includes('lovable.app') ||
+    currentHost.includes('lovableproject.com')
+  );
+};
+
 
 interface FunnelData {
   id: string;
@@ -88,8 +98,19 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
       }
     }
     const stepSlug = item.step_slug || '';
-    // Use clean URL for custom domains, fallback to full funnel path
-    const to = stepSlug ? `/${stepSlug}` : paths.home;
+    // Generate proper URL based on domain type
+    let to: string;
+    if (stepSlug) {
+      if (isCustomDomain()) {
+        // Custom domain: use clean URLs
+        to = `/${stepSlug}`;
+      } else {
+        // System domain: use funnel-aware URLs
+        to = `/funnel/${funnel.id}/${stepSlug}`;
+      }
+    } else {
+      to = paths.home;
+    }
     return (
       <a href={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</a>
     );

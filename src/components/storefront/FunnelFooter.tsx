@@ -2,6 +2,16 @@ import React, { useMemo } from 'react';
 // Removed SPA Link in favor of full reload anchors
 import { useEcomPaths } from '@/lib/pathResolver';
 
+const isCustomDomain = () => {
+  const currentHost = window.location.hostname;
+  return !(
+    currentHost === 'ecombuildr.com' || 
+    currentHost === 'localhost' || 
+    currentHost.includes('lovable.app') ||
+    currentHost.includes('lovableproject.com')
+  );
+};
+
 interface FunnelData {
   id: string;
   name: string;
@@ -123,7 +133,7 @@ export const FunnelFooter: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
                         )
                       ) : (
                         <a 
-                          href={link.step_slug ? `/${link.step_slug}` : paths.home} 
+                          href={link.step_slug ? (isCustomDomain() ? `/${link.step_slug}` : `/funnel/${funnel.id}/${link.step_slug}`) : paths.home} 
                           className="text-sm transition-colors" 
                           style={{ color: cfg?.style?.text_color || undefined }}
                         >
