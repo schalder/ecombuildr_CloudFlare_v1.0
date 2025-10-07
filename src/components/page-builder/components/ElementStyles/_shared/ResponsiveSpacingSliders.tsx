@@ -4,7 +4,7 @@ import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Monitor, Tablet, Smartphone } from 'lucide-react';
-import { useDevicePreview } from '../../contexts/DevicePreviewContext';
+import { useDevicePreview } from '../../../contexts/DevicePreviewContext';
 
 interface SpacingValues {
   top: number;
