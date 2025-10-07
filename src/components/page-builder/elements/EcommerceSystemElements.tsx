@@ -14,15 +14,15 @@ import { Label } from '@/components/ui/label';
 import { useCart } from '@/contexts/CartContext';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useStore } from '@/contexts/StoreContext';
+import { formatCurrency } from '@/lib/currency';
+import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { useParams, useNavigate } from 'react-router-dom';
 import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { formatVariant } from '@/lib/utils';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
-import { formatCurrency } from '@/lib/currency';
 import { computeOrderShipping, getAvailableShippingOptions, applyShippingOptionToForm, type CartItem, type ShippingAddress, type ShippingSettings, type ShippingOption } from '@/lib/shipping-enhanced';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
@@ -394,7 +394,88 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
 // Full Cart Element
 const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const { items, total, updateQuantity, removeItem } = useCart();
+  const { store } = useStore();
   const paths = useEcomPaths();
+  
+  // Discount code state
+  const [discountCode, setDiscountCode] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [discountLoading, setDiscountLoading] = useState(false);
+  
+  // Apply discount code
+  const applyDiscountCode = async () => {
+    if (!discountCode.trim() || !store) return;
+
+    setDiscountLoading(true);
+    try {
+      const { data: discountCodeData, error } = await supabase
+        .from('discount_codes' as any)
+        .select('*')
+        .eq('store_id', store.id)
+        .eq('code', discountCode.toUpperCase())
+        .eq('is_active', true)
+        .single();
+
+      if (error || !discountCodeData) {
+        toast.error('Invalid discount code');
+        setDiscountAmount(0);
+        return;
+      }
+
+      // Type assertion for the discount code object
+      const discount = discountCodeData as any;
+
+      // Check if discount is expired
+      if (discount.expires_at && new Date(discount.expires_at) < new Date()) {
+        toast.error('Discount code has expired');
+        setDiscountAmount(0);
+        return;
+      }
+
+      // Check if discount hasn't started yet
+      if (discount.starts_at && new Date(discount.starts_at) > new Date()) {
+        toast.error('Discount code is not active yet');
+        setDiscountAmount(0);
+        return;
+      }
+
+      // Check usage limit
+      if (discount.usage_limit && discount.used_count >= discount.usage_limit) {
+        toast.error('Discount code usage limit reached');
+        setDiscountAmount(0);
+        return;
+      }
+
+      // Check minimum amount
+      if (discount.minimum_amount && total < discount.minimum_amount) {
+        toast.error(`Minimum order amount is ${formatCurrency(discount.minimum_amount)} for this discount`);
+        setDiscountAmount(0);
+        return;
+      }
+
+      // Calculate discount amount
+      let discountValue = 0;
+      if (discount.type === 'percentage') {
+        discountValue = (total * discount.value) / 100;
+      } else if (discount.type === 'fixed') {
+        discountValue = discount.value;
+      }
+
+      // Ensure discount doesn't exceed total
+      discountValue = Math.min(discountValue, total);
+      setDiscountAmount(discountValue);
+      toast.success(`Discount applied! You saved ${formatCurrency(discountValue)}`);
+    } catch (error) {
+      console.error('Error applying discount code:', error);
+      toast.error('Failed to apply discount code');
+      setDiscountAmount(0);
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
+  // Calculate final total with discount
+  const finalTotal = total - discountAmount;
   
   // Apply responsive element styles
   const elementStyles = renderElementStyles(element, deviceType);
@@ -735,6 +816,8 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                     <input 
                       type="text" 
                       placeholder="Coupon code"
+                      value={discountCode}
+                      onChange={(e) => setDiscountCode(e.target.value)}
                       className="flex-1 px-3 py-2 text-sm border border-input rounded-md bg-background"
                       style={{
                         fontFamily: elementStyles.fontFamily
@@ -744,8 +827,10 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                       variant="outline" 
                       size="sm"
                       className="px-4"
+                      onClick={applyDiscountCode}
+                      disabled={discountLoading || !discountCode.trim()}
                     >
-                      Apply
+                      {discountLoading ? 'Applying...' : 'Apply'}
                     </Button>
                   </div>
                 </div>
@@ -775,6 +860,32 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                       {formatCurrency(total)}
                     </span>
                   </div>
+                  
+                  {/* Discount Amount */}
+                  {discountAmount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span 
+                        className="text-base text-green-600"
+                        style={{
+                          fontSize: elementStyles.fontSize,
+                          fontFamily: elementStyles.fontFamily,
+                          lineHeight: elementStyles.lineHeight
+                        }}
+                      >
+                        Discount ({discountCode})
+                      </span>
+                      <span 
+                        className="font-semibold text-base text-green-600"
+                        style={{
+                          fontSize: elementStyles.fontSize,
+                          fontFamily: elementStyles.fontFamily
+                        }}
+                      >
+                        -{formatCurrency(discountAmount)}
+                      </span>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center justify-between pt-2 border-t border-border">
                     <span 
                       className="text-lg font-semibold"
@@ -792,7 +903,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                         fontFamily: elementStyles.fontFamily
                       }}
                     >
-                      {formatCurrency(total)}
+                      {formatCurrency(finalTotal)}
                     </span>
                   </div>
                 </div>
