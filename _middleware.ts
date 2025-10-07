@@ -1,9 +1,14 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4?target=deno';
 
-const SUPABASE_URL = "https://fhqwacmokbtbspkxjixf.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM";
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Add error handling for missing environment variables
+if (!Deno.env.get('SUPABASE_URL') || !Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+  console.error('❌ Missing Supabase environment variables');
+}
 
 const SOCIAL_CRAWLERS = [
   'facebookexternalhit',
@@ -708,6 +713,12 @@ export default async function handler(request: Request): Promise<Response> {
     console.log(`🌐 ${isCustomDomain ? 'Custom' : 'System'} domain request - generating SEO HTML for ${isSocialBot ? 'social crawler' : 'regular visitor'}`);
     
     try {
+      // Check if Supabase client is properly initialized
+      if (!Deno.env.get('SUPABASE_URL') || !Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+        console.error('❌ Supabase environment variables not configured');
+        return new Response('Configuration Error', { status: 500 });
+      }
+      
       const seoData = await resolveSEOData(domain, pathname);
       
       if (!seoData) {
