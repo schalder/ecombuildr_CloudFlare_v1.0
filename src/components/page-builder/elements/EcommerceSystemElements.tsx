@@ -432,7 +432,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
         .eq('store_id', store.id)
         .eq('code', discountCode.toUpperCase())
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       console.log('🔍 Supabase response:', { data: discountCodeData, error });
 
