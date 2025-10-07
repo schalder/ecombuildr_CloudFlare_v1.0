@@ -35,7 +35,8 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     layout: false,
     background: false,
     border: false,
-    spacing: false
+    spacing: false,
+    sticky: false
   });
 
   // Helper functions for device-aware spacing conversion
@@ -775,6 +776,65 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               className="h-8"
             />
           </div>
+        </div>
+      </CollapsibleGroup>
+
+      <CollapsibleGroup
+        title="Sticky Position"
+        isOpen={openCards.sticky}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, sticky: isOpen }))}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Switch 
+                checked={section.styles?.stickyPosition !== 'none' && section.styles?.stickyPosition !== undefined}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    handleStyleUpdate('stickyPosition', 'top');
+                    handleStyleUpdate('stickyOffset', '0px');
+                  } else {
+                    handleStyleUpdate('stickyPosition', 'none');
+                    handleStyleUpdate('stickyOffset', undefined);
+                  }
+                }}
+              />
+              <Label className="text-sm">Enable Sticky Positioning</Label>
+            </div>
+          </div>
+          
+          {section.styles?.stickyPosition !== 'none' && section.styles?.stickyPosition !== undefined && (
+            <>
+              <div className="space-y-2">
+                <Label className="text-sm">Position</Label>
+                <Select
+                  value={section.styles?.stickyPosition || 'top'}
+                  onValueChange={(value: 'top' | 'bottom') => handleStyleUpdate('stickyPosition', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="top">Top of Page</SelectItem>
+                    <SelectItem value="bottom">Bottom of Page</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm">Offset from Edge</Label>
+                <Input
+                  value={section.styles?.stickyOffset || '0px'}
+                  onChange={(e) => handleStyleUpdate('stickyOffset', e.target.value)}
+                  placeholder="0px"
+                  className="h-8"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Distance from the edge of the viewport (e.g., "0px", "20px", "10vh")
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </CollapsibleGroup>
     </div>

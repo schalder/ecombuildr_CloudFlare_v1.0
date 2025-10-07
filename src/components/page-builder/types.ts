@@ -222,6 +222,8 @@ export interface PageBuilderSection {
     minHeight?: string;
     maxHeight?: string;
     contentVerticalAlignment?: 'top' | 'center' | 'bottom';
+    stickyPosition?: 'none' | 'top' | 'bottom';
+    stickyOffset?: string; // Offset from edge (e.g., "0px", "20px")
     responsive?: {
       desktop?: Record<string, any>;
       tablet?: Record<string, any>;

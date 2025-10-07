@@ -186,6 +186,18 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       if (section.styles.minHeight) styles.minHeight = section.styles.minHeight;
       if (section.styles.maxHeight) styles.maxHeight = section.styles.maxHeight;
     }
+    
+    // Sticky positioning
+    if (section.styles.stickyPosition && section.styles.stickyPosition !== 'none') {
+      styles.position = 'sticky';
+      styles.zIndex = '999'; // Ensure sticky elements stay on top
+      
+      if (section.styles.stickyPosition === 'top') {
+        styles.top = section.styles.stickyOffset || '0px';
+      } else if (section.styles.stickyPosition === 'bottom') {
+        styles.bottom = section.styles.stickyOffset || '0px';
+      }
+    }
   }
   
   // Merge responsive overrides FIRST, but preserve background styles
