@@ -114,7 +114,7 @@ const ELEMENT_CATEGORIES = [
     name: 'Basic',
     elements: [
       { id: 'heading', name: 'Heading', icon: Type, description: 'Add a title or heading' },
-      { id: 'text', name: 'Text Editor', icon: Type, description: 'Rich text content' },
+      { id: 'text', name: 'Paragraph', icon: Type, description: 'Rich text content' },
       { id: 'button', name: 'Button', icon: Layout, description: 'Call to action button' },
       { id: 'image', name: 'Image', icon: Image, description: 'Single image element' },
       { id: 'video', name: 'Video', icon: Video, description: 'Video player' },
