@@ -20,6 +20,8 @@ interface CartState {
   items: CartItem[];
   total: number;
   itemCount: number;
+  discountCode: string;
+  discountAmount: number;
 }
 
 type CartAction = 
@@ -27,12 +29,16 @@ type CartAction =
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'UPDATE_QUANTITY'; payload: { id: string; quantity: number } }
   | { type: 'CLEAR_CART' }
-  | { type: 'LOAD_CART'; payload: CartItem[] };
+  | { type: 'LOAD_CART'; payload: CartItem[] }
+  | { type: 'APPLY_DISCOUNT'; payload: { code: string; amount: number } }
+  | { type: 'CLEAR_DISCOUNT' };
 
 const initialState: CartState = {
   items: [],
   total: 0,
   itemCount: 0,
+  discountCode: '',
+  discountAmount: 0,
 };
 
 const calculateTotals = (items: CartItem[]): { total: number; itemCount: number } => {
@@ -84,7 +90,23 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
     case 'LOAD_CART': {
       const mergedItems = mergeCartItems(action.payload);
       const { total, itemCount } = calculateTotals(mergedItems);
-      return { items: mergedItems, total, itemCount };
+      return { items: mergedItems, total, itemCount, discountCode: state.discountCode, discountAmount: state.discountAmount };
+    }
+    
+    case 'APPLY_DISCOUNT': {
+      return {
+        ...state,
+        discountCode: action.payload.code,
+        discountAmount: action.payload.amount,
+      };
+    }
+    
+    case 'CLEAR_DISCOUNT': {
+      return {
+        ...state,
+        discountCode: '',
+        discountAmount: 0,
+      };
     }
     
     default:
@@ -97,6 +119,8 @@ interface CartContextType extends CartState {
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
+  applyDiscount: (code: string, amount: number) => void;
+  clearDiscount: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -135,8 +159,18 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
       
       if (savedCart) {
         try {
-          const cartItems = JSON.parse(savedCart);
-          dispatch({ type: 'LOAD_CART', payload: cartItems });
+          const cartData = JSON.parse(savedCart);
+          // Handle both old format (array of items) and new format (object with items and discount)
+          if (Array.isArray(cartData)) {
+            // Old format - just items
+            dispatch({ type: 'LOAD_CART', payload: cartData });
+          } else {
+            // New format - items and discount
+            dispatch({ type: 'LOAD_CART', payload: cartData.items || [] });
+            if (cartData.discountCode && cartData.discountAmount) {
+              dispatch({ type: 'APPLY_DISCOUNT', payload: { code: cartData.discountCode, amount: cartData.discountAmount } });
+            }
+          }
         } catch (error) {
           console.error('Error loading cart from localStorage:', error);
           dispatch({ type: 'CLEAR_CART' });
@@ -151,8 +185,18 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
       
       if (savedCart) {
         try {
-          const cartItems = JSON.parse(savedCart);
-          dispatch({ type: 'LOAD_CART', payload: cartItems });
+          const cartData = JSON.parse(savedCart);
+          // Handle both old format (array of items) and new format (object with items and discount)
+          if (Array.isArray(cartData)) {
+            // Old format - just items
+            dispatch({ type: 'LOAD_CART', payload: cartData });
+          } else {
+            // New format - items and discount
+            dispatch({ type: 'LOAD_CART', payload: cartData.items || [] });
+            if (cartData.discountCode && cartData.discountAmount) {
+              dispatch({ type: 'APPLY_DISCOUNT', payload: { code: cartData.discountCode, amount: cartData.discountAmount } });
+            }
+          }
         } catch (error) {
           console.error('Error loading cart from localStorage:', error);
           dispatch({ type: 'CLEAR_CART' });
@@ -166,8 +210,13 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
   // Save cart to localStorage whenever it changes (store-specific)
   useEffect(() => {
     const cartKey = getCartKey(storeId);
-    localStorage.setItem(cartKey, JSON.stringify(state.items));
-  }, [state.items, storeId]);
+    const cartData = {
+      items: state.items,
+      discountCode: state.discountCode,
+      discountAmount: state.discountAmount,
+    };
+    localStorage.setItem(cartKey, JSON.stringify(cartData));
+  }, [state.items, state.discountCode, state.discountAmount, storeId]);
 
   const addItem = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
@@ -205,6 +254,14 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
     dispatch({ type: 'CLEAR_CART' });
   };
 
+  const applyDiscount = (code: string, amount: number) => {
+    dispatch({ type: 'APPLY_DISCOUNT', payload: { code, amount } });
+  };
+
+  const clearDiscount = () => {
+    dispatch({ type: 'CLEAR_DISCOUNT' });
+  };
+
   return (
     <CartContext.Provider value={{
       ...state,
@@ -212,6 +269,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
       removeItem,
       updateQuantity,
       clearCart,
+      applyDiscount,
+      clearDiscount,
     }}>
       {children}
     </CartContext.Provider>

@@ -393,20 +393,19 @@ const RelatedProductsElement: React.FC<{ element: PageBuilderElement; deviceType
 
 // Full Cart Element
 const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
-  const { items, total, updateQuantity, removeItem } = useCart();
+  const { items, total, updateQuantity, removeItem, discountCode, discountAmount, applyDiscount, clearDiscount } = useCart();
   const { store } = useStore();
   const paths = useEcomPaths();
   
-  // Discount code state
-  const [discountCode, setDiscountCode] = useState('');
-  const [discountAmount, setDiscountAmount] = useState(0);
+  // Local discount code input state
+  const [discountCodeInput, setDiscountCodeInput] = useState('');
   const [discountLoading, setDiscountLoading] = useState(false);
   
   // Apply discount code
   const applyDiscountCode = async () => {
-    console.log('🔍 applyDiscountCode called with:', { discountCode, store: store?.id });
+    console.log('🔍 applyDiscountCode called with:', { discountCodeInput, store: store?.id });
     
-    if (!discountCode.trim()) {
+    if (!discountCodeInput.trim()) {
       console.log('❌ No discount code entered');
       toast.error('Please enter a discount code');
       return;
@@ -422,7 +421,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
     try {
       console.log('🔍 Querying discount_codes table for:', {
         store_id: store.id,
-        code: discountCode.toUpperCase(),
+        code: discountCodeInput.toUpperCase(),
         is_active: true
       });
       
@@ -430,7 +429,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
         .from('discount_codes' as any)
         .select('*')
         .eq('store_id', store.id)
-        .eq('code', discountCode.toUpperCase())
+        .eq('code', discountCodeInput.toUpperCase())
         .eq('is_active', true)
         .maybeSingle();
 
@@ -439,14 +438,14 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
       if (error) {
         console.log('❌ Supabase error:', error);
         toast.error(`Database error: ${error.message}`);
-        setDiscountAmount(0);
+        clearDiscount();
         return;
       }
       
       if (!discountCodeData) {
         console.log('❌ No discount code found');
         toast.error('Invalid discount code');
-        setDiscountAmount(0);
+        clearDiscount();
         return;
       }
 
@@ -458,7 +457,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
       if (discount.expires_at && new Date(discount.expires_at) < new Date()) {
         console.log('❌ Discount expired:', discount.expires_at);
         toast.error('Discount code has expired');
-        setDiscountAmount(0);
+        clearDiscount();
         return;
       }
 
@@ -466,7 +465,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
       if (discount.starts_at && new Date(discount.starts_at) > new Date()) {
         console.log('❌ Discount not started yet:', discount.starts_at);
         toast.error('Discount code is not active yet');
-        setDiscountAmount(0);
+        clearDiscount();
         return;
       }
 
@@ -474,7 +473,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
       if (discount.usage_limit && discount.used_count >= discount.usage_limit) {
         console.log('❌ Usage limit reached:', { used: discount.used_count, limit: discount.usage_limit });
         toast.error('Discount code usage limit reached');
-        setDiscountAmount(0);
+        clearDiscount();
         return;
       }
 
@@ -482,7 +481,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
       if (discount.minimum_amount && total < discount.minimum_amount) {
         console.log('❌ Minimum amount not met:', { total, minimum: discount.minimum_amount });
         toast.error(`Minimum order amount is ${formatCurrency(discount.minimum_amount)} for this discount`);
-        setDiscountAmount(0);
+        clearDiscount();
         return;
       }
 
@@ -502,12 +501,13 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
       discountValue = Math.min(discountValue, total);
       console.log('✅ Final discount amount:', discountValue);
       
-      setDiscountAmount(discountValue);
+      // Apply discount to context
+      applyDiscount(discountCodeInput.toUpperCase(), discountValue);
       toast.success(`Discount applied! You saved ${formatCurrency(discountValue)}`);
     } catch (error) {
       console.error('❌ Error applying discount code:', error);
       toast.error(`Failed to apply discount code: ${error.message || 'Unknown error'}`);
-      setDiscountAmount(0);
+      clearDiscount();
     } finally {
       setDiscountLoading(false);
     }
@@ -866,8 +866,8 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                     <input 
                       type="text" 
                       placeholder="Coupon code"
-                      value={discountCode}
-                      onChange={(e) => setDiscountCode(e.target.value)}
+                      value={discountCodeInput}
+                      onChange={(e) => setDiscountCodeInput(e.target.value)}
                       className="flex-1 px-3 py-2 text-sm border border-input rounded-md bg-background"
                       style={{
                         fontFamily: elementStyles.fontFamily
@@ -878,7 +878,7 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                       size="sm"
                       className="px-4"
                       onClick={applyDiscountCode}
-                      disabled={discountLoading || !discountCode.trim()}
+                      disabled={discountLoading || !discountCodeInput.trim()}
                     >
                       {discountLoading ? 'Applying...' : 'Apply'}
                     </Button>
@@ -990,7 +990,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const { slug } = useParams<{ slug?: string }>();
   const navigate = useNavigate();
   const { store, loadStore, loadStoreById } = useStore();
-  const { items, total, clearCart } = useCart();
+  const { items, total, clearCart, discountCode, discountAmount } = useCart();
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
   const { websiteId, funnelId } = useChannelContext();
@@ -1771,6 +1771,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                         <span className="text-gray-600">Subtotal</span>
                         <span className="font-medium text-gray-900">{formatCurrency(displayTotal)}</span>
                       </div>
+                      
+                      {/* Discount Amount */}
+                      {discountAmount > 0 && (
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600">Discount ({discountCode})</span>
+                          <span className="font-medium text-green-600">-{formatCurrency(discountAmount)}</span>
+                        </div>
+                      )}
+                      
                       {(productTypes.hasPhysical || shouldShowMockData) && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600">Shipping</span>
@@ -1785,7 +1794,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                       )}
                       <div className="flex items-center justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
                         <span>Total</span>
-                        <span>{formatCurrency(displayTotal+(productTypes.hasPhysical || shouldShowMockData ? displayShippingCost : 0))}</span>
+                        <span>{formatCurrency(displayTotal - discountAmount + (productTypes.hasPhysical || shouldShowMockData ? displayShippingCost : 0))}</span>
                       </div>
                     </div>
 
