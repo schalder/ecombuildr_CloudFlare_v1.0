@@ -788,7 +788,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <Switch 
-                checked={section.styles?.stickyPosition !== 'none' && section.styles?.stickyPosition !== undefined}
+                checked={section.styles?.stickyPosition === 'top' || section.styles?.stickyPosition === 'bottom'}
                 onCheckedChange={(checked) => {
                   if (checked) {
                     handleStyleUpdate('stickyPosition', 'top');
@@ -803,7 +803,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
             </div>
           </div>
           
-          {section.styles?.stickyPosition !== 'none' && section.styles?.stickyPosition !== undefined && (
+          {(section.styles?.stickyPosition === 'top' || section.styles?.stickyPosition === 'bottom') && (
             <>
               <div className="space-y-2">
                 <Label className="text-sm">Position</Label>

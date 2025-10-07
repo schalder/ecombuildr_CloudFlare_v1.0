@@ -187,17 +187,6 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       if (section.styles.maxHeight) styles.maxHeight = section.styles.maxHeight;
     }
     
-    // Sticky positioning
-    if (section.styles.stickyPosition && section.styles.stickyPosition !== 'none') {
-      styles.position = 'sticky';
-      styles.zIndex = '999'; // Ensure sticky elements stay on top
-      
-      if (section.styles.stickyPosition === 'top') {
-        styles.top = section.styles.stickyOffset || '0px';
-      } else if (section.styles.stickyPosition === 'bottom') {
-        styles.bottom = section.styles.stickyOffset || '0px';
-      }
-    }
   }
   
   // Merge responsive overrides FIRST, but preserve background styles
@@ -217,6 +206,18 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     delete stylesToMerge.margin;
   }
   const mergedStyles = mergeResponsiveStyles(styles, stylesToMerge || {}, deviceType);
+  
+  // Apply sticky positioning AFTER responsive merge to ensure it's not overridden
+  if (section.styles?.stickyPosition && section.styles.stickyPosition !== 'none') {
+    mergedStyles.position = 'sticky';
+    mergedStyles.zIndex = '999'; // Ensure sticky elements stay on top
+    
+    if (section.styles.stickyPosition === 'top') {
+      mergedStyles.top = section.styles.stickyOffset || '0px';
+    } else if (section.styles.stickyPosition === 'bottom') {
+      mergedStyles.bottom = section.styles.stickyOffset || '0px';
+    }
+  }
   
   // Apply background styles AFTER responsive merge to ensure they're not overwritten
   const backgroundStyles = buildBackgroundStyles({
