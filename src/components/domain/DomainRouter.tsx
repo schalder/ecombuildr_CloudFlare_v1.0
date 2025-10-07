@@ -149,9 +149,101 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
         }
       }
       
-      // Skip if we're on staging domains
-      if (currentHost === 'ecombuildr.com' || 
-          currentHost === 'localhost' || 
+      // Handle system domain routing
+      if (currentHost === 'ecombuildr.com' || currentHost === 'www.ecombuildr.com') {
+        console.log('🏠 DomainRouter: System domain detected, checking for system routes');
+        
+        const currentPath = window.location.pathname;
+        
+        // Check if this is a system route (/site/ or /funnel/)
+        if (currentPath.startsWith('/site/')) {
+          const websiteSlug = currentPath.split('/site/')[1]?.split('/')[0];
+          console.log('🌐 DomainRouter: Website slug detected:', websiteSlug);
+          
+          if (websiteSlug) {
+            // Find website by slug
+            const { data: website } = await supabase
+              .from('websites')
+              .select('id, slug, store_id')
+              .eq('slug', websiteSlug)
+              .eq('is_active', true)
+              .maybeSingle();
+              
+            if (website) {
+              // Create a mock custom domain for system domain routing
+              const mockDomain = {
+                id: `system-website-${website.id}`,
+                domain: currentHost,
+                store_id: website.store_id,
+                is_verified: true,
+                dns_configured: true
+              };
+              
+              setCustomDomain(mockDomain);
+              
+              // Create a mock connection for the website
+              const mockConnection = {
+                id: `system-website-conn-${website.id}`,
+                content_type: 'website',
+                content_id: website.id,
+                path: '',
+                is_homepage: true,
+                store_id: website.store_id
+              };
+              
+              setAllConnections([mockConnection]);
+              setSelectedConnection(mockConnection);
+              console.log('🌐 DomainRouter: System domain routing to website:', website.slug);
+            }
+          }
+        } else if (currentPath.startsWith('/funnel/')) {
+          const funnelId = currentPath.split('/funnel/')[1]?.split('/')[0];
+          console.log('🌐 DomainRouter: Funnel ID detected:', funnelId);
+          
+          if (funnelId) {
+            // Find funnel by ID
+            const { data: funnel } = await supabase
+              .from('funnels')
+              .select('id, slug, store_id')
+              .eq('id', funnelId)
+              .eq('is_active', true)
+              .maybeSingle();
+              
+            if (funnel) {
+              // Create a mock custom domain for system domain routing
+              const mockDomain = {
+                id: `system-funnel-${funnel.id}`,
+                domain: currentHost,
+                store_id: funnel.store_id,
+                is_verified: true,
+                dns_configured: true
+              };
+              
+              setCustomDomain(mockDomain);
+              
+              // Create a mock connection for the funnel
+              const mockConnection = {
+                id: `system-funnel-conn-${funnel.id}`,
+                content_type: 'funnel',
+                content_id: funnel.id,
+                path: '',
+                is_homepage: true,
+                store_id: funnel.store_id
+              };
+              
+              setAllConnections([mockConnection]);
+              setSelectedConnection(mockConnection);
+              console.log('🌐 DomainRouter: System domain routing to funnel:', funnel.slug);
+            }
+          }
+        }
+        
+        setLoading(false);
+        return;
+      }
+      
+      // Skip if we're on other staging domains
+      if (currentHost === 'localhost' || 
           currentHost.includes('lovable.app') ||
           currentHost.includes('lovableproject.com')) {
         setLoading(false);
