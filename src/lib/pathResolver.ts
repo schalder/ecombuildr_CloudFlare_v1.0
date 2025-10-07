@@ -1,7 +1,5 @@
 import { useParams, useLocation } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
-import { useWebsiteContext } from '@/contexts/WebsiteContext';
-import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 
 const isCustomDomain = () => {
   const currentHost = window.location.hostname;
@@ -19,33 +17,10 @@ export const useEcomPaths = () => {
   const { store } = useStore();
   const slug = store?.slug;
   
-  // Get context from providers
-  const { websiteId: contextWebsiteId, websiteSlug: contextWebsiteSlug } = useWebsiteContext();
-  const { funnelId: contextFunnelId } = useFunnelStepContext();
-  
-  // Get websiteId, websiteSlug, and funnelId from params, context, or parse from current pathname
+  // Get websiteId, websiteSlug, and funnelId from params, or parse from current pathname if params are empty
   let websiteId = (params as any).websiteId as string | undefined;
   let websiteSlug = (params as any).websiteSlug as string | undefined;
   let funnelId = (params as any).funnelId as string | undefined;
-  
-  // Use context values if params are empty
-  if (!websiteId) websiteId = contextWebsiteId;
-  if (!websiteSlug) websiteSlug = contextWebsiteSlug;
-  if (!funnelId) funnelId = contextFunnelId;
-  
-  // Debug logging for system domain
-  if (typeof window !== 'undefined' && window.location.hostname.includes('ecombuildr.com')) {
-    console.log('🔍 useEcomPaths Debug:', {
-      hostname: window.location.hostname,
-      websiteId,
-      websiteSlug,
-      funnelId,
-      contextWebsiteId,
-      contextWebsiteSlug,
-      contextFunnelId,
-      pathname: location.pathname
-    });
-  }
   
   // Parse storeId for course routes
   let storeId = (params as any).storeId as string | undefined;
@@ -125,18 +100,6 @@ export const useEcomPaths = () => {
     : slug
     ? `/store/${slug}`
     : '/';
-
-  // Debug logging for base path generation
-  if (typeof window !== 'undefined' && window.location.hostname.includes('ecombuildr.com')) {
-    console.log('🔍 useEcomPaths Base Path:', {
-      base,
-      funnelId,
-      websiteSlug,
-      websiteId,
-      slug,
-      isCustomDomain: isCustomDomain()
-    });
-  }
 
   return {
     base,
