@@ -88,8 +88,8 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
       }
     }
     const stepSlug = item.step_slug || '';
-    // Use clean URL for custom domains, fallback to full funnel path
-    const to = stepSlug ? `/${stepSlug}` : paths.home;
+    // Use full system domain path for proper routing
+    const to = stepSlug ? `${paths.base}/${stepSlug}` : paths.home;
     return (
       <a href={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</a>
     );

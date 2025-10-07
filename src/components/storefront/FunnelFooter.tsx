@@ -123,7 +123,7 @@ export const FunnelFooter: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
                         )
                       ) : (
                         <a 
-                          href={link.step_slug ? `/${link.step_slug}` : paths.home} 
+                          href={link.step_slug ? `${paths.base}/${link.step_slug}` : paths.home} 
                           className="text-sm transition-colors" 
                           style={{ color: cfg?.style?.text_color || undefined }}
                         >
