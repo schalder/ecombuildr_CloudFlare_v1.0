@@ -18,7 +18,7 @@ interface ResponsiveSpacing {
 }
 
 // Helper function to get device-aware spacing values with inheritance
-const getDeviceAwareSpacing = (
+export const getDeviceAwareSpacing = (
   spacingByDevice?: ResponsiveSpacing,
   deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'
 ): SpacingValues => {
