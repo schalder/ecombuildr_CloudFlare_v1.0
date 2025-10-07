@@ -4,6 +4,7 @@ import { storefrontRegistry } from '../registry/storefrontRegistry';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Skeleton } from '@/components/ui/skeleton';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
+import { getDeviceAwareSpacing } from '@/components/page-builder/utils/styleRenderer';
 
 interface StorefrontElementProps {
   element: PageBuilderElement;
@@ -62,11 +63,26 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
     // This is especially important for spacer/divider elements that use shorthand styles
     const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
     
+    // Handle device-aware spacing
+    const marginByDevice = (element.styles as any)?.marginByDevice;
+    const deviceAwareMargin = marginByDevice ? getDeviceAwareSpacing(marginByDevice, deviceType) : null;
+    
     const style: React.CSSProperties = {};
-    if (mergedStyles.marginTop) style.marginTop = mergedStyles.marginTop;
-    if (mergedStyles.marginRight) style.marginRight = mergedStyles.marginRight;
-    if (mergedStyles.marginBottom) style.marginBottom = mergedStyles.marginBottom;
-    if (mergedStyles.marginLeft) style.marginLeft = mergedStyles.marginLeft;
+    
+    // Apply device-aware margins if available, otherwise fallback to legacy margins
+    if (deviceAwareMargin) {
+      if (deviceAwareMargin.top > 0) style.marginTop = `${deviceAwareMargin.top}px`;
+      if (deviceAwareMargin.right > 0) style.marginRight = `${deviceAwareMargin.right}px`;
+      if (deviceAwareMargin.bottom > 0) style.marginBottom = `${deviceAwareMargin.bottom}px`;
+      if (deviceAwareMargin.left > 0) style.marginLeft = `${deviceAwareMargin.left}px`;
+    } else {
+      // Fallback to legacy margin styles
+      if (mergedStyles.marginTop) style.marginTop = mergedStyles.marginTop;
+      if (mergedStyles.marginRight) style.marginRight = mergedStyles.marginRight;
+      if (mergedStyles.marginBottom) style.marginBottom = mergedStyles.marginBottom;
+      if (mergedStyles.marginLeft) style.marginLeft = mergedStyles.marginLeft;
+    }
+    
     return style;
   }, [element, deviceType]);
 

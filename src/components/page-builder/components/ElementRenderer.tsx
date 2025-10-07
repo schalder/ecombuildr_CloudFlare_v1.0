@@ -6,6 +6,7 @@ import { PageBuilderElement } from '../types';
 import { elementRegistry } from '../elements';
 import { cn } from '@/lib/utils';
 import { mergeResponsiveStyles } from '../utils/responsiveStyles';
+import { getDeviceAwareSpacing } from '../utils/styleRenderer';
 
 interface ElementRendererProps {
   element: PageBuilderElement;
@@ -215,6 +216,14 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   // Merge responsive styles for spacing
   const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
   
+  // Handle device-aware spacing
+  const marginByDevice = (element.styles as any)?.marginByDevice;
+  const paddingByDevice = (element.styles as any)?.paddingByDevice;
+  
+  // Get device-aware spacing values
+  const deviceAwareMargin = marginByDevice ? getDeviceAwareSpacing(marginByDevice, deviceType) : null;
+  const deviceAwarePadding = paddingByDevice ? getDeviceAwareSpacing(paddingByDevice, deviceType) : null;
+  
   // Don't apply spacing for media elements as they handle it internally
   const isMediaElement = ['image-carousel', 'image-gallery', 'video-playlist'].includes(element.type);
   
@@ -223,6 +232,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   
   // Helper function to check if margin is defined in any responsive style
   const hasMarginDefined = (property: string) => {
+    // Check device-aware spacing first
+    if (deviceAwareMargin && deviceAwareMargin[property as keyof typeof deviceAwareMargin] > 0) return true;
+    
     // Check base styles
     if (element.styles?.[property] !== undefined) return true;
     
@@ -242,15 +254,15 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   
   // Apply margins in both edit and preview mode
   const userDefinedMargins = isButtonElement ? {
-    marginTop: hasMarginDefined('marginTop') ? mergedStyles.marginTop : undefined,
-    marginBottom: hasMarginDefined('marginBottom') ? mergedStyles.marginBottom : undefined,
-    marginLeft: hasMarginDefined('marginLeft') ? mergedStyles.marginLeft : undefined,
-    marginRight: hasMarginDefined('marginRight') ? mergedStyles.marginRight : undefined,
+    marginTop: hasMarginDefined('top') ? (deviceAwareMargin?.top ? `${deviceAwareMargin.top}px` : mergedStyles.marginTop) : undefined,
+    marginBottom: hasMarginDefined('bottom') ? (deviceAwareMargin?.bottom ? `${deviceAwareMargin.bottom}px` : mergedStyles.marginBottom) : undefined,
+    marginLeft: hasMarginDefined('left') ? (deviceAwareMargin?.left ? `${deviceAwareMargin.left}px` : mergedStyles.marginLeft) : undefined,
+    marginRight: hasMarginDefined('right') ? (deviceAwareMargin?.right ? `${deviceAwareMargin.right}px` : mergedStyles.marginRight) : undefined,
   } : {
-    marginTop: mergedStyles.marginTop,
-    marginBottom: mergedStyles.marginBottom,
-    marginLeft: mergedStyles.marginLeft,
-    marginRight: mergedStyles.marginRight,
+    marginTop: deviceAwareMargin?.top ? `${deviceAwareMargin.top}px` : mergedStyles.marginTop,
+    marginBottom: deviceAwareMargin?.bottom ? `${deviceAwareMargin.bottom}px` : mergedStyles.marginBottom,
+    marginLeft: deviceAwareMargin?.left ? `${deviceAwareMargin.left}px` : mergedStyles.marginLeft,
+    marginRight: deviceAwareMargin?.right ? `${deviceAwareMargin.right}px` : mergedStyles.marginRight,
   };
 
   // For button elements, don't apply padding from the wrapper - let the button handle its own padding
@@ -270,10 +282,10 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         ...(!isMediaElement ? {
           ...userDefinedMargins,
           ...(shouldApplyPadding ? {
-            paddingTop: mergedStyles.paddingTop,
-            paddingRight: mergedStyles.paddingRight,
-            paddingBottom: mergedStyles.paddingBottom,
-            paddingLeft: mergedStyles.paddingLeft,
+            paddingTop: deviceAwarePadding?.top ? `${deviceAwarePadding.top}px` : mergedStyles.paddingTop,
+            paddingRight: deviceAwarePadding?.right ? `${deviceAwarePadding.right}px` : mergedStyles.paddingRight,
+            paddingBottom: deviceAwarePadding?.bottom ? `${deviceAwarePadding.bottom}px` : mergedStyles.paddingBottom,
+            paddingLeft: deviceAwarePadding?.left ? `${deviceAwarePadding.left}px` : mergedStyles.paddingLeft,
           } : {})
         } : {}),
         // Apply user-defined border radius to selection ring when selected
