@@ -189,7 +189,22 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   }
   
   // Merge responsive overrides FIRST, but preserve background styles
-  const mergedStyles = mergeResponsiveStyles(styles, section.styles || {}, deviceType);
+  // Exclude legacy spacing properties if device-aware spacing is present to prevent conflicts
+  const stylesToMerge = { ...section.styles };
+  if (marginByDevice || paddingByDevice) {
+    // Remove legacy spacing properties when device-aware spacing is present
+    delete stylesToMerge.paddingTop;
+    delete stylesToMerge.paddingRight;
+    delete stylesToMerge.paddingBottom;
+    delete stylesToMerge.paddingLeft;
+    delete stylesToMerge.padding;
+    delete stylesToMerge.marginTop;
+    delete stylesToMerge.marginRight;
+    delete stylesToMerge.marginBottom;
+    delete stylesToMerge.marginLeft;
+    delete stylesToMerge.margin;
+  }
+  const mergedStyles = mergeResponsiveStyles(styles, stylesToMerge || {}, deviceType);
   
   // Apply background styles AFTER responsive merge to ensure they're not overwritten
   const backgroundStyles = buildBackgroundStyles({
@@ -296,7 +311,22 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
   }
   
   // Merge responsive overrides FIRST
-  const merged = mergeResponsiveStyles(styles, row.styles || {}, deviceType);
+  // Exclude legacy spacing properties if device-aware spacing is present to prevent conflicts
+  const stylesToMerge = { ...row.styles };
+  if (marginByDevice || paddingByDevice) {
+    // Remove legacy spacing properties when device-aware spacing is present
+    delete stylesToMerge.paddingTop;
+    delete stylesToMerge.paddingRight;
+    delete stylesToMerge.paddingBottom;
+    delete stylesToMerge.paddingLeft;
+    delete stylesToMerge.padding;
+    delete stylesToMerge.marginTop;
+    delete stylesToMerge.marginRight;
+    delete stylesToMerge.marginBottom;
+    delete stylesToMerge.marginLeft;
+    delete stylesToMerge.margin;
+  }
+  const merged = mergeResponsiveStyles(styles, stylesToMerge || {}, deviceType);
   
   // Apply background styles AFTER responsive merge
   const backgroundStyles = buildBackgroundStyles({
@@ -413,7 +443,22 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
   }
   
   // Merge responsive overrides FIRST
-  const merged = mergeResponsiveStyles(styles, column.styles || {}, deviceType);
+  // Exclude legacy spacing properties if device-aware spacing is present to prevent conflicts
+  const stylesToMerge = { ...column.styles };
+  if (marginByDevice || paddingByDevice) {
+    // Remove legacy spacing properties when device-aware spacing is present
+    delete stylesToMerge.paddingTop;
+    delete stylesToMerge.paddingRight;
+    delete stylesToMerge.paddingBottom;
+    delete stylesToMerge.paddingLeft;
+    delete stylesToMerge.padding;
+    delete stylesToMerge.marginTop;
+    delete stylesToMerge.marginRight;
+    delete stylesToMerge.marginBottom;
+    delete stylesToMerge.marginLeft;
+    delete stylesToMerge.margin;
+  }
+  const merged = mergeResponsiveStyles(styles, stylesToMerge || {}, deviceType);
   
   // Apply background styles AFTER responsive merge
   const backgroundStyles = buildBackgroundStyles({
