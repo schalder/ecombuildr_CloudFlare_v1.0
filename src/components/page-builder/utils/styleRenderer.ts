@@ -214,8 +214,19 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     
     if (section.styles.stickyPosition === 'top') {
       mergedStyles.top = section.styles.stickyOffset || '0px';
+      // Clear any conflicting bottom property
+      delete mergedStyles.bottom;
     } else if (section.styles.stickyPosition === 'bottom') {
       mergedStyles.bottom = section.styles.stickyOffset || '0px';
+      // Clear any conflicting top property
+      delete mergedStyles.top;
+      // Ensure the element has a minimum height for sticky bottom to work
+      if (!mergedStyles.minHeight) {
+        mergedStyles.minHeight = '60px';
+      }
+      // For bottom sticky, we might need to ensure the element stays at the bottom
+      // Add some additional properties to help with bottom sticky behavior
+      mergedStyles.width = '100%';
     }
   }
   
