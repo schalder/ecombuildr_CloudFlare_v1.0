@@ -154,10 +154,10 @@ const NewsletterElement: React.FC<{
   // Get device-aware styles
   const elementStyles = renderElementStyles(element, deviceType);
   
-  // Get responsive values
-  const formWidth = getEffectiveResponsiveValue(element.styles?.responsive, 'formWidth', deviceType) || 'full';
-  const fieldGap = getEffectiveResponsiveValue(element.styles?.responsive, 'fieldGap', deviceType) || '16px';
-  const labelAlignment = getEffectiveResponsiveValue(element.styles?.responsive, 'labelAlignment', deviceType) || 'left';
+  // Get responsive values with proper null checks
+  const formWidth = getEffectiveResponsiveValue(element, 'formWidth', deviceType) || 'full';
+  const fieldGap = getEffectiveResponsiveValue(element, 'fieldGap', deviceType) || '16px';
+  const labelAlignment = getEffectiveResponsiveValue(element, 'labelAlignment', deviceType) || 'left';
 
   // Render individual form field
   const renderFormField = (field: FormField) => {
@@ -276,7 +276,7 @@ const NewsletterElement: React.FC<{
     }
   };
 
-  // Container styles
+  // Container styles with proper null checks
   const containerStyle = {
     ...elementStyles,
     width: formWidth === 'full' ? '100%' : formWidth === '75%' ? '75%' : formWidth === '50%' ? '50%' : formWidth === '25%' ? '25%' : formWidth,
