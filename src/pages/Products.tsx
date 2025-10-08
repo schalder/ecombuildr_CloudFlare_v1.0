@@ -300,7 +300,7 @@ export default function Products() {
             .select('id')
             .eq('slug', newSlug)
             .eq('store_id', originalProduct.store_id)
-            .single();
+            .maybeSingle(); // Use maybeSingle() instead of single() to avoid errors
           
           if (!existing) break;
           
@@ -313,34 +313,57 @@ export default function Products() {
 
       const newSlug = await generateUniqueSlug(originalProduct.slug);
 
-      // Prepare the duplicated product data
+      // Prepare the duplicated product data - exclude problematic fields
       const duplicatedProduct = {
-        ...originalProduct,
-        id: undefined, // Let Supabase generate new ID
+        store_id: originalProduct.store_id,
+        category_id: originalProduct.category_id,
         name: `${originalProduct.name} (Copy)`,
         slug: newSlug,
+        description: originalProduct.description,
+        short_description: originalProduct.short_description,
+        price: originalProduct.price,
+        compare_price: originalProduct.compare_price,
+        cost_price: originalProduct.cost_price,
         sku: originalProduct.sku ? `${originalProduct.sku}-COPY` : null,
+        track_inventory: originalProduct.track_inventory,
         inventory_quantity: 0, // Reset inventory
+        images: originalProduct.images,
+        variations: originalProduct.variations,
         is_active: false, // Start as inactive
-        created_at: undefined, // Let Supabase set current timestamp
-        updated_at: undefined, // Let Supabase set current timestamp
-        // Preserve all other fields including images, variations, digital_files, etc.
+        seo_title: originalProduct.seo_title,
+        seo_description: originalProduct.seo_description,
+        free_shipping_min_amount: originalProduct.free_shipping_min_amount,
+        easy_returns_enabled: originalProduct.easy_returns_enabled,
+        easy_returns_days: originalProduct.easy_returns_days,
+        action_buttons: originalProduct.action_buttons,
+        allowed_payment_methods: originalProduct.allowed_payment_methods,
+        description_mode: originalProduct.description_mode,
+        description_builder: originalProduct.description_builder,
+        video_url: originalProduct.video_url,
+        weight_grams: originalProduct.weight_grams,
+        shipping_config: originalProduct.shipping_config,
+        library_item_id: originalProduct.library_item_id,
+        fulfillment_type: originalProduct.fulfillment_type,
+        supplier_link: originalProduct.supplier_link,
+        urgency_timer_enabled: originalProduct.urgency_timer_enabled,
+        urgency_timer_duration: originalProduct.urgency_timer_duration,
+        urgency_timer_text: originalProduct.urgency_timer_text,
+        urgency_timer_color: originalProduct.urgency_timer_color,
+        urgency_timer_text_color: originalProduct.urgency_timer_text_color,
+        is_membership: originalProduct.is_membership,
+        membership_content: originalProduct.membership_content,
+        product_type: originalProduct.product_type,
+        digital_files: originalProduct.digital_files,
+        download_limit: originalProduct.download_limit,
+        download_expiry_hours: originalProduct.download_expiry_hours,
+        // Explicitly exclude: id, created_at, updated_at, product_website_visibility
       };
 
-      // Remove the id field completely
-      delete duplicatedProduct.id;
-
-      // Insert the duplicated product
+      // Insert the duplicated product without select()
       const { data: newProduct, error: insertError } = await supabase
         .from('products')
         .insert(duplicatedProduct)
-        .select(`
-          *,
-          categories(name),
-          product_website_visibility(
-            websites(name)
-          )
-        `)
+        .select('*')
         .single();
 
       if (insertError) throw insertError;
