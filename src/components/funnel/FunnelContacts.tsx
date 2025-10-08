@@ -28,11 +28,18 @@ interface FormSubmission {
   id: string;
   store_id: string;
   funnel_id: string | null;
-  form_name: string;
-  form_id: string;
-  custom_fields: Record<string, any>;
-  submitted_at: string;
-  status: 'new' | 'read' | 'replied' | 'closed';
+  form_name: string | null;
+  form_id: string | null;
+  custom_fields: Record<string, any> | null;
+  created_at: string;
+  status: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  message: string | null;
+  form_type: string;
+  product_id: string | null;
+  updated_at: string;
 }
 
 interface FunnelContactsProps {
@@ -63,10 +70,13 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
       filtered = filtered.filter(submission => {
         const searchLower = searchTerm.toLowerCase();
         return (
-          submission.form_name.toLowerCase().includes(searchLower) ||
-          Object.values(submission.custom_fields).some(value => 
+          (submission.form_name?.toLowerCase().includes(searchLower)) ||
+          (submission.customer_name?.toLowerCase().includes(searchLower)) ||
+          (submission.customer_email?.toLowerCase().includes(searchLower)) ||
+          (submission.customer_phone?.toLowerCase().includes(searchLower)) ||
+          (submission.custom_fields && Object.values(submission.custom_fields).some(value => 
             String(value).toLowerCase().includes(searchLower)
-          )
+          ))
         );
       });
     }
@@ -91,14 +101,18 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
         .from('form_submissions')
         .select('*')
         .eq('funnel_id', funnelId)
-        .order('submitted_at', { ascending: false });
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
-      setSubmissions(data || []);
+      const submissionsData = (data || []) as FormSubmission[];
+      setSubmissions(submissionsData);
       
       // Extract unique form names
-      const uniqueFormNames = [...new Set(data?.map(s => s.form_name) || [])];
+      const uniqueFormNames = [...new Set(submissionsData.map(s => s.form_name).filter(Boolean))];
       setFormNames(uniqueFormNames);
     } catch (error) {
       console.error('Error loading submissions:', error);
@@ -134,14 +148,22 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
   };
 
   const exportToCSV = () => {
-    const headers = ['Date', 'Form Name', 'Status', ...Object.keys(filteredSubmissions[0]?.custom_fields || {})];
+    if (!filteredSubmissions || filteredSubmissions.length === 0) {
+      toast.error('No data to export');
+      return;
+    }
+    
+    const headers = ['Date', 'Form Name', 'Customer Name', 'Email', 'Phone', 'Status', ...Object.keys(filteredSubmissions[0]?.custom_fields || {})];
     const csvContent = [
       headers.join(','),
       ...filteredSubmissions.map(submission => [
-        new Date(submission.submitted_at).toLocaleDateString(),
-        submission.form_name,
-        submission.status,
-        ...Object.values(submission.custom_fields).map(value => `"${String(value).replace(/"/g, '""')}"`)
+        new Date(submission.created_at).toLocaleDateString(),
+        submission.form_name || '',
+        submission.customer_name || '',
+        submission.customer_email || '',
+        submission.customer_phone || '',
+        submission.status || '',
+        ...Object.values(submission.custom_fields || {}).map(value => `"${String(value).replace(/"/g, '""')}"`)
       ].join(','))
     ].join('\n');
 
@@ -300,35 +322,35 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSubmissions.map((submission) => (
+              {(filteredSubmissions || []).map((submission) => (
                 <TableRow key={submission.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
-                      {new Date(submission.submitted_at).toLocaleDateString()}
+                      {new Date(submission.created_at).toLocaleDateString()}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="font-medium">{submission.form_name}</div>
+                    <div className="font-medium">{submission.form_name || 'N/A'}</div>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      {submission.custom_fields.email && (
+                      {submission.customer_email && (
                         <div className="flex items-center gap-2 text-sm">
                           <Mail className="h-3 w-3 text-muted-foreground" />
-                          {submission.custom_fields.email}
+                          {submission.customer_email}
                         </div>
                       )}
-                      {submission.custom_fields.phone && (
+                      {submission.customer_phone && (
                         <div className="flex items-center gap-2 text-sm">
                           <Phone className="h-3 w-3 text-muted-foreground" />
-                          {submission.custom_fields.phone}
+                          {submission.customer_phone}
                         </div>
                       )}
-                      {(submission.custom_fields.fullName || submission.custom_fields.firstName) && (
+                      {submission.customer_name && (
                         <div className="flex items-center gap-2 text-sm">
                           <User className="h-3 w-3 text-muted-foreground" />
-                          {submission.custom_fields.fullName || submission.custom_fields.firstName}
+                          {submission.customer_name}
                         </div>
                       )}
                     </div>
@@ -365,7 +387,7 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
                                 <div>
                                   <Label className="text-sm font-medium">Submitted</Label>
                                   <p className="text-sm">
-                                    {new Date(selectedSubmission.submitted_at).toLocaleString()}
+                                    {new Date(selectedSubmission.created_at).toLocaleString()}
                                   </p>
                                 </div>
                               </div>

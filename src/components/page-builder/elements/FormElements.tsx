@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useParams } from 'react-router-dom';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
+import { useStore } from '@/contexts/StoreContext';
 
 // Contact Form Element
 const ContactFormElement: React.FC<{
@@ -138,18 +139,20 @@ const NewsletterElement: React.FC<{
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate, deviceType = 'desktop', columnCount = 1 }) => {
-  const { storeId, funnelId } = useParams();
+  const { store } = useStore();
+  const { funnelId } = useParams();
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get form configuration with defaults
-  const formName = element.content.formName || 'Newsletter Subscription';
-  const fields = element.content.fields || [];
-  const buttonText = element.content.buttonText || 'Subscribe';
-  const submitAction = element.content.submitAction || 'url';
-  const redirectUrl = element.content.redirectUrl || '';
-  const redirectStepId = element.content.redirectStepId || '';
-  const successMessage = element.content.successMessage || 'Successfully subscribed!';
+          // Get form configuration with defaults
+          const formName = element.content.formName || 'Newsletter Subscription';
+          const fields = element.content.fields || [];
+          const buttonText = element.content.buttonText || 'Subscribe';
+          const buttonSize = element.content.buttonSize || 'default';
+          const submitAction = element.content.submitAction || 'url';
+          const redirectUrl = element.content.redirectUrl || '';
+          const redirectStepId = element.content.redirectStepId || '';
+          const successMessage = element.content.successMessage || 'Successfully subscribed!';
 
   // Get device-aware styles
   const elementStyles = renderElementStyles(element, deviceType);
@@ -167,24 +170,80 @@ const NewsletterElement: React.FC<{
       setFormData(prev => ({ ...prev, [field.id]: value }));
     };
 
+    // Get all styling values
+    const fieldBorderColor = getEffectiveResponsiveValue(element, 'fieldBorderColor', deviceType, '#e5e7eb');
+    const inputTextColor = getEffectiveResponsiveValue(element, 'inputTextColor', deviceType, '#000000');
+    const fieldBackground = getEffectiveResponsiveValue(element, 'fieldBackground', deviceType, 'transparent');
+    const fieldBorderRadius = getEffectiveResponsiveValue(element, 'fieldBorderRadius', deviceType, '6px');
+    const fieldBorderWidth = getEffectiveResponsiveValue(element, 'fieldBorderWidth', deviceType, '1px');
+    
+    // Label styling
+    const labelColor = getEffectiveResponsiveValue(element, 'formLabelColor', deviceType, '#374151');
+    const labelFontSize = getEffectiveResponsiveValue(element, 'labelFontSize', deviceType, '14px');
+    const labelFontWeight = getEffectiveResponsiveValue(element, 'labelFontWeight', deviceType, '500');
+    const labelTextAlignment = getEffectiveResponsiveValue(element, 'labelAlignment', deviceType, 'left');
+    
+    // Placeholder styling
+    const placeholderColor = getEffectiveResponsiveValue(element, 'placeholderColor', deviceType, '#9ca3af');
+    const placeholderFontSize = getEffectiveResponsiveValue(element, 'placeholderFontSize', deviceType, '14px');
+    const placeholderFontWeight = getEffectiveResponsiveValue(element, 'placeholderFontWeight', deviceType, '400');
+
+    // Create unique IDs
+    const fieldId = `form-field-${field.id}`;
+    const labelId = `form-label-${field.id}`;
+
+    // Create comprehensive dynamic CSS for this field
+    const dynamicStyles = `
+      /* Field styling */
+      #${fieldId} {
+        border-color: ${fieldBorderColor} !important;
+        color: ${inputTextColor} !important;
+        background-color: ${fieldBackground} !important;
+        border-radius: ${fieldBorderRadius} !important;
+        border-width: ${fieldBorderWidth} !important;
+        border-style: solid !important;
+      }
+      
+      /* Label styling */
+      #${labelId} {
+        color: ${labelColor} !important;
+        font-size: ${labelFontSize} !important;
+        font-weight: ${labelFontWeight} !important;
+        text-align: ${labelTextAlignment} !important;
+        display: block !important;
+        width: 100% !important;
+      }
+      
+      /* Placeholder styling - all vendor prefixes */
+      #${fieldId}::placeholder {
+        color: ${placeholderColor} !important;
+        font-size: ${placeholderFontSize} !important;
+        font-weight: ${placeholderFontWeight} !important;
+      }
+      #${fieldId}::-webkit-input-placeholder {
+        color: ${placeholderColor} !important;
+        font-size: ${placeholderFontSize} !important;
+        font-weight: ${placeholderFontWeight} !important;
+      }
+      #${fieldId}::-moz-placeholder {
+        color: ${placeholderColor} !important;
+        font-size: ${placeholderFontSize} !important;
+        font-weight: ${placeholderFontWeight} !important;
+      }
+      #${fieldId}:-ms-input-placeholder {
+        color: ${placeholderColor} !important;
+        font-size: ${placeholderFontSize} !important;
+        font-weight: ${placeholderFontWeight} !important;
+      }
+    `;
+
     const fieldStyle = {
-      borderColor: element.styles?.responsive?.[deviceType]?.fieldBorderColor || '#e5e7eb',
-      color: element.styles?.responsive?.[deviceType]?.inputTextColor || '#000000',
-      backgroundColor: element.styles?.responsive?.[deviceType]?.formBackgroundColor || 'transparent',
-      borderRadius: element.styles?.responsive?.[deviceType]?.borderRadius || '6px',
-      borderWidth: element.styles?.responsive?.[deviceType]?.borderWidth || '1px',
-    };
-
-    const labelStyle = {
-      color: element.styles?.responsive?.[deviceType]?.formLabelColor || '#374151',
-      fontSize: element.styles?.responsive?.[deviceType]?.labelFontSize || '14px',
-      fontWeight: element.styles?.responsive?.[deviceType]?.labelFontWeight || '500',
-      textAlign: labelAlignment as any,
-    };
-
-    const placeholderStyle = {
-      color: element.styles?.responsive?.[deviceType]?.placeholderColor || '#9ca3af',
-      fontSize: element.styles?.responsive?.[deviceType]?.placeholderFontSize || '14px',
+      borderColor: fieldBorderColor,
+      color: inputTextColor,
+      backgroundColor: fieldBackground,
+      borderRadius: fieldBorderRadius,
+      borderWidth: fieldBorderWidth,
+      borderStyle: 'solid',
     };
 
     const commonProps = {
@@ -192,18 +251,19 @@ const NewsletterElement: React.FC<{
       onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => handleFieldChange(e.target.value),
       placeholder: field.placeholder,
       required: field.required,
-      style: { ...fieldStyle, ...placeholderStyle },
+      id: fieldId,
+      style: fieldStyle,
     };
 
     switch (field.type) {
       case 'textBox':
         return (
           <div key={field.id}>
-            <Label htmlFor={field.id} style={labelStyle}>
+            <style dangerouslySetInnerHTML={{ __html: dynamicStyles }} />
+            <Label htmlFor={fieldId} id={labelId}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </Label>
             <Textarea
-              id={field.id}
               {...commonProps}
               rows={4}
             />
@@ -212,11 +272,11 @@ const NewsletterElement: React.FC<{
       default:
         return (
           <div key={field.id}>
-            <Label htmlFor={field.id} style={labelStyle}>
+            <style dangerouslySetInnerHTML={{ __html: dynamicStyles }} />
+            <Label htmlFor={fieldId} id={labelId}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </Label>
             <Input
-              id={field.id}
               type={field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'}
               {...commonProps}
             />
@@ -228,7 +288,7 @@ const NewsletterElement: React.FC<{
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!storeId) {
+    if (!store?.id) {
       toast.error('Store not found');
       return;
     }
@@ -245,7 +305,7 @@ const NewsletterElement: React.FC<{
     try {
       const { data, error } = await supabase.functions.invoke('submit-custom-form', {
         body: {
-          store_id: storeId,
+          store_id: store.id,
           funnel_id: funnelId || null,
           form_name: formName,
           form_id: element.id,
@@ -276,25 +336,72 @@ const NewsletterElement: React.FC<{
     }
   };
 
+  // Get form container values
+  const formBackgroundColor = getEffectiveResponsiveValue(element, 'formBackground', deviceType, 'transparent');
+  const formBorderRadius = getEffectiveResponsiveValue(element, 'formBorderRadius', deviceType, '8px');
+  const formBorderWidth = getEffectiveResponsiveValue(element, 'formBorderWidth', deviceType, '0px');
+  const formBorderColor = getEffectiveResponsiveValue(element, 'formBorderColor', deviceType, 'transparent');
+
+  // Create dynamic CSS for form container
+  const containerId = `form-container-${element.id}`;
+  const containerStyles = `
+    #${containerId} {
+      background-color: ${formBackgroundColor} !important;
+      border-radius: ${formBorderRadius} !important;
+      border-width: ${formBorderWidth} !important;
+      border-color: ${formBorderColor} !important;
+      border-style: solid !important;
+    }
+  `;
+
   // Container styles with proper null checks
   const containerStyle = {
     ...elementStyles,
     width: formWidth === 'full' ? '100%' : formWidth === '75%' ? '75%' : formWidth === '50%' ? '50%' : formWidth === '25%' ? '25%' : formWidth,
-    gap: fieldGap,
-    backgroundColor: element.styles?.responsive?.[deviceType]?.formBackgroundColor || 'transparent',
-    borderRadius: element.styles?.responsive?.[deviceType]?.borderRadius || '8px',
-    borderWidth: element.styles?.responsive?.[deviceType]?.borderWidth || '0px',
-    borderColor: element.styles?.responsive?.[deviceType]?.borderColor || 'transparent',
+    backgroundColor: formBackgroundColor,
+    borderRadius: formBorderRadius,
+    borderWidth: formBorderWidth,
+    borderColor: formBorderColor,
     borderStyle: 'solid',
     padding: element.styles?.padding || '24px',
   };
 
+  // Get button color values
+  const buttonBg = getEffectiveResponsiveValue(element, 'buttonBg', deviceType, '#3b82f6');
+  const buttonTextColor = getEffectiveResponsiveValue(element, 'buttonText', deviceType, '#ffffff');
+  const buttonFontSize = getEffectiveResponsiveValue(element, 'buttonFontSize', deviceType, '16px');
+  const buttonFontWeight = getEffectiveResponsiveValue(element, 'buttonFontWeight', deviceType, '500');
+  const buttonBorderRadius = getEffectiveResponsiveValue(element, 'fieldBorderRadius', deviceType, '6px');
+  const buttonHoverBg = getEffectiveResponsiveValue(element, 'buttonHoverBg', deviceType, '#2563eb');
+  const buttonHoverText = getEffectiveResponsiveValue(element, 'buttonHoverText', deviceType, '#ffffff');
+
+  // Create dynamic CSS for button
+  const buttonId = `form-button-${element.id}`;
+  const buttonStyles = `
+    #${buttonId} {
+      background-color: ${buttonBg} !important;
+      color: ${buttonTextColor} !important;
+      font-size: ${buttonFontSize} !important;
+      font-weight: ${buttonFontWeight} !important;
+      border-radius: ${buttonBorderRadius} !important;
+      border: none !important;
+      padding: 12px 24px !important;
+      cursor: pointer !important;
+      width: 100% !important;
+      transition: all 0.2s ease !important;
+    }
+    #${buttonId}:hover {
+      background-color: ${buttonHoverBg} !important;
+      color: ${buttonHoverText} !important;
+    }
+  `;
+
   const buttonStyle = {
-    backgroundColor: element.styles?.responsive?.[deviceType]?.buttonBg || '#3b82f6',
-    color: element.styles?.responsive?.[deviceType]?.buttonText || '#ffffff',
-    fontSize: element.styles?.responsive?.[deviceType]?.buttonFontSize || '16px',
-    fontWeight: element.styles?.responsive?.[deviceType]?.buttonFontWeight || '500',
-    borderRadius: element.styles?.responsive?.[deviceType]?.borderRadius || '6px',
+    backgroundColor: buttonBg,
+    color: buttonTextColor,
+    fontSize: buttonFontSize,
+    fontWeight: buttonFontWeight,
+    borderRadius: buttonBorderRadius,
     border: 'none',
     padding: '12px 24px',
     cursor: 'pointer',
@@ -302,29 +409,28 @@ const NewsletterElement: React.FC<{
     transition: 'all 0.2s ease',
   };
 
-  const buttonHoverStyle = {
-    backgroundColor: element.styles?.responsive?.[deviceType]?.buttonHoverBg || '#2563eb',
-    color: element.styles?.responsive?.[deviceType]?.buttonHoverText || '#ffffff',
-  };
-
   return (
     <div 
+      id={containerId}
       className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'mx-auto'} p-6`} 
       style={containerStyle}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <style dangerouslySetInnerHTML={{ __html: containerStyles + buttonStyles }} />
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: fieldGap }}>
         {fields.map(renderFormField)}
         
-        <Button 
-          type="submit" 
-          className="w-full" 
-          disabled={isSubmitting}
-          style={buttonStyle}
-          onMouseEnter={(e) => Object.assign(e.currentTarget.style, buttonHoverStyle)}
-          onMouseLeave={(e) => Object.assign(e.currentTarget.style, buttonStyle)}
-        >
-          {isSubmitting ? 'Submitting...' : buttonText}
-        </Button>
+                <Button 
+                  type="submit" 
+                  className={`w-full ${buttonSize === 'sm' ? 'h-8 px-3 text-sm' : 
+                    buttonSize === 'lg' ? 'h-12 px-6 text-lg' : 
+                    buttonSize === 'xl' ? 'h-14 px-8 text-xl' : 
+                    'h-10 px-4'}`}
+                  disabled={isSubmitting}
+                  id={buttonId}
+                  style={buttonStyle}
+                >
+                  {isSubmitting ? 'Submitting...' : buttonText}
+                </Button>
       </form>
     </div>
   );
@@ -390,37 +496,38 @@ export const registerFormElements = () => {
     category: 'form',
     icon: Mail,
     component: NewsletterElement,
-    defaultContent: {
-      formName: 'Newsletter Subscription',
-      fields: [
-        {
-          id: 'field-1',
-          type: 'fullName',
-          label: 'Full Name',
-          placeholder: 'Enter your full name',
-          required: true
-        },
-        {
-          id: 'field-2',
-          type: 'phone',
-          label: 'Phone Number',
-          placeholder: 'Enter your phone number',
-          required: true
-        },
-        {
-          id: 'field-3',
-          type: 'email',
-          label: 'Email Address',
-          placeholder: 'Enter your email',
-          required: true
-        }
-      ],
-      buttonText: 'Subscribe',
-      submitAction: 'url',
-      redirectUrl: '',
-      redirectStepId: '',
-      successMessage: 'Successfully subscribed!'
-    },
+          defaultContent: {
+            formName: 'Newsletter Subscription',
+            fields: [
+              {
+                id: 'field-1',
+                type: 'fullName',
+                label: 'Full Name',
+                placeholder: 'Enter your full name',
+                required: true
+              },
+              {
+                id: 'field-2',
+                type: 'phone',
+                label: 'Phone Number',
+                placeholder: 'Enter your phone number',
+                required: true
+              },
+              {
+                id: 'field-3',
+                type: 'email',
+                label: 'Email Address',
+                placeholder: 'Enter your email',
+                required: true
+              }
+            ],
+            buttonText: 'Subscribe',
+            buttonSize: 'default',
+            submitAction: 'url',
+            redirectUrl: '',
+            redirectStepId: '',
+            successMessage: 'Successfully subscribed!'
+          },
     description: 'Customizable form builder with dynamic fields'
   });
 

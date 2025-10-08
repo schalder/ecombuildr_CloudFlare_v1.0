@@ -49,7 +49,6 @@ import {
   TextElementStyles,
   MediaElementStyles, 
   LayoutElementStyles,
-  FormElementStyles,
   ButtonElementStyles,
   SocialShareElementStyles,
   OrderConfirmationElementStyles,
@@ -67,6 +66,7 @@ import { CountdownElementStyles } from './ElementStyles/CountdownElementStyles';
 import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
 import { AccordionElementStyles } from './ElementStyles/AccordionElementStyles';
 import { FAQElementStyles } from './ElementStyles/FAQElementStyles';
+import { FormElementStyles } from './ElementStyles/FormElementStyles';
 
 import { PageBuilderElement } from '../types';
 import { useDevicePreview } from '../contexts/DevicePreviewContext';

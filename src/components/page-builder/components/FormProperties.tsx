@@ -8,7 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, GripVertical, Settings, Send } from 'lucide-react';
+import { Plus, Trash2, GripVertical, Settings, Send, ChevronDown, ChevronRight } from 'lucide-react';
 import { PageBuilderElement, FormField } from '../types';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useParams } from 'react-router-dom';
@@ -35,6 +35,11 @@ export const FormProperties: React.FC<FormPropertiesProps> = ({ element, onUpdat
     placeholder: '',
     required: false
   });
+
+  // Collapsible sections state
+  const [formSettingsOpen, setFormSettingsOpen] = useState(true);
+  const [formFieldsOpen, setFormFieldsOpen] = useState(true);
+  const [submitButtonOpen, setSubmitButtonOpen] = useState(true);
 
   // Load funnel steps for redirect options
   React.useEffect(() => {
@@ -119,55 +124,79 @@ export const FormProperties: React.FC<FormPropertiesProps> = ({ element, onUpdat
     <div className="space-y-6">
       {/* Form Settings */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
+        <CardHeader 
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => setFormSettingsOpen(!formSettingsOpen)}
+        >
+          <CardTitle className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <Settings className="h-3 w-3" />
             Form Settings
+            {formSettingsOpen ? (
+              <ChevronDown className="h-3 w-3 ml-auto" />
+            ) : (
+              <ChevronRight className="h-3 w-3 ml-auto" />
+            )}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="formName">Form Name</Label>
-            <Input
-              id="formName"
-              value={formName}
-              onChange={(e) => onUpdate('formName', e.target.value)}
-              placeholder="Enter form name"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="successMessage">Success Message</Label>
-            <Textarea
-              id="successMessage"
-              value={successMessage}
-              onChange={(e) => onUpdate('successMessage', e.target.value)}
-              placeholder="Enter success message"
-              rows={2}
-            />
-          </div>
-        </CardContent>
+        {formSettingsOpen && (
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="formName">Form Name</Label>
+              <Input
+                id="formName"
+                value={formName}
+                onChange={(e) => onUpdate('formName', e.target.value)}
+                placeholder="Enter form name"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="successMessage">Success Message</Label>
+              <Textarea
+                id="successMessage"
+                value={successMessage}
+                onChange={(e) => onUpdate('successMessage', e.target.value)}
+                placeholder="Enter success message"
+                rows={2}
+              />
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       {/* Field Management */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+        <CardHeader 
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => setFormFieldsOpen(!formFieldsOpen)}
+        >
+          <CardTitle className="flex items-center justify-between text-xs font-medium text-muted-foreground uppercase tracking-wide">
             <span className="flex items-center gap-2">
-              <GripVertical className="h-4 w-4" />
+              <GripVertical className="h-3 w-3" />
               Form Fields
+              {formFieldsOpen ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
             </span>
-            <Button 
-              size="sm" 
-              onClick={() => setShowAddField(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-3 w-3" />
-              Add Field
-            </Button>
+            {formFieldsOpen && (
+              <Button 
+                size="sm" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowAddField(true);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-3 w-3" />
+                Add Field
+              </Button>
+            )}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        {formFieldsOpen && (
+          <CardContent>
           {showAddField && (
             <Card className="mb-4 border-dashed">
               <CardContent className="pt-4">
@@ -248,43 +277,43 @@ export const FormProperties: React.FC<FormPropertiesProps> = ({ element, onUpdat
                             snapshot.isDragging ? 'shadow-lg' : ''
                           }`}
                         >
-                          <div className="flex items-center gap-2">
-                            <div {...provided.dragHandleProps}>
-                              <GripVertical className="h-4 w-4 text-muted-foreground" />
-                            </div>
-                            
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center gap-2">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <div {...provided.dragHandleProps}>
+                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              
+                              <div className="flex items-center gap-2 flex-1">
                                 <Badge variant="outline">
                                   {fieldTypeOptions.find(opt => opt.value === field.type)?.label}
                                 </Badge>
                                 {field.required && (
-                                  <Badge variant="destructive" className="text-xs">Required</Badge>
+                                  <span className="text-red-500 text-sm">*</span>
                                 )}
                               </div>
                               
-                              <div className="grid grid-cols-2 gap-2">
-                                <Input
-                                  value={field.label}
-                                  onChange={(e) => updateField(field.id, { label: e.target.value })}
-                                  placeholder="Field label"
-                                />
-                                <Input
-                                  value={field.placeholder}
-                                  onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
-                                  placeholder="Placeholder"
-                                />
-                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removeField(field.id)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
                             </div>
                             
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeField(field.id)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            <div className="space-y-2">
+                              <Input
+                                value={field.label}
+                                onChange={(e) => updateField(field.id, { label: e.target.value })}
+                                placeholder="Field label"
+                              />
+                              <Input
+                                value={field.placeholder}
+                                onChange={(e) => updateField(field.id, { placeholder: e.target.value })}
+                                placeholder="Placeholder"
+                              />
+                            </div>
                           </div>
                         </div>
                       )}
@@ -295,27 +324,55 @@ export const FormProperties: React.FC<FormPropertiesProps> = ({ element, onUpdat
               )}
             </Droppable>
           </DragDropContext>
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
 
       {/* Submit Button Settings */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Send className="h-4 w-4" />
+        <CardHeader 
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => setSubmitButtonOpen(!submitButtonOpen)}
+        >
+          <CardTitle className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <Send className="h-3 w-3" />
             Submit Button
+            {submitButtonOpen ? (
+              <ChevronDown className="h-3 w-3 ml-auto" />
+            ) : (
+              <ChevronRight className="h-3 w-3 ml-auto" />
+            )}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="buttonText">Button Text</Label>
-            <Input
-              id="buttonText"
-              value={buttonText}
-              onChange={(e) => onUpdate('buttonText', e.target.value)}
-              placeholder="Enter button text"
-            />
-          </div>
+        {submitButtonOpen && (
+          <CardContent className="space-y-4">
+                  <div>
+                    <Label htmlFor="buttonText">Button Text</Label>
+                    <Input
+                      id="buttonText"
+                      value={buttonText}
+                      onChange={(e) => onUpdate('buttonText', e.target.value)}
+                      placeholder="Enter button text"
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label>Button Size</Label>
+                    <Select 
+                      value={element.content.buttonSize || 'default'} 
+                      onValueChange={(value) => onUpdate('buttonSize', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select button size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sm">Small</SelectItem>
+                        <SelectItem value="default">Default</SelectItem>
+                        <SelectItem value="lg">Large</SelectItem>
+                        <SelectItem value="xl">Extra Large</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
           
           <div>
             <Label>Submit Action</Label>
@@ -365,7 +422,8 @@ export const FormProperties: React.FC<FormPropertiesProps> = ({ element, onUpdat
               </Select>
             </div>
           )}
-        </CardContent>
+          </CardContent>
+        )}
       </Card>
     </div>
   );
