@@ -81,7 +81,7 @@ export const FOMONotification: React.FC<FOMONotificationProps> = ({
   };
 
   const getPositionClasses = () => {
-    const base = 'fixed z-50 bottom-4';
+    const base = 'fixed z-[1000] bottom-4';
     return position === 'bottom-left' ? `${base} left-4` : `${base} right-4`;
   };
 
