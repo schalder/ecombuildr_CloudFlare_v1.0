@@ -44,7 +44,7 @@ const NewsletterElement: React.FC<{
   const formWidth = getEffectiveResponsiveValue(element, 'formWidth', deviceType, '100%');
   const fieldGap = getEffectiveResponsiveValue(element, 'fieldGap', deviceType, '16px');
   const labelAlignment = getEffectiveResponsiveValue(element, 'labelAlignment', deviceType, 'left');
-  const labelColor = getEffectiveResponsiveValue(element, 'labelColor', deviceType, '#374151');
+  const labelColor = getEffectiveResponsiveValue(element, 'formLabelColor', deviceType, '#374151');
   const labelFontSize = getEffectiveResponsiveValue(element, 'labelFontSize', deviceType, '14px');
   const labelFontWeight = getEffectiveResponsiveValue(element, 'labelFontWeight', deviceType, '500');
   const fieldBorderColor = getEffectiveResponsiveValue(element, 'fieldBorderColor', deviceType, '#d1d5db');
