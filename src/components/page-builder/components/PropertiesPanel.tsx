@@ -35,18 +35,8 @@ import {
 import { CheckoutContentProperties } from './CheckoutContentProperties';
 import { InlineCheckoutContentProperties } from './InlineCheckoutContentProperties';
 import { OrderConfirmationContentProperties } from './OrderConfirmationContentProperties';
-import { 
-  TestimonialContentProperties,
-  FAQContentProperties,
-  AccordionContentProperties,
-  TabsContentProperties
-} from './ContentPropertiesLegacy';
-import { ImageFeatureContentProperties } from './ImageFeatureContentProperties';
-import { 
-  ImageGalleryProperties, 
-  ImageCarouselProperties, 
-  VideoPlaylistProperties 
-} from './MediaProperties';
+import { FormProperties } from './FormProperties';
+import { FormElementStyles } from './ElementStyles/FormElementStyles';
 import { 
   GoogleMapsProperties, 
   CustomHTMLProperties, 
@@ -387,7 +377,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             )}
 
             {selectedElement.type === 'newsletter' && (
-              <NewsletterContentProperties 
+              <FormProperties 
                 element={selectedElement}
                 onUpdate={handleContentUpdate}
               />

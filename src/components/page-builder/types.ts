@@ -3,6 +3,52 @@
 // Background image modes
 export type BackgroundImageMode = 'full-center' | 'parallax' | 'fill-width' | 'no-repeat' | 'repeat';
 
+// Form Builder Types
+export interface FormField {
+  id: string;
+  type: 'fullName' | 'firstName' | 'lastName' | 'email' | 'phone' | 'address' | 'singleLineText' | 'textBox';
+  label: string;
+  placeholder?: string;
+  required: boolean;
+}
+
+export interface FormContent {
+  formName: string;
+  fields: FormField[];
+  buttonText: string;
+  submitAction: 'step' | 'url';
+  redirectUrl?: string;
+  redirectStepId?: string;
+  successMessage: string;
+}
+
+export interface FormStyles {
+  typography: {
+    labelFont: ResponsiveStyle;
+    placeholderFont: ResponsiveStyle;
+    buttonFont: ResponsiveStyle;
+  };
+  colors: {
+    fieldBorder: string;
+    formLabel: string;
+    placeholder: string;
+    inputText: string;
+    buttonBg: string;
+    buttonText: string;
+    buttonHoverBg: string;
+    buttonHoverText: string;
+    formBackground: string;
+  };
+  layout: {
+    formWidth: ResponsiveValue;
+    fieldGap: ResponsiveValue;
+    labelAlignment: ResponsiveValue;
+    borderWidth: string;
+    borderColor: string;
+    borderRadius: string;
+  };
+}
+
 export interface PageBuilderElement {
   id: string;
   anchor?: string;

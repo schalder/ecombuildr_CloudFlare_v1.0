@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign, GripVertical, Home, Trash2, Copy, CheckIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign, GripVertical, Home, Trash2, Copy, CheckIcon, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -17,8 +17,7 @@ import { FunnelStepSettingsModal } from '@/components/modals/FunnelStepSettingsM
 import { FunnelStats } from '@/components/funnel/FunnelStats';
 import { FunnelSales } from '@/components/funnel/FunnelSales';
 import { FunnelSettings } from '@/components/funnel/FunnelSettings';
-import { FunnelHeaderBuilder } from '@/components/funnel/FunnelHeaderBuilder';
-import { FunnelFooterBuilder } from '@/components/funnel/FunnelFooterBuilder';
+import { FunnelContacts } from '@/components/funnel/FunnelContacts';
 
 interface Funnel {
   id: string;
@@ -320,9 +319,9 @@ const FunnelManagement = () => {
               label: 'Sales',
               icon: DollarSign
             }, {
-              id: 'settings',
-              label: 'Settings',
-              icon: Settings
+              id: 'contacts',
+              label: 'Contacts',
+              icon: Users
             }, {
               id: 'header',
               label: 'Header',
@@ -548,6 +547,11 @@ const FunnelManagement = () => {
         {/* Sales Tab */}
         {activeTab === 'sales' && <div className="p-4 sm:p-6">
             <FunnelSales funnelId={id!} />
+          </div>}
+
+        {/* Contacts Tab */}
+        {activeTab === 'contacts' && <div className="p-4 sm:p-6">
+            {funnel && <FunnelContacts funnelId={funnel.id} />}
           </div>}
 
         {/* Settings Tab */}
