@@ -36,7 +36,6 @@ import { CheckoutContentProperties } from './CheckoutContentProperties';
 import { InlineCheckoutContentProperties } from './InlineCheckoutContentProperties';
 import { OrderConfirmationContentProperties } from './OrderConfirmationContentProperties';
 import { FormProperties } from './FormProperties';
-import { FormElementStyles } from './ElementStyles/FormElementStyles';
 import { 
   GoogleMapsProperties, 
   CustomHTMLProperties, 

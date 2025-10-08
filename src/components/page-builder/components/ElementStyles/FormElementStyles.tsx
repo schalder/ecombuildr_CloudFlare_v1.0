@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { ResponsiveSpacingSliders } from './ElementStyles/_shared/ResponsiveSpacingSliders';
+import { ResponsiveSpacingSliders } from './_shared/ResponsiveSpacingSliders';
 import { useDevicePreview } from '../../contexts/DevicePreviewContext';
 import { PageBuilderElement } from '../types';
 import { Type, Palette, Layout } from 'lucide-react';
