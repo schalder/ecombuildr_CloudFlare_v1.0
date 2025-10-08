@@ -658,9 +658,9 @@ export default function Products() {
                               View
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => navigate(`/dashboard/products/${product.id}/edit`)}>
-                               <Edit className="mr-2 h-3.5 w-3.5" />
-                               Edit
-                             </DropdownMenuItem>
+                              <Edit className="mr-2 h-3.5 w-3.5" />
+                              Edit
+                            </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => duplicateProduct(product.id)}
                               disabled={duplicatingProduct === product.id}
@@ -834,9 +834,16 @@ export default function Products() {
                               View
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => navigate(`/dashboard/products/${product.id}/edit`)}>
-                               <Edit className="mr-2 h-4 w-4" />
-                               Edit
-                             </DropdownMenuItem>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => duplicateProduct(product.id)}
+                              disabled={duplicatingProduct === product.id}
+                            >
+                              <Copy className="mr-2 h-4 w-4" />
+                              {duplicatingProduct === product.id ? 'Duplicating...' : 'Duplicate'}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => toggleProductStatus(product.id, product.is_active)}
                             >
