@@ -192,50 +192,60 @@ const NewsletterElement: React.FC<{
     const fieldId = `form-field-${field.id}`;
     const labelId = `form-label-${field.id}`;
 
-    // Create comprehensive dynamic CSS for this field
-    const dynamicStyles = `
-      /* Field styling */
-      #${fieldId} {
-        border-color: ${fieldBorderColor} !important;
-        color: ${inputTextColor} !important;
-        background-color: ${fieldBackground} !important;
-        border-radius: ${fieldBorderRadius} !important;
-        border-width: ${fieldBorderWidth} !important;
-        border-style: solid !important;
-      }
-      
-      /* Label styling */
-      #${labelId} {
-        color: ${labelColor} !important;
-        font-size: ${labelFontSize} !important;
-        font-weight: ${labelFontWeight} !important;
-        text-align: ${labelTextAlignment} !important;
-        display: block !important;
-        width: 100% !important;
-      }
-      
-      /* Placeholder styling - all vendor prefixes */
-      #${fieldId}::placeholder {
-        color: ${placeholderColor} !important;
-        font-size: ${placeholderFontSize} !important;
-        font-weight: ${placeholderFontWeight} !important;
-      }
-      #${fieldId}::-webkit-input-placeholder {
-        color: ${placeholderColor} !important;
-        font-size: ${placeholderFontSize} !important;
-        font-weight: ${placeholderFontWeight} !important;
-      }
-      #${fieldId}::-moz-placeholder {
-        color: ${placeholderColor} !important;
-        font-size: ${placeholderFontSize} !important;
-        font-weight: ${placeholderFontWeight} !important;
-      }
-      #${fieldId}:-ms-input-placeholder {
-        color: ${placeholderColor} !important;
-        font-size: ${placeholderFontSize} !important;
-        font-weight: ${placeholderFontWeight} !important;
-      }
-    `;
+            // Create comprehensive dynamic CSS for this field
+            const dynamicStyles = `
+              /* Field styling */
+              #${fieldId} {
+                border-color: ${fieldBorderColor} !important;
+                color: ${inputTextColor} !important;
+                background-color: ${fieldBackground} !important;
+                border-radius: ${fieldBorderRadius} !important;
+                border-width: ${fieldBorderWidth} !important;
+                border-style: solid !important;
+                outline: none !important;
+                box-shadow: none !important;
+              }
+              
+              /* Focus state - maintain same border color */
+              #${fieldId}:focus {
+                border-color: ${fieldBorderColor} !important;
+                outline: none !important;
+                box-shadow: none !important;
+              }
+              
+              /* Label styling */
+              #${labelId} {
+                color: ${labelColor} !important;
+                font-size: ${labelFontSize} !important;
+                font-weight: ${labelFontWeight} !important;
+                text-align: ${labelTextAlignment} !important;
+                display: block !important;
+                width: 100% !important;
+                margin-bottom: 8px !important;
+              }
+              
+              /* Placeholder styling - all vendor prefixes */
+              #${fieldId}::placeholder {
+                color: ${placeholderColor} !important;
+                font-size: ${placeholderFontSize} !important;
+                font-weight: ${placeholderFontWeight} !important;
+              }
+              #${fieldId}::-webkit-input-placeholder {
+                color: ${placeholderColor} !important;
+                font-size: ${placeholderFontSize} !important;
+                font-weight: ${placeholderFontWeight} !important;
+              }
+              #${fieldId}::-moz-placeholder {
+                color: ${placeholderColor} !important;
+                font-size: ${placeholderFontSize} !important;
+                font-weight: ${placeholderFontWeight} !important;
+              }
+              #${fieldId}:-ms-input-placeholder {
+                color: ${placeholderColor} !important;
+                font-size: ${placeholderFontSize} !important;
+                font-weight: ${placeholderFontWeight} !important;
+              }
+            `;
 
     const fieldStyle = {
       borderColor: fieldBorderColor,
@@ -244,6 +254,8 @@ const NewsletterElement: React.FC<{
       borderRadius: fieldBorderRadius,
       borderWidth: fieldBorderWidth,
       borderStyle: 'solid',
+      outline: 'none',
+      boxShadow: 'none',
     };
 
     const commonProps = {
@@ -258,7 +270,7 @@ const NewsletterElement: React.FC<{
     switch (field.type) {
       case 'textBox':
         return (
-          <div key={field.id}>
+          <div key={field.id} className="space-y-2">
             <style dangerouslySetInnerHTML={{ __html: dynamicStyles }} />
             <Label htmlFor={fieldId} id={labelId}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
@@ -266,12 +278,13 @@ const NewsletterElement: React.FC<{
             <Textarea
               {...commonProps}
               rows={4}
+              className="focus:ring-0 focus:ring-offset-0 focus:outline-none"
             />
           </div>
         );
       default:
         return (
-          <div key={field.id}>
+          <div key={field.id} className="space-y-2">
             <style dangerouslySetInnerHTML={{ __html: dynamicStyles }} />
             <Label htmlFor={fieldId} id={labelId}>
               {field.label} {field.required && <span className="text-red-500">*</span>}
@@ -279,6 +292,7 @@ const NewsletterElement: React.FC<{
             <Input
               type={field.type === 'email' ? 'email' : field.type === 'phone' ? 'tel' : 'text'}
               {...commonProps}
+              className="focus:ring-0 focus:ring-offset-0 focus:outline-none"
             />
           </div>
         );
