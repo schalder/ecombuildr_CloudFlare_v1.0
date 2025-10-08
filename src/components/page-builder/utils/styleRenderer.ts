@@ -273,6 +273,12 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     }
   }
 
+  // Add positioning for dividers
+  if (section.styles?.topDivider?.enabled || section.styles?.bottomDivider?.enabled) {
+    mergedStyles.position = 'relative';
+    mergedStyles.overflow = 'hidden';
+  }
+
   return mergedStyles;
 };
 

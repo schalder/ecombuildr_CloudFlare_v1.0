@@ -18,6 +18,7 @@ import { CompactMediaSelector } from './CompactMediaSelector';
 import { CollapsibleGroup } from './ElementStyles/_shared/CollapsibleGroup';
 import { SpacingSliders } from './ElementStyles/_shared/SpacingSliders';
 import { ResponsiveSpacingSliders } from './ElementStyles/_shared/ResponsiveSpacingSliders';
+import { DividerTypeSelector } from './DividerTypeSelector';
 import { getEffectiveResponsiveValue, hasResponsiveOverride, getInheritanceSource, getInheritanceLabel, clearResponsiveOverride } from '../utils/responsiveHelpers';
 import { useDevicePreview } from '../contexts/DevicePreviewContext';
 
@@ -36,7 +37,9 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     background: false,
     border: false,
     spacing: false,
-    sticky: false
+    sticky: false,
+    topDivider: false,
+    bottomDivider: false
   });
 
   // Helper functions for device-aware spacing conversion
@@ -840,6 +843,186 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
                   Distance from the edge of the viewport (e.g., "0px", "20px", "10vh"). 
                   {section.styles?.stickyPosition === 'bottom' && ' Bottom banners use fixed positioning for reliable floating behavior.'}
                 </p>
+              </div>
+            </>
+          )}
+        </div>
+      </CollapsibleGroup>
+
+      <CollapsibleGroup
+        title="Top Divider"
+        isOpen={openCards.topDivider}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, topDivider: isOpen }))}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Switch 
+                checked={section.styles?.topDivider?.enabled || false}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onUpdate({
+                      styles: {
+                        ...section.styles,
+                        topDivider: {
+                          enabled: true,
+                          type: 'smooth-wave',
+                          color: section.styles?.backgroundColor || '#ffffff',
+                          height: 100,
+                          flip: false,
+                          invert: false
+                        }
+                      }
+                    });
+                  } else {
+                    const newStyles = { ...section.styles };
+                    delete newStyles.topDivider;
+                    onUpdate({ styles: newStyles });
+                  }
+                }}
+              />
+              <Label className="text-sm">Enable Top Divider</Label>
+            </div>
+          </div>
+          
+          {section.styles?.topDivider?.enabled && (
+            <>
+              <div className="space-y-2">
+                <Label className="text-sm">Divider Type</Label>
+                <DividerTypeSelector
+                  value={section.styles.topDivider.type}
+                  onValueChange={(value) => handleStyleUpdate('topDivider', { ...section.styles?.topDivider, type: value })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm">Color</Label>
+                <ColorPicker
+                  color={section.styles.topDivider.color || '#ffffff'}
+                  onChange={(color) => handleStyleUpdate('topDivider', { ...section.styles?.topDivider, color })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm">Height: {section.styles.topDivider.height || 100}px</Label>
+                <Slider
+                  value={[section.styles.topDivider.height || 100]}
+                  onValueChange={([value]) => handleStyleUpdate('topDivider', { ...section.styles?.topDivider, height: value })}
+                  min={20}
+                  max={300}
+                  step={10}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    checked={section.styles.topDivider.flip || false}
+                    onCheckedChange={(checked) => handleStyleUpdate('topDivider', { ...section.styles?.topDivider, flip: checked })}
+                  />
+                  <Label className="text-sm">Flip Horizontally</Label>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    checked={section.styles.topDivider.invert || false}
+                    onCheckedChange={(checked) => handleStyleUpdate('topDivider', { ...section.styles?.topDivider, invert: checked })}
+                  />
+                  <Label className="text-sm">Invert Vertically</Label>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </CollapsibleGroup>
+
+      <CollapsibleGroup
+        title="Bottom Divider"
+        isOpen={openCards.bottomDivider}
+        onToggle={(isOpen) => setOpenCards(prev => ({ ...prev, bottomDivider: isOpen }))}
+      >
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Switch 
+                checked={section.styles?.bottomDivider?.enabled || false}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    onUpdate({
+                      styles: {
+                        ...section.styles,
+                        bottomDivider: {
+                          enabled: true,
+                          type: 'smooth-wave',
+                          color: section.styles?.backgroundColor || '#ffffff',
+                          height: 100,
+                          flip: false,
+                          invert: false
+                        }
+                      }
+                    });
+                  } else {
+                    const newStyles = { ...section.styles };
+                    delete newStyles.bottomDivider;
+                    onUpdate({ styles: newStyles });
+                  }
+                }}
+              />
+              <Label className="text-sm">Enable Bottom Divider</Label>
+            </div>
+          </div>
+          
+          {section.styles?.bottomDivider?.enabled && (
+            <>
+              <div className="space-y-2">
+                <Label className="text-sm">Divider Type</Label>
+                <DividerTypeSelector
+                  value={section.styles.bottomDivider.type}
+                  onValueChange={(value) => handleStyleUpdate('bottomDivider', { ...section.styles?.bottomDivider, type: value })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm">Color</Label>
+                <ColorPicker
+                  color={section.styles.bottomDivider.color || '#ffffff'}
+                  onChange={(color) => handleStyleUpdate('bottomDivider', { ...section.styles?.bottomDivider, color })}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm">Height: {section.styles.bottomDivider.height || 100}px</Label>
+                <Slider
+                  value={[section.styles.bottomDivider.height || 100]}
+                  onValueChange={([value]) => handleStyleUpdate('bottomDivider', { ...section.styles?.bottomDivider, height: value })}
+                  min={20}
+                  max={300}
+                  step={10}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    checked={section.styles.bottomDivider.flip || false}
+                    onCheckedChange={(checked) => handleStyleUpdate('bottomDivider', { ...section.styles?.bottomDivider, flip: checked })}
+                  />
+                  <Label className="text-sm">Flip Horizontally</Label>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Switch 
+                    checked={section.styles.bottomDivider.invert || false}
+                    onCheckedChange={(checked) => handleStyleUpdate('bottomDivider', { ...section.styles?.bottomDivider, invert: checked })}
+                  />
+                  <Label className="text-sm">Invert Vertically</Label>
+                </div>
               </div>
             </>
           )}

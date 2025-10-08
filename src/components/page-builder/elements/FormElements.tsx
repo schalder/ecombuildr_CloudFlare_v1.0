@@ -166,6 +166,17 @@ const NewsletterElement: React.FC<{
         return acc;
       }, {} as Record<string, string>);
 
+      // Extract contact information more reliably
+      const fullNameField = fields.find(f => f.type === 'fullName');
+      const emailField = fields.find(f => f.type === 'email');
+      const phoneField = fields.find(f => f.type === 'phone');
+      const messageField = fields.find(f => f.type === 'textBox');
+
+      const customer_name = fullNameField ? (formData[fullNameField.id] || '') : '';
+      const customer_email = emailField ? (formData[emailField.id] || '') : '';
+      const customer_phone = phoneField ? (formData[phoneField.id] || null) : null;
+      const message = messageField ? (formData[messageField.id] || null) : null;
+
       const { data, error } = await supabase.functions.invoke('submit-custom-form', {
         body: {
           store_id: store.id,
@@ -173,10 +184,10 @@ const NewsletterElement: React.FC<{
           form_name: formName,
           form_id: element.id,
           custom_fields: customFieldsWithLabels,
-          customer_name: formData[fields.find(f => f.type === 'fullName')?.id || ''] || '',
-          customer_email: formData[fields.find(f => f.type === 'email')?.id || ''] || '',
-          customer_phone: formData[fields.find(f => f.type === 'phone')?.id || ''] || null,
-          message: formData[fields.find(f => f.type === 'textBox')?.id || ''] || null,
+          customer_name,
+          customer_email,
+          customer_phone,
+          message,
           form_type: 'custom_form'
         }
       });

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Search, 
   Filter, 
@@ -19,7 +20,9 @@ import {
   Calendar,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  Trash2,
+  CheckSquare
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -55,6 +58,8 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
   const [formFilter, setFormFilter] = useState<string>('all');
   const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null);
   const [formNames, setFormNames] = useState<string[]>([]);
+  const [selectedContacts, setSelectedContacts] = useState<Set<string>>(new Set<string>());
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Load form submissions
   useEffect(() => {
@@ -97,19 +102,20 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
   const loadSubmissions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const response: any = await supabase
         .from('form_submissions')
         .select('*')
-        .eq('funnel_id', funnelId)
-        .order('created_at', { ascending: false });
+        .eq('funnel_id', funnelId);
+      
+      const { data, error } = response;
 
       if (error) {
         console.error('Supabase error:', error);
         throw error;
       }
 
-      const submissionsData = (data || []) as any[];
-      setSubmissions(submissionsData as FormSubmission[]);
+      const submissionsData = data as FormSubmission[] || [];
+      setSubmissions(submissionsData);
       
       // Extract unique form names
       const uniqueFormNames = [...new Set(submissionsData.map(s => s.form_name).filter(Boolean))];
@@ -144,6 +150,85 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Failed to update status');
+    }
+  };
+
+  // Delete single contact
+  const deleteSingleContact = async (submissionId: string) => {
+    try {
+      setIsDeleting(true);
+      const { error } = await supabase
+        .from('form_submissions')
+        .delete()
+        .eq('id', submissionId);
+
+      if (error) throw error;
+
+      // Update local state
+      setSubmissions(prev => prev.filter(submission => submission.id !== submissionId));
+      setSelectedContacts(prev => {
+        const newSet = new Set<string>(prev);
+        newSet.delete(submissionId);
+        return newSet;
+      });
+
+      toast.success('Contact deleted successfully');
+    } catch (error) {
+      console.error('Error deleting contact:', error);
+      toast.error('Failed to delete contact');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Delete multiple contacts
+  const deleteBulkContacts = async () => {
+    if (selectedContacts.size === 0) return;
+
+    try {
+      setIsDeleting(true);
+      const contactIds = Array.from(selectedContacts);
+      
+      const { error } = await supabase
+        .from('form_submissions')
+        .delete()
+        .in('id', contactIds);
+
+      if (error) throw error;
+
+      // Update local state
+      setSubmissions(prev => prev.filter(submission => !selectedContacts.has(submission.id)));
+      setSelectedContacts(new Set<string>());
+
+      toast.success(`${contactIds.length} contact${contactIds.length > 1 ? 's' : ''} deleted successfully`);
+    } catch (error) {
+      console.error('Error deleting contacts:', error);
+      toast.error('Failed to delete contacts');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handle checkbox selection
+  const handleSelectContact = (submissionId: string, checked: boolean) => {
+    setSelectedContacts(prev => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(submissionId);
+      } else {
+        newSet.delete(submissionId);
+      }
+      return newSet;
+    });
+  };
+
+  // Handle select all checkbox
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = new Set<string>(filteredSubmissions.map(submission => submission.id));
+      setSelectedContacts(allIds);
+    } else {
+      setSelectedContacts(new Set<string>());
     }
   };
 
@@ -232,12 +317,34 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
           <h2 className="text-2xl font-bold">Contacts</h2>
           <p className="text-muted-foreground">
             {filteredSubmissions.length} contact{filteredSubmissions.length !== 1 ? 's' : ''} found
+            {selectedContacts.size > 0 && (
+              <span className="ml-2 text-primary font-medium">
+                • {selectedContacts.size} selected
+              </span>
+            )}
           </p>
         </div>
-        <Button onClick={exportToCSV} className="flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          {selectedContacts.size > 0 && (
+            <Button 
+              onClick={() => {
+                if (confirm(`Are you sure you want to delete ${selectedContacts.size} contact${selectedContacts.size > 1 ? 's' : ''}? This action cannot be undone.`)) {
+                  deleteBulkContacts();
+                }
+              }}
+              variant="destructive"
+              disabled={isDeleting}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Selected ({selectedContacts.size})
+            </Button>
+          )}
+          <Button onClick={exportToCSV} className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -314,6 +421,13 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={filteredSubmissions.length > 0 && selectedContacts.size === filteredSubmissions.length}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all contacts"
+                  />
+                </TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Form</TableHead>
                 <TableHead>Contact Info</TableHead>
@@ -325,6 +439,13 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
               {(filteredSubmissions || []).map((submission) => (
                 <TableRow key={submission.id}>
                   <TableCell>
+                    <Checkbox
+                      checked={selectedContacts.has(submission.id)}
+                      onCheckedChange={(checked) => handleSelectContact(submission.id, checked as boolean)}
+                      aria-label={`Select contact ${submission.customer_name || submission.customer_email}`}
+                    />
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       {new Date(submission.created_at).toLocaleDateString()}
@@ -335,6 +456,12 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
+                      {submission.customer_name && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="h-3 w-3 text-muted-foreground" />
+                          {submission.customer_name}
+                        </div>
+                      )}
                       {submission.customer_email && (
                         <div className="flex items-center gap-2 text-sm">
                           <Mail className="h-3 w-3 text-muted-foreground" />
@@ -347,10 +474,10 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
                           {submission.customer_phone}
                         </div>
                       )}
-                      {submission.customer_name && (
-                        <div className="flex items-center gap-2 text-sm">
+                      {!submission.customer_name && !submission.customer_email && !submission.customer_phone && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <User className="h-3 w-3 text-muted-foreground" />
-                          {submission.customer_name}
+                          No contact info available
                         </div>
                       )}
                     </div>
@@ -469,6 +596,19 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
                           )}
                         </DialogContent>
                       </Dialog>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to delete this contact? This action cannot be undone.`)) {
+                            deleteSingleContact(submission.id);
+                          }
+                        }}
+                        disabled={isDeleting}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

@@ -63,6 +63,7 @@ import {
 } from './types';
 import { elementRegistry } from './elements';
 import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackground, hasUserShadow, getDeviceAwareSpacing } from './utils/styleRenderer';
+import { DividerRenderer } from './dividers/DividerRenderer';
 import { SectionDropZone } from './components/SectionDropZone';
 import { RowDropZone } from './components/RowDropZone';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -1603,6 +1604,16 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
             <Settings className="h-3 w-3" />
           </Button>
         </div>
+      )}
+
+      {/* Top Divider */}
+      {section.styles?.topDivider?.enabled && (
+        <DividerRenderer divider={section.styles.topDivider} position="top" />
+      )}
+
+      {/* Bottom Divider */}
+      {section.styles?.bottomDivider?.enabled && (
+        <DividerRenderer divider={section.styles.bottomDivider} position="bottom" />
       )}
 
       <div 

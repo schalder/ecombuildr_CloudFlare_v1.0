@@ -4,6 +4,7 @@ import { Plus, Trash2, Copy, Settings, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBuilderSection, PageBuilderElement } from '../types';
 import { RowRenderer } from './RowRenderer';
+import { DividerRenderer } from '../dividers/DividerRenderer';
 import { cn } from '@/lib/utils';
 import { renderSectionStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
 
@@ -215,6 +216,16 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
             </Button>
           </div>
         </div>
+      )}
+
+      {/* Top Divider */}
+      {section.styles?.topDivider?.enabled && (
+        <DividerRenderer divider={section.styles.topDivider} position="top" />
+      )}
+
+      {/* Bottom Divider */}
+      {section.styles?.bottomDivider?.enabled && (
+        <DividerRenderer divider={section.styles.bottomDivider} position="bottom" />
       )}
 
       <div 

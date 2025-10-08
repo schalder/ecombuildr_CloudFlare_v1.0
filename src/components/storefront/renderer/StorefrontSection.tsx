@@ -1,6 +1,7 @@
 import React from 'react';
 import { PageBuilderSection, SECTION_WIDTHS } from '@/components/page-builder/types';
 import { StorefrontRow } from './StorefrontRow';
+import { DividerRenderer } from '@/components/page-builder/dividers/DividerRenderer';
 import { cn } from '@/lib/utils';
 import { renderSectionStyles } from '@/components/page-builder/utils/styleRenderer';
 
@@ -61,6 +62,16 @@ export const StorefrontSection: React.FC<StorefrontSectionProps> = ({
       className={cn("relative")}
       style={getSectionStyles()}
     >
+      {/* Top Divider */}
+      {section.styles?.topDivider?.enabled && (
+        <DividerRenderer divider={section.styles.topDivider} position="top" />
+      )}
+
+      {/* Bottom Divider */}
+      {section.styles?.bottomDivider?.enabled && (
+        <DividerRenderer divider={section.styles.bottomDivider} position="bottom" />
+      )}
+
       <div className={getSectionWidthClasses()}>
         {section.rows?.map((row) => (
           <StorefrontRow

@@ -56,6 +56,28 @@ export interface ServerPageBuilderSection {
     width?: string;
     maxWidth?: string;
     minWidth?: string;
+    topDivider?: {
+      enabled: boolean;
+      type: 'smooth-wave' | 'double-wave' | 'mountain-wave' | 'angle-left' | 'angle-right' | 
+            'tilted-cut' | 'top-curve' | 'bottom-curve' | 'half-circle' | 'triangle' | 
+            'polygon' | 'chevron' | 'clouds' | 'drops' | 'zigzag' | 'dots-line' | 
+            'brush-stroke' | 'grunge-tear';
+      color?: string;
+      height?: number;
+      flip?: boolean;
+      invert?: boolean;
+    };
+    bottomDivider?: {
+      enabled: boolean;
+      type: 'smooth-wave' | 'double-wave' | 'mountain-wave' | 'angle-left' | 'angle-right' | 
+            'tilted-cut' | 'top-curve' | 'bottom-curve' | 'half-circle' | 'triangle' | 
+            'polygon' | 'chevron' | 'clouds' | 'drops' | 'zigzag' | 'dots-line' | 
+            'brush-stroke' | 'grunge-tear';
+      color?: string;
+      height?: number;
+      flip?: boolean;
+      invert?: boolean;
+    };
   };
 }
 
@@ -311,6 +333,43 @@ function renderRow(row: ServerPageBuilderRow): string {
   return `<div${anchorAttr} class="row"${styleAttr}>${columnsHTML}</div>`;
 }
 
+// Render divider as HTML
+function renderDivider(divider: any, position: 'top' | 'bottom'): string {
+  if (!divider?.enabled) return '';
+  
+  const { type, color = '#ffffff', height = 100, flip = false, invert = false } = divider;
+  
+  // SVG paths for each divider type
+  const dividerPaths: Record<string, string> = {
+    'smooth-wave': '<path d="M0,60 C300,120 600,0 900,60 C1050,90 1200,30 1200,60 L1200,120 L0,120 Z" />',
+    'double-wave': '<path d="M0,60 C200,20 400,100 600,60 C800,20 1000,100 1200,60 L1200,120 L0,120 Z" /><path d="M0,80 C200,40 400,120 600,80 C800,40 1000,120 1200,80 L1200,120 L0,120 Z" opacity="0.7" />',
+    'mountain-wave': '<path d="M0,60 L200,20 L400,80 L600,10 L800,90 L1000,30 L1200,60 L1200,120 L0,120 Z" />',
+    'angle-left': '<path d="M0,0 L1200,120 L1200,0 Z" />',
+    'angle-right': '<path d="M0,120 L1200,0 L1200,120 Z" />',
+    'tilted-cut': '<path d="M0,40 L1200,80 L1200,120 L0,120 Z" />',
+    'top-curve': '<path d="M0,60 C300,0 600,0 900,60 C1050,90 1200,30 1200,60 L1200,120 L0,120 Z" />',
+    'bottom-curve': '<path d="M0,0 L1200,0 L1200,60 C1050,30 900,90 600,60 C300,0 0,0 0,60 Z" />',
+    'half-circle': '<path d="M0,60 C0,26.9 26.9,0 60,0 L1140,0 C1173.1,0 1200,26.9 1200,60 L1200,120 L0,120 Z" />',
+    'triangle': '<path d="M0,0 L600,120 L1200,0 Z" />',
+    'polygon': '<path d="M0,60 L200,20 L400,80 L600,10 L800,90 L1000,30 L1200,60 L1200,120 L0,120 Z" />',
+    'chevron': '<path d="M0,60 L200,0 L400,60 L600,0 L800,60 L1000,0 L1200,60 L1200,120 L0,120 Z" />',
+    'clouds': '<path d="M0,60 C50,40 100,80 150,60 C200,40 250,80 300,60 C350,40 400,80 450,60 C500,40 550,80 600,60 C650,40 700,80 750,60 C800,40 850,80 900,60 C950,40 1000,80 1050,60 C1100,40 1150,80 1200,60 L1200,120 L0,120 Z" />',
+    'drops': '<path d="M0,60 C100,20 200,100 300,60 C400,20 500,100 600,60 C700,20 800,100 900,60 C1000,20 1100,100 1200,60 L1200,120 L0,120 Z" />',
+    'zigzag': '<path d="M0,60 L100,20 L200,80 L300,40 L400,100 L500,60 L600,20 L700,80 L800,40 L900,100 L1000,60 L1100,20 L1200,80 L1200,120 L0,120 Z" />',
+    'dots-line': '<circle cx="100" cy="60" r="8" /><circle cx="300" cy="60" r="8" /><circle cx="500" cy="60" r="8" /><circle cx="700" cy="60" r="8" /><circle cx="900" cy="60" r="8" /><circle cx="1100" cy="60" r="8" /><rect x="0" y="60" width="1200" height="60" />',
+    'brush-stroke': '<path d="M0,60 C150,30 300,90 450,50 C600,10 750,70 900,40 C1050,10 1200,50 1200,60 L1200,120 L0,120 Z" />',
+    'grunge-tear': '<path d="M0,60 L50,40 L100,80 L150,20 L200,90 L250,30 L300,70 L350,10 L400,85 L450,25 L500,75 L550,15 L600,80 L650,35 L700,90 L750,45 L800,70 L850,20 L900,85 L950,40 L1000,75 L1050,25 L1100,80 L1150,30 L1200,60 L1200,120 L0,120 Z" />'
+  };
+  
+  const path = dividerPaths[type] || dividerPaths['smooth-wave'];
+  const transform = `${flip ? 'scaleX(-1)' : ''} ${invert ? 'scaleY(-1)' : ''}`.trim();
+  
+  const svgStyle = `width: 100%; height: ${height}px; ${transform ? `transform: ${transform};` : ''} fill: ${color};`;
+  const containerStyle = `position: absolute; ${position}: 0; left: 0; right: 0; width: 100%; height: ${height}px; z-index: 1; pointer-events: none;`;
+  
+  return `<div style="${containerStyle}"><svg viewBox="0 0 1200 120" preserveAspectRatio="none" style="${svgStyle}">${path}</svg></div>`;
+}
+
 // Render section
 function renderSection(section: ServerPageBuilderSection): string {
   const sectionStyles = stylesToCSS(section.styles);
@@ -340,7 +399,11 @@ function renderSection(section: ServerPageBuilderSection): string {
   
   const rowsHTML = section.rows.map(row => renderRow(row)).join('');
   
-  return `<section${anchorAttr} class="${widthClass}"${styleAttr}>${rowsHTML}</section>`;
+  // Render dividers
+  const topDividerHTML = section.styles?.topDivider ? renderDivider(section.styles.topDivider, 'top') : '';
+  const bottomDividerHTML = section.styles?.bottomDivider ? renderDivider(section.styles.bottomDivider, 'bottom') : '';
+  
+  return `<section${anchorAttr} class="${widthClass}"${styleAttr}>${topDividerHTML}${rowsHTML}${bottomDividerHTML}</section>`;
 }
 
 // Main function to render page builder data to HTML
@@ -394,6 +457,7 @@ export function convertToServerFormat(data: any): ServerPageBuilderData {
       anchor: section.anchor,
       width: section.width,
       customWidth: section.customWidth,
+      styles: section.styles,
       rows: section.rows?.map((row: any) => ({
         id: row.id,
         anchor: row.anchor,

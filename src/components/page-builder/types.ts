@@ -155,6 +155,16 @@ export interface PageBuilderColumn {
     contentJustification?: 'flex-start' | 'center' | 'flex-end' | 'space-between' | 'space-around' | 'space-evenly';
     contentDirection?: 'column' | 'row';
     contentGap?: string;
+    marginByDevice?: {
+      desktop: { top: number; right: number; bottom: number; left: number };
+      tablet: { top: number; right: number; bottom: number; left: number };
+      mobile: { top: number; right: number; bottom: number; left: number };
+    };
+    paddingByDevice?: {
+      desktop: { top: number; right: number; bottom: number; left: number };
+      tablet: { top: number; right: number; bottom: number; left: number };
+      mobile: { top: number; right: number; bottom: number; left: number };
+    };
     responsive?: {
       desktop?: Record<string, any>;
       tablet?: Record<string, any>;
@@ -210,6 +220,16 @@ export interface PageBuilderRow {
     width?: string; // Custom width override
     maxWidth?: string;
     minWidth?: string;
+    marginByDevice?: {
+      desktop: { top: number; right: number; bottom: number; left: number };
+      tablet: { top: number; right: number; bottom: number; left: number };
+      mobile: { top: number; right: number; bottom: number; left: number };
+    };
+    paddingByDevice?: {
+      desktop: { top: number; right: number; bottom: number; left: number };
+      tablet: { top: number; right: number; bottom: number; left: number };
+      mobile: { top: number; right: number; bottom: number; left: number };
+    };
     responsive?: {
       desktop?: Record<string, any>;
       tablet?: Record<string, any>;
@@ -270,6 +290,38 @@ export interface PageBuilderSection {
     contentVerticalAlignment?: 'top' | 'center' | 'bottom';
     stickyPosition?: 'none' | 'top' | 'bottom';
     stickyOffset?: string; // Offset from edge (e.g., "0px", "20px")
+    marginByDevice?: {
+      desktop: { top: number; right: number; bottom: number; left: number };
+      tablet: { top: number; right: number; bottom: number; left: number };
+      mobile: { top: number; right: number; bottom: number; left: number };
+    };
+    paddingByDevice?: {
+      desktop: { top: number; right: number; bottom: number; left: number };
+      tablet: { top: number; right: number; bottom: number; left: number };
+      mobile: { top: number; right: number; bottom: number; left: number };
+    };
+    topDivider?: {
+      enabled: boolean;
+      type: 'smooth-wave' | 'double-wave' | 'mountain-wave' | 'angle-left' | 'angle-right' | 
+            'tilted-cut' | 'top-curve' | 'bottom-curve' | 'half-circle' | 'triangle' | 
+            'polygon' | 'chevron' | 'clouds' | 'drops' | 'zigzag' | 'dots-line' | 
+            'brush-stroke' | 'grunge-tear';
+      color?: string;
+      height?: number; // in pixels, default 100
+      flip?: boolean; // horizontally flip the shape
+      invert?: boolean; // vertically flip the shape
+    };
+    bottomDivider?: {
+      enabled: boolean;
+      type: 'smooth-wave' | 'double-wave' | 'mountain-wave' | 'angle-left' | 'angle-right' | 
+            'tilted-cut' | 'top-curve' | 'bottom-curve' | 'half-circle' | 'triangle' | 
+            'polygon' | 'chevron' | 'clouds' | 'drops' | 'zigzag' | 'dots-line' | 
+            'brush-stroke' | 'grunge-tear';
+      color?: string;
+      height?: number;
+      flip?: boolean;
+      invert?: boolean;
+    };
     responsive?: {
       desktop?: Record<string, any>;
       tablet?: Record<string, any>;

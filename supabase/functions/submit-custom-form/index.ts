@@ -32,6 +32,11 @@ serve(async (req) => {
       form_name, 
       form_id, 
       custom_fields, 
+      customer_name,
+      customer_email,
+      customer_phone,
+      message,
+      form_type,
       submit_action, 
       redirect_url, 
       redirect_step_id 
@@ -55,7 +60,11 @@ serve(async (req) => {
       form_name,
       form_id,
       custom_fields,
-      submitted_at: new Date().toISOString(),
+      customer_name: customer_name || '',
+      customer_email: customer_email || '',
+      customer_phone: customer_phone || null,
+      message: message || null,
+      form_type: form_type || 'custom_form',
       status: 'new'
     }
 
