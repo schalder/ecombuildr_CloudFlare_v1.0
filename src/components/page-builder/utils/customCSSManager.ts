@@ -49,8 +49,8 @@ export class CustomCSSManager {
         #${anchor}.element-${elementId} { 
           ${String(customCSS).replace(/;/g, ' !important;')} 
         }
-        /* Additional specificity for nested elements */
-        #${anchor} * { 
+        /* Additional specificity for nested elements - EXCLUDE toolbars and editor UI */
+        #${anchor} *:not([data-pb-toolbar]):not([data-rte-floating]):not([data-pb-toolbar] *):not([data-rte-floating] *) { 
           ${String(customCSS).replace(/;/g, ' !important;')} 
         }
       `;
