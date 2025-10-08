@@ -317,13 +317,21 @@ const NewsletterElement: React.FC<{
     setIsSubmitting(true);
 
     try {
+      // Transform formData to use field labels as keys instead of field IDs
+      const customFieldsWithLabels = fields.reduce((acc, field) => {
+        if (formData[field.id]) {
+          acc[field.label] = formData[field.id];
+        }
+        return acc;
+      }, {} as Record<string, string>);
+
       const { data, error } = await supabase.functions.invoke('submit-custom-form', {
         body: {
           store_id: store.id,
           funnel_id: funnelId || null,
           form_name: formName,
           form_id: element.id,
-          custom_fields: formData,
+          custom_fields: customFieldsWithLabels,
           submit_action: submitAction,
           redirect_url: redirectUrl,
           redirect_step_id: redirectStepId,

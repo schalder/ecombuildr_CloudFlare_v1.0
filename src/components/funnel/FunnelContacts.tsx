@@ -27,19 +27,19 @@ import { toast } from 'sonner';
 interface FormSubmission {
   id: string;
   store_id: string;
-  funnel_id: string | null;
-  form_name: string | null;
-  form_id: string | null;
-  custom_fields: Record<string, any> | null;
-  created_at: string;
-  status: string;
+  form_type: string;
   customer_name: string;
   customer_email: string;
   customer_phone: string | null;
   message: string | null;
-  form_type: string;
   product_id: string | null;
+  status: string | null;
+  created_at: string;
   updated_at: string;
+  form_name: string | null;
+  form_id: string | null;
+  funnel_id: string | null;
+  custom_fields: Record<string, any> | null;
 }
 
 interface FunnelContactsProps {
@@ -108,8 +108,8 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
         throw error;
       }
 
-      const submissionsData = (data || []) as FormSubmission[];
-      setSubmissions(submissionsData);
+      const submissionsData = (data || []) as any[];
+      setSubmissions(submissionsData as FormSubmission[]);
       
       // Extract unique form names
       const uniqueFormNames = [...new Set(submissionsData.map(s => s.form_name).filter(Boolean))];
@@ -397,16 +397,40 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
                               <div>
                                 <Label className="text-sm font-medium">Form Data</Label>
                                 <div className="mt-2 space-y-2">
-                                  {Object.entries(selectedSubmission.custom_fields).map(([key, value]) => (
-                                    <div key={key} className="flex justify-between py-2 border-b">
-                                      <span className="font-medium capitalize">
-                                        {key.replace(/([A-Z])/g, ' $1').trim()}
-                                      </span>
-                                      <span className="text-muted-foreground">
-                                        {String(value)}
-                                      </span>
-                                    </div>
-                                  ))}
+                                  {Object.entries(selectedSubmission.custom_fields).map(([key, value]) => {
+                                    // Helper function to get proper field label
+                                    const getFieldLabel = (fieldKey: string): string => {
+                                      // If it's already a proper label (not field-1, field-2, etc.), return as is
+                                      if (!fieldKey.match(/^field-\d+$/i)) {
+                                        return fieldKey.replace(/([A-Z])/g, ' $1').trim();
+                                      }
+                                      
+                                      // Map old field IDs to common field labels based on typical form structure
+                                      const fieldMapping: Record<string, string> = {
+                                        'field-1': 'Full Name',
+                                        'field-2': 'Phone Number', 
+                                        'field-3': 'Email Address',
+                                        'field-4': 'Address',
+                                        'field-5': 'Message',
+                                        'field-6': 'Company',
+                                        'field-7': 'Website',
+                                        'field-8': 'Subject'
+                                      };
+                                      
+                                      return fieldMapping[fieldKey.toLowerCase()] || fieldKey;
+                                    };
+
+                                    return (
+                                      <div key={key} className="flex justify-between py-2 border-b">
+                                        <span className="font-medium capitalize">
+                                          {getFieldLabel(key)}
+                                        </span>
+                                        <span className="text-muted-foreground">
+                                          {String(value)}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               </div>
                               
