@@ -2273,7 +2273,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
     >
       {/* Element Toolbar */}
       {shouldShowToolbar && (
-        <div data-pb-toolbar className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-amber-100 text-gray-800 border border-amber-200 px-2 py-1 rounded text-xs shadow-lg">
+        <div data-pb-toolbar className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-amber-100 text-gray-800 border border-amber-200 px-2 py-1 rounded text-xs shadow-lg min-w-max">
           <div 
             ref={dragRef}
             className="flex items-center cursor-move hover:bg-gray-100 p-1 rounded"
@@ -2281,7 +2281,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
             <Grip className="h-3 w-3" />
           </div>
           <elementDef.icon className="h-3 w-3" />
-          <span className="font-medium">{elementDef.name}</span>
+          <span className="font-medium whitespace-nowrap">{elementDef.name}</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
           <Button variant="ghost" size="sm" className="h-5 w-5 p-0 hover:bg-gray-100 cursor-pointer">
             <Edit className="h-2 w-2" />
