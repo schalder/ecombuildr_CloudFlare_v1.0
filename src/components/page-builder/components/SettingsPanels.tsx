@@ -791,11 +791,18 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
                 checked={section.styles?.stickyPosition === 'top' || section.styles?.stickyPosition === 'bottom'}
                 onCheckedChange={(checked) => {
                   if (checked) {
-                    handleStyleUpdate('stickyPosition', 'top');
-                    handleStyleUpdate('stickyOffset', '0px');
+                    onUpdate({
+                      styles: {
+                        ...section.styles,
+                        stickyPosition: 'top',
+                        stickyOffset: '0px'
+                      }
+                    });
                   } else {
-                    handleStyleUpdate('stickyPosition', 'none');
-                    handleStyleUpdate('stickyOffset', undefined);
+                    const newStyles = { ...section.styles };
+                    delete newStyles.stickyPosition;
+                    delete newStyles.stickyOffset;
+                    onUpdate({ styles: newStyles });
                   }
                 }}
               />
