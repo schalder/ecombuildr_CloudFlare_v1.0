@@ -40,7 +40,8 @@ import {
   CheckSquare,
   Square,
   Download,
-  Upload
+  Upload,
+  Copy
 } from "lucide-react";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { toast } from "@/hooks/use-toast";
@@ -72,6 +73,7 @@ export default function Products() {
   const isMobile = useIsMobile();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [duplicatingProduct, setDuplicatingProduct] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [showBulkActions, setShowBulkActions] = useState(false);
@@ -269,6 +271,100 @@ export default function Products() {
         description: "Failed to delete product",
         variant: "destructive",
       });
+    }
+  };
+
+  const duplicateProduct = async (productId: string) => {
+    setDuplicatingProduct(productId);
+    try {
+      // First, fetch the original product with all its data
+      const { data: originalProduct, error: fetchError } = await supabase
+        .from('products')
+        .select('*')
+        .eq('id', productId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!originalProduct) {
+        throw new Error('Product not found');
+      }
+
+      // Generate new slug to avoid conflicts
+      const generateUniqueSlug = async (baseSlug: string): Promise<string> => {
+        let newSlug = `${baseSlug}-copy`;
+        let counter = 1;
+        
+        while (true) {
+          const { data: existing } = await supabase
+            .from('products')
+            .select('id')
+            .eq('slug', newSlug)
+            .eq('store_id', originalProduct.store_id)
+            .single();
+          
+          if (!existing) break;
+          
+          newSlug = `${baseSlug}-copy-${counter}`;
+          counter++;
+        }
+        
+        return newSlug;
+      };
+
+      const newSlug = await generateUniqueSlug(originalProduct.slug);
+
+      // Prepare the duplicated product data
+      const duplicatedProduct = {
+        ...originalProduct,
+        id: undefined, // Let Supabase generate new ID
+        name: `${originalProduct.name} (Copy)`,
+        slug: newSlug,
+        sku: originalProduct.sku ? `${originalProduct.sku}-COPY` : null,
+        inventory_quantity: 0, // Reset inventory
+        is_active: false, // Start as inactive
+        created_at: undefined, // Let Supabase set current timestamp
+        updated_at: undefined, // Let Supabase set current timestamp
+        // Preserve all other fields including images, variations, digital_files, etc.
+      };
+
+      // Remove the id field completely
+      delete duplicatedProduct.id;
+
+      // Insert the duplicated product
+      const { data: newProduct, error: insertError } = await supabase
+        .from('products')
+        .insert(duplicatedProduct)
+        .select(`
+          *,
+          categories(name),
+          product_website_visibility(
+            websites(name)
+          )
+        `)
+        .single();
+
+      if (insertError) throw insertError;
+
+      // Add the new product to the current list
+      setProducts(prev => [newProduct, ...prev]);
+
+      toast({
+        title: "Success",
+        description: `Product "${originalProduct.name}" duplicated as "${newProduct.name}"`,
+      });
+
+      // Optionally navigate to edit the new product
+      navigate(`/dashboard/products/${newProduct.id}/edit`);
+
+    } catch (error) {
+      console.error('Error duplicating product:', error);
+      toast({
+        title: "Error",
+        description: "Failed to duplicate product",
+        variant: "destructive",
+      });
+    } finally {
+      setDuplicatingProduct(null);
     }
   };
 
@@ -565,6 +661,13 @@ export default function Products() {
                                <Edit className="mr-2 h-3.5 w-3.5" />
                                Edit
                              </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => duplicateProduct(product.id)}
+                              disabled={duplicatingProduct === product.id}
+                            >
+                              <Copy className="mr-2 h-3.5 w-3.5" />
+                              {duplicatingProduct === product.id ? 'Duplicating...' : 'Duplicate'}
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => toggleProductStatus(product.id, product.is_active)}
                             >
