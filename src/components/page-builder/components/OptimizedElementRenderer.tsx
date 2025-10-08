@@ -4,6 +4,7 @@ import { elementRegistry } from '../elements';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
+import { useCustomCSS } from '../utils/customCSSManager';
 
 interface OptimizedElementRendererProps {
   element: PageBuilderElement;
@@ -58,42 +59,9 @@ export const OptimizedElementRenderer = memo<OptimizedElementRendererProps>(({
     [onUpdate, element.id]
   );
 
-  // Apply Custom CSS to document head (prevents visible text in builder)
-  React.useEffect(() => {
-    const customCSS = (element as any).content?.customCSS;
-    if (!customCSS || !element.anchor) return;
-
-    const styleId = `custom-css-${element.id}`;
-    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
-    
-    // Create or update style element in document head
-    if (!styleElement) {
-      styleElement = document.createElement('style');
-      styleElement.id = styleId;
-      document.head.appendChild(styleElement);
-    }
-    
-    // Apply CSS with proper scoping to element anchor
-    // Use highly specific selectors and exclude internal elements like style and script tags
-    styleElement.textContent = `
-      /* Custom CSS for element ${element.id} */
-      #${element.anchor} { 
-        ${String(customCSS)} 
-      }
-      /* High specificity selectors for better override capability, excluding internal elements */
-      #${element.anchor} *:not(style):not(script) { 
-        ${String(customCSS).replace(/([^{]+){([^}]+)}/g, '$2')} 
-      }
-    `;
-    
-    // Cleanup function
-    return () => {
-      const existingStyle = document.getElementById(styleId);
-      if (existingStyle) {
-        existingStyle.remove();
-      }
-    };
-  }, [(element as any).content?.customCSS, element.anchor, element.id]);
+  // Apply Custom CSS using the CSS manager
+  const anchor = element.anchor || element.id;
+  useCustomCSS(element.id, anchor, (element as any).content?.customCSS || '');
 
   return (
     <Component

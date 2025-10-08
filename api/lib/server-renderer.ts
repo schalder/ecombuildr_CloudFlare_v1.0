@@ -231,13 +231,24 @@ function renderElement(element: ServerPageBuilderElement): string {
   const styleAttr = elementStyles ? ` style="${elementStyles}"` : '';
   const anchorAttr = element.anchor ? ` id="${element.anchor}"` : '';
   
+  // Generate custom CSS if present
+  const customCSS = content?.customCSS;
+  const customCSSHTML = customCSS ? `<style>#${element.anchor || element.id} { ${customCSS} }</style>` : '';
+  
+  // Generate custom JS if present
+  const customJS = content?.customJS;
+  const customJSHTML = customJS ? `<script>try { ${customJS} } catch(e) { console.error('Custom JS error:', e); }</script>` : '';
+  
+  let elementHTML = '';
   switch (type) {
     case 'heading':
       const headingLevel = content.level || 'h2';
-      return `<${headingLevel}${anchorAttr}${styleAttr}>${content.text || ''}</${headingLevel}>`;
+      elementHTML = `<${headingLevel}${anchorAttr}${styleAttr}>${content.text || ''}</${headingLevel}>`;
+      break;
       
     case 'text':
-      return `<p${anchorAttr}${styleAttr}>${content.text || ''}</p>`;
+      elementHTML = `<p${anchorAttr}${styleAttr}>${content.text || ''}</p>`;
+      break;
       
     case 'image':
       const imgSrc = content.src || '';
@@ -246,29 +257,34 @@ function renderElement(element: ServerPageBuilderElement): string {
       const imgElement = `<img src="${imgSrc}" alt="${imgAlt}"${styleAttr} />`;
       
       if (content.alignment === 'center') {
-        return `<div${anchorAttr} style="text-align: center;">${imgElement}${imgCaption}</div>`;
+        elementHTML = `<div${anchorAttr} style="text-align: center;">${imgElement}${imgCaption}</div>`;
       } else if (content.alignment === 'right') {
-        return `<div${anchorAttr} style="text-align: right;">${imgElement}${imgCaption}</div>`;
+        elementHTML = `<div${anchorAttr} style="text-align: right;">${imgElement}${imgCaption}</div>`;
       } else {
-        return `<div${anchorAttr}>${imgElement}${imgCaption}</div>`;
+        elementHTML = `<div${anchorAttr}>${imgElement}${imgCaption}</div>`;
       }
+      break;
       
     case 'button':
       const buttonText = content.text || 'Button';
       const buttonUrl = content.url || '#';
       const buttonTarget = content.target || '_self';
-      return `<a href="${buttonUrl}" target="${buttonTarget}"${anchorAttr}${styleAttr}>${buttonText}</a>`;
+      elementHTML = `<a href="${buttonUrl}" target="${buttonTarget}"${anchorAttr}${styleAttr}>${buttonText}</a>`;
+      break;
       
     case 'spacer':
-      return `<div${anchorAttr}${styleAttr}></div>`;
+      elementHTML = `<div${anchorAttr}${styleAttr}></div>`;
+      break;
       
     case 'divider':
-      return `<hr${anchorAttr}${styleAttr} />`;
+      elementHTML = `<hr${anchorAttr}${styleAttr} />`;
+      break;
       
     case 'video':
       const videoSrc = content.src || '';
       const videoCaption = content.caption ? `<figcaption>${content.caption}</figcaption>` : '';
-      return `<div${anchorAttr}${styleAttr}><video controls><source src="${videoSrc}" type="video/mp4">Your browser does not support the video tag.</video>${videoCaption}</div>`;
+      elementHTML = `<div${anchorAttr}${styleAttr}><video controls><source src="${videoSrc}" type="video/mp4">Your browser does not support the video tag.</video>${videoCaption}</div>`;
+      break;
       
     case 'form':
       const formAction = content.action || '#';
@@ -288,7 +304,8 @@ function renderElement(element: ServerPageBuilderElement): string {
       });
       
       formHTML += '</form>';
-      return formHTML;
+      elementHTML = formHTML;
+      break;
       
     case 'social-links':
       const socialLinks = content.links || [];
@@ -299,12 +316,16 @@ function renderElement(element: ServerPageBuilderElement): string {
       });
       
       socialHTML += '</div>';
-      return socialHTML;
+      elementHTML = socialHTML;
+      break;
       
     default:
       // Fallback for unknown element types
-      return `<div${anchorAttr}${styleAttr}>${content.text || ''}</div>`;
+      elementHTML = `<div${anchorAttr}${styleAttr}>${content.text || ''}</div>`;
   }
+  
+  // Return element with custom CSS and JS
+  return customCSSHTML + elementHTML + customJSHTML;
 }
 
 // Render column

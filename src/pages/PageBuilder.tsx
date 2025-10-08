@@ -26,6 +26,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { setGlobalCurrency } from '@/lib/currency';
 import { useStore } from '@/contexts/StoreContext';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
+import { cleanupAllCustomCSS, reapplyAllCachedCSS } from '@/components/page-builder/utils/customCSSManager';
 
 import { SEOConfig } from '@/lib/seo';
 import { FunnelStepToolbar } from '@/components/page-builder/components/FunnelStepToolbar';
@@ -79,6 +80,23 @@ export default function PageBuilder() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewDeviceType, setPreviewDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  
+  // Handle preview mode switching with CSS management
+  const handlePreviewToggle = useCallback(() => {
+    if (showPreview) {
+      // Switching from preview to edit mode
+      setShowPreview(false);
+      // Re-apply all cached CSS when switching back to edit mode
+      setTimeout(() => {
+        reapplyAllCachedCSS();
+      }, 100);
+    } else {
+      // Switching from edit to preview mode
+      setShowPreview(true);
+      // Clean up all custom CSS when switching to preview mode
+      cleanupAllCustomCSS();
+    }
+  }, [showPreview]);
   
   
 
@@ -443,7 +461,7 @@ export default function PageBuilder() {
           {context === 'funnel' && stepId && funnelId && (
             <FunnelStepToolbar stepId={stepId} funnelId={funnelId} />
           )}
-          <Button variant="outline" onClick={() => setShowPreview(!showPreview)}>
+          <Button variant="outline" onClick={handlePreviewToggle}>
             <Eye className="h-4 w-4 mr-2" />
             {showPreview ? 'Hide Preview' : 'Show Preview'}
           </Button>

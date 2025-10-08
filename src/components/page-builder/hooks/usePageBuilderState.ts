@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { PageBuilderData, PageBuilderElement, PageBuilderSection, PageBuilderRow } from '../types';
+import { cleanupAllCustomCSS } from '../utils/customCSSManager';
 
 interface HistoryState {
   past: PageBuilderData[];
@@ -356,6 +357,8 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     setIsPreviewMode(preview);
     if (preview) {
       setSelectedElement(undefined);
+      // Clean up all custom CSS when switching to preview mode
+      cleanupAllCustomCSS();
     }
   }, []);
 

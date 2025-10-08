@@ -5,6 +5,7 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Skeleton } from '@/components/ui/skeleton';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { getDeviceAwareSpacing } from '@/components/page-builder/utils/styleRenderer';
+import { useCustomCSS } from '@/components/page-builder/utils/customCSSManager';
 
 interface StorefrontElementProps {
   element: PageBuilderElement;
@@ -138,6 +139,68 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
       unsubscribe();
     };
   }, [element.type, elementDef]);
+
+  // Apply Custom CSS using the CSS manager
+  const anchor = element.anchor || element.id;
+  useCustomCSS(element.id, anchor, (element as any).content?.customCSS || '');
+
+  // Apply Custom JS for this element (for live pages)
+  useEffect(() => {
+    const code = (element as any).content?.customJS;
+    if (!code) return;
+    
+    let cleanupFn: (() => void) | null = null;
+    
+    // Use element ID as fallback if anchor is missing
+    const anchor = element.anchor || element.id;
+    if (!anchor) return;
+    
+    const executeJS = () => {
+      try {
+        const targetElement = document.getElementById(anchor);
+        if (!targetElement) {
+          console.warn('Custom JS target element not found:', anchor);
+          return;
+        }
+        
+        // Create a scoped execution context with cleanup support
+        // eslint-disable-next-line no-new-func
+        const fn = new Function(
+          'element', 'targetElement', 'document', 'window', 'console',
+          `
+          try {
+            ${String(code)}
+            // Return cleanup function if defined
+            return typeof cleanup === 'function' ? cleanup : null;
+          } catch (error) {
+            console.error('Custom JS execution error:', error);
+            return null;
+          }
+          `
+        );
+        
+        cleanupFn = fn(element, targetElement, document, window, console);
+        
+      } catch (err) {
+        console.error('Custom JS execution failed for', anchor, err);
+      }
+    };
+
+    // Execute JS after a short delay to ensure DOM is ready
+    const timeoutId = setTimeout(executeJS, 100);
+    
+    // Cleanup function
+    return () => {
+      clearTimeout(timeoutId);
+      if (cleanupFn && typeof cleanupFn === 'function') {
+        try {
+          cleanupFn();
+        } catch (err) {
+          console.warn('Custom JS cleanup failed:', err);
+        }
+      }
+    };
+  }, [(element as any).content?.customJS, element.anchor, element.id]);
 
   // Use conditional rendering instead of early returns to fix hooks rule violation
   if (isLoading && !showFallback) {

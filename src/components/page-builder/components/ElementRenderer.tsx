@@ -7,6 +7,7 @@ import { elementRegistry } from '../elements';
 import { cn } from '@/lib/utils';
 import { mergeResponsiveStyles } from '../utils/responsiveStyles';
 import { getDeviceAwareSpacing } from '../utils/styleRenderer';
+import { useCustomCSS } from '../utils/customCSSManager';
 
 interface ElementRendererProps {
   element: PageBuilderElement;
@@ -86,42 +87,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     }
   }
 
-  // Apply Custom CSS to document head (prevents visible text in builder)
-  React.useEffect(() => {
-    const customCSS = (element as any).content?.customCSS;
-    if (!customCSS || !element.anchor) return;
-
-    const styleId = `custom-css-${element.id}`;
-    let styleElement = document.getElementById(styleId) as HTMLStyleElement;
-    
-    // Create or update style element in document head
-    if (!styleElement) {
-      styleElement = document.createElement('style');
-      styleElement.id = styleId;
-      document.head.appendChild(styleElement);
-    }
-    
-    // Apply CSS with proper scoping to element anchor
-    // Use highly specific selectors and exclude internal elements like style and script tags
-    styleElement.textContent = `
-      /* Custom CSS for element ${element.id} */
-      #${element.anchor} { 
-        ${String(customCSS)} 
-      }
-      /* High specificity selectors for better override capability, excluding internal elements */
-      #${element.anchor} *:not(style):not(script) { 
-        ${String(customCSS).replace(/([^{]+){([^}]+)}/g, '$2')} 
-      }
-    `;
-    
-    // Cleanup function
-    return () => {
-      const existingStyle = document.getElementById(styleId);
-      if (existingStyle) {
-        existingStyle.remove();
-      }
-    };
-  }, [(element as any).content?.customCSS, element.anchor, element.id]);
+  // Apply Custom CSS using the CSS manager
+  const anchor = element.anchor || element.id;
+  useCustomCSS(element.id, anchor, (element as any).content?.customCSS || '');
 
   // Apply Custom JS for this element (scoped to its DOM node by anchor)
   React.useEffect(() => {
@@ -130,37 +98,47 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     
     let cleanupFn: (() => void) | null = null;
     
-    try {
-      const targetElement = document.getElementById(element.anchor || '');
-      if (!targetElement) {
-        console.warn('Custom JS target element not found:', element.anchor);
-        return;
-      }
-      
-      // Create a scoped execution context with cleanup support
-      // eslint-disable-next-line no-new-func
-      const fn = new Function(
-        'element', 'targetElement', 'document', 'window', 'console',
-        `
-        try {
-          ${String(code)}
-          // Return cleanup function if defined
-          return typeof cleanup === 'function' ? cleanup : null;
-        } catch (error) {
-          console.error('Custom JS execution error:', error);
-          return null;
+    // Use element ID as fallback if anchor is missing
+    const anchor = element.anchor || element.id;
+    if (!anchor) return;
+    
+    const executeJS = () => {
+      try {
+        const targetElement = document.getElementById(anchor);
+        if (!targetElement) {
+          console.warn('Custom JS target element not found:', anchor);
+          return;
         }
-        `
-      );
-      
-      cleanupFn = fn(element, targetElement, document, window, console);
-      
-    } catch (err) {
-      console.error('Custom JS execution failed for', element.anchor, err);
-    }
+        
+        // Create a scoped execution context with cleanup support
+        // eslint-disable-next-line no-new-func
+        const fn = new Function(
+          'element', 'targetElement', 'document', 'window', 'console',
+          `
+          try {
+            ${String(code)}
+            // Return cleanup function if defined
+            return typeof cleanup === 'function' ? cleanup : null;
+          } catch (error) {
+            console.error('Custom JS execution error:', error);
+            return null;
+          }
+          `
+        );
+        
+        cleanupFn = fn(element, targetElement, document, window, console);
+        
+      } catch (err) {
+        console.error('Custom JS execution failed for', anchor, err);
+      }
+    };
+
+    // Execute JS after a short delay to ensure DOM is ready
+    const timeoutId = setTimeout(executeJS, 100);
     
     // Cleanup function
     return () => {
+      clearTimeout(timeoutId);
       if (cleanupFn && typeof cleanupFn === 'function') {
         try {
           cleanupFn();
@@ -169,7 +147,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         }
       }
     };
-  }, [(element as any).content?.customJS, element.anchor]);
+  }, [(element as any).content?.customJS, element.anchor, element.id]);
 
   const handleElementClick = (e: React.MouseEvent) => {
     e.stopPropagation();
