@@ -93,7 +93,7 @@ export const DragDropPageBuilder: React.FC<DragDropPageBuilderProps> = ({
       <div className="flex h-screen bg-background relative">
         {/* Floating Elements Panel */}
         {isElementsPanelOpen && (
-          <div className="fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden">
+          <div className="fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-[1000] overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b">
               <h3 className="font-semibold">Elements</h3>
               <button

@@ -1113,7 +1113,7 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
       <div className="flex h-full min-h-0 bg-background relative">
         {/* Floating Elements Panel */}
         <div 
-          className={`fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-50 overflow-hidden transition-transform duration-300 ease-out ${
+          className={`fixed top-0 left-0 w-80 h-full bg-card border-r shadow-lg z-[1000] overflow-hidden transition-transform duration-300 ease-out ${
             isElementsPanelOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
           ref={elementsPanelRef}
