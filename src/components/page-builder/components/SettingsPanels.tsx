@@ -837,7 +837,8 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
                   className="h-8"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Distance from the edge of the viewport (e.g., "0px", "20px", "10vh")
+                  Distance from the edge of the viewport (e.g., "0px", "20px", "10vh"). 
+                  {section.styles?.stickyPosition === 'bottom' && ' Bottom banners use fixed positioning for reliable floating behavior.'}
                 </p>
               </div>
             </>

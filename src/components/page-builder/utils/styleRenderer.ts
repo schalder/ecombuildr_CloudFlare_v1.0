@@ -209,24 +209,27 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   
   // Apply sticky positioning AFTER responsive merge to ensure it's not overridden
   if (section.styles?.stickyPosition && section.styles.stickyPosition !== 'none') {
-    mergedStyles.position = 'sticky';
     mergedStyles.zIndex = '999'; // Ensure sticky elements stay on top
     
     if (section.styles.stickyPosition === 'top') {
+      // Use sticky positioning for top (works reliably)
+      mergedStyles.position = 'sticky';
       mergedStyles.top = section.styles.stickyOffset || '0px';
       // Clear any conflicting bottom property
       delete mergedStyles.bottom;
     } else if (section.styles.stickyPosition === 'bottom') {
+      // Use fixed positioning for bottom (more reliable than sticky)
+      mergedStyles.position = 'fixed';
       mergedStyles.bottom = section.styles.stickyOffset || '0px';
+      mergedStyles.left = '0';
+      mergedStyles.right = '0';
+      mergedStyles.width = '100%';
       // Clear any conflicting top property
       delete mergedStyles.top;
-      // Ensure the element has a minimum height for sticky bottom to work
+      // Ensure the element has a minimum height for visibility
       if (!mergedStyles.minHeight) {
         mergedStyles.minHeight = '60px';
       }
-      // For bottom sticky, we might need to ensure the element stays at the bottom
-      // Add some additional properties to help with bottom sticky behavior
-      mergedStyles.width = '100%';
     }
   }
   
