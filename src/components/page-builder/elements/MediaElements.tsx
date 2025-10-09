@@ -294,8 +294,6 @@ const VideoPlaylistElement: React.FC<{
   // Get effective width for responsive behavior
   const effectiveWidth = getEffectiveResponsiveValue(element, 'width', deviceType, '100%');
   
-  // Debug: Log the effective width
-  console.log('VideoPlaylistElement - effectiveWidth:', effectiveWidth, 'deviceType:', deviceType, 'element.styles:', element.styles);
   
   // Generate dynamic CSS for responsive width
   const dynamicStyles = `

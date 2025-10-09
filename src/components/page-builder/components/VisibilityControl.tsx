@@ -19,8 +19,6 @@ export const VisibilityControl: React.FC<VisibilityControlProps> = ({
       ...visibility,
       [device]: !visibility[device]
     };
-    console.log('VisibilityControl: Toggling device', device, 'from', visibility[device], 'to', newVisibility[device]);
-    console.log('VisibilityControl: New visibility object', newVisibility);
     onVisibilityChange(newVisibility);
   };
 

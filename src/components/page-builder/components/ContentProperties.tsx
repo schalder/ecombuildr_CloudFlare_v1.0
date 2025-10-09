@@ -93,10 +93,22 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
         });
         setSectionOptions(Array.from(optsMap.values()));
       };
+      
+      // Initial scan only - disable MutationObserver to prevent performance issues
       scan();
-      const observer = new MutationObserver(() => scan());
-      observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['id'] });
-      return () => observer.disconnect();
+      
+      // TODO: Re-enable MutationObserver with proper debouncing if needed
+      // const observer = new MutationObserver(() => {
+      //   setTimeout(scan, 100);
+      // });
+      // const pageBuilderContainer = document.querySelector('[data-page-builder]') || document.body;
+      // observer.observe(pageBuilderContainer, { 
+      //   childList: true, 
+      //   subtree: true, 
+      //   attributes: true, 
+      //   attributeFilter: ['id'] 
+      // });
+      // return () => observer.disconnect();
     }
   }, [element.type]);
 

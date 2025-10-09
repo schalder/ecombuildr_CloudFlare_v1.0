@@ -116,7 +116,6 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   const handleContentUpdate = (property: string, value: any) => {
     if (property === 'visibility') {
       // Handle visibility as a top-level property
-      console.log('PropertiesPanel: Updating visibility for element', selectedElement.id, 'to', value);
       onUpdateElement(selectedElement.id, {
         visibility: value
       });
