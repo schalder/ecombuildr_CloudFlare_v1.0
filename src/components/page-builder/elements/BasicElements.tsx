@@ -445,12 +445,6 @@ const ButtonElement: React.FC<{
     return '#';
   }, [linkType, pageSlug, paths.base, paths.home, url]);
 
-  const handleTextChange = (newText: string) => {
-    onUpdate?.({
-      content: { ...element.content, text: newText }
-    });
-  };
-
   const handleClick = (e: React.MouseEvent) => {
     // Handle in-page scroll always within editor/live
     if (linkType === 'scroll') {
@@ -521,9 +515,13 @@ const ButtonElement: React.FC<{
       // Allow testing links in editor with cmd/ctrl-click or target=_blank
       if (e.metaKey || e.ctrlKey || target === '_blank') {
         e.preventDefault();
+        e.stopPropagation();
         window.open(finalUrl, '_blank');
       } else {
+        // In editor mode, prevent default action but allow event to bubble up to ElementRenderer
+        // so it can open the properties panel
         e.preventDefault();
+        // Don't call stopPropagation() so ElementRenderer can handle the click
       }
       return;
     }
@@ -628,17 +626,7 @@ const ButtonElement: React.FC<{
                 }} 
               />
             )}
-            {isEditing ? (
-              <InlineEditor
-                value={text}
-                onChange={handleTextChange}
-                placeholder="Button text..."
-                disabled={false}
-                className="text-inherit font-inherit bg-transparent border-0 outline-none ring-0 focus:ring-0"
-              />
-            ) : (
-              text
-            )}
+            {text}
           </div>
           
           {/* Subtext - only shown if exists */}
