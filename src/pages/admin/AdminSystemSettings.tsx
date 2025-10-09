@@ -412,9 +412,13 @@ const AdminSystemSettings = () => {
                     <Label htmlFor="video_type">Video Type</Label>
                     <Select
                       value={
-                        (marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim()) 
+                        (marketingContent?.iframe_embed_code && 
+                         marketingContent.iframe_embed_code.trim() && 
+                         marketingContent.iframe_embed_code !== 'None') 
                           ? 'iframe' 
-                          : (marketingContent?.youtube_url && marketingContent.youtube_url.trim())
+                          : (marketingContent?.youtube_url && 
+                             marketingContent.youtube_url.trim() && 
+                             marketingContent.youtube_url !== 'None')
                             ? 'youtube' 
                             : 'none'
                       }
@@ -452,9 +456,13 @@ const AdminSystemSettings = () => {
                   </div>
 
                   {(() => {
-                    const currentValue = (marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim()) 
+                    const currentValue = (marketingContent?.iframe_embed_code && 
+                                         marketingContent.iframe_embed_code.trim() && 
+                                         marketingContent.iframe_embed_code !== 'None') 
                       ? 'iframe' 
-                      : (marketingContent?.youtube_url && marketingContent.youtube_url.trim())
+                      : (marketingContent?.youtube_url && 
+                         marketingContent.youtube_url.trim() && 
+                         marketingContent.youtube_url !== 'None')
                         ? 'youtube' 
                         : 'none';
                     
@@ -534,7 +542,9 @@ const AdminSystemSettings = () => {
                       YouTube URL: "{marketingContent?.youtube_url || 'None'}" (length: {marketingContent?.youtube_url?.length || 0})<br/>
                       Iframe Code: "{marketingContent?.iframe_embed_code || 'None'}" (length: {marketingContent?.iframe_embed_code?.length || 0})<br/>
                       Hero Image: {marketingContent?.hero_image_url || 'None'}<br/>
-                      Current Selection: {(marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim()) ? 'iframe' : (marketingContent?.youtube_url && marketingContent.youtube_url.trim()) ? 'youtube' : 'none'}
+                      Current Selection: {(marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim() && marketingContent.iframe_embed_code !== 'None') ? 'iframe' : (marketingContent?.youtube_url && marketingContent.youtube_url.trim() && marketingContent.youtube_url !== 'None') ? 'youtube' : 'none'}<br/>
+                      Is YouTube "None"? {marketingContent?.youtube_url === 'None' ? 'Yes' : 'No'}<br/>
+                      Is Iframe "None"? {marketingContent?.iframe_embed_code === 'None' ? 'Yes' : 'No'}
                     </p>
                   </div>
                 )}
@@ -544,9 +554,13 @@ const AdminSystemSettings = () => {
                     <h4 className="font-medium mb-2">Current Configuration:</h4>
                     <p className="text-sm text-muted-foreground">
                       {(() => {
-                        const currentValue = (marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim()) 
+                        const currentValue = (marketingContent?.iframe_embed_code && 
+                                             marketingContent.iframe_embed_code.trim() && 
+                                             marketingContent.iframe_embed_code !== 'None') 
                           ? 'iframe' 
-                          : (marketingContent?.youtube_url && marketingContent.youtube_url.trim())
+                          : (marketingContent?.youtube_url && 
+                             marketingContent.youtube_url.trim() && 
+                             marketingContent.youtube_url !== 'None')
                             ? 'youtube' 
                             : 'none';
                         
