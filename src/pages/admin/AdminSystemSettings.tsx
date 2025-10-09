@@ -412,9 +412,9 @@ const AdminSystemSettings = () => {
                     <Label htmlFor="video_type">Video Type</Label>
                     <Select
                       value={
-                        marketingContent?.iframe_embed_code 
+                        (marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim()) 
                           ? 'iframe' 
-                          : marketingContent?.youtube_url 
+                          : (marketingContent?.youtube_url && marketingContent.youtube_url.trim())
                             ? 'youtube' 
                             : 'none'
                       }
@@ -452,9 +452,9 @@ const AdminSystemSettings = () => {
                   </div>
 
                   {(() => {
-                    const currentValue = marketingContent?.iframe_embed_code 
+                    const currentValue = (marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim()) 
                       ? 'iframe' 
-                      : marketingContent?.youtube_url 
+                      : (marketingContent?.youtube_url && marketingContent.youtube_url.trim())
                         ? 'youtube' 
                         : 'none';
                     
@@ -531,9 +531,10 @@ const AdminSystemSettings = () => {
                   <div className="p-4 bg-blue-50 rounded-lg">
                     <h4 className="font-medium mb-2">Debug Info:</h4>
                     <p className="text-xs text-muted-foreground">
-                      YouTube URL: {marketingContent?.youtube_url || 'None'}<br/>
-                      Iframe Code: {marketingContent?.iframe_embed_code || 'None'}<br/>
-                      Hero Image: {marketingContent?.hero_image_url || 'None'}
+                      YouTube URL: "{marketingContent?.youtube_url || 'None'}" (length: {marketingContent?.youtube_url?.length || 0})<br/>
+                      Iframe Code: "{marketingContent?.iframe_embed_code || 'None'}" (length: {marketingContent?.iframe_embed_code?.length || 0})<br/>
+                      Hero Image: {marketingContent?.hero_image_url || 'None'}<br/>
+                      Current Selection: {(marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim()) ? 'iframe' : (marketingContent?.youtube_url && marketingContent.youtube_url.trim()) ? 'youtube' : 'none'}
                     </p>
                   </div>
                 )}
@@ -543,9 +544,9 @@ const AdminSystemSettings = () => {
                     <h4 className="font-medium mb-2">Current Configuration:</h4>
                     <p className="text-sm text-muted-foreground">
                       {(() => {
-                        const currentValue = marketingContent?.iframe_embed_code 
+                        const currentValue = (marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim()) 
                           ? 'iframe' 
-                          : marketingContent?.youtube_url 
+                          : (marketingContent?.youtube_url && marketingContent.youtube_url.trim())
                             ? 'youtube' 
                             : 'none';
                         
