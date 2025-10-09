@@ -15,7 +15,7 @@ const Dashboard = () => {
 
   // Redirect if not authenticated (but not during logout process)
   if (!user && !authLoading && !isLoggingOut) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Show loading while authentication is being verified

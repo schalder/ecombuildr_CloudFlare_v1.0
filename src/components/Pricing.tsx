@@ -126,7 +126,7 @@ export const Pricing = () => {
                 </div>
 
                 {/* CTA Button */}
-                <Button variant={plan.button_variant as any} className="w-full" size="lg" onClick={() => navigate(`/auth?plan=${plan.plan_name}`)}>
+                <Button variant={plan.button_variant as any} className="w-full" size="lg" onClick={() => navigate(`/login?plan=${plan.plan_name}`)}>
                   {plan.price_bdt === 0 ? "ফ্রি শুরু করুন" : "এই প্ল্যান নিন"}
                 </Button>
 

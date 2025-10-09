@@ -615,7 +615,7 @@ const Roadmap = () => {
                     Please sign in to submit feedback and see your previous submissions.
                   </p>
                   <Button asChild>
-                    <a href="/auth">Sign In</a>
+                    <a href="/login">Sign In</a>
                   </Button>
                 </CardContent>
               </Card>

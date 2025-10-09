@@ -37,7 +37,7 @@ export function RequireSuperAdmin() {
 
   // Redirect if not authenticated
   if (!user) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Redirect if not super admin or if there was an error

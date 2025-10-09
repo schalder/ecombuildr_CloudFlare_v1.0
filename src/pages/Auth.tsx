@@ -23,6 +23,7 @@ const Auth = () => {
   const [signUpData, setSignUpData] = useState({ email: '', password: '', fullName: '', phone: '', confirmPassword: '' });
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [defaultTab, setDefaultTab] = useState("signin");
+  const [activeTab, setActiveTab] = useState("signin");
   const [emailSuggestion, setEmailSuggestion] = useState<string | null>(null);
   const [showEmailSuggestion, setShowEmailSuggestion] = useState(false);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -34,6 +35,7 @@ const Auth = () => {
     if (plan) {
       setSelectedPlan(plan);
       setDefaultTab("signup");
+      setActiveTab("signup");
     }
   }, [searchParams]);
 
@@ -256,7 +258,7 @@ const Auth = () => {
                 </p>
               </div>
             )}
-            <Tabs defaultValue={defaultTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>

@@ -160,7 +160,7 @@ const App = () => (
                       <DomainRouter>
                 <Routes>
                 <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
+                <Route path="/login" element={<Auth />} />
                 
                 {/* Single Store Dashboard Routes - Protected */}
                 <Route path="/dashboard" element={<OnboardingGate />}>

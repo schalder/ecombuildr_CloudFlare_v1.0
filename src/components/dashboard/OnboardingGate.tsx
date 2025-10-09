@@ -35,7 +35,7 @@ export function OnboardingGate() {
 
   // Redirect if not authenticated
   if (!user && !authLoading) {
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Show loading while checking authentication, store, websites, funnels, or profile

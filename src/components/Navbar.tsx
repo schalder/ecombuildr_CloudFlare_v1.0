@@ -67,7 +67,7 @@ export const Navbar = () => {
             ) : (
               <>
                 <Button asChild variant="ghost" size="sm">
-                  <Link to="/auth">
+                  <Link to="/login">
                     <LogIn className="h-4 w-4 mr-2" />
                     Login
                   </Link>
@@ -124,7 +124,7 @@ export const Navbar = () => {
                 ) : (
                   <>
                     <Button asChild variant="ghost" className="w-full justify-start" onClick={() => setIsMenuOpen(false)}>
-                      <Link to="/auth">
+                      <Link to="/login">
                         <LogIn className="h-4 w-4 mr-2" />
                         Login
                       </Link>
