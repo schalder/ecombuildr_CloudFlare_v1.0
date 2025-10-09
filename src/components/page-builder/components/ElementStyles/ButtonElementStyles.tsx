@@ -39,10 +39,7 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
 
   // Handle icon changes
   const handleIconChange = (iconName: string | null) => {
-    onStyleUpdate('content', {
-      ...element.content,
-      icon: iconName
-    });
+    onContentUpdate('icon', iconName);
   };
 
   // Helper functions for device-aware spacing conversion
