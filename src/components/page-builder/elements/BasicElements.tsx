@@ -425,6 +425,10 @@ const ButtonElement: React.FC<{
   const target = element.content.target || '_blank';
   const iconName = element.content.icon;
   const IconComponent = iconName ? getIconByName(iconName) : null;
+  
+  // Subtext properties
+  const subtext = element.content.subtext || '';
+  const subtextPosition = element.content.subtextPosition || 'below'; // 'below' or 'above'
 
   const linkType: 'page' | 'url' | 'scroll' | undefined = element.content.linkType || (element.content.url ? 'url' : undefined);
   const pageSlug: string | undefined = element.content.pageSlug;
@@ -555,6 +559,12 @@ const ButtonElement: React.FC<{
   // Use renderElementStyles for consistent styling
   const elementStyles = renderElementStyles(element, deviceType);
 
+  // Get device-aware subtext styles
+  const subtextFontSize = getEffectiveResponsiveValue(element, 'subtextFontSize', deviceType, '12px');
+  const subtextColor = getEffectiveResponsiveValue(element, 'subtextColor', deviceType, elementStyles.color || '#ffffff');
+  const subtextFontWeight = getEffectiveResponsiveValue(element, 'subtextFontWeight', deviceType, '400');
+  const subtextFontFamily = getEffectiveResponsiveValue(element, 'subtextFontFamily', deviceType, 'inherit');
+
   // Smart padding fallback when no padding is set - ratio-based
   const hasExistingPadding = elementStyles.padding || elementStyles.paddingTop || elementStyles.paddingRight || 
                            elementStyles.paddingBottom || elementStyles.paddingLeft;
@@ -562,7 +572,10 @@ const ButtonElement: React.FC<{
   if (!hasExistingPadding) {
     const fontSize = String(elementStyles.fontSize || '16px');
     const size = parseInt(fontSize.replace(/\D/g, ''));
-    const verticalPadding = Math.max(8, Math.round(size * 0.5)); // 0.5x font size, min 8px
+    // Increase vertical padding slightly if subtext exists
+    const verticalPadding = element.content.subtext 
+      ? Math.max(10, Math.round(size * 0.6)) 
+      : Math.max(8, Math.round(size * 0.5));
     const horizontalPadding = Math.max(16, Math.round(size * 1.2)); // 1.2x font size, min 16px
     elementStyles.padding = `${verticalPadding}px ${horizontalPadding}px`;
   }
@@ -600,29 +613,48 @@ const ButtonElement: React.FC<{
       
       <div className={containerClass}>
         <button 
-          className={`${customClassName} h-auto leading-none inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
+          className={`${customClassName} h-auto leading-none inline-flex ${subtextPosition === 'above' ? 'flex-col-reverse' : 'flex-col'} items-center justify-center gap-1 whitespace-normal rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
           onClick={handleClick}
           style={elementStyles}
         >
-          {IconComponent && (
-            <IconComponent 
-              style={{ 
-                width: elementStyles.fontSize || '16px',
-                height: elementStyles.fontSize || '16px',
-                color: 'currentColor'
-              }} 
-            />
-          )}
-          {isEditing ? (
-            <InlineEditor
-              value={text}
-              onChange={handleTextChange}
-              placeholder="Button text..."
-              disabled={false}
-              className="text-inherit font-inherit bg-transparent border-0 outline-none ring-0 focus:ring-0"
-            />
-          ) : (
-            text
+          {/* Main content wrapper for icon + text */}
+          <div className="flex items-center justify-center gap-2 whitespace-nowrap">
+            {IconComponent && (
+              <IconComponent 
+                style={{ 
+                  width: elementStyles.fontSize || '16px',
+                  height: elementStyles.fontSize || '16px',
+                  color: 'currentColor'
+                }} 
+              />
+            )}
+            {isEditing ? (
+              <InlineEditor
+                value={text}
+                onChange={handleTextChange}
+                placeholder="Button text..."
+                disabled={false}
+                className="text-inherit font-inherit bg-transparent border-0 outline-none ring-0 focus:ring-0"
+              />
+            ) : (
+              text
+            )}
+          </div>
+          
+          {/* Subtext - only shown if exists */}
+          {subtext && (
+            <span 
+              style={{
+                fontSize: subtextFontSize,
+                color: subtextColor,
+                fontWeight: subtextFontWeight,
+                fontFamily: subtextFontFamily,
+                lineHeight: '1.2'
+              }}
+              className="whitespace-normal text-center"
+            >
+              {subtext}
+            </span>
           )}
         </button>
       </div>
@@ -1020,7 +1052,16 @@ export const registerBasicElements = () => {
     category: 'basic',
     icon: RectangleHorizontal,
     component: ButtonElement,
-    defaultContent: { text: 'Get Started', variant: 'default', size: 'default', url: '#' },
+    defaultContent: { 
+      text: 'Get Started', 
+      variant: 'default', 
+      size: 'default', 
+      url: '#',
+      subtext: '',
+      subtextPosition: 'below',
+      subtextFontSize: '12px',
+      subtextFontWeight: '400'
+    },
     description: 'Call to action button'
   });
 

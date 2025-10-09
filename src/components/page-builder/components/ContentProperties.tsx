@@ -162,6 +162,34 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
         </div>
 
         <div>
+          <Label htmlFor="button-subtext">Subtext (Optional)</Label>
+          <Input
+            id="button-subtext"
+            value={element.content.subtext || ''}
+            onChange={(e) => onUpdate('subtext', e.target.value)}
+            placeholder="Add subtext below button..."
+          />
+        </div>
+
+        {element.content.subtext && (
+          <div>
+            <Label>Subtext Position</Label>
+            <Select
+              value={element.content.subtextPosition || 'below'}
+              onValueChange={(value) => onUpdate('subtextPosition', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="below">Below Main Text</SelectItem>
+                <SelectItem value="above">Above Main Text</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <div>
           <Label>Link to</Label>
           <Select
             value={linkType}
