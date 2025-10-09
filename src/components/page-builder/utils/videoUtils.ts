@@ -119,9 +119,31 @@ export function buildEmbedUrl(
  * Sanitize custom embed code for security
  */
 export function sanitizeEmbedCode(embedCode: string): string {
-  // Basic sanitization - remove dangerous scripts but allow iframe and video tags
-  return embedCode
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/on\w+\s*=/gi, '');
+  if (!embedCode || typeof embedCode !== 'string') {
+    return '';
+  }
+
+  try {
+    // Basic sanitization - remove dangerous scripts but allow iframe and video tags
+    let sanitized = embedCode
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+      .replace(/javascript:/gi, '')
+      .replace(/on\w+\s*=/gi, '')
+      .replace(/data:text\/html/gi, '') // Remove data URLs
+      .replace(/vbscript:/gi, '') // Remove vbscript
+      .replace(/<object\b[^>]*>/gi, '') // Remove object tags
+      .replace(/<embed\b[^>]*>/gi, '') // Remove embed tags
+      .replace(/<link\b[^>]*>/gi, ''); // Remove link tags
+
+    // Ensure it's a valid iframe or video tag
+    if (!sanitized.includes('<iframe') && !sanitized.includes('<video')) {
+      console.warn('Sanitized embed code does not contain valid iframe or video tag');
+      return '';
+    }
+
+    return sanitized;
+  } catch (error) {
+    console.error('Error sanitizing embed code:', error);
+    return '';
+  }
 }

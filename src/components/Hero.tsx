@@ -13,12 +13,22 @@ export const Hero = () => {
   // Determine what media to show
   const getHeroMedia = () => {
     // Priority: iframe embed code > YouTube URL > image fallback
-    if (marketingContent?.iframe_embed_code) {
+    if (marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim()) {
       console.log('Hero: Found iframe embed code');
-      return {
-        type: 'iframe',
-        url: marketingContent.iframe_embed_code
-      };
+      try {
+        // Validate the iframe code before using it
+        const sanitized = sanitizeEmbedCode(marketingContent.iframe_embed_code);
+        if (sanitized) {
+          return {
+            type: 'iframe',
+            url: sanitized
+          };
+        } else {
+          console.warn('Hero: Invalid iframe embed code, falling back to image');
+        }
+      } catch (error) {
+        console.error('Hero: Error processing iframe embed code:', error);
+      }
     }
     
     if (marketingContent?.youtube_url) {
@@ -83,9 +93,30 @@ export const Hero = () => {
             {/* Mobile Media - Show below headline on mobile only */}
             <div className="lg:hidden">
               <div className="relative rounded-2xl overflow-hidden shadow-glow">
-                {heroMedia.type === 'video' ? <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
+                {heroMedia.type === 'iframe' ? (
+                  <div className="w-full rounded-2xl overflow-hidden">
+                    {(() => {
+                      try {
+                        const sanitizedCode = sanitizeEmbedCode(heroMedia.url);
+                        if (sanitizedCode) {
+                          return <div dangerouslySetInnerHTML={{ __html: sanitizedCode }} />;
+                        } else {
+                          console.warn('Hero Mobile: Invalid iframe code, showing fallback image');
+                          return <img src={marketingContent?.hero_image_url || heroImage} alt="Hero Fallback" className="w-full h-auto rounded-2xl" />;
+                        }
+                      } catch (error) {
+                        console.error('Hero Mobile: Error rendering iframe:', error);
+                        return <img src={marketingContent?.hero_image_url || heroImage} alt="Hero Fallback" className="w-full h-auto rounded-2xl" />;
+                      }
+                    })()}
+                  </div>
+                ) : heroMedia.type === 'video' ? (
+                  <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
                     <iframe src={heroMedia.url} title="Hero Video" className="w-full h-full rounded-2xl" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                  </AspectRatio> : <img src={heroMedia.url} alt="F-Commerce Platform Dashboard" className="w-full h-auto rounded-2xl" />}
+                  </AspectRatio>
+                ) : (
+                  <img src={heroMedia.url} alt="F-Commerce Platform Dashboard" className="w-full h-auto rounded-2xl" />
+                )}
               </div>
             </div>
 
@@ -134,10 +165,22 @@ export const Hero = () => {
           <div className="relative hidden lg:block">
             <div className="relative z-10 rounded-2xl overflow-hidden shadow-glow">
               {heroMedia.type === 'iframe' ? (
-                <div 
-                  className="w-full rounded-2xl overflow-hidden"
-                  dangerouslySetInnerHTML={{ __html: sanitizeEmbedCode(heroMedia.url) }}
-                />
+                <div className="w-full rounded-2xl overflow-hidden">
+                  {(() => {
+                    try {
+                      const sanitizedCode = sanitizeEmbedCode(heroMedia.url);
+                      if (sanitizedCode) {
+                        return <div dangerouslySetInnerHTML={{ __html: sanitizedCode }} />;
+                      } else {
+                        console.warn('Hero: Invalid iframe code, showing fallback image');
+                        return <img src={marketingContent?.hero_image_url || heroImage} alt="Hero Fallback" className="w-full h-auto rounded-2xl" />;
+                      }
+                    } catch (error) {
+                      console.error('Hero: Error rendering iframe:', error);
+                      return <img src={marketingContent?.hero_image_url || heroImage} alt="Hero Fallback" className="w-full h-auto rounded-2xl" />;
+                    }
+                  })()}
+                </div>
               ) : heroMedia.type === 'video' ? (
                 <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
                   <iframe src={heroMedia.url} title="Hero Video" className="w-full h-full rounded-2xl" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
