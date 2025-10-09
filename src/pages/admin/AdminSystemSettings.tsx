@@ -29,6 +29,62 @@ const AdminSystemSettings = () => {
   const { toast } = useToast();
   const { content: marketingContent, updateContent } = useMarketingContent();
   
+  // Local state for marketing content inputs
+  const [localVideoType, setLocalVideoType] = useState<'none' | 'youtube' | 'iframe'>('none');
+  const [localYoutubeUrl, setLocalYoutubeUrl] = useState('');
+  const [localIframeCode, setLocalIframeCode] = useState('');
+  const [localHeroImageUrl, setLocalHeroImageUrl] = useState('');
+
+  // Initialize local state when marketingContent loads
+  React.useEffect(() => {
+    if (marketingContent) {
+      // Determine video type based on existing content
+      if (marketingContent.iframe_embed_code && marketingContent.iframe_embed_code.trim()) {
+        setLocalVideoType('iframe');
+        setLocalIframeCode(marketingContent.iframe_embed_code);
+      } else if (marketingContent.youtube_url && marketingContent.youtube_url.trim()) {
+        setLocalVideoType('youtube');
+        setLocalYoutubeUrl(marketingContent.youtube_url);
+      } else {
+        setLocalVideoType('none');
+      }
+      setLocalHeroImageUrl(marketingContent.hero_image_url || '');
+    }
+  }, [marketingContent]);
+
+  // Save marketing content function
+  const handleSaveMarketingContent = async () => {
+    const dataToUpdate: any = {
+      hero_image_url: localHeroImageUrl,
+    };
+
+    if (localVideoType === 'youtube') {
+      dataToUpdate.youtube_url = localYoutubeUrl;
+      dataToUpdate.iframe_embed_code = ''; // Clear iframe
+    } else if (localVideoType === 'iframe') {
+      dataToUpdate.iframe_embed_code = localIframeCode;
+      dataToUpdate.youtube_url = ''; // Clear YouTube
+    } else {
+      dataToUpdate.youtube_url = '';
+      dataToUpdate.iframe_embed_code = '';
+    }
+
+    try {
+      await updateContent('hero', dataToUpdate);
+      toast({
+        title: "Success",
+        description: "Marketing content updated successfully",
+      });
+    } catch (error) {
+      console.error("Failed to update marketing content:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update marketing content. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+  
   // Local state for settings (in a real app, this would come from the database)
   const [settings, setSettings] = useState({
     // System Settings
@@ -411,36 +467,17 @@ const AdminSystemSettings = () => {
                   <div className="space-y-2">
                     <Label htmlFor="video_type">Video Type</Label>
                     <Select
-                      value={
-                        (marketingContent?.iframe_embed_code && 
-                         marketingContent.iframe_embed_code.trim() && 
-                         marketingContent.iframe_embed_code !== 'None') 
-                          ? 'iframe' 
-                          : (marketingContent?.youtube_url && 
-                             marketingContent.youtube_url.trim() && 
-                             marketingContent.youtube_url !== 'None')
-                            ? 'youtube' 
-                            : 'none'
-                      }
-                      onValueChange={(value) => {
+                      value={localVideoType}
+                      onValueChange={(value: 'none' | 'youtube' | 'iframe') => {
+                        setLocalVideoType(value);
+                        // Clear the other fields when switching types
                         if (value === 'youtube') {
-                          updateContent('hero', { 
-                            youtube_url: marketingContent?.youtube_url || '',
-                            iframe_embed_code: '', // Clear iframe when switching to YouTube
-                            hero_image_url: marketingContent?.hero_image_url 
-                          });
+                          setLocalIframeCode('');
                         } else if (value === 'iframe') {
-                          updateContent('hero', { 
-                            youtube_url: '', // Clear YouTube when switching to iframe
-                            iframe_embed_code: marketingContent?.iframe_embed_code || '',
-                            hero_image_url: marketingContent?.hero_image_url 
-                          });
+                          setLocalYoutubeUrl('');
                         } else {
-                          updateContent('hero', { 
-                            youtube_url: '',
-                            iframe_embed_code: '',
-                            hero_image_url: marketingContent?.hero_image_url 
-                          });
+                          setLocalYoutubeUrl('');
+                          setLocalIframeCode('');
                         }
                       }}
                     >
@@ -455,79 +492,44 @@ const AdminSystemSettings = () => {
                     </Select>
                   </div>
 
-                  {(() => {
-                    const currentValue = (marketingContent?.iframe_embed_code && 
-                                         marketingContent.iframe_embed_code.trim() && 
-                                         marketingContent.iframe_embed_code !== 'None') 
-                      ? 'iframe' 
-                      : (marketingContent?.youtube_url && 
-                         marketingContent.youtube_url.trim() && 
-                         marketingContent.youtube_url !== 'None')
-                        ? 'youtube' 
-                        : 'none';
-                    
-                    if (currentValue === 'youtube') {
-                      return (
-                        <div className="space-y-2">
-                          <Label htmlFor="youtube_url">YouTube Video URL</Label>
-                          <Input
-                            id="youtube_url"
-                            value={marketingContent?.youtube_url || ''}
-                            onChange={(e) => {
-                              updateContent('hero', { 
-                                youtube_url: e.target.value,
-                                iframe_embed_code: '',
-                                hero_image_url: marketingContent?.hero_image_url 
-                              });
-                            }}
-                            placeholder="https://www.youtube.com/watch?v=..."
-                          />
-                          <p className="text-sm text-muted-foreground">
-                            Video will be shown with controls, no autoplay. Leave empty to use image fallback.
-                          </p>
-                        </div>
-                      );
-                    }
-                    
-                    if (currentValue === 'iframe') {
-                      return (
-                        <div className="space-y-2">
-                          <Label htmlFor="iframe_embed_code">Custom Iframe Embed Code</Label>
-                          <Textarea
-                            id="iframe_embed_code"
-                            value={marketingContent?.iframe_embed_code || ''}
-                            onChange={(e) => {
-                              updateContent('hero', { 
-                                youtube_url: '',
-                                iframe_embed_code: e.target.value,
-                                hero_image_url: marketingContent?.hero_image_url 
-                              });
-                            }}
-                            placeholder="<iframe src=&quot;https://flexplayer.ghlsaaskits.com/embed/...&quot; frameborder=&quot;0&quot; allowfullscreen></iframe>"
-                            rows={4}
-                            className="font-mono text-sm"
-                          />
-                          <p className="text-sm text-muted-foreground">
-                            Paste your custom iframe embed code here. This will override YouTube video if both are set.
-                          </p>
-                        </div>
-                      );
-                    }
-                    
-                    return null;
-                  })()}
+                  {localVideoType === 'youtube' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="youtube_url">YouTube Video URL</Label>
+                      <Input
+                        id="youtube_url"
+                        value={localYoutubeUrl}
+                        onChange={(e) => setLocalYoutubeUrl(e.target.value)}
+                        placeholder="https://www.youtube.com/watch?v=..."
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Video will be shown with controls, no autoplay. Leave empty to use image fallback.
+                      </p>
+                    </div>
+                  )}
+                  
+                  {localVideoType === 'iframe' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="iframe_embed_code">Custom Iframe Embed Code</Label>
+                      <Textarea
+                        id="iframe_embed_code"
+                        value={localIframeCode}
+                        onChange={(e) => setLocalIframeCode(e.target.value)}
+                        placeholder="<iframe src=&quot;https://flexplayer.ghlsaaskits.com/embed/...&quot; frameborder=&quot;0&quot; allowfullscreen></iframe>"
+                        rows={4}
+                        className="font-mono text-sm"
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Paste your custom iframe embed code here. This will override YouTube video if both are set.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label>Hero Fallback Image</Label>
                   <ImageUpload
-                    value={marketingContent?.hero_image_url || ''}
-                    onChange={(url) => {
-                      updateContent('hero', { 
-                        youtube_url: marketingContent?.youtube_url,
-                        hero_image_url: url 
-                      });
-                    }}
+                    value={localHeroImageUrl}
+                    onChange={(url) => setLocalHeroImageUrl(url)}
                     label="Upload hero image"
                   />
                   <p className="text-sm text-muted-foreground">
@@ -535,48 +537,43 @@ const AdminSystemSettings = () => {
                   </p>
                 </div>
 
-                {marketingContent && (
-                  <div className="p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-medium mb-2">Debug Info:</h4>
-                    <p className="text-xs text-muted-foreground">
-                      YouTube URL: "{marketingContent?.youtube_url || 'None'}" (length: {marketingContent?.youtube_url?.length || 0})<br/>
-                      Iframe Code: "{marketingContent?.iframe_embed_code || 'None'}" (length: {marketingContent?.iframe_embed_code?.length || 0})<br/>
-                      Hero Image: {marketingContent?.hero_image_url || 'None'}<br/>
-                      Current Selection: {(marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim() && marketingContent.iframe_embed_code !== 'None') ? 'iframe' : (marketingContent?.youtube_url && marketingContent.youtube_url.trim() && marketingContent.youtube_url !== 'None') ? 'youtube' : 'none'}<br/>
-                      Is YouTube "None"? {marketingContent?.youtube_url === 'None' ? 'Yes' : 'No'}<br/>
-                      Is Iframe "None"? {marketingContent?.iframe_embed_code === 'None' ? 'Yes' : 'No'}
-                    </p>
-                  </div>
-                )}
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-medium mb-2">Debug Info:</h4>
+                  <p className="text-xs text-muted-foreground">
+                    Local Video Type: {localVideoType}<br/>
+                    Local YouTube URL: "{localYoutubeUrl}" (length: {localYoutubeUrl.length})<br/>
+                    Local Iframe Code: "{localIframeCode}" (length: {localIframeCode.length})<br/>
+                    Local Hero Image: {localHeroImageUrl || 'None'}<br/>
+                    <br/>
+                    Database YouTube URL: "{marketingContent?.youtube_url || 'None'}" (length: {marketingContent?.youtube_url?.length || 0})<br/>
+                    Database Iframe Code: "{marketingContent?.iframe_embed_code || 'None'}" (length: {marketingContent?.iframe_embed_code?.length || 0})<br/>
+                    Database Hero Image: {marketingContent?.hero_image_url || 'None'}
+                  </p>
+                </div>
 
-                {marketingContent && (
-                  <div className="p-4 bg-muted rounded-lg">
-                    <h4 className="font-medium mb-2">Current Configuration:</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {(() => {
-                        const currentValue = (marketingContent?.iframe_embed_code && 
-                                             marketingContent.iframe_embed_code.trim() && 
-                                             marketingContent.iframe_embed_code !== 'None') 
-                          ? 'iframe' 
-                          : (marketingContent?.youtube_url && 
-                             marketingContent.youtube_url.trim() && 
-                             marketingContent.youtube_url !== 'None')
-                            ? 'youtube' 
-                            : 'none';
-                        
-                        if (currentValue === 'iframe') {
-                          return 'Custom Iframe Player';
-                        } else if (currentValue === 'youtube') {
-                          return `YouTube Video: ${marketingContent?.youtube_url}`;
-                        } else if (marketingContent?.hero_image_url) {
-                          return `Image: ${marketingContent.hero_image_url.split('/').pop()}`;
-                        } else {
-                          return 'Default image will be used';
-                        }
-                      })()}
-                    </p>
-                  </div>
-                )}
+                <div className="p-4 bg-muted rounded-lg">
+                  <h4 className="font-medium mb-2">Current Configuration:</h4>
+                  <p className="text-sm text-muted-foreground">
+                    {(() => {
+                      if (localVideoType === 'iframe') {
+                        return 'Custom Iframe Player';
+                      } else if (localVideoType === 'youtube') {
+                        return `YouTube Video: ${localYoutubeUrl || 'No URL entered'}`;
+                      } else if (localHeroImageUrl) {
+                        return `Image: ${localHeroImageUrl.split('/').pop()}`;
+                      } else {
+                        return 'Default image will be used';
+                      }
+                    })()}
+                  </p>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button onClick={handleSaveMarketingContent} className="flex items-center gap-2">
+                    <Save className="h-4 w-4" />
+                    Save Marketing Content
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
