@@ -6,21 +6,32 @@ import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/vi
 import heroImage from "@/assets/hero-ecommerce.jpg";
 export const Hero = () => {
   const {
-    content: marketingContent
+    content: marketingContent,
+    loading: marketingLoading
   } = useMarketingContent();
 
   // Determine what media to show
   const getHeroMedia = () => {
     if (marketingContent?.youtube_url) {
+      console.log('Hero: Found YouTube URL:', marketingContent.youtube_url);
       const videoInfo = parseVideoUrl(marketingContent.youtube_url);
+      console.log('Hero: Parsed video info:', videoInfo);
+      
       if (videoInfo.type === 'youtube' && videoInfo.id) {
-        const embedUrl = `https://www.youtube-nocookie.com/embed/${videoInfo.id}?rel=0`;
+        // Use youtube-nocookie.com for better privacy and performance
+        const embedUrl = `https://www.youtube-nocookie.com/embed/${videoInfo.id}?rel=0&modestbranding=1`;
+        console.log('Hero: Generated embed URL:', embedUrl);
         return {
           type: 'video',
           url: embedUrl
         };
+      } else {
+        console.log('Hero: Invalid YouTube URL or video info');
       }
+    } else {
+      console.log('Hero: No YouTube URL found, using image fallback');
     }
+    
     const imageUrl = marketingContent?.hero_image_url || heroImage;
     return {
       type: 'image',

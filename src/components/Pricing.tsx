@@ -5,6 +5,7 @@ import { Check, Crown, Zap, Rocket, Star, Loader } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 interface PricingPlan {
   id: string;
   plan_name: string;
@@ -28,25 +29,40 @@ export const Pricing = () => {
   const [plans, setPlans] = useState<PricingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { toast } = useToast();
   useEffect(() => {
     fetchPlans();
   }, []);
   const fetchPlans = async () => {
     try {
+      console.log('Fetching pricing plans...');
       const {
         data,
         error
       } = await supabase.from('site_pricing_plans').select('*').eq('is_active', true).order('sort_order');
+      
       if (error) {
         console.error('Error fetching pricing plans:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load pricing plans. Please refresh the page.",
+          variant: "destructive",
+        });
         return;
       }
+      
+      console.log('Pricing plans fetched successfully:', data?.length || 0, 'plans');
       setPlans((data || []).map(plan => ({
         ...plan,
         features: Array.isArray(plan.features) ? plan.features.map(f => String(f)) : []
       })));
     } catch (error) {
       console.error('Error fetching pricing plans:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load pricing plans. Please check your connection.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
