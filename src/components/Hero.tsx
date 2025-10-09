@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { ArrowRight, Play, Star, Users, TrendingUp } from "lucide-react";
 import { useMarketingContent } from "@/hooks/useMarketingContent";
-import { parseVideoUrl, buildEmbedUrl } from "@/components/page-builder/utils/videoUtils";
+import { parseVideoUrl, buildEmbedUrl, sanitizeEmbedCode } from "@/components/page-builder/utils/videoUtils";
 import heroImage from "@/assets/hero-ecommerce.jpg";
 export const Hero = () => {
   const {
@@ -12,6 +12,15 @@ export const Hero = () => {
 
   // Determine what media to show
   const getHeroMedia = () => {
+    // Priority: iframe embed code > YouTube URL > image fallback
+    if (marketingContent?.iframe_embed_code) {
+      console.log('Hero: Found iframe embed code');
+      return {
+        type: 'iframe',
+        url: marketingContent.iframe_embed_code
+      };
+    }
+    
     if (marketingContent?.youtube_url) {
       console.log('Hero: Found YouTube URL:', marketingContent.youtube_url);
       const videoInfo = parseVideoUrl(marketingContent.youtube_url);
@@ -29,7 +38,7 @@ export const Hero = () => {
         console.log('Hero: Invalid YouTube URL or video info');
       }
     } else {
-      console.log('Hero: No YouTube URL found, using image fallback');
+      console.log('Hero: No video found, using image fallback');
     }
     
     const imageUrl = marketingContent?.hero_image_url || heroImage;
@@ -124,9 +133,18 @@ export const Hero = () => {
           {/* Right Content - Hero Media - Hidden on mobile */}
           <div className="relative hidden lg:block">
             <div className="relative z-10 rounded-2xl overflow-hidden shadow-glow">
-              {heroMedia.type === 'video' ? <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
+              {heroMedia.type === 'iframe' ? (
+                <div 
+                  className="w-full rounded-2xl overflow-hidden"
+                  dangerouslySetInnerHTML={{ __html: sanitizeEmbedCode(heroMedia.url) }}
+                />
+              ) : heroMedia.type === 'video' ? (
+                <AspectRatio ratio={16 / 9} className="rounded-2xl overflow-hidden">
                   <iframe src={heroMedia.url} title="Hero Video" className="w-full h-full rounded-2xl" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
-                </AspectRatio> : <img src={heroMedia.url} alt="F-Commerce Platform Dashboard" className="w-full h-auto rounded-2xl" />}
+                </AspectRatio>
+              ) : (
+                <img src={heroMedia.url} alt="F-Commerce Platform Dashboard" className="w-full h-auto rounded-2xl" />
+              )}
             </div>
             
             {/* Floating Elements */}

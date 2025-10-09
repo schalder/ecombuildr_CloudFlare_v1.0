@@ -6,6 +6,7 @@ interface MarketingContent {
   id: string;
   section: string;
   youtube_url?: string;
+  iframe_embed_code?: string;
   hero_image_url?: string;
   is_active: boolean;
   created_at: string;
@@ -14,6 +15,7 @@ interface MarketingContent {
 
 interface UpdateMarketingContentData {
   youtube_url?: string;
+  iframe_embed_code?: string;
   hero_image_url?: string;
   is_active?: boolean;
 }

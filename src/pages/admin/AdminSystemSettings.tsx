@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useMarketingContent } from '@/hooks/useMarketingContent';
 import { ImageUpload } from '@/components/ui/image-upload';
@@ -406,22 +407,107 @@ const AdminSystemSettings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="youtube_url">YouTube Video URL</Label>
-                  <Input
-                    id="youtube_url"
-                    value={marketingContent?.youtube_url || ''}
-                    onChange={(e) => {
-                      updateContent('hero', { 
-                        youtube_url: e.target.value,
-                        hero_image_url: marketingContent?.hero_image_url 
-                      });
-                    }}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Video will be shown with controls, no autoplay. Leave empty to use image fallback.
-                  </p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="video_type">Video Type</Label>
+                    <Select
+                      value={
+                        marketingContent?.iframe_embed_code 
+                          ? 'iframe' 
+                          : marketingContent?.youtube_url 
+                            ? 'youtube' 
+                            : 'none'
+                      }
+                      onValueChange={(value) => {
+                        if (value === 'youtube') {
+                          updateContent('hero', { 
+                            youtube_url: marketingContent?.youtube_url || '',
+                            iframe_embed_code: '', // Clear iframe when switching to YouTube
+                            hero_image_url: marketingContent?.hero_image_url 
+                          });
+                        } else if (value === 'iframe') {
+                          updateContent('hero', { 
+                            youtube_url: '', // Clear YouTube when switching to iframe
+                            iframe_embed_code: marketingContent?.iframe_embed_code || '',
+                            hero_image_url: marketingContent?.hero_image_url 
+                          });
+                        } else {
+                          updateContent('hero', { 
+                            youtube_url: '',
+                            iframe_embed_code: '',
+                            hero_image_url: marketingContent?.hero_image_url 
+                          });
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select video type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Video (Image Only)</SelectItem>
+                        <SelectItem value="youtube">YouTube Video</SelectItem>
+                        <SelectItem value="iframe">Custom Iframe Player</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {(() => {
+                    const currentValue = marketingContent?.iframe_embed_code 
+                      ? 'iframe' 
+                      : marketingContent?.youtube_url 
+                        ? 'youtube' 
+                        : 'none';
+                    
+                    if (currentValue === 'youtube') {
+                      return (
+                        <div className="space-y-2">
+                          <Label htmlFor="youtube_url">YouTube Video URL</Label>
+                          <Input
+                            id="youtube_url"
+                            value={marketingContent?.youtube_url || ''}
+                            onChange={(e) => {
+                              updateContent('hero', { 
+                                youtube_url: e.target.value,
+                                iframe_embed_code: '',
+                                hero_image_url: marketingContent?.hero_image_url 
+                              });
+                            }}
+                            placeholder="https://www.youtube.com/watch?v=..."
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Video will be shown with controls, no autoplay. Leave empty to use image fallback.
+                          </p>
+                        </div>
+                      );
+                    }
+                    
+                    if (currentValue === 'iframe') {
+                      return (
+                        <div className="space-y-2">
+                          <Label htmlFor="iframe_embed_code">Custom Iframe Embed Code</Label>
+                          <Textarea
+                            id="iframe_embed_code"
+                            value={marketingContent?.iframe_embed_code || ''}
+                            onChange={(e) => {
+                              updateContent('hero', { 
+                                youtube_url: '',
+                                iframe_embed_code: e.target.value,
+                                hero_image_url: marketingContent?.hero_image_url 
+                              });
+                            }}
+                            placeholder="<iframe src=&quot;https://flexplayer.ghlsaaskits.com/embed/...&quot; frameborder=&quot;0&quot; allowfullscreen></iframe>"
+                            rows={4}
+                            className="font-mono text-sm"
+                          />
+                          <p className="text-sm text-muted-foreground">
+                            Paste your custom iframe embed code here. This will override YouTube video if both are set.
+                          </p>
+                        </div>
+                      );
+                    }
+                    
+                    return null;
+                  })()}
                 </div>
 
                 <div className="space-y-2">
@@ -442,15 +528,37 @@ const AdminSystemSettings = () => {
                 </div>
 
                 {marketingContent && (
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-medium mb-2">Debug Info:</h4>
+                    <p className="text-xs text-muted-foreground">
+                      YouTube URL: {marketingContent?.youtube_url || 'None'}<br/>
+                      Iframe Code: {marketingContent?.iframe_embed_code || 'None'}<br/>
+                      Hero Image: {marketingContent?.hero_image_url || 'None'}
+                    </p>
+                  </div>
+                )}
+
+                {marketingContent && (
                   <div className="p-4 bg-muted rounded-lg">
                     <h4 className="font-medium mb-2">Current Configuration:</h4>
                     <p className="text-sm text-muted-foreground">
-                      {marketingContent.youtube_url 
-                        ? `Video: ${marketingContent.youtube_url}`
-                        : marketingContent.hero_image_url 
-                          ? `Image: ${marketingContent.hero_image_url.split('/').pop()}`
-                          : 'Default image will be used'
-                      }
+                      {(() => {
+                        const currentValue = marketingContent?.iframe_embed_code 
+                          ? 'iframe' 
+                          : marketingContent?.youtube_url 
+                            ? 'youtube' 
+                            : 'none';
+                        
+                        if (currentValue === 'iframe') {
+                          return 'Custom Iframe Player';
+                        } else if (currentValue === 'youtube') {
+                          return `YouTube Video: ${marketingContent?.youtube_url}`;
+                        } else if (marketingContent?.hero_image_url) {
+                          return `Image: ${marketingContent.hero_image_url.split('/').pop()}`;
+                        } else {
+                          return 'Default image will be used';
+                        }
+                      })()}
                     </p>
                   </div>
                 )}
