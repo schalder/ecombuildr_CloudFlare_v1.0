@@ -236,7 +236,7 @@ const VideoPlaylistElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   const videos = element.content.videos || [
     {
       title: 'Sample Video 1',
@@ -257,42 +257,80 @@ const VideoPlaylistElement: React.FC<{
   const validVideos = videos.filter((video: any) => video.url);
   const [currentVideo, setCurrentVideo] = useState(validVideos[0] || videos[0]);
 
-  const handleTitleUpdate = (newTitle: string) => {
-    if (onUpdate) {
-      onUpdate({
-        content: {
-          ...element.content,
-          title: newTitle
-        }
-      });
+  // Extract button styling properties
+  const buttonFontSize = element.content.buttonFontSize || 14;
+  const buttonFontWeight = element.content.buttonFontWeight || '400';
+  const buttonFontColor = element.content.buttonFontColor || '#ffffff';
+  const buttonBackgroundColor = element.content.buttonBackgroundColor || '#000000';
+  const buttonHoverBackground = element.content.buttonHoverBackground || '#333333';
+  const buttonActiveBackground = element.content.buttonActiveBackground || '#0066cc';
+  const buttonPadding = element.content.buttonPadding || 8;
+  const buttonBorderRadius = element.content.buttonBorderRadius || 4;
+  const buttonGap = element.content.buttonGap || 8;
+
+  // Generate button styles CSS
+  const buttonStyles = `
+    .playlist-button-${element.id} {
+      font-size: ${buttonFontSize}px !important;
+      font-weight: ${buttonFontWeight} !important;
+      color: ${buttonFontColor} !important;
+      background-color: ${buttonBackgroundColor} !important;
+      padding: ${buttonPadding}px !important;
+      border-radius: ${buttonBorderRadius}px !important;
+      border: none !important;
+      transition: background-color 0.2s ease !important;
     }
-  };
+    .playlist-button-${element.id}:hover {
+      background-color: ${buttonHoverBackground} !important;
+    }
+    .playlist-button-${element.id}.active {
+      background-color: ${buttonActiveBackground} !important;
+    }
+  `;
+
+  // Get device-aware styles
+  const containerStyles = renderElementStyles(element, deviceType);
+  
+  // Get effective width for responsive behavior
+  const effectiveWidth = getEffectiveResponsiveValue(element, 'width', deviceType, '100%');
+  
+  // Debug: Log the effective width
+  console.log('VideoPlaylistElement - effectiveWidth:', effectiveWidth, 'deviceType:', deviceType, 'element.styles:', element.styles);
+  
+  // Generate dynamic CSS for responsive width
+  const dynamicStyles = `
+    .video-playlist-container-${element.id} {
+      width: ${effectiveWidth} !important;
+      max-width: ${effectiveWidth === '100%' ? '100%' : effectiveWidth} !important;
+      margin: 0 auto !important;
+    }
+    ${buttonStyles}
+  `;
 
   if (!currentVideo) {
     return (
-      <div className="max-w-4xl mx-auto" style={element.styles}>
-        <InlineEditor
-          value={element.content.title || 'Video Playlist'}
-          onChange={handleTitleUpdate}
-          className="text-xl font-semibold mb-4"
-          placeholder="Playlist title..."
-        />
-        <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-          <p className="text-muted-foreground">No videos available</p>
+      <>
+        <style dangerouslySetInnerHTML={{ __html: dynamicStyles }} />
+        <div 
+          className={`video-playlist-container-${element.id}`} 
+          style={containerStyles}
+        >
+          <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+            <p className="text-muted-foreground">No videos available</p>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto" style={element.styles}>
-      <InlineEditor
-        value={element.content.title || 'Video Playlist'}
-        onChange={handleTitleUpdate}
-        className="text-xl font-semibold mb-4"
-        placeholder="Playlist title..."
-      />
-      <div className="grid md:grid-cols-3 gap-4">
+    <>
+      <style dangerouslySetInnerHTML={{ __html: dynamicStyles }} />
+      <div 
+        className={`video-playlist-container-${element.id}`} 
+        style={containerStyles}
+      >
+        <div className="grid md:grid-cols-3 gap-4 w-full">
         <div className="md:col-span-2">
           <div className="aspect-video bg-black rounded-lg overflow-hidden">
             <video
@@ -311,13 +349,18 @@ const VideoPlaylistElement: React.FC<{
         </div>
         <div className="space-y-2">
           <h5 className="font-medium">Playlist ({validVideos.length})</h5>
-          <div className="max-h-60 overflow-y-auto space-y-2">
+          <div 
+            className="max-h-60 overflow-y-auto"
+            style={{ gap: `${buttonGap}px`, display: 'flex', flexDirection: 'column' }}
+          >
             {validVideos.map((video: any, index: number) => (
               <Button
                 key={index}
-                variant={currentVideo.url === video.url ? "default" : "outline"}
+                variant="outline"
                 size="sm"
-                className="w-full justify-start"
+                className={`w-full justify-start playlist-button-${element.id} ${
+                  currentVideo.url === video.url ? 'active' : ''
+                }`}
                 onClick={() => setCurrentVideo(video)}
               >
                 <Play className="h-4 w-4 mr-2" />
@@ -326,8 +369,9 @@ const VideoPlaylistElement: React.FC<{
             ))}
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -378,7 +422,6 @@ export const registerMediaElements = () => {
     icon: Video,
     component: VideoPlaylistElement,
     defaultContent: {
-      title: 'Video Playlist',
       videos: [
         {
           title: 'Sample Video 1',

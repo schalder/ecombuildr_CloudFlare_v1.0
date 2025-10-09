@@ -25,11 +25,13 @@ const WIDTH_PRESETS = [
 interface MediaElementStylesProps {
   element: PageBuilderElement;
   onStyleUpdate: (property: string, value: any) => void;
+  onContentUpdate: (property: string, value: any) => void;
 }
 
 export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
   element,
   onStyleUpdate,
+  onContentUpdate,
 }) => {
   // Use global device state instead of local state
   const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
@@ -38,6 +40,7 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
   const [borderOpen, setBorderOpen] = React.useState(false);
   const [effectsOpen, setEffectsOpen] = React.useState(false);
   const [spacingOpen, setSpacingOpen] = React.useState(false);
+  const [playlistButtonOpen, setPlaylistButtonOpen] = React.useState(false);
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
   const currentStyles = (responsiveStyles as any)[responsiveTab] || {};
   
@@ -144,7 +147,7 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
         </div>
       </div>
 
-      {/* Dimensions - Hide for video elements */}
+      {/* Dimensions - Show for all media elements except single video */}
       {element.type !== 'video' && (
         <CollapsibleGroup title="Dimensions" isOpen={dimensionsOpen} onToggle={setDimensionsOpen}>
           <div className="space-y-2">
@@ -273,6 +276,132 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
           />
         </div>
       </CollapsibleGroup>
+
+      {/* Playlist Button Styling - Only for video-playlist */}
+      {element.type === 'video-playlist' && (
+        <CollapsibleGroup title="Playlist Button Styling" isOpen={playlistButtonOpen} onToggle={setPlaylistButtonOpen}>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-xs">Font Size</Label>
+              <div className="flex items-center space-x-2">
+                <Slider
+                  value={[element.content?.buttonFontSize || 14]}
+                  onValueChange={([value]) => onContentUpdate('buttonFontSize', value)}
+                  min={12}
+                  max={24}
+                  step={1}
+                  className="flex-1"
+                />
+                <span className="text-xs text-muted-foreground w-12">
+                  {element.content?.buttonFontSize || 14}px
+                </span>
+              </div>
+            </div>
+            
+            <div>
+              <Label className="text-xs">Font Weight</Label>
+              <Select
+                value={element.content?.buttonFontWeight || '400'}
+                onValueChange={(value) => onContentUpdate('buttonFontWeight', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select font weight" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="300">Light (300)</SelectItem>
+                  <SelectItem value="400">Normal (400)</SelectItem>
+                  <SelectItem value="500">Medium (500)</SelectItem>
+                  <SelectItem value="600">Semi Bold (600)</SelectItem>
+                  <SelectItem value="700">Bold (700)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-xs">Font Color</Label>
+              <ColorPicker
+                color={element.content?.buttonFontColor || '#ffffff'}
+                onChange={(color) => onContentUpdate('buttonFontColor', color)}
+              />
+            </div>
+            
+            <div>
+              <Label className="text-xs">Background Color</Label>
+              <ColorPicker
+                color={element.content?.buttonBackgroundColor || '#000000'}
+                onChange={(color) => onContentUpdate('buttonBackgroundColor', color)}
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs">Hover Background</Label>
+              <ColorPicker
+                color={element.content?.buttonHoverBackground || '#333333'}
+                onChange={(color) => onContentUpdate('buttonHoverBackground', color)}
+              />
+            </div>
+            
+            <div>
+              <Label className="text-xs">Active Background</Label>
+              <ColorPicker
+                color={element.content?.buttonActiveBackground || '#0066cc'}
+                onChange={(color) => onContentUpdate('buttonActiveBackground', color)}
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs">Padding</Label>
+              <div className="flex items-center space-x-2">
+                <Slider
+                  value={[element.content?.buttonPadding || 8]}
+                  onValueChange={([value]) => onContentUpdate('buttonPadding', value)}
+                  min={4}
+                  max={20}
+                  step={1}
+                  className="flex-1"
+                />
+                <span className="text-xs text-muted-foreground w-12">
+                  {element.content?.buttonPadding || 8}px
+                </span>
+              </div>
+            </div>
+            
+            <div>
+              <Label className="text-xs">Border Radius</Label>
+              <div className="flex items-center space-x-2">
+                <Slider
+                  value={[element.content?.buttonBorderRadius || 4]}
+                  onValueChange={([value]) => onContentUpdate('buttonBorderRadius', value)}
+                  min={0}
+                  max={20}
+                  step={1}
+                  className="flex-1"
+                />
+                <span className="text-xs text-muted-foreground w-12">
+                  {element.content?.buttonBorderRadius || 4}px
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs">Button Gap</Label>
+              <div className="flex items-center space-x-2">
+                <Slider
+                  value={[element.content?.buttonGap || 8]}
+                  onValueChange={([value]) => onContentUpdate('buttonGap', value)}
+                  min={0}
+                  max={32}
+                  step={1}
+                  className="flex-1"
+                />
+                <span className="text-xs text-muted-foreground w-12">
+                  {element.content?.buttonGap || 8}px
+                </span>
+              </div>
+            </div>
+          </div>
+        </CollapsibleGroup>
+      )}
 
       {/* Spacing */}
       <CollapsibleGroup title="Spacing" isOpen={spacingOpen} onToggle={setSpacingOpen}>

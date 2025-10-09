@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { MediaSelector } from './MediaSelector';
@@ -377,16 +378,6 @@ export const VideoPlaylistProperties: React.FC<MediaPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
-      <div>
-        <Label htmlFor="playlist-title">Playlist Title</Label>
-        <Input
-          id="playlist-title"
-          value={element.content.title || ''}
-          onChange={(e) => onUpdate('title', e.target.value)}
-          placeholder="Video Playlist"
-        />
-      </div>
-
       <div className="flex items-center space-x-2">
         <Switch
           id="video-autoplay"

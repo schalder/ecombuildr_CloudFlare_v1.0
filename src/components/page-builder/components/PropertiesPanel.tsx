@@ -45,6 +45,20 @@ import {
 import { FunnelOfferContentProperties } from './FunnelOfferContentProperties';
 import { HeroSliderContentProperties } from './HeroSliderContentProperties';
 import { CountdownProperties } from './CountdownProperties';
+import { 
+  TestimonialContentProperties,
+  FAQContentProperties,
+  AccordionContentProperties,
+  TabsContentProperties
+} from './ContentPropertiesLegacy';
+import { 
+  ImageFeatureContentProperties
+} from './ImageFeatureContentProperties';
+import { 
+  ImageGalleryProperties,
+  ImageCarouselProperties,
+  VideoPlaylistProperties
+} from './MediaProperties';
 import {
   TextElementStyles,
   MediaElementStyles, 
@@ -157,7 +171,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
     
     // Media elements (image, video, image-carousel, image-gallery, video-playlist)
     if (['image', 'video', 'image-carousel', 'image-gallery', 'video-playlist'].includes(selectedElement.type)) {
-      return <MediaElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+      return <MediaElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} onContentUpdate={handleContentUpdate} />;
     }
     
     // Layout elements (spacer, divider)
