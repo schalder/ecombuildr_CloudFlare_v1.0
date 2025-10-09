@@ -3,7 +3,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import type { PageBuilderElement } from '../types';
+import type { PageBuilderElement, ElementVisibility } from '../types';
+import { VisibilityControl } from './VisibilityControl';
 
 interface Props {
   element: PageBuilderElement;
@@ -20,6 +21,19 @@ export const OrderConfirmationContentProperties: React.FC<Props> = ({ element, o
     itemsTitle: 'Items',
   };
   const show = content.show || { email: true, phone: true, notes: true };
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const updateTexts = (key: keyof typeof texts, value: string) => {
     onUpdate('texts', { ...texts, [key]: value });
@@ -30,6 +44,10 @@ export const OrderConfirmationContentProperties: React.FC<Props> = ({ element, o
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Headings</h4>
         <div className="space-y-2 mt-2">

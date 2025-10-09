@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
-import { Plus, GripVertical } from 'lucide-react';
+import { Plus, GripVertical, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBuilderColumn, PageBuilderElement } from '../types';
 import { ElementRenderer } from './ElementRenderer';
@@ -9,6 +9,7 @@ import { isColumnHidden, getColumnResponsiveClasses } from '../utils/responsive'
 import { cn } from '@/lib/utils';
 import { renderColumnStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
 import { mergeResponsiveStyles } from '../utils/responsiveStyles';
+import { isElementVisible, getVisibilityStyles } from '../utils/deviceDetection';
 
 interface ColumnRendererProps {
   column: PageBuilderColumn;
@@ -96,6 +97,10 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
     return baseStyles;
   };
 
+  // Check column visibility
+  const isVisible = isElementVisible(column.visibility, deviceType);
+  const visibilityStyles = getVisibilityStyles(column.visibility, deviceType);
+
   // Check if column should be hidden on current device
   if (isColumnHidden(column, deviceType)) {
     return null;
@@ -103,6 +108,11 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
 
   // Hide empty columns on tablet and mobile in preview/live mode
   if ((deviceType === 'tablet' || deviceType === 'mobile') && isPreviewMode && column.elements.length === 0) {
+    return null;
+  }
+
+  // Don't render column if it's not visible on current device
+  if (!isVisible && isPreviewMode) {
     return null;
   }
 
@@ -121,11 +131,17 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         // Only apply border/background styles if not in preview mode and no user background
         !isPreviewMode && !(userBackground || userShadow) && 'border-2 border-dashed border-gray-300',
         !isPreviewMode && !(userBackground || userShadow) && isOver && 'border-primary/60',
+        // Apply visibility styles in preview mode
+        isPreviewMode && !isVisible && 'hidden',
         !isPreviewMode && !(userBackground || userShadow) && isOver && 'bg-primary/5',
         !isPreviewMode && !(userBackground || userShadow) && isHovered && 'border-primary/50',
         getColumnResponsiveClasses(column, deviceType)
       )}
-      style={getColumnStyles()}
+      style={{
+        ...getColumnStyles(),
+        // Apply visibility styles in preview mode
+        ...(isPreviewMode ? visibilityStyles : {})
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleColumnClick}
@@ -142,6 +158,23 @@ export const ColumnRenderer: React.FC<ColumnRendererProps> = ({
         <div className="absolute -top-6 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <span>Column</span>
+          {/* Visibility indicator */}
+          {!isVisible && (
+            <div className="flex items-center space-x-1 ml-1 px-1 py-0.5 bg-orange-500 text-white rounded text-xs">
+              <EyeOff className="h-3 w-3" />
+              <span className="capitalize">{deviceType}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Visual indicator for hidden columns in editor mode */}
+      {!isPreviewMode && !isVisible && (
+        <div className="absolute inset-0 bg-gray-200/50 border-2 border-dashed border-gray-400 rounded flex items-center justify-center z-10 pointer-events-none">
+          <div className="bg-white px-3 py-1 rounded-md shadow-sm flex items-center space-x-2 text-sm text-gray-600">
+            <EyeOff className="h-4 w-4" />
+            <span>Column hidden on {deviceType}</span>
+          </div>
         </div>
       )}
 

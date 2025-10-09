@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement, SECTION_WIDTHS, COLUMN_LAYOUTS, BackgroundImageMode } from '../types';
+import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement, SECTION_WIDTHS, COLUMN_LAYOUTS, BackgroundImageMode, ElementVisibility } from '../types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -21,6 +21,7 @@ import { ResponsiveSpacingSliders } from './ElementStyles/_shared/ResponsiveSpac
 import { DividerTypeSelector } from './DividerTypeSelector';
 import { getEffectiveResponsiveValue, hasResponsiveOverride, getInheritanceSource, getInheritanceLabel, clearResponsiveOverride } from '../utils/responsiveHelpers';
 import { useDevicePreview } from '../contexts/DevicePreviewContext';
+import { VisibilityControl } from './VisibilityControl';
 
 // Section Settings Panel
 interface SectionSettingsProps {
@@ -41,6 +42,19 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
     topDivider: false,
     bottomDivider: false
   });
+
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = section.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate({ visibility });
+  };
 
   // Helper functions for device-aware spacing conversion
   const parsePixelValue = (value: string | undefined): number => {
@@ -302,6 +316,10 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
 
   return (
     <div className="p-4 space-y-6">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <CollapsibleGroup
         title="Anchor"
         isOpen={openCards.anchor}
@@ -1049,6 +1067,19 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
     spacing: false
   });
 
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = row.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate({ visibility });
+  };
+
   // Helper functions for device-aware spacing conversion
   const parsePixelValue = (value: string | undefined): number => {
     if (!value) return 0;
@@ -1196,6 +1227,10 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
 
   return (
     <div className="p-4 space-y-6">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <CollapsibleGroup
         title="Anchor"
         isOpen={openCards.anchor}
@@ -1601,6 +1636,19 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
     content: false
   });
 
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = column.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate({ visibility });
+  };
+
   // Helper functions for device-aware spacing conversion
   const parsePixelValue = (value: string | undefined): number => {
     if (!value) return 0;
@@ -1748,6 +1796,10 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
 
   return (
     <div className="p-4 space-y-6">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <CollapsibleGroup
         title="Anchor"
         isOpen={openCards.anchor}

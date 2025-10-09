@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PageBuilderElement } from '../types';
+import { PageBuilderElement, ElementVisibility } from '../types';
+import { VisibilityControl } from './VisibilityControl';
 
 interface AdvancedPropertiesProps {
   element: PageBuilderElement;
@@ -25,9 +26,26 @@ export const GoogleMapsProperties: React.FC<AdvancedPropertiesProps> = ({
   const height = element.content.height || 400;
   const showMarker = element.content.showMarker !== false;
   const markerTitle = element.content.markerTitle || '';
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label htmlFor="maps-title">Map Title</Label>
         <Input
@@ -138,9 +156,26 @@ export const CustomHTMLProperties: React.FC<AdvancedPropertiesProps> = ({
   const html = element.content.html || '';
   const enableSyntaxHighlighting = element.content.enableSyntaxHighlighting !== false;
   const allowDangerousHTML = element.content.allowDangerousHTML || false;
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label htmlFor="html-title">HTML Block Title</Label>
         <Input
@@ -253,6 +288,19 @@ export const SocialLinksProperties: React.FC<AdvancedPropertiesProps> = ({
   const toggleSection = (section: keyof typeof sectionsOpen) => {
     setSectionsOpen(prev => ({ ...prev, [section]: !prev[section] }));
   };
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const platforms = element.content.platforms || {
     facebook: true,
@@ -291,6 +339,10 @@ export const SocialLinksProperties: React.FC<AdvancedPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label htmlFor="title">Title (Optional)</Label>
         <Input
@@ -459,6 +511,19 @@ export const SocialShareProperties: React.FC<AdvancedPropertiesProps> = ({
   const showLabels = element.content.showLabels !== false;
   const shareUrl = element.content.url || '';
   const shareText = element.content.text || '';
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const updatePlatform = (platform: string, enabled: boolean) => {
     const newPlatforms = { ...platforms, [platform]: enabled };
@@ -467,6 +532,10 @@ export const SocialShareProperties: React.FC<AdvancedPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label htmlFor="social-title">Share Title</Label>
         <Input

@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { MediaSelector } from './MediaSelector';
-import { PageBuilderElement } from '../types';
+import { PageBuilderElement, ElementVisibility } from '../types';
 import { ImageContentProperties } from './ImageContentProperties';
 import { VideoContentProperties } from './VideoContentProperties';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -18,6 +18,7 @@ import { getIconByName } from '@/components/icons/icon-sources';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { VisibilityControl } from './VisibilityControl';
 
 interface ContentPropertiesProps {
   element: PageBuilderElement;
@@ -34,6 +35,19 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
   const [sectionOptions, setSectionOptions] = React.useState<Array<{ id: string; label: string }>>([]);
   const [scrollSearch, setScrollSearch] = React.useState('');
   const [dividerDevice, setDividerDevice] = React.useState<'desktop' | 'mobile'>('desktop');
+
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   // Fetch website pages when in website context
   React.useEffect(() => {
@@ -86,15 +100,29 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
     }
   }, [element.type]);
 
+  // Universal visibility control component
+  const VisibilitySection = () => (
+    <VisibilityControl
+      visibility={currentVisibility}
+      onVisibilityChange={handleVisibilityChange}
+    />
+  );
+
   // Image element content
   if (element.type === 'image') {
-    return <ImageContentProperties element={element} onUpdate={onUpdate} />;
+    return (
+      <div className="space-y-4">
+        <VisibilitySection />
+        <ImageContentProperties element={element} onUpdate={onUpdate} />
+      </div>
+    );
   }
 
   // Heading element content
   if (element.type === 'heading') {
     return (
       <div className="space-y-4">
+        <VisibilitySection />
         <div>
           <Label htmlFor="heading-text">Heading Text</Label>
           <Textarea
@@ -132,6 +160,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
   if (element.type === 'text') {
     return (
       <div className="space-y-4">
+        <VisibilitySection />
         <div>
           <Label htmlFor="text-content">Text Content</Label>
           <Textarea
@@ -151,6 +180,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
     const linkType = element.content.linkType || (element.content.url ? 'url' : 'page');
     return (
       <div className="space-y-4">
+        <VisibilitySection />
         <div>
           <Label htmlFor="button-text">Button Text</Label>
           <Input
@@ -296,7 +326,12 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
   // Video element content
   if (element.type === 'video') {
-    return <VideoContentProperties element={element} onUpdate={onUpdate} />;
+    return (
+      <div className="space-y-4">
+        <VisibilitySection />
+        <VideoContentProperties element={element} onUpdate={onUpdate} />
+      </div>
+    );
   }
 
   // Spacer element content
@@ -307,6 +342,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
     
     return (
       <div className="space-y-4">
+        <VisibilitySection />
         <div>
           <Label htmlFor="spacer-height">Height</Label>
           <div className="space-y-2">
@@ -332,6 +368,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
     
     return (
       <div className="space-y-4">
+        <VisibilitySection />
         <div>
           <Label htmlFor="divider-style">Style</Label>
           <Select
@@ -470,6 +507,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
     return (
       <div className="space-y-4">
+        <VisibilitySection />
         <div>
           <Label htmlFor="list-style">List Style</Label>
           <Select value={style} onValueChange={(v) => setStyle(v as any)}>
@@ -610,6 +648,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
     return (
       <div className="space-y-4">
+        <VisibilitySection />
         <div>
           <MediaSelector
             value={element.content.logoUrl || ''}
@@ -764,8 +803,11 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
   // Default fallback
   return (
-    <div className="text-center text-muted-foreground text-sm py-4">
-      No content properties available for this element type.
+    <div className="space-y-4">
+      <VisibilitySection />
+      <div className="text-center text-muted-foreground text-sm py-4">
+        No content properties available for this element type.
+      </div>
     </div>
   );
 };

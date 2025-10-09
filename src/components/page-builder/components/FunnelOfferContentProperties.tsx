@@ -4,9 +4,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
-import { PageBuilderElement } from '../types';
+import { PageBuilderElement, ElementVisibility } from '../types';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 import { FunnelStepSettingsModal } from '@/components/modals/FunnelStepSettingsModal';
+import { VisibilityControl } from './VisibilityControl';
 
 interface FunnelOfferContentPropertiesProps {
   element: PageBuilderElement;
@@ -19,9 +20,26 @@ export const FunnelOfferContentProperties: React.FC<FunnelOfferContentProperties
 }) => {
   const { stepId, funnelId } = useFunnelStepContext();
   const [showStepSettings, setShowStepSettings] = React.useState(false);
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   return (
     <div className="space-y-6">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       {/* Basic Content */}
       <div className="space-y-4">
         <h3 className="text-sm font-medium">Offer Content</h3>

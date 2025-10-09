@@ -15,8 +15,8 @@ interface FormElementStylesProps {
   onStyleUpdate: (property: string, value: any) => void;
 }
 
-export const FormElementStyles: React.FC<FormElementStylesProps> = ({ 
-  element, 
+export const FormElementStyles: React.FC<FormElementStylesProps> = ({
+  element,
   onStyleUpdate 
 }) => {
   const { deviceType } = useDevicePreview();
@@ -99,7 +99,7 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
           </div>
 
           {/* Label Font Size */}
-          <div>
+        <div>
             <Label className="text-sm">Label Font Size</Label>
             <Slider
               value={[parseInt(getResponsiveValue('labelFontSize', '14'))]}
@@ -210,11 +210,11 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
               <span className="text-xs text-muted-foreground">0px</span>
               <span className="text-xs text-muted-foreground">{getResponsiveValue('fieldBorderWidth', '1')}</span>
               <span className="text-xs text-muted-foreground">10px</span>
-            </div>
           </div>
+        </div>
 
           {/* Field Corner Radius */}
-          <div>
+        <div>
             <Label className="text-sm">Field Corner Radius</Label>
             <Slider
               value={[parseInt(getResponsiveValue('fieldBorderRadius', '6'))]}
@@ -225,7 +225,7 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
               className="mt-2"
             />
             <div className="flex items-center gap-2 mt-2">
-              <Input
+          <Input
                 type="number"
                 min="0"
                 max="50"
@@ -280,7 +280,7 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
           </div>
 
           {/* Placeholder Font Size */}
-          <div>
+        <div>
             <Label className="text-sm">Placeholder Font Size</Label>
             <Slider
               value={[parseInt(getResponsiveValue('placeholderFontSize', '14'))]}
@@ -291,7 +291,7 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
               className="mt-2"
             />
             <div className="flex items-center gap-2 mt-2">
-              <Input
+          <Input
                 type="number"
                 min="8"
                 max="32"
@@ -348,16 +348,16 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
           </div>
 
           {/* Button Text Color */}
-          <div>
+        <div>
             <Label className="text-sm">Button Text Color</Label>
             <ColorPicker
               color={getResponsiveValue('buttonText', '#ffffff')}
               onChange={(color) => updateResponsiveValue('buttonText', color)}
-            />
-          </div>
+          />
+        </div>
 
           {/* Button Font Size */}
-          <div>
+        <div>
             <Label className="text-sm">Button Font Size</Label>
             <Slider
               value={[parseInt(getResponsiveValue('buttonFontSize', '16'))]}
@@ -368,7 +368,7 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
               className="mt-2"
             />
             <div className="flex items-center gap-2 mt-2">
-              <Input
+          <Input
                 type="number"
                 min="8"
                 max="32"
@@ -411,8 +411,8 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
             <ColorPicker
               color={getResponsiveValue('buttonHoverBg', '#2563eb')}
               onChange={(color) => updateResponsiveValue('buttonHoverBg', color)}
-            />
-          </div>
+          />
+        </div>
 
           {/* Button Hover Text Color */}
           <div>
@@ -529,7 +529,7 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
           </div>
 
           {/* Field Gap */}
-          <div>
+        <div>
             <Label className="text-sm">Field Gap</Label>
             <Slider
               value={[parseInt(getResponsiveValue('fieldGap', '16'))]}
@@ -540,7 +540,7 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
               className="mt-2"
             />
             <div className="flex items-center gap-2 mt-2">
-              <Input
+          <Input
                 type="number"
                 min="0"
                 max="64"

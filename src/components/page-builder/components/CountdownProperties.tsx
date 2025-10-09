@@ -6,9 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { RotateCcw } from 'lucide-react';
-import { PageBuilderElement } from '../types';
+import { PageBuilderElement, ElementVisibility } from '../types';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { VisibilityControl } from './VisibilityControl';
 
 interface CountdownPropertiesProps {
   element: PageBuilderElement;
@@ -29,6 +30,19 @@ export const CountdownProperties: React.FC<CountdownPropertiesProps> = ({
     hours: 'Hours', 
     minutes: 'Minutes',
     seconds: 'Seconds'
+  };
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
   };
 
   React.useEffect(() => {
@@ -63,6 +77,10 @@ export const CountdownProperties: React.FC<CountdownPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       {/* Timer Mode */}
       <div>
         <Label>Timer Mode</Label>

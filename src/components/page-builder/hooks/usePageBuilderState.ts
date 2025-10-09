@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { PageBuilderData, PageBuilderElement, PageBuilderSection, PageBuilderRow } from '../types';
 import { cleanupAllCustomCSS } from '../utils/customCSSManager';
+import { runMigrationIfNeeded } from '../utils/elementMigration';
 
 interface HistoryState {
   past: PageBuilderData[];
@@ -13,9 +14,12 @@ export const usePageBuilderState = (initialData?: PageBuilderData) => {
     sections: []
   };
 
+  // Run migration on initial data if needed
+  const migratedInitialData = initialData ? runMigrationIfNeeded(initialData) : defaultData;
+
   const [history, setHistory] = useState<HistoryState>({
     past: [],
-    present: initialData || defaultData,
+    present: migratedInitialData,
     future: []
   });
 

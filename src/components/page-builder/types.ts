@@ -49,6 +49,13 @@ export interface FormStyles {
   };
 }
 
+// Device visibility types
+export interface ElementVisibility {
+  desktop: boolean;
+  tablet: boolean;
+  mobile: boolean;
+}
+
 export interface PageBuilderElement {
   id: string;
   anchor?: string;
@@ -67,6 +74,7 @@ export interface PageBuilderElement {
     linkTarget?: '_blank' | '_self';
     [key: string]: any;
   };
+  visibility?: ElementVisibility;
   styles?: {
     margin?: string;
     padding?: string;
@@ -126,6 +134,7 @@ export interface PageBuilderColumn {
   width: number; // 1-12 based on grid system
   elements: PageBuilderElement[];
   customWidth?: string; // Custom width override (px, %, vw, etc.)
+  visibility?: ElementVisibility;
   styles?: {
     padding?: string;
     margin?: string;
@@ -196,6 +205,7 @@ export interface PageBuilderRow {
   columns: PageBuilderColumn[];
   columnLayout: '1' | '1-1' | '1-2' | '2-1' | '1-1-1' | '1-2-1' | '2-1-1' | '1-1-1-1' | '1-1-1-1-1' | '1-1-1-1-1-1';
   customWidth?: string; // Custom width override (px, %, vw, etc.)
+  visibility?: ElementVisibility;
   styles?: {
     padding?: string;
     margin?: string;
@@ -260,6 +270,7 @@ export interface PageBuilderSection {
   rows: PageBuilderRow[];
   width: 'full' | 'wide' | 'medium' | 'small';
   customWidth?: string; // Custom width override (px, %, vw, etc.)
+  visibility?: ElementVisibility;
   styles?: {
     padding?: string;
     margin?: string;

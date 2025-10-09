@@ -3,6 +3,7 @@ import { PageBuilderColumn } from '@/components/page-builder/types';
 import { StorefrontElement } from './StorefrontElement';
 import { cn } from '@/lib/utils';
 import { renderColumnStyles } from '@/components/page-builder/utils/styleRenderer';
+import { isElementVisible, getVisibilityStyles } from '@/components/page-builder/utils/deviceDetection';
 
 interface StorefrontColumnProps {
   column: PageBuilderColumn;
@@ -15,6 +16,15 @@ export const StorefrontColumn: React.FC<StorefrontColumnProps> = ({
   deviceType = 'desktop',
   totalColumns
 }) => {
+  // Check column visibility
+  const isVisible = isElementVisible(column.visibility, deviceType);
+  const visibilityStyles = getVisibilityStyles(column.visibility, deviceType);
+
+  // Don't render column if it's not visible on current device
+  if (!isVisible) {
+    return null;
+  }
+
   const columnStyles = renderColumnStyles(column, deviceType);
   
   return (

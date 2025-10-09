@@ -1,11 +1,12 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
-import { Plus, Trash2, Copy, GripVertical, Columns } from 'lucide-react';
+import { Plus, Trash2, Copy, GripVertical, Columns, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBuilderRow, PageBuilderElement, COLUMN_LAYOUTS, RESPONSIVE_LAYOUTS } from '../types';
 import { ColumnRenderer } from './ColumnRenderer';
 import { cn } from '@/lib/utils';
 import { renderRowStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
+import { isElementVisible, getVisibilityStyles } from '../utils/deviceDetection';
 
 interface RowRendererProps {
   row: PageBuilderRow;
@@ -68,6 +69,10 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     e.stopPropagation();
     // TODO: Implement row duplication
   };
+
+  // Check row visibility
+  const isVisible = isElementVisible(row.visibility, deviceType);
+  const visibilityStyles = getVisibilityStyles(row.visibility, deviceType);
 
   const getDeviceSpecificGridStyle = () => {
     const stackOnMobile = row.responsive?.mobile?.stackColumns !== false; // Default to true
@@ -178,6 +183,11 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     return null;
   }
 
+  // Don't render row if it's not visible on current device
+  if (!isVisible && isPreviewMode) {
+    return null;
+  }
+
   return (
     <div
       ref={drop}
@@ -190,9 +200,15 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
         // Only apply border/background styles if not in preview mode and no user background
         !isPreviewMode && !(userBackground || userShadow) && 'border border-dashed border-blue-400',
         !isPreviewMode && !(userBackground || userShadow) && isHovered && 'border-blue-500',
-        !isPreviewMode && !(userBackground || userShadow) && isOver && 'border-blue-600'
+        !isPreviewMode && !(userBackground || userShadow) && isOver && 'border-blue-600',
+        // Apply visibility styles in preview mode
+        isPreviewMode && !isVisible && 'hidden'
       )}
-      style={getRowStyles()}
+      style={{
+        ...getRowStyles(),
+        // Apply visibility styles in preview mode
+        ...(isPreviewMode ? visibilityStyles : {})
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleRowClick}
@@ -210,6 +226,13 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
           <GripVertical className="h-3 w-3" />
           <Columns className="h-3 w-3" />
           <span>Row</span>
+          {/* Visibility indicator */}
+          {!isVisible && (
+            <div className="flex items-center space-x-1 ml-1 px-1 py-0.5 bg-orange-500 text-white rounded text-xs">
+              <EyeOff className="h-3 w-3" />
+              <span className="capitalize">{deviceType}</span>
+            </div>
+          )}
           <div className="flex items-center space-x-1 ml-2">
             <Button
               size="sm"
@@ -238,6 +261,16 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
             >
               <Plus className="h-3 w-3" />
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Visual indicator for hidden rows in editor mode */}
+      {!isPreviewMode && !isVisible && (
+        <div className="absolute inset-0 bg-gray-200/50 border-2 border-dashed border-gray-400 rounded flex items-center justify-center z-10 pointer-events-none">
+          <div className="bg-white px-3 py-1 rounded-md shadow-sm flex items-center space-x-2 text-sm text-gray-600">
+            <EyeOff className="h-4 w-4" />
+            <span>Row hidden on {deviceType}</span>
           </div>
         </div>
       )}

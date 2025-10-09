@@ -8,11 +8,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { useStoreProducts, useStoreCategories } from '@/hooks/useStoreData';
-import { PageBuilderElement } from '../types';
+import { PageBuilderElement, ElementVisibility } from '../types';
 import { Trash2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useStore } from '@/contexts/StoreContext';
+import { VisibilityControl } from './VisibilityControl';
 
 interface EcommerceContentPropertiesProps {
   element: PageBuilderElement;
@@ -24,6 +25,19 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
   onUpdate
 }) => {
   const { store } = useStore();
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
   
   // Resolve websiteId for filtering product/category lists
   const resolvedWebsiteId = useResolvedWebsiteId(element);
@@ -83,6 +97,10 @@ export const EcommerceContentProperties: React.FC<EcommerceContentPropertiesProp
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label className="text-xs">Title</Label>
         <Input
@@ -312,9 +330,26 @@ export const FeaturedProductsContentProperties: React.FC<EcommerceContentPropert
   const { products } = useStoreProducts({ 
     websiteId: shouldShowData ? resolvedWebsiteId : undefined 
   });
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label className="text-xs">Filter by Categories</Label>
         <div className="space-y-2 max-h-40 overflow-y-auto">
@@ -489,6 +524,19 @@ export const ProductCategoriesContentProperties: React.FC<EcommerceContentProper
   
   const { categories } = useStoreCategories(resolvedWebsiteId);
   const selectedCategoryIds = element.content.selectedCategoryIds || [];
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const handleCategoryToggle = (categoryId: string) => {
     const updatedIds = selectedCategoryIds.includes(categoryId)
@@ -499,6 +547,10 @@ export const ProductCategoriesContentProperties: React.FC<EcommerceContentProper
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label className="text-xs">Title</Label>
         <Input
@@ -572,8 +624,25 @@ export const PriceContentProperties: React.FC<EcommerceContentPropertiesProps> =
     websiteId: shouldShowData ? resolvedWebsiteId : undefined 
   });
 
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
+
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label className="text-xs">Select Product</Label>
         <Select
@@ -672,8 +741,25 @@ export const ContactFormContentProperties: React.FC<EcommerceContentPropertiesPr
     websiteId: shouldShowData ? resolvedWebsiteId : undefined 
   });
 
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
+
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label className="text-xs">Form Title</Label>
         <Input
@@ -784,8 +870,25 @@ export const NewsletterContentProperties: React.FC<EcommerceContentPropertiesPro
   element,
   onUpdate
 }) => {
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
+
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label className="text-xs">Title</Label>
         <Input
@@ -1010,10 +1113,27 @@ export const ProductsPageContentProperties: React.FC<EcommerceContentPropertiesP
 export const RelatedProductsContentProperties: React.FC<EcommerceContentPropertiesProps> = ({ element, onUpdate }) => {
   const resolvedWebsiteId = useResolvedWebsiteId(element);
   const shouldShowData = resolvedWebsiteId !== undefined;
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
   const { categories } = useStoreCategories(shouldShowData ? resolvedWebsiteId : undefined);
   const selected = element.content.categoryIds || [];
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label className="text-xs">Title</Label>
         <Input value={element.content.title || ''} onChange={(e) => onUpdate('title', e.target.value)} placeholder="Related Products" />
@@ -1123,6 +1243,19 @@ export const WeeklyFeaturedElementProperties: React.FC<EcommerceContentPropertie
   
   const sourceType = element.content.sourceType || 'auto';
   const selectedProductIds = element.content.selectedProductIds || [];
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const handleProductToggle = (productId: string) => {
     const updatedIds = selectedProductIds.includes(productId)
@@ -1133,6 +1266,10 @@ export const WeeklyFeaturedElementProperties: React.FC<EcommerceContentPropertie
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label className="text-xs">Title</Label>
         <Input value={element.content.title || ''} onChange={(e) => onUpdate('title', e.target.value)} placeholder="Weekly Featured Products" />

@@ -464,7 +464,7 @@ const CategoryNavigationElement: React.FC<{
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   columnCount?: number;
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, deviceType = 'desktop', columnCount = 1 }) => {
+}> = ({ element, isEditing = false, deviceType = 'desktop', columnCount = 1 }) => {
   // Resolve websiteId for filtering
   const resolvedWebsiteId = useResolvedWebsiteId(element);
   const { categories, loading } = useStoreCategories(resolvedWebsiteId);
@@ -557,7 +557,8 @@ const CategoryNavigationElement: React.FC<{
   };
 
   const handleCategoryClick = (category: any) => {
-    if (enableLinks) {
+    // Don't navigate in editing mode to allow properties panel to open
+    if (enableLinks && !isEditing) {
       window.location.href = `${paths.products}?category=${category.slug}`;
     }
   };

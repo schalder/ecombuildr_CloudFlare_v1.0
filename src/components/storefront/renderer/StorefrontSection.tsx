@@ -4,6 +4,7 @@ import { StorefrontRow } from './StorefrontRow';
 import { DividerRenderer } from '@/components/page-builder/dividers/DividerRenderer';
 import { cn } from '@/lib/utils';
 import { renderSectionStyles } from '@/components/page-builder/utils/styleRenderer';
+import { isElementVisible, getVisibilityStyles } from '@/components/page-builder/utils/deviceDetection';
 
 interface StorefrontSectionProps {
   section: PageBuilderSection;
@@ -14,6 +15,15 @@ export const StorefrontSection: React.FC<StorefrontSectionProps> = ({
   section,
   deviceType = 'desktop'
 }) => {
+  // Check section visibility
+  const isVisible = isElementVisible(section.visibility, deviceType);
+  const visibilityStyles = getVisibilityStyles(section.visibility, deviceType);
+
+  // Don't render section if it's not visible on current device
+  if (!isVisible) {
+    return null;
+  }
+
   const sectionStyles = renderSectionStyles(section, deviceType);
   
   const getSectionWidthClasses = () => {

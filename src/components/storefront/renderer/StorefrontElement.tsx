@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
 import { getDeviceAwareSpacing } from '@/components/page-builder/utils/styleRenderer';
 import { useCustomCSS } from '@/components/page-builder/utils/customCSSManager';
+import { isElementVisible, getVisibilityStyles } from '@/components/page-builder/utils/deviceDetection';
 
 interface StorefrontElementProps {
   element: PageBuilderElement;
@@ -58,6 +59,10 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
   const [isLoading, setIsLoading] = useState(!elementDef);
   const [showFallback, setShowFallback] = useState(false);
 
+  // Check element visibility
+  const isVisible = isElementVisible(element.visibility, deviceType);
+  const visibilityStyles = getVisibilityStyles(element.visibility, deviceType);
+
   // Move useMemo to top level - this was causing the hooks rule violation
   const wrapperStyle = useMemo<React.CSSProperties>(() => {
     // Use mergeResponsiveStyles to properly handle shorthand margin/padding parsing
@@ -84,8 +89,11 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
       if (mergedStyles.marginLeft) style.marginLeft = mergedStyles.marginLeft;
     }
     
+    // Apply visibility styles
+    Object.assign(style, visibilityStyles);
+    
     return style;
-  }, [element, deviceType]);
+  }, [element, deviceType, visibilityStyles]);
 
   useEffect(() => {
     let mounted = true;
@@ -209,6 +217,11 @@ export const StorefrontElement: React.FC<StorefrontElementProps> = ({
 
   if (showFallback || !elementDef) {
     return <ElementNotSupported elementType={element.type} />;
+  }
+
+  // Don't render element if it's not visible on current device
+  if (!isVisible) {
+    return null;
   }
 
   const ElementComponent = elementDef.component;

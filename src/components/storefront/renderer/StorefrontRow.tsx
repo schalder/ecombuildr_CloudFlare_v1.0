@@ -3,6 +3,7 @@ import { PageBuilderRow, RESPONSIVE_LAYOUTS } from '@/components/page-builder/ty
 import { StorefrontColumn } from './StorefrontColumn';
 import { cn } from '@/lib/utils';
 import { renderRowStyles } from '@/components/page-builder/utils/styleRenderer';
+import { isElementVisible, getVisibilityStyles } from '@/components/page-builder/utils/deviceDetection';
 
 // Helper function to get responsive grid classes based on device type
 function getResponsiveGridClasses(columnLayout: string, deviceType: 'desktop' | 'tablet' | 'mobile'): string {
@@ -32,6 +33,15 @@ export const StorefrontRow: React.FC<StorefrontRowProps> = ({
   row,
   deviceType = 'desktop'
 }) => {
+  // Check row visibility
+  const isVisible = isElementVisible(row.visibility, deviceType);
+  const visibilityStyles = getVisibilityStyles(row.visibility, deviceType);
+
+  // Don't render row if it's not visible on current device
+  if (!isVisible) {
+    return null;
+  }
+
   const rowStyles = renderRowStyles(row, deviceType);
   const responsiveLayoutClass = getResponsiveGridClasses(row.columnLayout, deviceType);
   

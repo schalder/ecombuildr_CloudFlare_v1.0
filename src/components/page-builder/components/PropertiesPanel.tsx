@@ -114,12 +114,21 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   };
 
   const handleContentUpdate = (property: string, value: any) => {
-    onUpdateElement(selectedElement.id, {
-      content: {
-        ...selectedElement.content,
-        [property]: value
-      }
-    });
+    if (property === 'visibility') {
+      // Handle visibility as a top-level property
+      console.log('PropertiesPanel: Updating visibility for element', selectedElement.id, 'to', value);
+      onUpdateElement(selectedElement.id, {
+        visibility: value
+      });
+    } else {
+      // Handle other content properties normally
+      onUpdateElement(selectedElement.id, {
+        content: {
+          ...selectedElement.content,
+          [property]: value
+        }
+      });
+    }
   };
 
   // Determine which style component to render based on element type

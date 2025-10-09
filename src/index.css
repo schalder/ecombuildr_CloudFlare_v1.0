@@ -468,3 +468,66 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
   margin-top: 0 !important;
   margin-bottom: 0 !important;
 }
+
+/* Device Visibility Classes */
+@layer utilities {
+  /* Hide on specific devices */
+  .hide-on-desktop {
+    @media (min-width: 1024px) {
+      display: none !important;
+    }
+  }
+  
+  .hide-on-tablet {
+    @media (min-width: 768px) and (max-width: 1023px) {
+      display: none !important;
+    }
+  }
+  
+  .hide-on-mobile {
+    @media (max-width: 767px) {
+      display: none !important;
+    }
+  }
+  
+  /* Show only on specific devices */
+  .show-only-desktop {
+    display: none !important;
+    @media (min-width: 1024px) {
+      display: block !important;
+    }
+  }
+  
+  .show-only-tablet {
+    display: none !important;
+    @media (min-width: 768px) and (max-width: 1023px) {
+      display: block !important;
+    }
+  }
+  
+  .show-only-mobile {
+    display: none !important;
+    @media (max-width: 767px) {
+      display: block !important;
+    }
+  }
+  
+  /* Flexible visibility classes */
+  .element-hidden-desktop {
+    @media (min-width: 1024px) {
+      display: none !important;
+    }
+  }
+  
+  .element-hidden-tablet {
+    @media (min-width: 768px) and (max-width: 1023px) {
+      display: none !important;
+    }
+  }
+  
+  .element-hidden-mobile {
+    @media (max-width: 767px) {
+      display: none !important;
+    }
+  }
+}

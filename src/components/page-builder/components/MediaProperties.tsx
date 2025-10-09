@@ -9,8 +9,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { MediaSelector } from './MediaSelector';
 import { CompactMediaSelector } from './CompactMediaSelector';
 import { Plus, Trash2, GripVertical, Monitor, Tablet, Smartphone } from 'lucide-react';
-import { PageBuilderElement } from '../types';
+import { PageBuilderElement, ElementVisibility } from '../types';
 import { useDevicePreview } from '../contexts/DevicePreviewContext';
+import { VisibilityControl } from './VisibilityControl';
 
 interface MediaPropertiesProps {
   element: PageBuilderElement;
@@ -27,6 +28,19 @@ export const ImageGalleryProperties: React.FC<MediaPropertiesProps> = ({
   const gap = element.content.gap || 'md';
   const aspectRatio = element.content.aspectRatio || 'square';
   const showLightbox = element.content.showLightbox !== false;
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const addImage = () => {
     const newImages = [...images, ''];
@@ -46,6 +60,10 @@ export const ImageGalleryProperties: React.FC<MediaPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label htmlFor="columns">Columns</Label>
         <Select value={columns.toString()} onValueChange={(value) => onUpdate('columns', parseInt(value))}>
@@ -151,6 +169,19 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
   const pauseOnHover = element.content.pauseOnHover !== false;
   const height = element.content.height || 384;
   const imageFit = element.content.imageFit || 'cover';
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   // Get current visibleImagesByDevice with proper defaults
   const currentVisibleImagesByDevice = React.useMemo(() => {
@@ -188,6 +219,10 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label htmlFor="carousel-height">Carousel Height (px)</Label>
         <Input
@@ -359,6 +394,19 @@ export const VideoPlaylistProperties: React.FC<MediaPropertiesProps> = ({
   const autoPlay = element.content.autoPlay || false;
   const showControls = element.content.showControls !== false;
   const muted = element.content.muted || false;
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const addVideo = () => {
     const newVideos = [...videos, { title: '', url: '', thumbnail: '' }];
@@ -378,6 +426,10 @@ export const VideoPlaylistProperties: React.FC<MediaPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div className="flex items-center space-x-2">
         <Switch
           id="video-autoplay"

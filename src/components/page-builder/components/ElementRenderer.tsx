@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
-import { Trash2, Copy, Settings, GripVertical } from 'lucide-react';
+import { Trash2, Copy, Settings, GripVertical, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from '../elements';
@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { mergeResponsiveStyles } from '../utils/responsiveStyles';
 import { getDeviceAwareSpacing } from '../utils/styleRenderer';
 import { useCustomCSS } from '../utils/customCSSManager';
+import { isElementVisible, getVisibilityStyles } from '../utils/deviceDetection';
 
 interface ElementRendererProps {
   element: PageBuilderElement;
@@ -181,6 +182,15 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     onUpdateElement(element.id, updates);
   };
 
+  // Check element visibility
+  const isVisible = isElementVisible(element.visibility, deviceType);
+  const visibilityStyles = getVisibilityStyles(element.visibility, deviceType);
+  
+  // Debug logging
+  if (element.id.includes('test') || element.type === 'heading') {
+    console.log('ElementRenderer: Element', element.id, 'visibility:', element.visibility, 'deviceType:', deviceType, 'isVisible:', isVisible);
+  }
+
   if (!elementType) {
     return (
       <div className="p-4 border border-destructive/50 rounded bg-destructive/10 text-destructive text-sm">
@@ -254,7 +264,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       className={cn(
         'relative group transition-all duration-200 w-full',
         isDragging && 'opacity-50',
-        isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50'
+        isSelected && !isPreviewMode && 'ring-2 ring-primary ring-opacity-50',
+        // Apply visibility styles in preview mode only
+        isPreviewMode && !isVisible && 'hidden'
       )}
       style={{
         ...(!isMediaElement ? {
@@ -269,7 +281,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         // Apply user-defined border radius to selection ring when selected
         ...(isSelected && !isPreviewMode && mergedStyles.borderRadius ? {
           borderRadius: mergedStyles.borderRadius
-        } : {})
+        } : {}),
+        // Apply visibility styles in preview mode
+        ...(isPreviewMode ? visibilityStyles : {})
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -280,6 +294,13 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         <div className="absolute -top-8 left-0 flex items-center space-x-1 bg-accent text-accent-foreground px-2 py-1 rounded-md text-xs z-20">
           <GripVertical className="h-3 w-3" />
           <span className="capitalize">{elementType.name}</span>
+          {/* Visibility indicator */}
+          {!isVisible && (
+            <div className="flex items-center space-x-1 ml-1 px-1 py-0.5 bg-orange-500 text-white rounded text-xs">
+              <EyeOff className="h-3 w-3" />
+              <span className="capitalize">{deviceType}</span>
+            </div>
+          )}
           <div className="flex items-center space-x-1 ml-2">
             <Button
               size="sm"
@@ -297,6 +318,16 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
             >
               <Trash2 className="h-3 w-3" />
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Visual indicator for hidden elements in editor mode */}
+      {!isPreviewMode && !isVisible && (
+        <div className="absolute inset-0 bg-gray-200/50 border-2 border-dashed border-gray-400 rounded flex items-center justify-center z-10 pointer-events-none">
+          <div className="bg-white px-3 py-1 rounded-md shadow-sm flex items-center space-x-2 text-sm text-gray-600">
+            <EyeOff className="h-4 w-4" />
+            <span>Hidden on {deviceType}</span>
           </div>
         </div>
       )}

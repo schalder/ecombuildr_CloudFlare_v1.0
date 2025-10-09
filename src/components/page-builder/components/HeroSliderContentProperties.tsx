@@ -10,8 +10,9 @@ import { Separator } from '@/components/ui/separator';
 import { Card } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Trash2, Plus, Move, ChevronDown, ChevronRight } from 'lucide-react';
-import { PageBuilderElement } from '../types';
+import { PageBuilderElement, ElementVisibility } from '../types';
 import { MediaSelector } from './MediaSelector';
+import { VisibilityControl } from './VisibilityControl';
 
 interface HeroSliderContentPropertiesProps {
   element: PageBuilderElement;
@@ -37,6 +38,19 @@ export const HeroSliderContentProperties: React.FC<HeroSliderContentPropertiesPr
   const content = element.content as any;
   const slides = content?.slides || [];
   const [openSlides, setOpenSlides] = useState<Set<string>>(new Set([slides[0]?.id])); // First slide open by default
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const addSlide = () => {
     const newSlide: Slide = {
@@ -93,6 +107,10 @@ export const HeroSliderContentProperties: React.FC<HeroSliderContentPropertiesPr
 
   return (
     <div className="space-y-6">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       {/* Layout Settings */}
       <div className="space-y-3">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Layout</h4>

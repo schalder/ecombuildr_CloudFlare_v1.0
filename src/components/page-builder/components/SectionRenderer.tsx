@@ -1,12 +1,13 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
-import { Plus, Trash2, Copy, Settings, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Copy, Settings, GripVertical, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageBuilderSection, PageBuilderElement } from '../types';
 import { RowRenderer } from './RowRenderer';
 import { DividerRenderer } from '../dividers/DividerRenderer';
 import { cn } from '@/lib/utils';
 import { renderSectionStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
+import { isElementVisible, getVisibilityStyles } from '../utils/deviceDetection';
 
 interface SectionRendererProps {
   section: PageBuilderSection;
@@ -71,6 +72,10 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
     e.stopPropagation();
     // TODO: Implement section duplication
   };
+
+  // Check section visibility
+  const isVisible = isElementVisible(section.visibility, deviceType);
+  const visibilityStyles = getVisibilityStyles(section.visibility, deviceType);
 
   const getSectionWidth = () => {
     // If custom width is set, don't apply preset classes
@@ -150,6 +155,11 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   const userBackground = hasUserBackground(section.styles);
   const userShadow = hasUserShadow(section.styles);
 
+  // Don't render section if it's not visible on current device
+  if (!isVisible && isPreviewMode) {
+    return null;
+  }
+
   return (
     <div
       ref={drop}
@@ -164,9 +174,15 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         !isPreviewMode && !(userBackground || userShadow) && isHovered && !isSelected && 'border-primary/30',
         !isPreviewMode && !(userBackground || userShadow) && isHovered && !isSelected && 'bg-primary/2',
         !isPreviewMode && !(userBackground || userShadow) && !isHovered && !isSelected && 'border-transparent',
-        !isPreviewMode && !(userBackground || userShadow) && isOver && 'bg-primary/5'
+        !isPreviewMode && !(userBackground || userShadow) && isOver && 'bg-primary/5',
+        // Apply visibility styles in preview mode
+        isPreviewMode && !isVisible && 'hidden'
       )}
-      style={getSectionStyles()}
+      style={{
+        ...getSectionStyles(),
+        // Apply visibility styles in preview mode
+        ...(isPreviewMode ? visibilityStyles : {})
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleSectionClick}
@@ -186,6 +202,13 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
         <div className="absolute -top-10 left-0 flex items-center space-x-1 bg-primary text-primary-foreground px-2 py-1 rounded-md text-xs z-10">
           <GripVertical className="h-3 w-3" />
           <span>Section</span>
+          {/* Visibility indicator */}
+          {!isVisible && (
+            <div className="flex items-center space-x-1 ml-1 px-1 py-0.5 bg-orange-500 text-white rounded text-xs">
+              <EyeOff className="h-3 w-3" />
+              <span className="capitalize">{deviceType}</span>
+            </div>
+          )}
           <div className="flex items-center space-x-1 ml-2">
             <Button
               size="sm"
@@ -224,6 +247,16 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
       )}
 
       {/* Bottom Divider */}
+      {/* Visual indicator for hidden sections in editor mode */}
+      {!isPreviewMode && !isVisible && (
+        <div className="absolute inset-0 bg-gray-200/50 border-2 border-dashed border-gray-400 rounded flex items-center justify-center z-10 pointer-events-none">
+          <div className="bg-white px-3 py-1 rounded-md shadow-sm flex items-center space-x-2 text-sm text-gray-600">
+            <EyeOff className="h-4 w-4" />
+            <span>Section hidden on {deviceType}</span>
+          </div>
+        </div>
+      )}
+
       {section.styles?.bottomDivider?.enabled && (
         <DividerRenderer divider={section.styles.bottomDivider} position="bottom" />
       )}

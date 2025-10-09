@@ -9,10 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Trash2, GripVertical, Settings, Send, ChevronDown, ChevronRight } from 'lucide-react';
-import { PageBuilderElement, FormField } from '../types';
+import { PageBuilderElement, FormField, ElementVisibility } from '../types';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { VisibilityControl } from './VisibilityControl';
 
 interface FormPropertiesProps {
   element: PageBuilderElement;
@@ -28,6 +29,19 @@ interface FunnelStep {
 export const FormProperties: React.FC<FormPropertiesProps> = ({ element, onUpdate }) => {
   const { funnelId } = useParams();
   const [funnelSteps, setFunnelSteps] = useState<FunnelStep[]>([]);
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
   const [showAddField, setShowAddField] = useState(false);
   const [newField, setNewField] = useState<Partial<FormField>>({
     type: 'singleLineText',
@@ -122,6 +136,10 @@ export const FormProperties: React.FC<FormPropertiesProps> = ({ element, onUpdat
 
   return (
     <div className="space-y-6">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       {/* Form Settings */}
       <Card>
         <CardHeader 

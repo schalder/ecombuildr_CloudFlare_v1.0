@@ -5,7 +5,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { MediaSelector } from './MediaSelector';
-import { PageBuilderElement } from '../types';
+import { PageBuilderElement, ElementVisibility } from '../types';
+import { VisibilityControl } from './VisibilityControl';
 
 interface ImageFeatureContentPropertiesProps {
   element: PageBuilderElement;
@@ -22,9 +23,26 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
   const altText = element.content.altText || '';
   const imagePosition = element.content.imagePosition || 'left';
   const imageWidth = element.content.imageWidth || 25;
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label htmlFor="headline">Feature Headline</Label>
         <Input

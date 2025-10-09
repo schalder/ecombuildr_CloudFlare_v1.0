@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ImageUpload } from '@/components/ui/image-upload';
-import { PageBuilderElement } from '../types';
+import { PageBuilderElement, ElementVisibility } from '../types';
+import { VisibilityControl } from './VisibilityControl';
 
 interface ContentPropertiesProps {
   element: PageBuilderElement;
@@ -23,9 +24,26 @@ export const TestimonialContentProperties: React.FC<ContentPropertiesProps> = ({
   const handleRatingChange = (rating: number) => {
     onUpdate('rating', rating);
   };
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label className="text-xs">Testimonial Text</Label>
         <Textarea
@@ -107,6 +125,19 @@ export const FAQContentProperties: React.FC<ContentPropertiesProps> = ({
   onUpdate
 }) => {
   const faqs = element.content.faqs || [];
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const addFAQ = () => {
     const newFAQs = [...faqs, { question: 'New question?', answer: 'Your answer here.' }];
@@ -135,6 +166,10 @@ export const FAQContentProperties: React.FC<ContentPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div>
         <Label className="text-xs">FAQ Title</Label>
         <Input
@@ -226,6 +261,19 @@ export const AccordionContentProperties: React.FC<ContentPropertiesProps> = ({
   onUpdate
 }) => {
   const items = element.content.items || [];
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const addItem = () => {
     const newItems = [...items, { title: 'New Section', content: 'Section content here.' }];
@@ -254,6 +302,10 @@ export const AccordionContentProperties: React.FC<ContentPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div className="flex items-center justify-between">
         <Label className="text-xs">Accordion Sections</Label>
         <Button size="sm" onClick={addItem} className="h-7">
@@ -344,6 +396,19 @@ export const TabsContentProperties: React.FC<ContentPropertiesProps> = ({
   onUpdate
 }) => {
   const tabs = element.content.tabs || [];
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
 
   const addTab = () => {
     const newTabs = [...tabs, { 
@@ -376,6 +441,10 @@ export const TabsContentProperties: React.FC<ContentPropertiesProps> = ({
 
   return (
     <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
       <div className="flex items-center justify-between">
         <Label className="text-xs">Tab Management</Label>
         <Button size="sm" onClick={addTab} className="h-7">
