@@ -24,6 +24,7 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
   const [headerOpen, setHeaderOpen] = useState(false);
   const [backgroundsOpen, setBackgroundsOpen] = useState(false);
   const [spacingOpen, setSpacingOpen] = useState(false);
+  const [orderBumpOpen, setOrderBumpOpen] = useState(false);
   
   const styles = ((element.styles as any)?.checkoutButton) || { responsive: { desktop: {}, tablet: {}, mobile: {} } } as any;
   
@@ -48,6 +49,9 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
 
   // Background colors
   const backgrounds = ((element.styles as any)?.checkoutBackgrounds) || {} as any;
+
+  // Order bump styles
+  const orderBumpStyles = ((element.styles as any)?.orderBump) || { responsive: { desktop: {}, tablet: {}, mobile: {} } } as any;
 
   const updateResponsive = (key: string, value: any) => {
     const next = {
@@ -88,6 +92,18 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
 
   const updateBackgrounds = (key: 'containerBg' | 'formBg' | 'summaryBg' | 'formBorderColor' | 'formBorderWidth' | 'summaryBorderColor' | 'summaryBorderWidth', value: any) => {
     onStyleUpdate('checkoutBackgrounds', { ...backgrounds, [key]: value });
+  };
+
+  const updateOrderBumpResponsive = (key: string, value: any) => {
+    const next = {
+      responsive: {
+        desktop: { ...(orderBumpStyles.responsive?.desktop || {}) },
+        tablet: { ...(orderBumpStyles.responsive?.tablet || {}) },
+        mobile: { ...(orderBumpStyles.responsive?.mobile || {}) },
+      }
+    } as any;
+    next.responsive[tab] = { ...next.responsive[tab], [key]: value };
+    onStyleUpdate('orderBump', next);
   };
 
   return (
@@ -764,6 +780,467 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
                 deviceType="mobile"
                 onStyleUpdate={onStyleUpdate}
               />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CollapsibleGroup>
+
+      <Separator />
+
+      <CollapsibleGroup title="Order Bump Styling" isOpen={orderBumpOpen} onToggle={setOrderBumpOpen}>
+        <p className="text-xs text-muted-foreground mb-3">Customize the appearance of order bump labels, descriptions, and product images</p>
+
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="desktop" className="flex items-center gap-2"><Monitor className="h-3 w-3" />Desktop</TabsTrigger>
+            <TabsTrigger value="tablet" className="flex items-center gap-2"><Tablet className="h-3 w-3" />Tablet</TabsTrigger>
+            <TabsTrigger value="mobile" className="flex items-center gap-2"><Smartphone className="h-3 w-3" />Mobile</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="desktop" className="space-y-3 mt-3">
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Bump Label Styling</h5>
+              <div>
+                <Label className="text-xs">Font Size</Label>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                    value={[parseInt(getEffectiveValue(orderBumpStyles, 'labelFontSize', '14').replace(/\D/g, ''))]} 
+                    onValueChange={(val) => updateOrderBumpResponsive('labelFontSize', `${val[0]}px`)} 
+                    min={10} 
+                    max={24} 
+                    step={1} 
+                    className="flex-1" 
+                  />
+                  <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(orderBumpStyles, 'labelFontSize', '14px')}</span>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Font Weight</Label>
+                <Select 
+                  value={getEffectiveValue(orderBumpStyles, 'labelFontWeight', '600')} 
+                  onValueChange={(val) => updateOrderBumpResponsive('labelFontWeight', val)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="300">Light (300)</SelectItem>
+                    <SelectItem value="400">Normal (400)</SelectItem>
+                    <SelectItem value="500">Medium (500)</SelectItem>
+                    <SelectItem value="600">Semi Bold (600)</SelectItem>
+                    <SelectItem value="700">Bold (700)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <ColorPicker 
+                    label="Label Text Color"
+                    color={getEffectiveValue(orderBumpStyles, 'labelColor', 'hsl(var(--success))')}
+                    onChange={(val) => updateOrderBumpResponsive('labelColor', val)}
+                  />
+                </div>
+                <div>
+                  <ColorPicker 
+                    label="Label Background Color"
+                    color={getEffectiveValue(orderBumpStyles, 'labelBgColor', 'hsl(var(--warning-light))')}
+                    onChange={(val) => updateOrderBumpResponsive('labelBgColor', val)}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Line Height</Label>
+                <Input 
+                  value={getEffectiveValue(orderBumpStyles, 'labelLineHeight', '1.5')} 
+                  onChange={(e) => updateOrderBumpResponsive('labelLineHeight', e.target.value)} 
+                  placeholder="1.5" 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Bump Description Styling</h5>
+              <div>
+                <Label className="text-xs">Font Size</Label>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                    value={[parseInt(getEffectiveValue(orderBumpStyles, 'descFontSize', '12').replace(/\D/g, ''))]} 
+                    onValueChange={(val) => updateOrderBumpResponsive('descFontSize', `${val[0]}px`)} 
+                    min={8} 
+                    max={18} 
+                    step={1} 
+                    className="flex-1" 
+                  />
+                  <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(orderBumpStyles, 'descFontSize', '12px')}</span>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Font Weight</Label>
+                <Select 
+                  value={getEffectiveValue(orderBumpStyles, 'descFontWeight', '400')} 
+                  onValueChange={(val) => updateOrderBumpResponsive('descFontWeight', val)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="300">Light (300)</SelectItem>
+                    <SelectItem value="400">Normal (400)</SelectItem>
+                    <SelectItem value="500">Medium (500)</SelectItem>
+                    <SelectItem value="600">Semi Bold (600)</SelectItem>
+                    <SelectItem value="700">Bold (700)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <ColorPicker 
+                  label="Description Text Color"
+                  color={getEffectiveValue(orderBumpStyles, 'descColor', 'hsl(var(--muted-foreground))')}
+                  onChange={(val) => updateOrderBumpResponsive('descColor', val)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Line Height</Label>
+                <Input 
+                  value={getEffectiveValue(orderBumpStyles, 'descLineHeight', '1.4')} 
+                  onChange={(e) => updateOrderBumpResponsive('descLineHeight', e.target.value)} 
+                  placeholder="1.4" 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Product Image Size</h5>
+              <div>
+                <Label className="text-xs">Image Width</Label>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                    value={[parseInt(getEffectiveValue(orderBumpStyles, 'imageWidth', '48').replace(/\D/g, ''))]} 
+                    onValueChange={(val) => updateOrderBumpResponsive('imageWidth', `${val[0]}px`)} 
+                    min={24} 
+                    max={300} 
+                    step={1} 
+                    className="flex-1" 
+                  />
+                  <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(orderBumpStyles, 'imageWidth', '48px')}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Section Background</h5>
+              <div>
+                <ColorPicker 
+                  label="Section Background Color"
+                  color={getEffectiveValue(orderBumpStyles, 'sectionBgColor', '#ffffff')}
+                  onChange={(val) => updateOrderBumpResponsive('sectionBgColor', val)}
+                />
+              </div>
+              <div>
+                <ColorPicker 
+                  label="Border Color"
+                  color={getEffectiveValue(orderBumpStyles, 'borderColor', 'hsl(var(--warning-border))')}
+                  onChange={(val) => updateOrderBumpResponsive('borderColor', val)}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="tablet" className="space-y-3 mt-3">
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Bump Label Styling</h5>
+              <div>
+                <Label className="text-xs">Font Size</Label>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                    value={[parseInt(getEffectiveValue(orderBumpStyles, 'labelFontSize', '14').replace(/\D/g, ''))]} 
+                    onValueChange={(val) => updateOrderBumpResponsive('labelFontSize', `${val[0]}px`)} 
+                    min={10} 
+                    max={24} 
+                    step={1} 
+                    className="flex-1" 
+                  />
+                  <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(orderBumpStyles, 'labelFontSize', '14px')}</span>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Font Weight</Label>
+                <Select 
+                  value={getEffectiveValue(orderBumpStyles, 'labelFontWeight', '600')} 
+                  onValueChange={(val) => updateOrderBumpResponsive('labelFontWeight', val)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="300">Light (300)</SelectItem>
+                    <SelectItem value="400">Normal (400)</SelectItem>
+                    <SelectItem value="500">Medium (500)</SelectItem>
+                    <SelectItem value="600">Semi Bold (600)</SelectItem>
+                    <SelectItem value="700">Bold (700)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <ColorPicker 
+                    label="Label Text Color"
+                    color={getEffectiveValue(orderBumpStyles, 'labelColor', 'hsl(var(--success))')}
+                    onChange={(val) => updateOrderBumpResponsive('labelColor', val)}
+                  />
+                </div>
+                <div>
+                  <ColorPicker 
+                    label="Label Background Color"
+                    color={getEffectiveValue(orderBumpStyles, 'labelBgColor', 'hsl(var(--warning-light))')}
+                    onChange={(val) => updateOrderBumpResponsive('labelBgColor', val)}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Line Height</Label>
+                <Input 
+                  value={getEffectiveValue(orderBumpStyles, 'labelLineHeight', '1.5')} 
+                  onChange={(e) => updateOrderBumpResponsive('labelLineHeight', e.target.value)} 
+                  placeholder="1.5" 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Bump Description Styling</h5>
+              <div>
+                <Label className="text-xs">Font Size</Label>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                    value={[parseInt(getEffectiveValue(orderBumpStyles, 'descFontSize', '12').replace(/\D/g, ''))]} 
+                    onValueChange={(val) => updateOrderBumpResponsive('descFontSize', `${val[0]}px`)} 
+                    min={8} 
+                    max={18} 
+                    step={1} 
+                    className="flex-1" 
+                  />
+                  <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(orderBumpStyles, 'descFontSize', '12px')}</span>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Font Weight</Label>
+                <Select 
+                  value={getEffectiveValue(orderBumpStyles, 'descFontWeight', '400')} 
+                  onValueChange={(val) => updateOrderBumpResponsive('descFontWeight', val)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="300">Light (300)</SelectItem>
+                    <SelectItem value="400">Normal (400)</SelectItem>
+                    <SelectItem value="500">Medium (500)</SelectItem>
+                    <SelectItem value="600">Semi Bold (600)</SelectItem>
+                    <SelectItem value="700">Bold (700)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <ColorPicker 
+                  label="Description Text Color"
+                  color={getEffectiveValue(orderBumpStyles, 'descColor', 'hsl(var(--muted-foreground))')}
+                  onChange={(val) => updateOrderBumpResponsive('descColor', val)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Line Height</Label>
+                <Input 
+                  value={getEffectiveValue(orderBumpStyles, 'descLineHeight', '1.4')} 
+                  onChange={(e) => updateOrderBumpResponsive('descLineHeight', e.target.value)} 
+                  placeholder="1.4" 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Product Image Size</h5>
+              <div>
+                <Label className="text-xs">Image Width</Label>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                    value={[parseInt(getEffectiveValue(orderBumpStyles, 'imageWidth', '48').replace(/\D/g, ''))]} 
+                    onValueChange={(val) => updateOrderBumpResponsive('imageWidth', `${val[0]}px`)} 
+                    min={24} 
+                    max={300} 
+                    step={1} 
+                    className="flex-1" 
+                  />
+                  <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(orderBumpStyles, 'imageWidth', '48px')}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Section Background</h5>
+              <div>
+                <ColorPicker 
+                  label="Section Background Color"
+                  color={getEffectiveValue(orderBumpStyles, 'sectionBgColor', '#ffffff')}
+                  onChange={(val) => updateOrderBumpResponsive('sectionBgColor', val)}
+                />
+              </div>
+              <div>
+                <ColorPicker 
+                  label="Border Color"
+                  color={getEffectiveValue(orderBumpStyles, 'borderColor', 'hsl(var(--warning-border))')}
+                  onChange={(val) => updateOrderBumpResponsive('borderColor', val)}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="mobile" className="space-y-3 mt-3">
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Bump Label Styling</h5>
+              <div>
+                <Label className="text-xs">Font Size</Label>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                    value={[parseInt(getEffectiveValue(orderBumpStyles, 'labelFontSize', '14').replace(/\D/g, ''))]} 
+                    onValueChange={(val) => updateOrderBumpResponsive('labelFontSize', `${val[0]}px`)} 
+                    min={10} 
+                    max={24} 
+                    step={1} 
+                    className="flex-1" 
+                  />
+                  <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(orderBumpStyles, 'labelFontSize', '14px')}</span>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Font Weight</Label>
+                <Select 
+                  value={getEffectiveValue(orderBumpStyles, 'labelFontWeight', '600')} 
+                  onValueChange={(val) => updateOrderBumpResponsive('labelFontWeight', val)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="300">Light (300)</SelectItem>
+                    <SelectItem value="400">Normal (400)</SelectItem>
+                    <SelectItem value="500">Medium (500)</SelectItem>
+                    <SelectItem value="600">Semi Bold (600)</SelectItem>
+                    <SelectItem value="700">Bold (700)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <ColorPicker 
+                    label="Label Text Color"
+                    color={getEffectiveValue(orderBumpStyles, 'labelColor', 'hsl(var(--success))')}
+                    onChange={(val) => updateOrderBumpResponsive('labelColor', val)}
+                  />
+                </div>
+                <div>
+                  <ColorPicker 
+                    label="Label Background Color"
+                    color={getEffectiveValue(orderBumpStyles, 'labelBgColor', 'hsl(var(--warning-light))')}
+                    onChange={(val) => updateOrderBumpResponsive('labelBgColor', val)}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Line Height</Label>
+                <Input 
+                  value={getEffectiveValue(orderBumpStyles, 'labelLineHeight', '1.5')} 
+                  onChange={(e) => updateOrderBumpResponsive('labelLineHeight', e.target.value)} 
+                  placeholder="1.5" 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Bump Description Styling</h5>
+              <div>
+                <Label className="text-xs">Font Size</Label>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                    value={[parseInt(getEffectiveValue(orderBumpStyles, 'descFontSize', '12').replace(/\D/g, ''))]} 
+                    onValueChange={(val) => updateOrderBumpResponsive('descFontSize', `${val[0]}px`)} 
+                    min={8} 
+                    max={18} 
+                    step={1} 
+                    className="flex-1" 
+                  />
+                  <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(orderBumpStyles, 'descFontSize', '12px')}</span>
+                </div>
+              </div>
+              <div>
+                <Label className="text-xs">Font Weight</Label>
+                <Select 
+                  value={getEffectiveValue(orderBumpStyles, 'descFontWeight', '400')} 
+                  onValueChange={(val) => updateOrderBumpResponsive('descFontWeight', val)}
+                >
+                  <SelectTrigger className="h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="300">Light (300)</SelectItem>
+                    <SelectItem value="400">Normal (400)</SelectItem>
+                    <SelectItem value="500">Medium (500)</SelectItem>
+                    <SelectItem value="600">Semi Bold (600)</SelectItem>
+                    <SelectItem value="700">Bold (700)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <ColorPicker 
+                  label="Description Text Color"
+                  color={getEffectiveValue(orderBumpStyles, 'descColor', 'hsl(var(--muted-foreground))')}
+                  onChange={(val) => updateOrderBumpResponsive('descColor', val)}
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Line Height</Label>
+                <Input 
+                  value={getEffectiveValue(orderBumpStyles, 'descLineHeight', '1.4')} 
+                  onChange={(e) => updateOrderBumpResponsive('descLineHeight', e.target.value)} 
+                  placeholder="1.4" 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Product Image Size</h5>
+              <div>
+                <Label className="text-xs">Image Width</Label>
+                <div className="flex items-center gap-2">
+                  <Slider 
+                    value={[parseInt(getEffectiveValue(orderBumpStyles, 'imageWidth', '48').replace(/\D/g, ''))]} 
+                    onValueChange={(val) => updateOrderBumpResponsive('imageWidth', `${val[0]}px`)} 
+                    min={24} 
+                    max={300} 
+                    step={1} 
+                    className="flex-1" 
+                  />
+                  <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(orderBumpStyles, 'imageWidth', '48px')}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Section Background</h5>
+              <div>
+                <ColorPicker 
+                  label="Section Background Color"
+                  color={getEffectiveValue(orderBumpStyles, 'sectionBgColor', '#ffffff')}
+                  onChange={(val) => updateOrderBumpResponsive('sectionBgColor', val)}
+                />
+              </div>
+              <div>
+                <ColorPicker 
+                  label="Border Color"
+                  color={getEffectiveValue(orderBumpStyles, 'borderColor', 'hsl(var(--warning-border))')}
+                  onChange={(val) => updateOrderBumpResponsive('borderColor', val)}
+                />
+              </div>
             </div>
           </TabsContent>
         </Tabs>

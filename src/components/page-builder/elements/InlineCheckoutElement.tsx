@@ -242,6 +242,10 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const buttonInline = useMemo(() => mergeResponsiveStyles({}, buttonStyles, deviceType as any), [buttonStyles, deviceType]);
   const headerInline = useMemo(() => mergeResponsiveStyles({}, headerStyles, deviceType as any), [headerStyles, deviceType]);
 
+  // Order bump styles
+  const orderBumpStyles = (element.styles as any)?.orderBump || { responsive: { desktop: {}, tablet: {}, mobile: {} } };
+  const orderBumpInline = useMemo(() => mergeResponsiveStyles({}, orderBumpStyles, deviceType as any), [orderBumpStyles, deviceType]);
+
   // Shipping calculation using enhanced shipping
   const { websiteShipping } = useWebsiteShipping();
 
@@ -1091,21 +1095,60 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
             {orderBump.enabled && bumpProduct && (
               <section className="space-y-3">
-                <div className="border border-dashed rounded-md overflow-hidden" style={{ borderColor: 'hsl(var(--warning-border))' }}>
-                  <div className="px-3 py-2" style={{ backgroundColor: 'hsl(var(--warning-light))' }}>
+                <div 
+                  className="border border-dashed rounded-md overflow-hidden" 
+                  style={{ 
+                    borderColor: getEffectiveResponsiveValue(element, 'borderColor', deviceType, 'hsl(var(--warning-border))', 'orderBump'),
+                    backgroundColor: getEffectiveResponsiveValue(element, 'sectionBgColor', deviceType, '#ffffff', 'orderBump')
+                  }}
+                >
+                  <div 
+                    className="px-3 py-2" 
+                    style={{ 
+                      backgroundColor: getEffectiveResponsiveValue(element, 'labelBgColor', deviceType, 'hsl(var(--warning-light))', 'orderBump')
+                    }}
+                  >
                     <label className="flex items-center gap-2">
                       <input type="checkbox" checked={bumpChecked} onChange={(e)=>setBumpChecked(e.target.checked)} />
-                      <span className="text-sm font-semibold" style={{ color: 'hsl(var(--success))' }}>{orderBump.label || 'Add this to my order'}</span>
+                      <span 
+                        className="font-semibold" 
+                        style={{ 
+                          fontSize: getEffectiveResponsiveValue(element, 'labelFontSize', deviceType, '14px', 'orderBump'),
+                          fontWeight: getEffectiveResponsiveValue(element, 'labelFontWeight', deviceType, '600', 'orderBump'),
+                          color: getEffectiveResponsiveValue(element, 'labelColor', deviceType, 'hsl(var(--success))', 'orderBump'),
+                          lineHeight: getEffectiveResponsiveValue(element, 'labelLineHeight', deviceType, '1.5', 'orderBump')
+                        }}
+                      >
+                        {orderBump.label || 'Add this to my order'}
+                      </span>
                     </label>
                   </div>
-                  <div className="p-3 flex items-start gap-3">
+                  <div className={`p-3 flex gap-3 ${deviceType === 'mobile' ? 'flex-col items-center' : 'flex-row items-start'}`}>
                     {Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
-                      <img src={bumpProduct.images[0]} alt={`${bumpProduct.name} product`} className="w-12 h-12 object-cover rounded border" />
+                      <img 
+                        src={bumpProduct.images[0]} 
+                        alt={`${bumpProduct.name} product`} 
+                        className={`object-cover rounded border ${deviceType !== 'mobile' ? 'flex-shrink-0' : ''}`} 
+                        style={{
+                          width: getEffectiveResponsiveValue(element, 'imageWidth', deviceType, '48px', 'orderBump'),
+                          height: 'auto'
+                        }}
+                      />
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium break-words">{bumpProduct.name} · {formatCurrency(Number(bumpProduct.price))}</div>
                       {orderBump.description && (
-                        <p className="text-xs text-muted-foreground mt-1 break-words">{orderBump.description}</p>
+                        <p 
+                          className="mt-1 break-words" 
+                          style={{
+                            fontSize: getEffectiveResponsiveValue(element, 'descFontSize', deviceType, '12px', 'orderBump'),
+                            fontWeight: getEffectiveResponsiveValue(element, 'descFontWeight', deviceType, '400', 'orderBump'),
+                            color: getEffectiveResponsiveValue(element, 'descColor', deviceType, 'hsl(var(--muted-foreground))', 'orderBump'),
+                            lineHeight: getEffectiveResponsiveValue(element, 'descLineHeight', deviceType, '1.4', 'orderBump')
+                          }}
+                        >
+                          {orderBump.description}
+                        </p>
                       )}
                     </div>
                   </div>
