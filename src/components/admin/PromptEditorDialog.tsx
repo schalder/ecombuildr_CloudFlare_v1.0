@@ -14,7 +14,8 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Prompt, PromptCategory, CreatePromptData, UpdatePromptData } from '@/hooks/usePromptManagement';
+import { CreatePromptData, UpdatePromptData } from '@/hooks/usePromptManagement';
+import { Prompt, PromptCategory } from '@/hooks/usePrompts';
 import { useToast } from '@/hooks/use-toast';
 
 interface PromptEditorDialogProps {

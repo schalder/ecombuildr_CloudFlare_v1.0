@@ -70,8 +70,10 @@ const AdminPromptManagement: React.FC = () => {
   };
 
   const handleEditPrompt = (prompt: Prompt) => {
+    console.log('handleEditPrompt called with prompt:', prompt);
     setSelectedPrompt(prompt);
     setIsPromptDialogOpen(true);
+    console.log('Dialog should now be open with selectedPrompt:', prompt);
   };
 
   const handleCreateCategory = () => {
