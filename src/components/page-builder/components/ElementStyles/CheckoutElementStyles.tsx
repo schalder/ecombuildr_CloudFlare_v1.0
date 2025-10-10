@@ -10,7 +10,6 @@ import { PageBuilderElement } from '../../types';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { SpacingControl } from './_shared/SpacingControl';
-import { getEffectiveResponsiveValue } from '../../utils/responsiveStyles';
 
 interface CheckoutElementStylesProps {
   element: PageBuilderElement;
@@ -36,11 +35,6 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
     return responsiveStyles.responsive?.desktop?.[property] || fallback;
   };
 
-  // Get effective responsive value for subtext styling (matches element implementation)
-  const getSubtextValue = (property: string, fallback: string) => {
-    return getEffectiveResponsiveValue(element, property, tab as any, fallback, 'checkoutButton');
-  };
-
   // Section header styles
   const headerStyles = ((element.styles as any)?.checkoutSectionHeader) || { responsive: { desktop: {}, mobile: {} } } as any;
 
@@ -48,6 +42,18 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
   const backgrounds = ((element.styles as any)?.checkoutBackgrounds) || {} as any;
 
   const updateResponsive = (key: string, value: any) => {
+    const next = {
+      responsive: {
+        desktop: { ...(styles.responsive?.desktop || {}) },
+        mobile: { ...(styles.responsive?.mobile || {}) },
+      }
+    } as any;
+    next.responsive[tab] = { ...next.responsive[tab], [key]: value };
+    onStyleUpdate('checkoutButton', next);
+  };
+
+  // Update subtext styling to use the same structure as main button styling
+  const updateSubtextResponsive = (key: string, value: any) => {
     const next = {
       responsive: {
         desktop: { ...(styles.responsive?.desktop || {}) },
@@ -211,29 +217,29 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
                     <Label className="text-xs">Font Size</Label>
                     <div className="flex items-center gap-2">
                       <Slider 
-                        value={[parseInt(getSubtextValue('subtextFontSize', '12px').replace(/\D/g, ''))]} 
-                        onValueChange={(val) => updateResponsive('subtextFontSize', `${val[0]}px`)} 
+                        value={[parseInt(getEffectiveValue(styles, 'subtextFontSize', '12').replace(/\D/g, ''))]} 
+                        onValueChange={(val) => updateSubtextResponsive('subtextFontSize', `${val[0]}px`)} 
                         min={8} 
                         max={32} 
                         step={1} 
                         className="flex-1" 
                       />
-                      <span className="text-xs text-muted-foreground w-12">{getSubtextValue('subtextFontSize', '12px')}</span>
+                      <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(styles, 'subtextFontSize', '12px')}</span>
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div>
                       <ColorPicker 
                         label="Text Color"
-                        color={getSubtextValue('subtextColor', '#ffffff')}
-                        onChange={(val) => updateResponsive('subtextColor', val)}
+                        color={getEffectiveValue(styles, 'subtextColor', '#ffffff')}
+                        onChange={(val) => updateSubtextResponsive('subtextColor', val)}
                       />
                     </div>
                     <div>
                       <Label className="text-xs">Font Weight</Label>
                       <Select 
-                        value={getSubtextValue('subtextFontWeight', '400')} 
-                        onValueChange={(val) => updateResponsive('subtextFontWeight', val)}
+                        value={getEffectiveValue(styles, 'subtextFontWeight', '400')} 
+                        onValueChange={(val) => updateSubtextResponsive('subtextFontWeight', val)}
                       >
                         <SelectTrigger className="h-9">
                           <SelectValue />
@@ -254,29 +260,29 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
                     <Label className="text-xs">Font Size</Label>
                     <div className="flex items-center gap-2">
                       <Slider 
-                        value={[parseInt(getSubtextValue('subtextFontSize', '12px').replace(/\D/g, ''))]} 
-                        onValueChange={(val) => updateResponsive('subtextFontSize', `${val[0]}px`)} 
+                        value={[parseInt(getEffectiveValue(styles, 'subtextFontSize', '12').replace(/\D/g, ''))]} 
+                        onValueChange={(val) => updateSubtextResponsive('subtextFontSize', `${val[0]}px`)} 
                         min={8} 
                         max={28} 
                         step={1} 
                         className="flex-1" 
                       />
-                      <span className="text-xs text-muted-foreground w-12">{getSubtextValue('subtextFontSize', '12px')}</span>
+                      <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(styles, 'subtextFontSize', '12px')}</span>
                     </div>
                   </div>
                   <div className="space-y-3">
                     <div>
                       <ColorPicker 
                         label="Text Color"
-                        color={getSubtextValue('subtextColor', '#ffffff')}
-                        onChange={(val) => updateResponsive('subtextColor', val)}
+                        color={getEffectiveValue(styles, 'subtextColor', '#ffffff')}
+                        onChange={(val) => updateSubtextResponsive('subtextColor', val)}
                       />
                     </div>
                     <div>
                       <Label className="text-xs">Font Weight</Label>
                       <Select 
-                        value={getSubtextValue('subtextFontWeight', '400')} 
-                        onValueChange={(val) => updateResponsive('subtextFontWeight', val)}
+                        value={getEffectiveValue(styles, 'subtextFontWeight', '400')} 
+                        onValueChange={(val) => updateSubtextResponsive('subtextFontWeight', val)}
                       >
                         <SelectTrigger className="h-9">
                           <SelectValue />

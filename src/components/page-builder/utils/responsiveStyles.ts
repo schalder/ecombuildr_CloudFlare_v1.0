@@ -233,14 +233,26 @@ export function getEffectiveResponsiveValue(
   defaultValue: string = '',
   styleGroup?: string
 ): string {
-  if (!element?.styles?.responsive) {
+  if (!element?.styles) {
     return defaultValue;
   }
 
-  const { responsive } = element.styles;
+  let targetStyles = null;
   
-  // Get the specific style group if provided (e.g., 'checkoutButton')
-  const targetStyles = styleGroup ? responsive[styleGroup] : responsive;
+  if (styleGroup) {
+    // For style groups like 'checkoutButton', check both structures:
+    // 1. element.styles.responsive.checkoutButton (old structure)
+    // 2. element.styles.checkoutButton.responsive (new structure)
+    const styleGroupData = element.styles[styleGroup];
+    if (styleGroupData?.responsive) {
+      targetStyles = styleGroupData.responsive;
+    } else if (element.styles.responsive?.[styleGroup]) {
+      targetStyles = element.styles.responsive[styleGroup];
+    }
+  } else {
+    // For direct responsive styles
+    targetStyles = element.styles.responsive;
+  }
   
   if (!targetStyles) {
     return defaultValue;
