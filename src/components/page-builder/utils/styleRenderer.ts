@@ -209,7 +209,7 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
   
   // Apply sticky positioning AFTER responsive merge to ensure it's not overridden
   if (section.styles?.stickyPosition && section.styles.stickyPosition !== 'none') {
-    mergedStyles.zIndex = '999'; // Ensure sticky elements stay on top
+    mergedStyles.zIndex = '45'; // Ensure sticky elements stay above content but below overlays
     
     if (section.styles.stickyPosition === 'top') {
       // Use sticky positioning for top (works reliably)
