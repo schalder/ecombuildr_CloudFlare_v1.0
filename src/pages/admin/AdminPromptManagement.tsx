@@ -185,21 +185,6 @@ const AdminPromptManagement: React.FC = () => {
       description="Manage AI prompt templates and categories"
     >
       <div className="container mx-auto px-4 py-8">
-        {/* Action Buttons */}
-        <div className="mb-8 flex justify-end gap-2">
-          <Button
-            variant="outline"
-            onClick={handleCreateCategory}
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Manage Categories
-          </Button>
-          <Button onClick={handleCreatePrompt}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Prompt
-          </Button>
-        </div>
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <Card>
@@ -395,6 +380,14 @@ const AdminPromptManagement: React.FC = () => {
 
       {/* Prompts Table */}
       <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Prompts</h2>
+          <Button onClick={handleCreatePrompt} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Prompt
+          </Button>
+        </div>
+        
         {filteredPrompts.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
@@ -406,10 +399,6 @@ const AdminPromptManagement: React.FC = () => {
                   : 'Create your first prompt to get started'
                 }
               </p>
-              <Button onClick={handleCreatePrompt}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Prompt
-              </Button>
             </CardContent>
           </Card>
         ) : (
