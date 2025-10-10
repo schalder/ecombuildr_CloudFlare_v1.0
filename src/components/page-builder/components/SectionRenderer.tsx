@@ -129,7 +129,7 @@ export const SectionRenderer: React.FC<SectionRendererProps> = ({
   };
 
   const getSectionStyles = (): React.CSSProperties => {
-    const baseStyles = renderSectionStyles(section, deviceType, isPreviewMode);
+    const baseStyles = renderSectionStyles(section, deviceType, true); // true = isEditorMode
     
     // Add flex styles for vertical alignment - device aware
     const verticalAlignment = section.styles?.responsive?.[deviceType]?.contentVerticalAlignment || 

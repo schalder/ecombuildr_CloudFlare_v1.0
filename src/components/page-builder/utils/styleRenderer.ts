@@ -126,7 +126,7 @@ const getBackgroundImageProperties = (mode: BackgroundImageMode = 'full-center',
 };
 
 // Universal style renderer that creates pure inline styles
-export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop', isPreviewMode: boolean = false): React.CSSProperties => {
+export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop', isEditorMode: boolean = false): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
   // Device-aware spacing styles - check for new responsive spacing first (moved outside if block for scope)
@@ -218,22 +218,19 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       // Clear any conflicting bottom property
       delete mergedStyles.bottom;
     } else if (section.styles.stickyPosition === 'bottom') {
-      if (isPreviewMode) {
-        // Preview/Live mode: Use fixed positioning for reliable floating behavior
-        mergedStyles.position = 'fixed';
+      if (isEditorMode) {
+        // In editor mode, use sticky positioning to stay within canvas
+        mergedStyles.position = 'sticky';
         mergedStyles.bottom = section.styles.stickyOffset || '0px';
-        mergedStyles.left = '0';
-        mergedStyles.right = '0';
-        mergedStyles.width = '100%';
-        // Clear any conflicting top property
+        // Clear conflicting properties for sticky positioning
+        delete mergedStyles.left;
+        delete mergedStyles.right;
+        delete mergedStyles.width;
         delete mergedStyles.top;
-        // Ensure the element has a minimum height for visibility
-        if (!mergedStyles.minHeight) {
-          mergedStyles.minHeight = '60px';
-        }
+        delete mergedStyles.minHeight;
       } else {
-        // Editor mode: Use absolute positioning relative to canvas container
-        mergedStyles.position = 'absolute';
+        // In preview/live mode, use fixed positioning for reliable floating
+        mergedStyles.position = 'fixed';
         mergedStyles.bottom = section.styles.stickyOffset || '0px';
         mergedStyles.left = '0';
         mergedStyles.right = '0';

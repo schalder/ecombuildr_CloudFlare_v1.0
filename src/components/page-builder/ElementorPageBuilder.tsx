@@ -1519,7 +1519,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
-      style={renderSectionStyles(section, deviceType, false)} // Editor mode
+      style={renderSectionStyles(section, deviceType)}
       onMouseEnter={() => setHoveredTarget({ type: 'section', id: section.id })}
       onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {
@@ -2484,7 +2484,7 @@ const CanvasAreaWithAutoscroll: React.FC<CanvasAreaWithAutoscrollProps> = ({
   return (
     <ScrollArea ref={canvasRef} scrollbarType="always" className="flex-1 min-h-0 bg-muted/30">
       <div className="p-8">
-        <div style={{ ...getDevicePreviewStyles(), ...getPageStyles() }} className={cn("min-h-full bg-background rounded-lg shadow-sm relative", deviceType === 'mobile' && "pb-mobile", deviceType === 'tablet' && "pb-tablet")}>
+        <div style={{ ...getDevicePreviewStyles(), ...getPageStyles() }} className={cn("min-h-full bg-background rounded-lg shadow-sm", deviceType === 'mobile' && "pb-mobile", deviceType === 'tablet' && "pb-tablet")}>
           {data.sections.length === 0 ? (
             <div className="p-16 text-center">
               <h3 className="text-lg font-medium mb-2">Start Building Your Page</h3>
