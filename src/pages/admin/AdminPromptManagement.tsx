@@ -17,7 +17,8 @@ import {
   Tag,
   Calendar
 } from 'lucide-react';
-import { usePromptManagement, Prompt, PromptCategory } from '@/hooks/usePromptManagement';
+import { usePromptManagement, CreatePromptData, UpdatePromptData, CreateCategoryData, UpdateCategoryData } from '@/hooks/usePromptManagement';
+import { Prompt, PromptCategory } from '@/hooks/usePrompts';
 import { CategoryManagerDialog } from '@/components/admin/CategoryManagerDialog';
 import { PromptEditorDialog } from '@/components/admin/PromptEditorDialog';
 import { useToast } from '@/hooks/use-toast';
@@ -70,10 +71,8 @@ const AdminPromptManagement: React.FC = () => {
   };
 
   const handleEditPrompt = (prompt: Prompt) => {
-    console.log('handleEditPrompt called with prompt:', prompt);
     setSelectedPrompt(prompt);
     setIsPromptDialogOpen(true);
-    console.log('Dialog should now be open with selectedPrompt:', prompt);
   };
 
   const handleCreateCategory = () => {
@@ -86,11 +85,15 @@ const AdminPromptManagement: React.FC = () => {
     setIsCategoryDialogOpen(true);
   };
 
-  const handleSavePrompt = async (data: any) => {
-    const success = selectedPrompt 
-      ? await updatePrompt(data)
-      : await createPrompt(data);
+  const handleSavePrompt = async (data: CreatePromptData | UpdatePromptData): Promise<boolean> => {
+    let result;
+    if (selectedPrompt) {
+      result = await updatePrompt(data as UpdatePromptData);
+    } else {
+      result = await createPrompt(data as CreatePromptData);
+    }
     
+    const success = result !== null;
     if (success) {
       setIsPromptDialogOpen(false);
       setSelectedPrompt(null);
@@ -98,11 +101,15 @@ const AdminPromptManagement: React.FC = () => {
     return success;
   };
 
-  const handleSaveCategory = async (data: any) => {
-    const success = selectedCategoryForEdit 
-      ? await updateCategory(data)
-      : await createCategory(data);
+  const handleSaveCategory = async (data: CreateCategoryData | UpdateCategoryData): Promise<boolean> => {
+    let result;
+    if (selectedCategoryForEdit) {
+      result = await updateCategory(data as UpdateCategoryData);
+    } else {
+      result = await createCategory(data as CreateCategoryData);
+    }
     
+    const success = result !== null;
     if (success) {
       setIsCategoryDialogOpen(false);
       setSelectedCategoryForEdit(null);
@@ -178,32 +185,19 @@ const AdminPromptManagement: React.FC = () => {
       description="Manage AI prompt templates and categories"
     >
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <FileText className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-3xl font-bold">Prompt Management</h1>
-              <p className="text-muted-foreground">
-                Manage AI prompt templates and categories
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleCreateCategory}
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Manage Categories
-            </Button>
-            <Button onClick={handleCreatePrompt}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Prompt
-            </Button>
-          </div>
-        </div>
+        {/* Action Buttons */}
+        <div className="mb-8 flex justify-end gap-2">
+          <Button
+            variant="outline"
+            onClick={handleCreateCategory}
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Manage Categories
+          </Button>
+          <Button onClick={handleCreatePrompt}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Prompt
+          </Button>
         </div>
 
       {/* Stats Cards */}

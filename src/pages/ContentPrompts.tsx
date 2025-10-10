@@ -50,17 +50,6 @@ const ContentPrompts: React.FC = () => {
       description="Discover and customize AI prompt templates for your content creation needs"
     >
       <div className="py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Sparkles className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">Content Prompts</h1>
-          </div>
-          <p className="text-muted-foreground text-lg">
-            Discover and customize AI prompt templates for your content creation needs
-          </p>
-        </div>
-
       {/* Search and Filters */}
       <div className="mb-8 space-y-4">
         {/* Search Bar */}
