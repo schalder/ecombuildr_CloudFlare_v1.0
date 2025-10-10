@@ -224,3 +224,53 @@ export function mergeResponsiveStyles(baseStyles: any, elementStyles: any, devic
   
   return mergedStyles;
 }
+
+// Helper function to get effective responsive value for a specific property
+export function getEffectiveResponsiveValue(
+  element: any,
+  property: string,
+  deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop',
+  defaultValue: string = '',
+  styleGroup?: string
+): string {
+  if (!element?.styles?.responsive) {
+    return defaultValue;
+  }
+
+  const { responsive } = element.styles;
+  
+  // Get the specific style group if provided (e.g., 'checkoutButton')
+  const targetStyles = styleGroup ? responsive[styleGroup] : responsive;
+  
+  if (!targetStyles) {
+    return defaultValue;
+  }
+
+  // Current device value
+  const currentValue = targetStyles[deviceType]?.[property];
+  if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+    return currentValue;
+  }
+
+  // Inheritance for mobile: tablet -> desktop
+  if (deviceType === 'mobile') {
+    const tabletValue = targetStyles.tablet?.[property];
+    if (tabletValue !== undefined && tabletValue !== null && tabletValue !== '') {
+      return tabletValue;
+    }
+    const desktopValue = targetStyles.desktop?.[property];
+    if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+      return desktopValue;
+    }
+  }
+
+  // Inheritance for tablet: desktop
+  if (deviceType === 'tablet') {
+    const desktopValue = targetStyles.desktop?.[property];
+    if (desktopValue !== undefined && desktopValue !== null && desktopValue !== '') {
+      return desktopValue;
+    }
+  }
+
+  return defaultValue;
+}
