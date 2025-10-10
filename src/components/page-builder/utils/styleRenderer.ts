@@ -232,11 +232,18 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
           mergedStyles.minHeight = '60px';
         }
       } else {
-        // Editor mode: Use sticky positioning to stay within canvas
-        mergedStyles.position = 'sticky';
+        // Editor mode: Use absolute positioning relative to canvas container
+        mergedStyles.position = 'absolute';
         mergedStyles.bottom = section.styles.stickyOffset || '0px';
+        mergedStyles.left = '0';
+        mergedStyles.right = '0';
+        mergedStyles.width = '100%';
         // Clear any conflicting top property
         delete mergedStyles.top;
+        // Ensure the element has a minimum height for visibility
+        if (!mergedStyles.minHeight) {
+          mergedStyles.minHeight = '60px';
+        }
       }
     }
   }
