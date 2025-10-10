@@ -109,9 +109,27 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
             <div>
               <Label className="text-xs">Font Size</Label>
               <div className="flex items-center gap-2">
-                <Slider value={[parseInt(getEffectiveValue(styles, 'fontSize', '16').replace(/\D/g, ''))]} onValueChange={(val) => updateResponsive('fontSize', `${val[0]}px`)} min={12} max={28} step={1} className="flex-1" />
+                <Slider value={[parseInt(getEffectiveValue(styles, 'fontSize', '16').replace(/\D/g, ''))]} onValueChange={(val) => updateResponsive('fontSize', `${val[0]}px`)} min={12} max={50} step={1} className="flex-1" />
                 <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(styles, 'fontSize', '16px')}</span>
               </div>
+            </div>
+            <div>
+              <Label className="text-xs">Font Weight</Label>
+              <Select 
+                value={getEffectiveValue(styles, 'fontWeight', '400')} 
+                onValueChange={(val) => updateResponsive('fontWeight', val)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="300">Light (300)</SelectItem>
+                  <SelectItem value="400">Normal (400)</SelectItem>
+                  <SelectItem value="500">Medium (500)</SelectItem>
+                  <SelectItem value="600">Semi Bold (600)</SelectItem>
+                  <SelectItem value="700">Bold (700)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-3">
               <div>
@@ -156,9 +174,27 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
             <div>
               <Label className="text-xs">Font Size</Label>
               <div className="flex items-center gap-2">
-                <Slider value={[parseInt(getEffectiveValue(styles, 'fontSize', '16').replace(/\D/g, ''))]} onValueChange={(val) => updateResponsive('fontSize', `${val[0]}px`)} min={12} max={24} step={1} className="flex-1" />
+                <Slider value={[parseInt(getEffectiveValue(styles, 'fontSize', '16').replace(/\D/g, ''))]} onValueChange={(val) => updateResponsive('fontSize', `${val[0]}px`)} min={12} max={50} step={1} className="flex-1" />
                 <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(styles, 'fontSize', '16px')}</span>
               </div>
+            </div>
+            <div>
+              <Label className="text-xs">Font Weight</Label>
+              <Select 
+                value={getEffectiveValue(styles, 'fontWeight', '400')} 
+                onValueChange={(val) => updateResponsive('fontWeight', val)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="300">Light (300)</SelectItem>
+                  <SelectItem value="400">Normal (400)</SelectItem>
+                  <SelectItem value="500">Medium (500)</SelectItem>
+                  <SelectItem value="600">Semi Bold (600)</SelectItem>
+                  <SelectItem value="700">Bold (700)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-3">
               <div>

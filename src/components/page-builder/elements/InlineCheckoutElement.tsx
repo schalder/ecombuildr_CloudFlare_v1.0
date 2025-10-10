@@ -1156,7 +1156,14 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     disabled={!selectedProduct || isSelectedOut || isSubmitting}
                   >
                     {/* Main button text */}
-                    <span className="whitespace-nowrap">
+                    <span 
+                      className="whitespace-nowrap"
+                      style={{
+                        fontSize: getEffectiveResponsiveValue(element, 'fontSize', deviceType, '16px', 'checkoutButton'),
+                        color: getEffectiveResponsiveValue(element, 'color', deviceType, '#ffffff', 'checkoutButton'),
+                        fontWeight: getEffectiveResponsiveValue(element, 'fontWeight', deviceType, '400', 'checkoutButton'),
+                      }}
+                    >
                       {isSubmitting ? 'Processing...' : (isSelectedOut ? 'Out of Stock' : buttonLabel)}
                     </span>
                     
