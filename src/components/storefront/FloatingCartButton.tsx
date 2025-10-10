@@ -36,7 +36,7 @@ export const FloatingCartButton: React.FC<FloatingCartButtonProps> = ({
     <CartDrawer trigger>
       <div
         className={cn(
-          'fixed z-50 transition-all duration-300 hover:scale-105',
+          'fixed z-[100] transition-all duration-300 hover:scale-105',
           positionClasses[position]
         )}
       >

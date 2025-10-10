@@ -94,7 +94,7 @@ export const SupportWidget: React.FC<SupportWidgetProps> = ({ website }) => {
   const expandDirection = position === 'bottom-right' ? 'left' : 'right';
   
   return (
-    <div className={cn('fixed z-60', positionClasses[position])}>
+    <div className={cn('fixed z-[110]', positionClasses[position])}>
       {/* Expanded options */}
       {isExpanded && supportOptions.length > 1 && (
         <div 
