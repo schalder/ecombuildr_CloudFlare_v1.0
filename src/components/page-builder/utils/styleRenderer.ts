@@ -126,7 +126,7 @@ const getBackgroundImageProperties = (mode: BackgroundImageMode = 'full-center',
 };
 
 // Universal style renderer that creates pure inline styles
-export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
+export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop', isPreviewMode: boolean = false): React.CSSProperties => {
   const styles: React.CSSProperties = {};
   
   // Device-aware spacing styles - check for new responsive spacing first (moved outside if block for scope)
@@ -218,17 +218,32 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       // Clear any conflicting bottom property
       delete mergedStyles.bottom;
     } else if (section.styles.stickyPosition === 'bottom') {
-      // Use fixed positioning for bottom (more reliable than sticky)
-      mergedStyles.position = 'fixed';
-      mergedStyles.bottom = section.styles.stickyOffset || '0px';
-      mergedStyles.left = '0';
-      mergedStyles.right = '0';
-      mergedStyles.width = '100%';
-      // Clear any conflicting top property
-      delete mergedStyles.top;
-      // Ensure the element has a minimum height for visibility
-      if (!mergedStyles.minHeight) {
-        mergedStyles.minHeight = '60px';
+      if (isPreviewMode) {
+        // In preview mode, use fixed positioning relative to viewport
+        mergedStyles.position = 'fixed';
+        mergedStyles.bottom = section.styles.stickyOffset || '0px';
+        mergedStyles.left = '0';
+        mergedStyles.right = '0';
+        mergedStyles.width = '100%';
+        // Clear any conflicting top property
+        delete mergedStyles.top;
+        // Ensure the element has a minimum height for visibility
+        if (!mergedStyles.minHeight) {
+          mergedStyles.minHeight = '60px';
+        }
+      } else {
+        // In editor mode, use absolute positioning relative to canvas container
+        mergedStyles.position = 'absolute';
+        mergedStyles.bottom = section.styles.stickyOffset || '0px';
+        mergedStyles.left = '0';
+        mergedStyles.right = '0';
+        mergedStyles.width = '100%';
+        // Clear any conflicting top property
+        delete mergedStyles.top;
+        // Ensure the element has a minimum height for visibility
+        if (!mergedStyles.minHeight) {
+          mergedStyles.minHeight = '60px';
+        }
       }
     }
   }

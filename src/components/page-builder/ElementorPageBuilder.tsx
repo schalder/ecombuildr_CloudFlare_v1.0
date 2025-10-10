@@ -1519,7 +1519,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       } ${
         isDragging ? 'opacity-50' : ''
       }`}
-      style={renderSectionStyles(section, deviceType)}
+      style={renderSectionStyles(section, deviceType, false)}
       onMouseEnter={() => setHoveredTarget({ type: 'section', id: section.id })}
       onMouseLeave={() => setHoveredTarget(null)}
       onClick={(e) => {

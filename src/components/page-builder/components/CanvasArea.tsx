@@ -119,7 +119,7 @@ export const CanvasArea: React.FC<CanvasAreaProps> = ({
         data-canvas-area="true"
         data-testid="canvas-area"
         className={cn(
-          'canvas-area page-builder-canvas',
+          'canvas-area page-builder-canvas relative',
           getCanvasClasses(),
           isOver && 'ring-2 ring-primary ring-opacity-50',
           isPreviewMode && 'pointer-events-none'

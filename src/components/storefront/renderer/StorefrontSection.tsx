@@ -24,7 +24,7 @@ export const StorefrontSection: React.FC<StorefrontSectionProps> = ({
     return null;
   }
 
-  const sectionStyles = renderSectionStyles(section, deviceType);
+  const sectionStyles = renderSectionStyles(section, deviceType, true);
   
   const getSectionWidthClasses = () => {
     switch (section.width) {
