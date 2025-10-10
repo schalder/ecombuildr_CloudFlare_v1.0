@@ -219,17 +219,15 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       delete mergedStyles.bottom;
     } else if (section.styles.stickyPosition === 'bottom') {
       if (isEditorMode) {
-        // In editor mode, use sticky positioning to stay within canvas
-        mergedStyles.position = 'sticky';
-        mergedStyles.bottom = section.styles.stickyOffset || '0px';
-        // Clear conflicting properties for sticky positioning
+        // In editor mode, disable sticky positioning to keep section within canvas
+        // This prevents overlap with properties panel
+        mergedStyles.position = 'relative';
+        delete mergedStyles.bottom;
         delete mergedStyles.left;
         delete mergedStyles.right;
         delete mergedStyles.width;
-        delete mergedStyles.top;
-        delete mergedStyles.minHeight;
       } else {
-        // In preview/live mode, use fixed positioning for reliable floating
+        // Use fixed positioning for bottom (more reliable than sticky) in preview/live mode
         mergedStyles.position = 'fixed';
         mergedStyles.bottom = section.styles.stickyOffset || '0px';
         mergedStyles.left = '0';
