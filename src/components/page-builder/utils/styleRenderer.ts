@@ -219,7 +219,7 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       delete mergedStyles.bottom;
     } else if (section.styles.stickyPosition === 'bottom') {
       if (isPreviewMode) {
-        // In preview mode, use fixed positioning relative to viewport
+        // Preview/Live mode: Use fixed positioning for reliable floating behavior
         mergedStyles.position = 'fixed';
         mergedStyles.bottom = section.styles.stickyOffset || '0px';
         mergedStyles.left = '0';
@@ -232,18 +232,11 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
           mergedStyles.minHeight = '60px';
         }
       } else {
-        // In editor mode, use absolute positioning relative to canvas container
-        mergedStyles.position = 'absolute';
+        // Editor mode: Use sticky positioning to stay within canvas
+        mergedStyles.position = 'sticky';
         mergedStyles.bottom = section.styles.stickyOffset || '0px';
-        mergedStyles.left = '0';
-        mergedStyles.right = '0';
-        mergedStyles.width = '100%';
         // Clear any conflicting top property
         delete mergedStyles.top;
-        // Ensure the element has a minimum height for visibility
-        if (!mergedStyles.minHeight) {
-          mergedStyles.minHeight = '60px';
-        }
       }
     }
   }
