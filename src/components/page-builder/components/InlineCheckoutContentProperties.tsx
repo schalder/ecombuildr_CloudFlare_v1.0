@@ -5,14 +5,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { PageBuilderElement, ElementVisibility } from '@/components/page-builder/types';
+import { PageBuilderElement } from '@/components/page-builder/types';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { CheckoutContentProperties } from './CheckoutContentProperties';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useStore } from '@/contexts/StoreContext';
 import { useUserStore } from '@/hooks/useUserStore';
 import { CollapsibleGroup } from './ElementStyles/_shared/CollapsibleGroup';
-import { VisibilityControl } from './VisibilityControl';
 
 interface InlineCheckoutContentPropertiesProps {
   element: PageBuilderElement;
@@ -24,19 +23,6 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
   const [orderBumpOpen, setOrderBumpOpen] = useState(false);
   
   const cfg: any = element.content || {};
-  
-  // Default visibility settings
-  const defaultVisibility: ElementVisibility = {
-    desktop: true,
-    tablet: true,
-    mobile: true
-  };
-
-  const currentVisibility = element.visibility || defaultVisibility;
-
-  const handleVisibilityChange = (visibility: ElementVisibility) => {
-    onUpdate('visibility', visibility);
-  };
   const selectedIds: string[] = Array.isArray(cfg.productIds) ? cfg.productIds : [];
   const defaultProductId: string = cfg.defaultProductId || '';
   const allowSwitching: boolean = cfg.allowSwitching !== false; // default true
@@ -77,10 +63,6 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
 
   return (
     <div className="space-y-6">
-      <VisibilityControl
-        visibility={currentVisibility}
-        onVisibilityChange={handleVisibilityChange}
-      />
       <CollapsibleGroup title="Inline Checkout Products" isOpen={productsOpen} onToggle={setProductsOpen}>
         <p className="text-xs text-muted-foreground mb-3">Select products to show on this checkout form and choose the default one.</p>
         
