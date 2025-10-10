@@ -6,9 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { PageBuilderElement, ElementVisibility } from '@/components/page-builder/types';
+import { PageBuilderElement } from '@/components/page-builder/types';
 import { MediaSelector } from './MediaSelector';
-import { VisibilityControl } from './VisibilityControl';
 
 interface CheckoutContentPropertiesProps {
   element: PageBuilderElement;
@@ -29,19 +28,6 @@ const defaultFields = {
 
 export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps> = ({ element, onUpdate }) => {
   const fields = element.content?.fields || defaultFields;
-  
-  // Default visibility settings
-  const defaultVisibility: ElementVisibility = {
-    desktop: true,
-    tablet: true,
-    mobile: true
-  };
-
-  const currentVisibility = element.visibility || defaultVisibility;
-
-  const handleVisibilityChange = (visibility: ElementVisibility) => {
-    onUpdate('visibility', visibility);
-  };
   const customFields = element.content?.customFields || [];
   const terms = element.content?.terms || { enabled: false, required: true, label: 'I agree to the Terms & Conditions', url: '/terms' };
   const trust = element.content?.trustBadge || { enabled: false, imageUrl: '', alt: 'Secure checkout' };
@@ -70,10 +56,6 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
 
   return (
     <div className="space-y-6">
-      <VisibilityControl
-        visibility={currentVisibility}
-        onVisibilityChange={handleVisibilityChange}
-      />
       <div>
         <Label className="text-sm">Place Order Button Text</Label>
         <Input value={buttonLabel} onChange={(e) => onUpdate('placeOrderLabel', e.target.value)} placeholder="Place Order" />
