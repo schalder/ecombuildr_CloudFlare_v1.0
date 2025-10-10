@@ -16,7 +16,7 @@ import { useEcomPaths } from '@/lib/pathResolver';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
-import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
+import { generateResponsiveCSS, mergeResponsiveStyles, getEffectiveResponsiveValue } from '@/components/page-builder/utils/responsiveStyles';
 import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
 import { computeOrderShipping, getAvailableShippingOptions, applyShippingOptionToForm } from '@/lib/shipping-enhanced';
 import type { CartItem, ShippingOption } from '@/lib/shipping-enhanced';
@@ -842,9 +842,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
             {/* Info */}
             {sections.info && (
-              <section className="space-y-4">
-                <h3 className={`mb-3 font-semibold text-xl element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
-                <div className={`grid ${infoGridCols} gap-4`}>
+              <section className="space-y-3">
+                <h3 className={`mb-2 font-semibold text-base element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
+                <div className={`grid ${infoGridCols} gap-3`}>
                   {fields.fullName?.enabled && (
                     <Input 
                       placeholder={fields.fullName.placeholder} 
@@ -852,7 +852,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                       onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} 
                       required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
                       aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
-                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                     />
                   )}
                   {fields.phone?.enabled && (
@@ -876,7 +876,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                         aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))}
                         aria-invalid={!!phoneError}
                         aria-describedby={phoneError ? `phone-error-${element.id}` : undefined}
-                        className={`h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 ${phoneError ? 'border-destructive focus:border-destructive focus:ring-destructive/20' : ''}`}
+                        className={`h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 ${phoneError ? 'border-destructive focus:border-destructive focus:ring-destructive/20' : ''}`}
                       />
                       {phoneError && (
                         <p id={`phone-error-${element.id}`} className="text-sm font-medium text-destructive" role="alert">
@@ -894,7 +894,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} 
                     required={!!(fields.email?.enabled && (fields.email?.required ?? false))} 
                     aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))}
-                    className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                    className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   />
                 )}
               </section>
@@ -904,20 +904,19 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
             {/* Shipping */}
             {sections.shipping && !isDigitalOnlyCart && (
-              <section className="space-y-4">
-                <h3 className={`mb-3 font-semibold text-xl element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
+              <section className="space-y-3">
+                <h3 className={`mb-2 font-semibold text-base element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                 {fields.address?.enabled && (
-                  <Textarea 
+                  <Input 
                     placeholder={fields.address.placeholder} 
                     value={form.shipping_address} 
                     onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} 
-                    rows={3} 
                     required={!!(fields.address?.enabled && (fields.address?.required ?? true))} 
                     aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))}
-                    className="min-h-[90px] rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 resize-none"
+                    className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                   />
                 )}
-                <div className={`grid ${ship2GridCols} gap-4`}>
+                <div className={`grid ${ship2GridCols} gap-3`}>
                   {fields.city?.enabled && (
                     <Input 
                       placeholder={fields.city.placeholder} 
@@ -925,7 +924,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                       onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} 
                       required={!!(fields.city?.enabled && (fields.city?.required ?? true))} 
                       aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))}
-                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                     />
                   )}
                   {fields.area?.enabled && (
@@ -935,11 +934,11 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                       onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} 
                       required={!!(fields.area?.enabled && (fields.area?.required ?? false))} 
                       aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))}
-                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                     />
                   )}
                 </div>
-                <div className={`grid ${ship3GridCols} gap-4`}>
+                <div className={`grid ${ship3GridCols} gap-3`}>
                   {fields.country?.enabled && (
                     <Input 
                       placeholder={fields.country.placeholder} 
@@ -947,7 +946,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                       onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} 
                       required={!!(fields.country?.enabled && (fields.country?.required ?? false))} 
                       aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))}
-                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                     />
                   )}
                   {fields.state?.enabled && (
@@ -957,7 +956,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                       onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} 
                       required={!!(fields.state?.enabled && (fields.state?.required ?? false))} 
                       aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))}
-                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                     />
                   )}
                   {fields.postalCode?.enabled && (
@@ -967,7 +966,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                       onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} 
                       required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} 
                       aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))}
-                      className="h-12 rounded-lg border-border bg-background px-4 py-3 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                     />
                   )}
                 </div>
@@ -1048,8 +1047,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
             {/* Payment */}
             {sections.payment && (
-              <section className="space-y-4">
-                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.payment}</h3>
+              <section className="space-y-3">
+                <h3 className={`mb-2 font-semibold text-base element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.payment}</h3>
                 <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
                   <SelectTrigger className="w-full"><SelectValue placeholder="Select method" /></SelectTrigger>
                   <SelectContent>
@@ -1068,7 +1067,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                       placeholder="Enter transaction ID (e.g., 8M5HA84D5K)"
                       value={form.payment_transaction_number}
                       onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
-                      className="w-full"
+                      className="w-full h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       required
                     />
                   </div>
@@ -1081,7 +1080,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                       placeholder="Enter transaction ID (e.g., NG8M5HA84D5K)"
                       value={form.payment_transaction_number}
                       onChange={(e) => setForm(f => ({ ...f, payment_transaction_number: e.target.value }))}
-                      className="w-full"
+                      className="w-full h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
                       required
                     />
                   </div>
@@ -1116,7 +1115,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
             {sections.summary && (
               <section className="space-y-3">
-                <h3 className={`mb-3 font-semibold element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
+                <h3 className={`mb-2 font-semibold text-base element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
                 <div className="rounded-md p-4" style={{ backgroundColor: (backgrounds as any).summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
                   <div className="space-y-2">
                     {selectedProduct && (
@@ -1166,12 +1165,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                       <span 
                         className="whitespace-normal text-center"
                         style={{
-                          fontSize: element.styles?.checkoutButton?.responsive?.desktop?.subtextFontSize || 
-                                   element.styles?.checkoutButton?.responsive?.mobile?.subtextFontSize || '12px',
-                          color: element.styles?.checkoutButton?.responsive?.desktop?.subtextColor || 
-                                 element.styles?.checkoutButton?.responsive?.mobile?.subtextColor || '#ffffff',
-                          fontWeight: element.styles?.checkoutButton?.responsive?.desktop?.subtextFontWeight || 
-                                     element.styles?.checkoutButton?.responsive?.mobile?.subtextFontWeight || '400',
+                          fontSize: getEffectiveResponsiveValue(element, 'subtextFontSize', deviceType, '12px', 'checkoutButton'),
+                          color: getEffectiveResponsiveValue(element, 'subtextColor', deviceType, '#ffffff', 'checkoutButton'),
+                          fontWeight: getEffectiveResponsiveValue(element, 'subtextFontWeight', deviceType, '400', 'checkoutButton'),
                           opacity: 0.9
                         }}
                       >

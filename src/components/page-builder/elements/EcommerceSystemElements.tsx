@@ -22,7 +22,7 @@ import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImag
 import { supabase } from '@/integrations/supabase/client';
 import { useStoreProducts } from '@/hooks/useStoreData';
 import { formatVariant } from '@/lib/utils';
-import { generateResponsiveCSS, mergeResponsiveStyles } from '@/components/page-builder/utils/responsiveStyles';
+import { generateResponsiveCSS, mergeResponsiveStyles, getEffectiveResponsiveValue } from '@/components/page-builder/utils/responsiveStyles';
 import { computeOrderShipping, getAvailableShippingOptions, applyShippingOptionToForm, type CartItem, type ShippingAddress, type ShippingSettings, type ShippingOption } from '@/lib/shipping-enhanced';
 import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
@@ -1502,11 +1502,11 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     <div className="max-w-5xl mx-auto" style={{ backgroundColor: backgrounds.containerBg || undefined, ...checkoutPadding }}>
         {(sections.info || sections.shipping || sections.payment || sections.summary) && (
           <Card className={formBorderWidth > 0 ? undefined : 'border-0'} style={{ backgroundColor: backgrounds.formBg || undefined, borderColor: (backgrounds as any).formBorderColor || undefined, borderWidth: formBorderWidth || 0 }}>
-            <CardContent className="p-6 md:p-8 space-y-8 w-full overflow-x-hidden">
+            <CardContent className="p-4 md:p-6 space-y-5 w-full overflow-x-hidden">
               {sections.info && (
-                <section className="space-y-6">
-                  <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
-                  <div className={`grid ${infoGridCols} gap-4`}>
+                <section className="space-y-4">
+                  <h3 className={`text-base font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
+                  <div className={`grid ${infoGridCols} gap-3`}>
                     {fields.fullName?.enabled && (
                       <Input 
                         placeholder={fields.fullName.placeholder} 
@@ -1514,7 +1514,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                         onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} 
                         required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
                         aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
-                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                        className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
                       />
                     )}
                     {fields.phone?.enabled && (
@@ -1524,7 +1524,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                         onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} 
                         required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} 
                         aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))}
-                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                        className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
                       />
                     )}
                   </div>
@@ -1536,7 +1536,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                       onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} 
                       required={!!(fields.email?.enabled && (fields.email?.required ?? false))} 
                       aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))}
-                      className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-sm"
                     />
                   )}
                 </section>
@@ -1546,20 +1546,19 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
               {/* Show shipping section only if there are physical products and shipping fields are enabled */}
               {(isEditing || productTypes.hasPhysical) && (fields.address?.enabled || fields.city?.enabled || fields.area?.enabled || fields.country?.enabled || fields.state?.enabled || fields.postalCode?.enabled || (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout)) && (
-                <section className="space-y-6">
-                  <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
+                <section className="space-y-4">
+                  <h3 className={`text-base font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                   {fields.address?.enabled && (
-                    <Textarea 
+                    <Input 
                       placeholder={fields.address.placeholder} 
                       value={form.shipping_address} 
                       onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} 
-                      rows={3} 
                       required={!!(fields.address?.enabled && (fields.address?.required ?? true))} 
                       aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))}
-                      className="px-4 py-3 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"
+                      className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-sm"
                     />
                   )}
-                  <div className={`grid ${ship2GridCols} gap-4`}>
+                  <div className={`grid ${ship2GridCols} gap-3`}>
                     {fields.city?.enabled && (
                       <Input 
                         placeholder={fields.city.placeholder} 
@@ -1567,7 +1566,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                         onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} 
                         required={!!(fields.city?.enabled && (fields.city?.required ?? true))} 
                         aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))}
-                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                        className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
                       />
                     )}
                     {fields.area?.enabled && (
@@ -1577,11 +1576,11 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                         onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} 
                         required={!!(fields.area?.enabled && (fields.area?.required ?? false))} 
                         aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))}
-                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                        className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
                       />
                     )}
                   </div>
-                  <div className={`grid ${ship3GridCols} gap-4`}>
+                  <div className={`grid ${ship3GridCols} gap-3`}>
                     {fields.country?.enabled && (
                       <Input 
                         placeholder={fields.country.placeholder} 
@@ -1589,7 +1588,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                         onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} 
                         required={!!(fields.country?.enabled && (fields.country?.required ?? false))} 
                         aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))}
-                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                        className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
                       />
                     )}
                     {fields.state?.enabled && (
@@ -1599,7 +1598,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                         onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} 
                         required={!!(fields.state?.enabled && (fields.state?.required ?? false))} 
                         aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))}
-                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                        className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
                       />
                     )}
                      {fields.postalCode?.enabled && (
@@ -1609,7 +1608,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                         onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} 
                         required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} 
                         aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))}
-                        className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                        className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
                        />
                      )}
                     </div>
@@ -1652,7 +1651,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                             onChange={(e)=>setForm(f=>({...f, custom_fields: { ...f.custom_fields, [cf.id]: e.target.value }}))} 
                             required={!!cf.required} 
                             aria-required={!!cf.required}
-                            className="h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                            className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
                           />
                         )}
                       </div>
@@ -1773,12 +1772,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                         <span 
                           className="whitespace-normal text-center"
                           style={{
-                            fontSize: element.styles?.checkoutButton?.responsive?.desktop?.subtextFontSize || 
-                                     element.styles?.checkoutButton?.responsive?.mobile?.subtextFontSize || '12px',
-                            color: element.styles?.checkoutButton?.responsive?.desktop?.subtextColor || 
-                                   element.styles?.checkoutButton?.responsive?.mobile?.subtextColor || '#ffffff',
-                            fontWeight: element.styles?.checkoutButton?.responsive?.desktop?.subtextFontWeight || 
-                                       element.styles?.checkoutButton?.responsive?.mobile?.subtextFontWeight || '400',
+                            fontSize: getEffectiveResponsiveValue(element, 'subtextFontSize', deviceType, '12px', 'checkoutButton'),
+                            color: getEffectiveResponsiveValue(element, 'subtextColor', deviceType, '#ffffff', 'checkoutButton'),
+                            fontWeight: getEffectiveResponsiveValue(element, 'subtextFontWeight', deviceType, '400', 'checkoutButton'),
                             opacity: 0.9
                           }}
                         >

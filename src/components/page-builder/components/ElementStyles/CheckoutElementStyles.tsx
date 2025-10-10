@@ -208,7 +208,7 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
                         value={[parseInt(getEffectiveValue(styles, 'subtextFontSize', '12').replace(/\D/g, ''))]} 
                         onValueChange={(val) => updateResponsive('subtextFontSize', `${val[0]}px`)} 
                         min={8} 
-                        max={20} 
+                        max={32} 
                         step={1} 
                         className="flex-1" 
                       />
@@ -251,7 +251,7 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
                         value={[parseInt(getEffectiveValue(styles, 'subtextFontSize', '12').replace(/\D/g, ''))]} 
                         onValueChange={(val) => updateResponsive('subtextFontSize', `${val[0]}px`)} 
                         min={8} 
-                        max={18} 
+                        max={28} 
                         step={1} 
                         className="flex-1" 
                       />
