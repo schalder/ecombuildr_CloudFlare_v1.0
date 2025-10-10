@@ -84,6 +84,11 @@ const adminMenuItems = [
     icon: Layout,
   },
   {
+    title: 'AI Prompt template',
+    url: '/admin/prompts',
+    icon: MessageSquare,
+  },
+  {
     title: 'Shipping',
     url: '/admin/shipping',
     icon: Truck,

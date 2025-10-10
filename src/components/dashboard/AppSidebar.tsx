@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingCart, Users, FileText, BarChart3, Megaphone, Settings, Plus, Search, ChevronDown, ChevronRight, Palette, Globe, Shield, Images, BookOpen, PlayCircle, GraduationCap } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, Users, FileText, BarChart3, Megaphone, Settings, Plus, Search, ChevronDown, ChevronRight, Palette, Globe, Shield, Images, BookOpen, PlayCircle, GraduationCap, Sparkles } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,8 +123,11 @@ const navigationItems = [{
   }, {
     title: "Discounts",
     url: "/dashboard/marketing/discounts"
+  }, {
+    title: "Content Prompt",
+    url: "/dashboard/prompts"
   }]
-},{
+}, {
   title: "Training",
   url: "/training",
   icon: BookOpen
@@ -145,10 +148,15 @@ const navigationItems = [{
 
 // Admin navigation items for super admins
 const adminNavigationItems = [{
+  title: "Prompt Management",
+  url: "/admin/prompts",
+  icon: FileText
+}, {
   title: "Admin Training",
   url: "/admin/training",
   icon: BookOpen
 }];
+
 export function AppSidebar() {
   // Safety check for sidebar context
   let sidebarContext;

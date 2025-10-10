@@ -238,8 +238,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
       </div>
 
       {/* Editor */}
-      <div className="min-h-[200px]">
-        <EditorContent editor={editor} />
+      <div className="min-h-[200px] overflow-auto">
+        <EditorContent editor={editor} className="prose prose-sm max-w-none" />
       </div>
 
       {/* Video Embed Dialog */}

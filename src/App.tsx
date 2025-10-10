@@ -74,6 +74,8 @@ import AdminChangelog from "./pages/admin/AdminChangelog";
 import AdminFeedback from "./pages/admin/AdminFeedback";
 import AdminCareers from "./pages/admin/AdminCareers";
 import AdminSiteTemplates from "./pages/admin/AdminSiteTemplates";
+import ContentPrompts from "./pages/ContentPrompts";
+import AdminPromptManagement from "./pages/admin/AdminPromptManagement";
 import Training from "./pages/Training";
 import TrainingCourse from "./pages/TrainingCourse";
 import Roadmap from "./pages/Roadmap";
@@ -202,6 +204,7 @@ const App = () => (
                   <Route path="courses/domains" element={<CourseDomainSettings />} />
                   <Route path="courses/:courseId/edit" element={<CourseEditor />} />
                   <Route path="courses/:courseId" element={<CourseView />} />
+                  <Route path="prompts" element={<ContentPrompts />} />
                   {/* Create and management routes included to ensure OnboardingGate mounts here too */}
                   <Route path="websites/create" element={<CreateWebsite />} />
                   <Route path="websites/:id" element={<WebsiteManagement />} />
@@ -265,6 +268,7 @@ const App = () => (
                   <Route path="feedback" element={<AdminFeedback />} />
                   <Route path="careers" element={<AdminCareers />} />
                   <Route path="site-templates" element={<AdminSiteTemplates />} />
+                  <Route path="prompts" element={<AdminPromptManagement />} />
                 </Route>
                 
                 {/* Demo and Preview Routes */}
