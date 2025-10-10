@@ -37,56 +37,52 @@ export const PromptCard: React.FC<PromptCardProps> = ({
   };
 
   return (
-    <Card className="h-full flex flex-col border border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg transition-all duration-200 group">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2 leading-tight mb-2">
-          {prompt.title}
-        </CardTitle>
-        
-        {prompt.description && (
-          <CardDescription className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
-            {prompt.description}
-          </CardDescription>
-        )}
-      </CardHeader>
-
-      <CardContent className="flex-1 flex flex-col justify-between pt-0">
-        {/* Category and Tags Section */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            {prompt.category && (
-              <Badge 
-                variant="secondary" 
-                className="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-medium px-2.5 py-1"
-              >
-                {prompt.category.name}
-              </Badge>
+    <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-lg font-semibold line-clamp-2">
+              {prompt.title}
+            </CardTitle>
+            {prompt.description && (
+              <CardDescription className="mt-2 line-clamp-2">
+                {prompt.description}
+              </CardDescription>
             )}
           </div>
-          
+        </div>
+        
+        <div className="flex items-center gap-2 mt-3">
+          {prompt.category && (
+            <Badge variant="secondary" className="text-xs">
+              {prompt.category.name}
+            </Badge>
+          )}
           {prompt.tags && prompt.tags.length > 0 && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-md px-2.5 py-1">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Tag className="h-3 w-3" />
-              <span className="font-medium">{prompt.tags.length} tags</span>
+              <span>{prompt.tags.length} tags</span>
             </div>
           )}
         </div>
+      </CardHeader>
 
-        {/* Action Buttons */}
-        <div className="flex gap-3">
+      <CardContent className="flex-1 flex flex-col justify-end">
+        <div className="flex gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => onViewPrompt(prompt)}
-            className="flex-1 border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-colors duration-200"
+            className="flex-1"
           >
             <Eye className="h-4 w-4 mr-2" />
             View Prompt
           </Button>
           <Button
+            variant="secondary"
             size="sm"
             onClick={handleCopyPrompt}
-            className="flex-1 bg-gray-900 hover:bg-gray-800 text-white transition-colors duration-200"
+            className="flex-1"
           >
             <Copy className="h-4 w-4 mr-2" />
             Copy
