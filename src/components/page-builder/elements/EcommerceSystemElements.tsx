@@ -968,6 +968,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const terms = cfg.terms || { enabled: false, required: true, label: 'I agree to the Terms & Conditions', url: '/terms' };
   const trust = cfg.trustBadge || { enabled: false, imageUrl: '', alt: 'Secure checkout' };
   const buttonLabel: string = cfg.placeOrderLabel || 'Place Order';
+  const buttonSubtext: string = cfg.placeOrderSubtext || '';
+  const buttonSubtextPosition: string = cfg.placeOrderSubtextPosition || 'below';
   const showItemImages: boolean = cfg.showItemImages ?? true;
   const sections = cfg.sections || { info: true, shipping: true, payment: true, summary: true };
 
@@ -1756,12 +1758,33 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
                     <Button 
                       size={buttonSize as any} 
-                      className={`w-full h-12 text-base font-semibold element-${element.id} bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-lg transition-colors`} 
+                      className={`w-full h-auto min-h-12 text-base font-semibold element-${element.id} bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-lg transition-colors ${buttonSubtextPosition === 'above' ? 'flex-col-reverse' : 'flex-col'} items-center justify-center gap-1 whitespace-normal`} 
                       style={buttonInline as React.CSSProperties} 
                       onClick={handleSubmit} 
                       disabled={loading || (isEditing && items.length === 0)}
                     >
-                      {isEditing && items.length === 0 ? 'Preview Mode - Add items to cart' : (loading? 'Placing Order...' : buttonLabel)}
+                      {/* Main button text */}
+                      <span className="whitespace-nowrap">
+                        {isEditing && items.length === 0 ? 'Preview Mode - Add items to cart' : (loading? 'Placing Order...' : buttonLabel)}
+                      </span>
+                      
+                      {/* Subtext - only shown if exists */}
+                      {buttonSubtext && (
+                        <span 
+                          className="whitespace-normal text-center"
+                          style={{
+                            fontSize: element.styles?.checkoutButton?.responsive?.desktop?.subtextFontSize || 
+                                     element.styles?.checkoutButton?.responsive?.mobile?.subtextFontSize || '12px',
+                            color: element.styles?.checkoutButton?.responsive?.desktop?.subtextColor || 
+                                   element.styles?.checkoutButton?.responsive?.mobile?.subtextColor || '#ffffff',
+                            fontWeight: element.styles?.checkoutButton?.responsive?.desktop?.subtextFontWeight || 
+                                       element.styles?.checkoutButton?.responsive?.mobile?.subtextFontWeight || '400',
+                            opacity: 0.9
+                          }}
+                        >
+                          {buttonSubtext}
+                        </span>
+                      )}
                     </Button>
 
                     {terms.enabled && (
@@ -2186,7 +2209,11 @@ export const registerEcommerceSystemElements = () => {
     category: 'ecommerce',
     icon: CreditCard,
     component: CheckoutFullElement,
-    defaultContent: {},
+    defaultContent: {
+      placeOrderLabel: 'Place Order',
+      placeOrderSubtext: '',
+      placeOrderSubtextPosition: 'below',
+    },
     description: 'Full checkout form with summary.'
   });
 

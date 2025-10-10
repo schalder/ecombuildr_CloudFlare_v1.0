@@ -88,6 +88,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const terms = cfg.terms || { enabled: false, required: true, label: 'I agree to the Terms & Conditions', url: '/terms' };
   const trust = cfg.trustBadge || { enabled: false, imageUrl: '', alt: 'Secure checkout' };
   const buttonLabel: string = cfg.placeOrderLabel || 'Place Order';
+  const buttonSubtext: string = cfg.placeOrderSubtext || '';
+  const buttonSubtextPosition: string = cfg.placeOrderSubtextPosition || 'below';
   const showItemImages: boolean = cfg.showItemImages ?? true;
   const orderBump = cfg.orderBump || { enabled: false, productId: '', label: 'Add this to my order', description: '', prechecked: false };
   const chargeShippingForBump: boolean = cfg.chargeShippingForBump !== false;
@@ -1147,8 +1149,35 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(shippingCost)}</span></div>
                   <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(subtotal + shippingCost)}</span></div>
 
-                  <Button size={buttonSize as any} className={`w-full mt-2 element-${element.id}`} style={buttonInline as React.CSSProperties} onClick={handleSubmit} disabled={!selectedProduct || isSelectedOut || isSubmitting}>
-                    {isSubmitting ? 'Processing...' : (isSelectedOut ? 'Out of Stock' : buttonLabel)}
+                  <Button 
+                    size={buttonSize as any} 
+                    className={`w-full mt-2 h-auto min-h-12 element-${element.id} ${buttonSubtextPosition === 'above' ? 'flex-col-reverse' : 'flex-col'} items-center justify-center gap-1 whitespace-normal`} 
+                    style={buttonInline as React.CSSProperties} 
+                    onClick={handleSubmit} 
+                    disabled={!selectedProduct || isSelectedOut || isSubmitting}
+                  >
+                    {/* Main button text */}
+                    <span className="whitespace-nowrap">
+                      {isSubmitting ? 'Processing...' : (isSelectedOut ? 'Out of Stock' : buttonLabel)}
+                    </span>
+                    
+                    {/* Subtext - only shown if exists */}
+                    {buttonSubtext && (
+                      <span 
+                        className="whitespace-normal text-center"
+                        style={{
+                          fontSize: element.styles?.checkoutButton?.responsive?.desktop?.subtextFontSize || 
+                                   element.styles?.checkoutButton?.responsive?.mobile?.subtextFontSize || '12px',
+                          color: element.styles?.checkoutButton?.responsive?.desktop?.subtextColor || 
+                                 element.styles?.checkoutButton?.responsive?.mobile?.subtextColor || '#ffffff',
+                          fontWeight: element.styles?.checkoutButton?.responsive?.desktop?.subtextFontWeight || 
+                                     element.styles?.checkoutButton?.responsive?.mobile?.subtextFontWeight || '400',
+                          opacity: 0.9
+                        }}
+                      >
+                        {buttonSubtext}
+                      </span>
+                    )}
                   </Button>
 
                   {terms.enabled && (
@@ -1190,6 +1219,8 @@ export const registerInlineCheckoutElements = () => {
       sections: { info: true, shipping: true, payment: true, summary: true },
       headings: { info: 'Customer Information', shipping: 'Shipping', payment: 'Payment', summary: 'Order Summary' },
       placeOrderLabel: 'Place Order',
+      placeOrderSubtext: '',
+      placeOrderSubtextPosition: 'below',
       showItemImages: true,
       fields: {
         fullName: { enabled: true, required: true, placeholder: 'Full Name' },

@@ -79,6 +79,33 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
         <Input value={buttonLabel} onChange={(e) => onUpdate('placeOrderLabel', e.target.value)} placeholder="Place Order" />
       </div>
 
+      <div>
+        <Label className="text-sm">Button Subtext (Optional)</Label>
+        <Input 
+          value={element.content?.placeOrderSubtext || ''} 
+          onChange={(e) => onUpdate('placeOrderSubtext', e.target.value)} 
+          placeholder="Add subtext below button..." 
+        />
+      </div>
+
+      {element.content?.placeOrderSubtext && (
+        <div>
+          <Label className="text-sm">Subtext Position</Label>
+          <Select
+            value={element.content?.placeOrderSubtextPosition || 'below'}
+            onValueChange={(value) => onUpdate('placeOrderSubtextPosition', value)}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="below">Below Main Text</SelectItem>
+              <SelectItem value="above">Above Main Text</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <Separator />
 
       <Accordion type="multiple" className="w-full">

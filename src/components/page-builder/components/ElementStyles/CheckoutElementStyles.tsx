@@ -69,8 +69,8 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
 
   return (
     <div className="space-y-4">
-      <CollapsibleGroup title="Primary Button" isOpen={buttonOpen} onToggle={setButtonOpen}>
-        <p className="text-xs text-muted-foreground mb-3">Customize the Place Order button styles</p>
+      <CollapsibleGroup title="Button Main Text Styling" isOpen={buttonOpen} onToggle={setButtonOpen}>
+        <p className="text-xs text-muted-foreground mb-3">Customize the Place Order button main text styles</p>
 
       {/* Button size preset */}
       <div className="grid grid-cols-1 gap-2">
@@ -101,7 +101,7 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
                 <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(styles, 'fontSize', '16px')}</span>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
               <div>
                 <ColorPicker 
                   label="Text Color"
@@ -116,8 +116,6 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
                   onChange={(val) => updateResponsive('backgroundColor', val)}
                 />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
               <div>
                 <ColorPicker 
                   label="Hover Text"
@@ -150,7 +148,7 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
                 <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(styles, 'fontSize', '16px')}</span>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
               <div>
                 <ColorPicker 
                   label="Text Color"
@@ -165,8 +163,6 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
                   onChange={(val) => updateResponsive('backgroundColor', val)}
                 />
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
               <div>
                 <ColorPicker 
                   label="Hover Text"
@@ -192,6 +188,108 @@ export const CheckoutElementStyles: React.FC<CheckoutElementStylesProps> = ({ el
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Subtext Styling - only show if subtext exists */}
+        {element.content?.placeOrderSubtext && (
+          <>
+            <Separator className="my-4" />
+            <div className="space-y-3">
+              <h5 className="text-xs font-medium">Subtext Styling</h5>
+              <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="desktop" className="flex items-center gap-2"><Monitor className="h-3 w-3" />Desktop</TabsTrigger>
+                  <TabsTrigger value="mobile" className="flex items-center gap-2"><Smartphone className="h-3 w-3" />Mobile</TabsTrigger>
+                </TabsList>
+                <TabsContent value="desktop" className="space-y-3 mt-3">
+                  <div>
+                    <Label className="text-xs">Font Size</Label>
+                    <div className="flex items-center gap-2">
+                      <Slider 
+                        value={[parseInt(getEffectiveValue(styles, 'subtextFontSize', '12').replace(/\D/g, ''))]} 
+                        onValueChange={(val) => updateResponsive('subtextFontSize', `${val[0]}px`)} 
+                        min={8} 
+                        max={20} 
+                        step={1} 
+                        className="flex-1" 
+                      />
+                      <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(styles, 'subtextFontSize', '12px')}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <ColorPicker 
+                        label="Text Color"
+                        color={getEffectiveValue(styles, 'subtextColor', '#ffffff')}
+                        onChange={(val) => updateResponsive('subtextColor', val)}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Font Weight</Label>
+                      <Select 
+                        value={getEffectiveValue(styles, 'subtextFontWeight', '400')} 
+                        onValueChange={(val) => updateResponsive('subtextFontWeight', val)}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="300">Light (300)</SelectItem>
+                          <SelectItem value="400">Normal (400)</SelectItem>
+                          <SelectItem value="500">Medium (500)</SelectItem>
+                          <SelectItem value="600">Semi Bold (600)</SelectItem>
+                          <SelectItem value="700">Bold (700)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </TabsContent>
+                <TabsContent value="mobile" className="space-y-3 mt-3">
+                  <div>
+                    <Label className="text-xs">Font Size</Label>
+                    <div className="flex items-center gap-2">
+                      <Slider 
+                        value={[parseInt(getEffectiveValue(styles, 'subtextFontSize', '12').replace(/\D/g, ''))]} 
+                        onValueChange={(val) => updateResponsive('subtextFontSize', `${val[0]}px`)} 
+                        min={8} 
+                        max={18} 
+                        step={1} 
+                        className="flex-1" 
+                      />
+                      <span className="text-xs text-muted-foreground w-12">{getEffectiveValue(styles, 'subtextFontSize', '12px')}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <ColorPicker 
+                        label="Text Color"
+                        color={getEffectiveValue(styles, 'subtextColor', '#ffffff')}
+                        onChange={(val) => updateResponsive('subtextColor', val)}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Font Weight</Label>
+                      <Select 
+                        value={getEffectiveValue(styles, 'subtextFontWeight', '400')} 
+                        onValueChange={(val) => updateResponsive('subtextFontWeight', val)}
+                      >
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="300">Light (300)</SelectItem>
+                          <SelectItem value="400">Normal (400)</SelectItem>
+                          <SelectItem value="500">Medium (500)</SelectItem>
+                          <SelectItem value="600">Semi Bold (600)</SelectItem>
+                          <SelectItem value="700">Bold (700)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </>
+        )}
       </CollapsibleGroup>
 
       <CollapsibleGroup title="Section Header" isOpen={headerOpen} onToggle={setHeaderOpen}>
