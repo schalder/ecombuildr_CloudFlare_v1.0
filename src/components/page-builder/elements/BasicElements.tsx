@@ -178,7 +178,7 @@ const ImageElement: React.FC<{
       objectFit: element.styles?.objectFit || 'cover',
       display: 'block',
       // ADD: Prevent layout shift with aspect ratio
-      aspectRatio: element.styles?.aspectRatio || (element.styles?.width && element.styles?.height 
+      aspectRatio: (element.styles as any)?.aspectRatio || (element.styles?.width && element.styles?.height 
         ? `${element.styles.width} / ${element.styles.height}` 
         : undefined)
     } as React.CSSProperties;
@@ -248,24 +248,34 @@ const ImageElement: React.FC<{
     }
 
     // Determine if image is above fold (first section, first 2 rows)
-    const isCritical = element.metadata?.position === 'above-fold' || 
-                       element.metadata?.sectionIndex === 0;
+    const isCritical = (element as any).metadata?.position === 'above-fold' || 
+                       (element as any).metadata?.sectionIndex === 0;
     
     // Use optimized component for live pages
     if (!isEditing) {
+      // Parse width and height correctly (handle px units)
+      const parseDimension = (value: string | undefined): number | undefined => {
+        if (!value) return undefined;
+        const numericValue = parseFloat(value.replace(/[^\d.]/g, ''));
+        return isNaN(numericValue) ? undefined : numericValue;
+      };
+
       return (
-        <StorefrontImage
-          src={imageUrl}
-          alt={alt || (!src ? 'Placeholder image' : '')}
-          className={`element-${element.id}`}
-          style={getImageStyles()}
-          priority={isCritical}
-          isCritical={isCritical}
-          width={element.styles?.width ? parseInt(element.styles.width) : undefined}
-          height={element.styles?.height ? parseInt(element.styles.height) : undefined}
-          aspectRatio={element.styles?.aspectRatio}
-          preserveOriginal={true}
-        />
+        <>
+          {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
+          <StorefrontImage
+            src={imageUrl}
+            alt={alt || (!src ? 'Placeholder image' : '')}
+            className={`element-${element.id}`}
+            style={getImageStyles()}
+            priority={isCritical}
+            isCritical={isCritical}
+            width={parseDimension(element.styles?.width)}
+            height={parseDimension(element.styles?.height)}
+            aspectRatio={(element.styles as any)?.aspectRatio}
+            preserveOriginal={true}
+          />
+        </>
       );
     }
     

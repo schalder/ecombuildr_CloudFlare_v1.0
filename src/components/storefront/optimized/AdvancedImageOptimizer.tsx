@@ -146,27 +146,43 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
       ...style
     };
 
+    // Extract dimensions from style prop if available
+    const styleWidth = style?.width;
+    const styleHeight = style?.height;
+    const styleAspectRatio = style?.aspectRatio;
+
+    // Priority order: props > style prop > default
+    const finalWidth = width || styleWidth;
+    const finalHeight = height || styleHeight;
+    const finalAspectRatio = aspectRatio || styleAspectRatio;
+
     // Explicit dimensions take precedence
-    if (width && height) {
+    if (finalWidth && finalHeight) {
       return {
         ...baseStyles,
-        width,
-        height,
-        aspectRatio: `${width} / ${height}`
+        width: finalWidth,
+        height: finalHeight,
+        aspectRatio: typeof finalWidth === 'number' && typeof finalHeight === 'number' 
+          ? `${finalWidth} / ${finalHeight}` 
+          : finalAspectRatio
       };
     }
 
-    // When preserving original, do not enforce any aspect ratio by default
+    // When preserving original, respect style dimensions but don't enforce aspect ratio
     if (preserveOriginal) {
-      // Respect explicit aspectRatio only if provided with preserveOriginal? We'll avoid forcing it
-      return baseStyles;
+      return {
+        ...baseStyles,
+        ...(finalWidth && { width: finalWidth }),
+        ...(finalHeight && { height: finalHeight }),
+        ...(finalAspectRatio && { aspectRatio: finalAspectRatio })
+      };
     }
 
     // Use aspect ratio if provided (responsive layout mode)
-    if (aspectRatio) {
+    if (finalAspectRatio) {
       return {
         ...baseStyles,
-        aspectRatio
+        aspectRatio: finalAspectRatio
       };
     }
 

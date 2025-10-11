@@ -60,6 +60,10 @@ export interface PageBuilderElement {
   id: string;
   anchor?: string;
   type: string;
+  metadata?: {
+    position?: 'above-fold' | 'below-fold';
+    sectionIndex?: number;
+  };
   content: {
     text?: string;
     url?: string;
@@ -105,6 +109,7 @@ export interface PageBuilderElement {
     borderStyle?: string;
     opacity?: number;
     objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+    aspectRatio?: string;
     fontWeight?: string;
     fontFamily?: string;
     // Social Links Element specific properties
