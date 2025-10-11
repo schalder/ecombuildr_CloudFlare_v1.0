@@ -4,7 +4,7 @@ export type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
 // Device viewport dimensions for preview
 export const DEVICE_DIMENSIONS = {
-  mobile: { width: 375, height: 667 },
+  mobile: { width: 390, height: 844 },
   tablet: { width: 768, height: 1024 },
   desktop: { width: 1200, height: 800 }
 } as const;

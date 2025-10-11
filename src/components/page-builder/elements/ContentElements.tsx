@@ -10,6 +10,7 @@ import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
+import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
 
 
 // Testimonial Element
@@ -581,16 +582,30 @@ const ImageFeatureElement: React.FC<{
           }}
         >
           {imageUrl ? (
-            <img
-              src={imageUrl}
-              alt={altText}
-              className="w-full h-auto rounded-lg object-cover select-none"
-              draggable={false}
-              onDragStart={(e) => e.preventDefault()}
-              style={{
-                maxHeight: '400px'
-              }}
-            />
+            isEditing ? (
+              <img
+                src={imageUrl}
+                alt={altText}
+                className="w-full h-auto rounded-lg object-cover select-none"
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+                style={{
+                  maxHeight: '400px'
+                }}
+              />
+            ) : (
+              <StorefrontImage
+                src={imageUrl}
+                alt={altText}
+                className="w-full h-auto rounded-lg object-cover"
+                style={{
+                  maxHeight: '400px'
+                }}
+                priority={false}
+                aspectRatio="16/9"
+                preserveOriginal={true}
+              />
+            )
           ) : (
             <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center pointer-events-none">
               <span className="text-muted-foreground text-sm">No image selected</span>

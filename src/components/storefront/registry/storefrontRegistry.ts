@@ -278,6 +278,50 @@ class StorefrontElementRegistry {
     }
   }
 
+  // Preload only critical elements that are commonly above-fold
+  async preloadCriticalElements(): Promise<void> {
+    // Critical elements that are commonly above-fold
+    const criticalCategories = ['basic']; // heading, text, button, image
+    
+    const loadPromises = criticalCategories.map(category => 
+      this.loadCategory(category)
+    );
+    
+    try {
+      await Promise.all(loadPromises);
+    } catch (error) {
+      console.warn('Some critical elements failed to load:', error);
+    }
+  }
+
+  // Load category with priority - high priority loads immediately, low priority defers
+  async loadCategoryWithPriority(category: string, priority: 'high' | 'low' = 'low'): Promise<void> {
+    // If high priority, load immediately
+    if (priority === 'high') {
+      return this.loadCategory(category);
+    }
+    
+    // Low priority: defer to idle callback
+    return new Promise((resolve) => {
+      if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => {
+          this.loadCategory(category).then(resolve).catch((err) => {
+            console.warn(`Failed to load ${category}:`, err);
+            resolve();
+          });
+        }, { timeout: 3000 });
+      } else {
+        // Fallback for browsers without requestIdleCallback
+        setTimeout(() => {
+          this.loadCategory(category).then(resolve).catch((err) => {
+            console.warn(`Failed to load ${category}:`, err);
+            resolve();
+          });
+        }, 100);
+      }
+    });
+  }
+
   register(element: StorefrontElementType) {
     this.elements.set(element.id, element);
     this.notify();

@@ -33,9 +33,26 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
   useEffect(() => {
     const initializePage = async () => {
       try {
-        await storefrontRegistry.preloadPageElements(data);
+        // Phase 1: Load critical above-fold elements immediately
+        await storefrontRegistry.preloadCriticalElements();
+        
+        // Phase 2: Preload page-specific elements (deferred)
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(() => {
+            storefrontRegistry.preloadPageElements(data).catch(err => 
+              console.warn('Failed to preload some page elements:', err)
+            );
+          }, { timeout: 2000 });
+        } else {
+          // Fallback for browsers without requestIdleCallback
+          setTimeout(() => {
+            storefrontRegistry.preloadPageElements(data).catch(err => 
+              console.warn('Failed to preload some page elements:', err)
+            );
+          }, 100);
+        }
       } catch (error) {
-        console.warn('Failed to preload some page elements:', error);
+        console.warn('Failed to load critical elements:', error);
       } finally {
         setIsLoading(false);
       }
@@ -109,6 +126,55 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
       const [family, weights] = fontWithWeights.split(':');
       ensureGoogleFontLoaded(family, weights);
     });
+  }, [data]);
+
+  // Preload LCP image candidate
+  useEffect(() => {
+    if (!data?.sections) return;
+    
+    // Find first image in first section (likely LCP candidate)
+    const firstSection = data.sections[0];
+    if (!firstSection) return;
+    
+    const findFirstImage = (obj: any): string | null => {
+      if (!obj) return null;
+      
+      if (obj.type === 'image' && obj.content?.src) {
+        return obj.content.src;
+      }
+      
+      if (Array.isArray(obj)) {
+        for (const item of obj) {
+          const result = findFirstImage(item);
+          if (result) return result;
+        }
+      } else if (typeof obj === 'object') {
+        for (const value of Object.values(obj)) {
+          const result = findFirstImage(value);
+          if (result) return result;
+        }
+      }
+      
+      return null;
+    };
+    
+    const lcpImage = findFirstImage(firstSection);
+    
+    if (lcpImage) {
+      // Preload the LCP image
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = lcpImage;
+      link.fetchPriority = 'high';
+      document.head.appendChild(link);
+      
+      return () => {
+        if (document.head.contains(link)) {
+          document.head.removeChild(link);
+        }
+      };
+    }
   }, [data]);
 
   // Handle responsive design

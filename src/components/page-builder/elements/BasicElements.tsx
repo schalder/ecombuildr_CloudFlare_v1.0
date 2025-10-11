@@ -176,7 +176,11 @@ const ImageElement: React.FC<{
     const baseStyles = {
       height: element.styles?.height || 'auto',
       objectFit: element.styles?.objectFit || 'cover',
-      display: 'block'
+      display: 'block',
+      // ADD: Prevent layout shift with aspect ratio
+      aspectRatio: element.styles?.aspectRatio || (element.styles?.width && element.styles?.height 
+        ? `${element.styles.width} / ${element.styles.height}` 
+        : undefined)
     } as React.CSSProperties;
 
     // Apply alignment as margin styles directly to the image
@@ -243,6 +247,29 @@ const ImageElement: React.FC<{
       );
     }
 
+    // Determine if image is above fold (first section, first 2 rows)
+    const isCritical = element.metadata?.position === 'above-fold' || 
+                       element.metadata?.sectionIndex === 0;
+    
+    // Use optimized component for live pages
+    if (!isEditing) {
+      return (
+        <StorefrontImage
+          src={imageUrl}
+          alt={alt || (!src ? 'Placeholder image' : '')}
+          className={`element-${element.id}`}
+          style={getImageStyles()}
+          priority={isCritical}
+          isCritical={isCritical}
+          width={element.styles?.width ? parseInt(element.styles.width) : undefined}
+          height={element.styles?.height ? parseInt(element.styles.height) : undefined}
+          aspectRatio={element.styles?.aspectRatio}
+          preserveOriginal={true}
+        />
+      );
+    }
+    
+    // Editor mode - keep existing simple img tag
     return (
       <div className="relative">
         {imageLoading && src && (
@@ -550,9 +577,9 @@ const ButtonElement: React.FC<{
   }
   
   const containerClass = 
-    alignment === 'center' ? 'flex justify-center' :
-    alignment === 'right' ? 'flex justify-end' : 
-    'flex justify-start';
+    alignment === 'center' ? 'flex justify-center w-full overflow-hidden' :
+    alignment === 'right' ? 'flex justify-end w-full overflow-hidden' : 
+    'flex justify-start w-full overflow-hidden';
 
   // Use renderElementStyles for consistent styling
   const elementStyles = renderElementStyles(element, deviceType);
@@ -616,17 +643,26 @@ const ButtonElement: React.FC<{
           style={elementStyles}
         >
           {/* Main content wrapper for icon + text */}
-          <div className="flex items-center justify-center gap-2 whitespace-nowrap">
-            {IconComponent && (
+          <div className="flex items-center justify-center gap-2 whitespace-normal text-center">
+            {IconComponent && element.content.iconPosition !== 'after' && (
               <IconComponent 
                 style={{ 
-                  width: elementStyles.fontSize || '16px',
-                  height: elementStyles.fontSize || '16px',
-                  color: 'currentColor'
+                  width: getEffectiveResponsiveValue(element, 'iconSize', deviceType, elementStyles.fontSize || '16px'),
+                  height: getEffectiveResponsiveValue(element, 'iconSize', deviceType, elementStyles.fontSize || '16px'),
+                  color: getEffectiveResponsiveValue(element, 'iconColor', deviceType, 'currentColor')
                 }} 
               />
             )}
-            {text}
+            <span className="break-words">{text}</span>
+            {IconComponent && element.content.iconPosition === 'after' && (
+              <IconComponent 
+                style={{ 
+                  width: getEffectiveResponsiveValue(element, 'iconSize', deviceType, elementStyles.fontSize || '16px'),
+                  height: getEffectiveResponsiveValue(element, 'iconSize', deviceType, elementStyles.fontSize || '16px'),
+                  color: getEffectiveResponsiveValue(element, 'iconColor', deviceType, 'currentColor')
+                }} 
+              />
+            )}
           </div>
           
           {/* Subtext - only shown if exists */}
@@ -1048,7 +1084,8 @@ export const registerBasicElements = () => {
       subtext: '',
       subtextPosition: 'below',
       subtextFontSize: '12px',
-      subtextFontWeight: '400'
+      subtextFontWeight: '400',
+      iconPosition: 'before'
     },
     description: 'Call to action button'
   });

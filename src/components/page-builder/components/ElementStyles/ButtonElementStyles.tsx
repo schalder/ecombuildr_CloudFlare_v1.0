@@ -35,6 +35,7 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
   const [bordersOpen, setBordersOpen] = useState(false);
   const [spacingOpen, setSpacingOpen] = useState(false);
   const [iconOpen, setIconOpen] = useState(false);
+  const [iconStylingOpen, setIconStylingOpen] = useState(false);
   const [subtextStylingOpen, setSubtextStylingOpen] = useState(false);
 
   // Handle icon changes
@@ -149,6 +150,77 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
           </p>
         </div>
       </CollapsibleGroup>
+
+      {/* Icon Styling - Only show if icon exists */}
+      {element.content.icon && (
+        <CollapsibleGroup title="Icon Styling" isOpen={iconStylingOpen} onToggle={setIconStylingOpen}>
+          <div className="space-y-3">
+            {/* Icon Size */}
+            <ResponsiveStyleControl
+              element={element}
+              property="iconSize"
+              label="Icon Size"
+              deviceType={responsiveTab}
+              fallback="16px"
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <div className="flex items-center space-x-2">
+                  <Slider
+                    value={[parseInt(value.toString().replace(/\D/g, ''))]}
+                    onValueChange={(val) => onChange(`${val[0]}px`)}
+                    max={100}
+                    min={8}
+                    step={1}
+                    className="flex-1"
+                  />
+                  <span className="text-xs text-muted-foreground w-12">
+                    {value}
+                  </span>
+                </div>
+              )}
+            </ResponsiveStyleControl>
+
+            {/* Icon Color */}
+            <ResponsiveStyleControl
+              element={element}
+              property="iconColor"
+              label="Icon Color"
+              deviceType={responsiveTab}
+              fallback="currentColor"
+              onStyleUpdate={onStyleUpdate}
+            >
+              {(value, onChange) => (
+                <ColorPicker
+                  color={value}
+                  onChange={onChange}
+                />
+              )}
+            </ResponsiveStyleControl>
+
+            {/* Icon Position */}
+            <div>
+              <Label className="text-xs">Icon Position</Label>
+              <div className="flex space-x-1 mt-1">
+                <Button
+                  size="sm"
+                  variant={element.content.iconPosition === 'before' ? 'default' : 'outline'}
+                  onClick={() => onContentUpdate('iconPosition', 'before')}
+                >
+                  Before Text
+                </Button>
+                <Button
+                  size="sm"
+                  variant={element.content.iconPosition === 'after' ? 'default' : 'outline'}
+                  onClick={() => onContentUpdate('iconPosition', 'after')}
+                >
+                  After Text
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CollapsibleGroup>
+      )}
 
       {/* Dimensions */}
       <CollapsibleGroup title="Dimensions" isOpen={dimensionsOpen} onToggle={setDimensionsOpen}>
