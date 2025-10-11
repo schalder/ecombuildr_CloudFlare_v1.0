@@ -62,19 +62,34 @@ export const PlatformNavigationManager: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('platform_navigation_settings')
-        .update({
-          logo_url: logoUrl,
-          nav_items: navItems,
-        })
-        .eq('id', settings?.id);
+      let result;
+      
+      if (settings?.id) {
+        // Update existing record
+        result = await supabase
+          .from('platform_navigation_settings')
+          .update({
+            logo_url: logoUrl,
+            nav_items: navItems,
+          })
+          .eq('id', settings.id);
+      } else {
+        // Insert new record
+        result = await supabase
+          .from('platform_navigation_settings')
+          .insert({
+            logo_url: logoUrl,
+            nav_items: navItems,
+          })
+          .select()
+          .single();
+      }
 
-      if (error) throw error;
+      if (result.error) throw result.error;
 
       toast({
         title: 'Success',
-        description: 'Navigation settings updated successfully',
+        description: 'Navigation settings saved successfully',
       });
       
       fetchSettings();
