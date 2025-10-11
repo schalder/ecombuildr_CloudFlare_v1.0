@@ -331,6 +331,3 @@ class StorefrontElementRegistry {
 }
 
 export const storefrontRegistry = new StorefrontElementRegistry();
-
-// Initialize critical elements immediately
-storefrontRegistry.preloadCriticalElements();
