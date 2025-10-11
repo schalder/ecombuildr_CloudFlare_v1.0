@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useMarketingContent } from '@/hooks/useMarketingContent';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { PlatformNavigationManager } from '@/components/admin/PlatformNavigationManager';
 import { 
   AlertCircle, 
   Settings, 
@@ -21,7 +22,8 @@ import {
   Server,
   Save,
   AlertTriangle,
-  Monitor
+  Monitor,
+  Menu
 } from 'lucide-react';
 
 const AdminSystemSettings = () => {
@@ -161,7 +163,7 @@ const AdminSystemSettings = () => {
     <AdminLayout title="System Settings" description="Configure platform-wide settings and preferences">
       <div className="space-y-6">
         <Tabs defaultValue="system" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="system" className="flex items-center gap-2">
               <Server className="h-4 w-4" />
               System
@@ -181,6 +183,10 @@ const AdminSystemSettings = () => {
             <TabsTrigger value="marketing" className="flex items-center gap-2">
               <Monitor className="h-4 w-4" />
               Marketing
+            </TabsTrigger>
+            <TabsTrigger value="navigation" className="flex items-center gap-2">
+              <Menu className="h-4 w-4" />
+              Navigation
             </TabsTrigger>
           </TabsList>
 
@@ -576,6 +582,11 @@ const AdminSystemSettings = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Navigation Settings */}
+          <TabsContent value="navigation">
+            <PlatformNavigationManager />
           </TabsContent>
         </Tabs>
       </div>
