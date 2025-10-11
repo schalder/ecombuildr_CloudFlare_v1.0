@@ -278,21 +278,6 @@ class StorefrontElementRegistry {
     }
   }
 
-  // Preload only critical elements that are commonly above-fold
-  async preloadCriticalElements(): Promise<void> {
-    // Critical elements that are commonly above-fold
-    const criticalCategories = ['basic']; // heading, text, button, image
-    
-    const loadPromises = criticalCategories.map(category => 
-      this.loadCategory(category)
-    );
-    
-    try {
-      await Promise.all(loadPromises);
-    } catch (error) {
-      console.warn('Some critical elements failed to load:', error);
-    }
-  }
 
   // Load category with priority - high priority loads immediately, low priority defers
   async loadCategoryWithPriority(category: string, priority: 'high' | 'low' = 'low'): Promise<void> {
