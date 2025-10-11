@@ -104,21 +104,7 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
 
   // For divider elements, only show spacing controls
   if (element.type === 'divider') {
-    const marginSpacing = parseSpacingProperty(element.styles?.margin, 'margin');
-    const paddingSpacing = parseSpacingProperty(element.styles?.padding, 'padding');
-
-    // Convert to device-aware format
-    const marginByDevice = {
-      desktop: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left },
-      tablet: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left },
-      mobile: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left }
-    };
-    
-    const paddingByDevice = {
-      desktop: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left },
-      tablet: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left },
-      mobile: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left }
-    };
+    const { marginByDevice, paddingByDevice } = getCurrentSpacingByDevice();
 
     const handleMarginChange = (device: 'desktop' | 'tablet' | 'mobile', property: 'top' | 'right' | 'bottom' | 'left', value: number) => {
       const updated = { ...marginByDevice };
