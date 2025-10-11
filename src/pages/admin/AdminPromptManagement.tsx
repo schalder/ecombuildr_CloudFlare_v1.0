@@ -43,7 +43,7 @@ const AdminPromptManagement: React.FC = () => {
   } = usePromptManagement();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all');
   const [selectedPrompt, setSelectedPrompt] = useState<Prompt | null>(null);
   const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState<PromptCategory | null>(null);
