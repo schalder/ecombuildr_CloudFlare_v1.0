@@ -598,7 +598,6 @@ function generateHTML(seo: SEOData, url: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#10B981" />
   
   <title>${title}</title>
   <meta name="description" content="${description}" />

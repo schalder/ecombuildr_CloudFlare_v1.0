@@ -152,7 +152,6 @@ export const MetaTags: React.FC<MetaTagsProps> = ({
       <meta name="twitter:site" content="@ecombuildr" />
       
       {/* Additional SEO Tags */}
-      <meta name="theme-color" content="#10B981" />
       
       {/* Favicon */}
       {favicon && (

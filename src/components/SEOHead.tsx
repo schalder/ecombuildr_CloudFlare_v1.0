@@ -80,7 +80,6 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
       <meta name="twitter:site" content="@ecombuildr" />
       
       {/* Additional SEO Tags */}
-      <meta name="theme-color" content="#10B981" />
       
       {/* Structured Data */}
       <script type="application/ld+json">
