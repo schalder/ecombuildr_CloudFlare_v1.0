@@ -994,67 +994,163 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
               <section className="space-y-3">
                 <h3 className={`mb-2 font-semibold text-base element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                 {fields.address?.enabled && (
-                  <Input 
-                    placeholder={fields.address.placeholder} 
-                    value={form.shipping_address} 
-                    onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} 
-                    required={!!(fields.address?.enabled && (fields.address?.required ?? true))} 
-                    aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))}
-                    className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                  />
+                  <div>
+                    <Input 
+                      placeholder={fields.address.placeholder} 
+                      value={form.shipping_address} 
+                      onChange={e => {
+                        setForm(f => ({ ...f, shipping_address: e.target.value }));
+                        clearFieldError('shipping_address');
+                      }} 
+                      required={!!(fields.address?.enabled && (fields.address?.required ?? true))} 
+                      aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))}
+                      aria-invalid={!!validationErrors.shipping_address}
+                      aria-describedby={validationErrors.shipping_address ? `shipping_address-error-${element.id}` : undefined}
+                      className={`h-[3.75rem] rounded-md border-2 bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:ring-2 transition-all duration-200 ${
+                        validationErrors.shipping_address
+                          ? 'border-destructive focus:border-destructive focus:ring-destructive/20'
+                          : 'border-border focus:border-primary focus:ring-primary/20'
+                      }`}
+                    />
+                    {validationErrors.shipping_address && (
+                      <p id={`shipping_address-error-${element.id}`} className="text-sm text-destructive mt-1" role="alert">
+                        {validationErrors.shipping_address}
+                      </p>
+                    )}
+                  </div>
                 )}
                 <div className={`grid ${ship2GridCols} gap-3`}>
                   {fields.city?.enabled && (
-                    <Input 
-                      placeholder={fields.city.placeholder} 
-                      value={form.shipping_city} 
-                      onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} 
-                      required={!!(fields.city?.enabled && (fields.city?.required ?? true))} 
-                      aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))}
-                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                    />
+                    <div>
+                      <Input 
+                        placeholder={fields.city.placeholder} 
+                        value={form.shipping_city} 
+                        onChange={e => {
+                          setForm(f => ({ ...f, shipping_city: e.target.value }));
+                          clearFieldError('shipping_city');
+                        }} 
+                        required={!!(fields.city?.enabled && (fields.city?.required ?? true))} 
+                        aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))}
+                        aria-invalid={!!validationErrors.shipping_city}
+                        aria-describedby={validationErrors.shipping_city ? `shipping_city-error-${element.id}` : undefined}
+                        className={`h-[3.75rem] rounded-md border-2 bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:ring-2 transition-all duration-200 ${
+                          validationErrors.shipping_city
+                            ? 'border-destructive focus:border-destructive focus:ring-destructive/20'
+                            : 'border-border focus:border-primary focus:ring-primary/20'
+                        }`}
+                      />
+                      {validationErrors.shipping_city && (
+                        <p id={`shipping_city-error-${element.id}`} className="text-sm text-destructive mt-1" role="alert">
+                          {validationErrors.shipping_city}
+                        </p>
+                      )}
+                    </div>
                   )}
                   {fields.area?.enabled && (
-                    <Input 
-                      placeholder={fields.area.placeholder} 
-                      value={form.shipping_area} 
-                      onChange={e=>setForm(f=>({...f,shipping_area:e.target.value}))} 
-                      required={!!(fields.area?.enabled && (fields.area?.required ?? false))} 
-                      aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))}
-                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                    />
+                    <div>
+                      <Input 
+                        placeholder={fields.area.placeholder} 
+                        value={form.shipping_area} 
+                        onChange={e => {
+                          setForm(f => ({ ...f, shipping_area: e.target.value }));
+                          clearFieldError('shipping_area');
+                        }} 
+                        required={!!(fields.area?.enabled && (fields.area?.required ?? false))} 
+                        aria-required={!!(fields.area?.enabled && (fields.area?.required ?? false))}
+                        aria-invalid={!!validationErrors.shipping_area}
+                        aria-describedby={validationErrors.shipping_area ? `shipping_area-error-${element.id}` : undefined}
+                        className={`h-[3.75rem] rounded-md border-2 bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:ring-2 transition-all duration-200 ${
+                          validationErrors.shipping_area
+                            ? 'border-destructive focus:border-destructive focus:ring-destructive/20'
+                            : 'border-border focus:border-primary focus:ring-primary/20'
+                        }`}
+                      />
+                      {validationErrors.shipping_area && (
+                        <p id={`shipping_area-error-${element.id}`} className="text-sm text-destructive mt-1" role="alert">
+                          {validationErrors.shipping_area}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className={`grid ${ship3GridCols} gap-3`}>
                   {fields.country?.enabled && (
-                    <Input 
-                      placeholder={fields.country.placeholder} 
-                      value={form.shipping_country} 
-                      onChange={e=>setForm(f=>({...f,shipping_country:e.target.value}))} 
-                      required={!!(fields.country?.enabled && (fields.country?.required ?? false))} 
-                      aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))}
-                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                    />
+                    <div>
+                      <Input 
+                        placeholder={fields.country.placeholder} 
+                        value={form.shipping_country} 
+                        onChange={e => {
+                          setForm(f => ({ ...f, shipping_country: e.target.value }));
+                          clearFieldError('shipping_country');
+                        }} 
+                        required={!!(fields.country?.enabled && (fields.country?.required ?? false))} 
+                        aria-required={!!(fields.country?.enabled && (fields.country?.required ?? false))}
+                        aria-invalid={!!validationErrors.shipping_country}
+                        aria-describedby={validationErrors.shipping_country ? `shipping_country-error-${element.id}` : undefined}
+                        className={`h-[3.75rem] rounded-md border-2 bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:ring-2 transition-all duration-200 ${
+                          validationErrors.shipping_country
+                            ? 'border-destructive focus:border-destructive focus:ring-destructive/20'
+                            : 'border-border focus:border-primary focus:ring-primary/20'
+                        }`}
+                      />
+                      {validationErrors.shipping_country && (
+                        <p id={`shipping_country-error-${element.id}`} className="text-sm text-destructive mt-1" role="alert">
+                          {validationErrors.shipping_country}
+                        </p>
+                      )}
+                    </div>
                   )}
                   {fields.state?.enabled && (
-                    <Input 
-                      placeholder={fields.state.placeholder} 
-                      value={form.shipping_state} 
-                      onChange={e=>setForm(f=>({...f,shipping_state:e.target.value}))} 
-                      required={!!(fields.state?.enabled && (fields.state?.required ?? false))} 
-                      aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))}
-                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                    />
+                    <div>
+                      <Input 
+                        placeholder={fields.state.placeholder} 
+                        value={form.shipping_state} 
+                        onChange={e => {
+                          setForm(f => ({ ...f, shipping_state: e.target.value }));
+                          clearFieldError('shipping_state');
+                        }} 
+                        required={!!(fields.state?.enabled && (fields.state?.required ?? false))} 
+                        aria-required={!!(fields.state?.enabled && (fields.state?.required ?? false))}
+                        aria-invalid={!!validationErrors.shipping_state}
+                        aria-describedby={validationErrors.shipping_state ? `shipping_state-error-${element.id}` : undefined}
+                        className={`h-[3.75rem] rounded-md border-2 bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:ring-2 transition-all duration-200 ${
+                          validationErrors.shipping_state
+                            ? 'border-destructive focus:border-destructive focus:ring-destructive/20'
+                            : 'border-border focus:border-primary focus:ring-primary/20'
+                        }`}
+                      />
+                      {validationErrors.shipping_state && (
+                        <p id={`shipping_state-error-${element.id}`} className="text-sm text-destructive mt-1" role="alert">
+                          {validationErrors.shipping_state}
+                        </p>
+                      )}
+                    </div>
                   )}
                   {fields.postalCode?.enabled && (
-                    <Input 
-                      placeholder={fields.postalCode.placeholder} 
-                      value={form.shipping_postal_code} 
-                      onChange={e=>setForm(f=>({...f,shipping_postal_code:e.target.value}))} 
-                      required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} 
-                      aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))}
-                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                    />
+                    <div>
+                      <Input 
+                        placeholder={fields.postalCode.placeholder} 
+                        value={form.shipping_postal_code} 
+                        onChange={e => {
+                          setForm(f => ({ ...f, shipping_postal_code: e.target.value }));
+                          clearFieldError('shipping_postal_code');
+                        }} 
+                        required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))} 
+                        aria-required={!!(fields.postalCode?.enabled && (fields.postalCode?.required ?? false))}
+                        aria-invalid={!!validationErrors.shipping_postal_code}
+                        aria-describedby={validationErrors.shipping_postal_code ? `shipping_postal_code-error-${element.id}` : undefined}
+                        className={`h-[3.75rem] rounded-md border-2 bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:ring-2 transition-all duration-200 ${
+                          validationErrors.shipping_postal_code
+                            ? 'border-destructive focus:border-destructive focus:ring-destructive/20'
+                            : 'border-border focus:border-primary focus:ring-primary/20'
+                        }`}
+                      />
+                      {validationErrors.shipping_postal_code && (
+                        <p id={`shipping_postal_code-error-${element.id}`} className="text-sm text-destructive mt-1" role="alert">
+                          {validationErrors.shipping_postal_code}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
 
