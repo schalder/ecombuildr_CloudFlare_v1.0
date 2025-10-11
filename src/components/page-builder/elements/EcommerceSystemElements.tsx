@@ -1031,6 +1031,20 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const [loading, setLoading] = useState(false);
   const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay'>>(['cod','bkash','nagad','eps','ebpay']);
   const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any; product_type?: string }>>(new Map());
+  
+  // Validation error states
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  // Helper function to clear validation error for a specific field
+  const clearFieldError = (fieldName: string) => {
+    if (validationErrors[fieldName]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
+  };
   const [productTypes, setProductTypes] = useState<{ hasPhysical: boolean; hasDigital: boolean }>({ hasPhysical: false, hasDigital: false });
   
   // Tracking state
@@ -1232,32 +1246,54 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       return;
     }
 
-    // Validate required fields
-    const missing: string[] = [];
+    // Validate required fields with inline error messages
+    const errors: Record<string, string> = {};
     const isEmpty = (v?: string) => !v || v.trim() === '';
 
-    if (fields.fullName?.enabled && (fields.fullName?.required ?? true) && isEmpty(form.customer_name)) missing.push('Full Name');
-    if (fields.phone?.enabled && (fields.phone?.required ?? true) && isEmpty(form.customer_phone)) missing.push('Phone');
+    if (fields.fullName?.enabled && (fields.fullName?.required ?? true) && isEmpty(form.customer_name)) {
+      errors.customer_name = 'Full name is required';
+    }
+    if (fields.phone?.enabled && (fields.phone?.required ?? true) && isEmpty(form.customer_phone)) {
+      errors.customer_phone = 'Phone number is required';
+    }
     if (fields.email?.enabled && (fields.email?.required ?? false)) {
       const email = form.customer_email || '';
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      if (isEmpty(email) || !emailOk) missing.push('Valid Email');
+      if (isEmpty(email)) {
+        errors.customer_email = 'Email address is required';
+      } else if (!emailOk) {
+        errors.customer_email = 'Please enter a valid email address';
+      }
     }
     // Skip shipping field validation for digital-only orders
     if (productTypes.hasPhysical) {
-      if (fields.address?.enabled && (fields.address?.required ?? true) && isEmpty(form.shipping_address)) missing.push('Address');
-      if (fields.city?.enabled && (fields.city?.required ?? true) && isEmpty(form.shipping_city)) missing.push('City');
-      if (fields.area?.enabled && (fields.area?.required ?? false) && isEmpty(form.shipping_area)) missing.push('Area');
-      if (fields.country?.enabled && (fields.country?.required ?? false) && isEmpty(form.shipping_country)) missing.push('Country');
-      if (fields.state?.enabled && (fields.state?.required ?? false) && isEmpty(form.shipping_state)) missing.push('State/Province');
-      if (fields.postalCode?.enabled && (fields.postalCode?.required ?? false) && isEmpty(form.shipping_postal_code)) missing.push('ZIP / Postal code');
+      if (fields.address?.enabled && (fields.address?.required ?? true) && isEmpty(form.shipping_address)) {
+        errors.shipping_address = 'Address is required';
+      }
+      if (fields.city?.enabled && (fields.city?.required ?? true) && isEmpty(form.shipping_city)) {
+        errors.shipping_city = 'City is required';
+      }
+      if (fields.area?.enabled && (fields.area?.required ?? false) && isEmpty(form.shipping_area)) {
+        errors.shipping_area = 'Area is required';
+      }
+      if (fields.country?.enabled && (fields.country?.required ?? false) && isEmpty(form.shipping_country)) {
+        errors.shipping_country = 'Country is required';
+      }
+      if (fields.state?.enabled && (fields.state?.required ?? false) && isEmpty(form.shipping_state)) {
+        errors.shipping_state = 'State/Province is required';
+      }
+      if (fields.postalCode?.enabled && (fields.postalCode?.required ?? false) && isEmpty(form.shipping_postal_code)) {
+        errors.shipping_postal_code = 'ZIP / Postal code is required';
+      }
     }
 
     (customFields || [])
       .filter((cf:any) => cf.enabled && cf.required)
       .forEach((cf:any) => {
         const val = (form.custom_fields as any)[cf.id];
-        if (isEmpty(String(val ?? ''))) missing.push(cf.label || 'Custom field');
+        if (isEmpty(String(val ?? ''))) {
+          errors[`custom_${cf.id}`] = `${cf.label || 'Custom field'} is required`;
+        }
       });
 
     // Require transaction number for manual number-only payments
@@ -1267,13 +1303,19 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       const hasNagadApi = Boolean(store?.settings?.nagad?.merchant_id && store?.settings?.nagad?.public_key && store?.settings?.nagad?.private_key);
       const isNagadManual = Boolean(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
       const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
-      if (isManual && !form.payment_transaction_number?.trim()) missing.push('Transaction Number');
+      if (isManual && !form.payment_transaction_number?.trim()) {
+        errors.payment_transaction_number = 'Transaction number is required';
+      }
     }
 
-    if (missing.length) {
-      toast.error(`Please fill in: ${missing.join(', ')}`);
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      setLoading(false); // Reset loading state on validation error
       return;
     }
+    
+    // Clear validation errors if validation passes
+    setValidationErrors({});
 
     setLoading(true);
     try {
@@ -1508,36 +1550,84 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                   <h3 className={`text-base font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
                   <div className={`grid ${infoGridCols} gap-3`}>
                     {fields.fullName?.enabled && (
-                      <Input 
-                        placeholder={fields.fullName.placeholder} 
-                        value={form.customer_name} 
-                        onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} 
-                        required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
-                        aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
-                        className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
-                      />
+                      <div>
+                        <Input 
+                          placeholder={fields.fullName.placeholder} 
+                          value={form.customer_name} 
+                          onChange={e => {
+                            setForm(f => ({ ...f, customer_name: e.target.value }));
+                            clearFieldError('customer_name');
+                          }} 
+                          required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
+                          aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
+                          aria-invalid={!!validationErrors.customer_name}
+                          aria-describedby={validationErrors.customer_name ? `customer_name-error-${element.id}` : undefined}
+                          className={`h-[3.75rem] px-3 border-2 rounded-md focus:ring-1 transition-colors text-base ${
+                            validationErrors.customer_name 
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                              : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
+                          }`}
+                        />
+                        {validationErrors.customer_name && (
+                          <p id={`customer_name-error-${element.id}`} className="text-sm text-red-600 mt-1" role="alert">
+                            {validationErrors.customer_name}
+                          </p>
+                        )}
+                      </div>
                     )}
                     {fields.phone?.enabled && (
-                      <Input 
-                        placeholder={fields.phone.placeholder} 
-                        value={form.customer_phone} 
-                        onChange={e=>setForm(f=>({...f,customer_phone:e.target.value}))} 
-                        required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} 
-                        aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))}
-                        className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
-                      />
+                      <div>
+                        <Input 
+                          placeholder={fields.phone.placeholder} 
+                          value={form.customer_phone} 
+                          onChange={e => {
+                            setForm(f => ({ ...f, customer_phone: e.target.value }));
+                            clearFieldError('customer_phone');
+                          }} 
+                          required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} 
+                          aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))}
+                          aria-invalid={!!validationErrors.customer_phone}
+                          aria-describedby={validationErrors.customer_phone ? `customer_phone-error-${element.id}` : undefined}
+                          className={`h-[3.75rem] px-3 border-2 rounded-md focus:ring-1 transition-colors text-base ${
+                            validationErrors.customer_phone 
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                              : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
+                          }`}
+                        />
+                        {validationErrors.customer_phone && (
+                          <p id={`customer_phone-error-${element.id}`} className="text-sm text-red-600 mt-1" role="alert">
+                            {validationErrors.customer_phone}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                   {fields.email?.enabled && (
-                    <Input 
-                      type="email" 
-                      placeholder={fields.email.placeholder} 
-                      value={form.customer_email} 
-                      onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} 
-                      required={!!(fields.email?.enabled && (fields.email?.required ?? false))} 
-                      aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))}
-                      className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-sm"
-                    />
+                    <div>
+                      <Input 
+                        type="email" 
+                        placeholder={fields.email.placeholder} 
+                        value={form.customer_email} 
+                        onChange={e => {
+                          setForm(f => ({ ...f, customer_email: e.target.value }));
+                          clearFieldError('customer_email');
+                        }} 
+                        required={!!(fields.email?.enabled && (fields.email?.required ?? false))} 
+                        aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))}
+                        aria-invalid={!!validationErrors.customer_email}
+                        aria-describedby={validationErrors.customer_email ? `customer_email-error-${element.id}` : undefined}
+                        className={`h-[3.75rem] px-3 border-2 rounded-md focus:ring-1 transition-colors text-sm ${
+                          validationErrors.customer_email 
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                            : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
+                        }`}
+                      />
+                      {validationErrors.customer_email && (
+                        <p id={`customer_email-error-${element.id}`} className="text-sm text-red-600 mt-1" role="alert">
+                          {validationErrors.customer_email}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </section>
               )}
@@ -1549,25 +1639,57 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                 <section className="space-y-4">
                   <h3 className={`text-base font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                   {fields.address?.enabled && (
-                    <Input 
-                      placeholder={fields.address.placeholder} 
-                      value={form.shipping_address} 
-                      onChange={e=>setForm(f=>({...f,shipping_address:e.target.value}))} 
-                      required={!!(fields.address?.enabled && (fields.address?.required ?? true))} 
-                      aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))}
-                      className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-sm"
-                    />
+                    <div>
+                      <Input 
+                        placeholder={fields.address.placeholder} 
+                        value={form.shipping_address} 
+                        onChange={e => {
+                          setForm(f => ({ ...f, shipping_address: e.target.value }));
+                          clearFieldError('shipping_address');
+                        }} 
+                        required={!!(fields.address?.enabled && (fields.address?.required ?? true))} 
+                        aria-required={!!(fields.address?.enabled && (fields.address?.required ?? true))}
+                        aria-invalid={!!validationErrors.shipping_address}
+                        aria-describedby={validationErrors.shipping_address ? `shipping_address-error-${element.id}` : undefined}
+                        className={`h-[3.75rem] px-3 border-2 rounded-md focus:ring-1 transition-colors text-sm ${
+                          validationErrors.shipping_address 
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                            : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
+                        }`}
+                      />
+                      {validationErrors.shipping_address && (
+                        <p id={`shipping_address-error-${element.id}`} className="text-sm text-red-600 mt-1" role="alert">
+                          {validationErrors.shipping_address}
+                        </p>
+                      )}
+                    </div>
                   )}
                   <div className={`grid ${ship2GridCols} gap-3`}>
                     {fields.city?.enabled && (
-                      <Input 
-                        placeholder={fields.city.placeholder} 
-                        value={form.shipping_city} 
-                        onChange={e=>setForm(f=>({...f,shipping_city:e.target.value}))} 
-                        required={!!(fields.city?.enabled && (fields.city?.required ?? true))} 
-                        aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))}
-                        className="h-[3.75rem] px-3 border-2 border-gray-200 rounded-md focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors text-base"
-                      />
+                      <div>
+                        <Input 
+                          placeholder={fields.city.placeholder} 
+                          value={form.shipping_city} 
+                          onChange={e => {
+                            setForm(f => ({ ...f, shipping_city: e.target.value }));
+                            clearFieldError('shipping_city');
+                          }} 
+                          required={!!(fields.city?.enabled && (fields.city?.required ?? true))} 
+                          aria-required={!!(fields.city?.enabled && (fields.city?.required ?? true))}
+                          aria-invalid={!!validationErrors.shipping_city}
+                          aria-describedby={validationErrors.shipping_city ? `shipping_city-error-${element.id}` : undefined}
+                          className={`h-[3.75rem] px-3 border-2 rounded-md focus:ring-1 transition-colors text-base ${
+                            validationErrors.shipping_city 
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                              : 'border-gray-200 focus:border-blue-500 focus:ring-blue-500'
+                          }`}
+                        />
+                        {validationErrors.shipping_city && (
+                          <p id={`shipping_city-error-${element.id}`} className="text-sm text-red-600 mt-1" role="alert">
+                            {validationErrors.shipping_city}
+                          </p>
+                        )}
+                      </div>
                     )}
                     {fields.area?.enabled && (
                       <Input 

@@ -38,6 +38,18 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   
   // Error states
   const [phoneError, setPhoneError] = useState<string>('');
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  
+  // Helper function to clear validation error for a specific field
+  const clearFieldError = (fieldName: string) => {
+    if (validationErrors[fieldName]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
+  };
   
   // Load funnel step data for success redirect
   const [funnelStepData, setFunnelStepData] = useState<any>(null);
@@ -451,19 +463,23 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     // Generate idempotency key for this submission
     const idempotencyKey = crypto.randomUUID();
 
-    // Validate required fields
-    const missing: string[] = [];
+    // Validate required fields with inline error messages
+    const errors: Record<string, string> = {};
     const isEmpty = (v?: string) => !v || v.trim() === '';
-    if (fields.fullName?.enabled && (fields.fullName?.required ?? true) && isEmpty(form.customer_name)) missing.push('Full Name');
+    
+    if (fields.fullName?.enabled && (fields.fullName?.required ?? true) && isEmpty(form.customer_name)) {
+      errors.customer_name = 'Full name is required';
+    }
     
     // Phone validation with normalization
     if (fields.phone?.enabled && (fields.phone?.required ?? true)) {
       if (isEmpty(form.customer_phone)) {
-        missing.push('Phone');
+        errors.customer_phone = 'Phone number is required';
       } else {
         const normalizedPhone = normalizeBdPhone(form.customer_phone);
         if (!normalizedPhone || normalizedPhone.length < 11) {
           setPhoneError('Please enter a valid phone number');
+          setIsSubmitting(false); // Reset submitting state on validation error
           return; // Stop form submission
         } else {
           // Update form with normalized phone and clear error
@@ -476,15 +492,38 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     if (fields.email?.enabled && (fields.email?.required ?? false)) {
       const email = form.customer_email || '';
       const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      if (isEmpty(email) || !emailOk) missing.push('Valid Email');
+      if (isEmpty(email)) {
+        errors.customer_email = 'Email address is required';
+      } else if (!emailOk) {
+        errors.customer_email = 'Please enter a valid email address';
+      }
     }
-    if (!isDigitalOnlyCart && fields.address?.enabled && (fields.address?.required ?? true) && isEmpty(form.shipping_address)) missing.push('Address');
-    if (!isDigitalOnlyCart && fields.city?.enabled && (fields.city?.required ?? true) && isEmpty(form.shipping_city)) missing.push('City');
-    if (!isDigitalOnlyCart && fields.area?.enabled && (fields.area?.required ?? false) && isEmpty(form.shipping_area)) missing.push('Area');
-    if (!isDigitalOnlyCart && fields.country?.enabled && (fields.country?.required ?? false) && isEmpty(form.shipping_country)) missing.push('Country');
-    if (!isDigitalOnlyCart && fields.state?.enabled && (fields.state?.required ?? false) && isEmpty(form.shipping_state)) missing.push('State/Province');
-    if (!isDigitalOnlyCart && fields.postalCode?.enabled && (fields.postalCode?.required ?? false) && isEmpty(form.shipping_postal_code)) missing.push('ZIP / Postal code');
-    (customFields || []).filter((cf:any)=>cf.enabled && cf.required).forEach((cf:any)=>{ const v=(form.custom_fields as any)[cf.id]; if (!String(v ?? '').trim()) missing.push(cf.label || 'Custom field'); });
+    
+    if (!isDigitalOnlyCart && fields.address?.enabled && (fields.address?.required ?? true) && isEmpty(form.shipping_address)) {
+      errors.shipping_address = 'Address is required';
+    }
+    if (!isDigitalOnlyCart && fields.city?.enabled && (fields.city?.required ?? true) && isEmpty(form.shipping_city)) {
+      errors.shipping_city = 'City is required';
+    }
+    if (!isDigitalOnlyCart && fields.area?.enabled && (fields.area?.required ?? false) && isEmpty(form.shipping_area)) {
+      errors.shipping_area = 'Area is required';
+    }
+    if (!isDigitalOnlyCart && fields.country?.enabled && (fields.country?.required ?? false) && isEmpty(form.shipping_country)) {
+      errors.shipping_country = 'Country is required';
+    }
+    if (!isDigitalOnlyCart && fields.state?.enabled && (fields.state?.required ?? false) && isEmpty(form.shipping_state)) {
+      errors.shipping_state = 'State/Province is required';
+    }
+    if (!isDigitalOnlyCart && fields.postalCode?.enabled && (fields.postalCode?.required ?? false) && isEmpty(form.shipping_postal_code)) {
+      errors.shipping_postal_code = 'ZIP / Postal code is required';
+    }
+    
+    (customFields || []).filter((cf:any)=>cf.enabled && cf.required).forEach((cf:any)=>{ 
+      const v=(form.custom_fields as any)[cf.id]; 
+      if (!String(v ?? '').trim()) {
+        errors[`custom_${cf.id}`] = `${cf.label || 'Custom field'} is required`;
+      }
+    });
     
     // Validate transaction number for manual payments
     const hasBkashApi = !!(store?.settings?.bkash?.app_key && store?.settings?.bkash?.app_secret && store?.settings?.bkash?.username && store?.settings?.bkash?.password);
@@ -494,10 +533,17 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
     
     if (isManual && !form.payment_transaction_number?.trim()) {
-      missing.push('Transaction Number');
+      errors.payment_transaction_number = 'Transaction number is required';
     }
     
-    if (missing.length) { toast.error(`Please fill in: ${missing.join(', ')}`); return; }
+    if (Object.keys(errors).length > 0) { 
+      setValidationErrors(errors);
+      setIsSubmitting(false); // Reset submitting state on validation error
+      return; 
+    }
+    
+    // Clear validation errors if validation passes
+    setValidationErrors({});
 
   const total = subtotal + shippingCost;
     try {
@@ -850,14 +896,30 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                 <h3 className={`mb-2 font-semibold text-base element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
                 <div className={`grid ${infoGridCols} gap-3`}>
                   {fields.fullName?.enabled && (
-                    <Input 
-                      placeholder={fields.fullName.placeholder} 
-                      value={form.customer_name} 
-                      onChange={e=>setForm(f=>({...f,customer_name:e.target.value}))} 
-                      required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
-                      aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
-                      className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                    />
+                    <div>
+                      <Input 
+                        placeholder={fields.fullName.placeholder} 
+                        value={form.customer_name} 
+                        onChange={e => {
+                          setForm(f => ({ ...f, customer_name: e.target.value }));
+                          clearFieldError('customer_name');
+                        }} 
+                        required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
+                        aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
+                        aria-invalid={!!validationErrors.customer_name}
+                        aria-describedby={validationErrors.customer_name ? `customer_name-error-${element.id}` : undefined}
+                        className={`h-[3.75rem] rounded-md border-2 bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:ring-2 transition-all duration-200 ${
+                          validationErrors.customer_name 
+                            ? 'border-destructive focus:border-destructive focus:ring-destructive/20' 
+                            : 'border-border focus:border-primary focus:ring-primary/20'
+                        }`}
+                      />
+                      {validationErrors.customer_name && (
+                        <p id={`customer_name-error-${element.id}`} className="text-sm text-destructive mt-1" role="alert">
+                          {validationErrors.customer_name}
+                        </p>
+                      )}
+                    </div>
                   )}
                   {fields.phone?.enabled && (
                     <div className="space-y-2">
@@ -866,7 +928,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                         value={form.customer_phone} 
                         onChange={(e) => {
                           setForm(f => ({ ...f, customer_phone: e.target.value }));
-                          setPhoneError(''); // Clear error on input
+                          setPhoneError(''); // Clear phone error on input
+                          clearFieldError('customer_phone'); // Clear validation error on input
                         }}
                         onBlur={(e) => {
                           if (fields.phone?.required && e.target.value.trim()) {
@@ -878,28 +941,48 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                         }}
                         required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} 
                         aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))}
-                        aria-invalid={!!phoneError}
-                        aria-describedby={phoneError ? `phone-error-${element.id}` : undefined}
-                        className={`h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 ${phoneError ? 'border-destructive focus:border-destructive focus:ring-destructive/20' : ''}`}
+                        aria-invalid={!!phoneError || !!validationErrors.customer_phone}
+                        aria-describedby={(phoneError || validationErrors.customer_phone) ? `phone-error-${element.id}` : undefined}
+                        className={`h-[3.75rem] rounded-md border-2 bg-background px-3 py-2 text-base font-medium text-foreground placeholder:text-muted-foreground focus:ring-2 transition-all duration-200 ${
+                          phoneError || validationErrors.customer_phone 
+                            ? 'border-destructive focus:border-destructive focus:ring-destructive/20' 
+                            : 'border-border focus:border-primary focus:ring-primary/20'
+                        }`}
                       />
-                      {phoneError && (
+                      {(phoneError || validationErrors.customer_phone) && (
                         <p id={`phone-error-${element.id}`} className="text-sm font-medium text-destructive" role="alert">
-                          {phoneError}
+                          {phoneError || validationErrors.customer_phone}
                         </p>
                       )}
                     </div>
                   )}
                 </div>
                 {fields.email?.enabled && (
-                  <Input 
-                    type="email" 
-                    placeholder={fields.email.placeholder} 
-                    value={form.customer_email} 
-                    onChange={e=>setForm(f=>({...f,customer_email:e.target.value}))} 
-                    required={!!(fields.email?.enabled && (fields.email?.required ?? false))} 
-                    aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))}
-                    className="h-[3.75rem] rounded-md border-2 border-border bg-background px-3 py-2 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                  />
+                  <div>
+                    <Input 
+                      type="email" 
+                      placeholder={fields.email.placeholder} 
+                      value={form.customer_email} 
+                      onChange={e => {
+                        setForm(f => ({ ...f, customer_email: e.target.value }));
+                        clearFieldError('customer_email');
+                      }} 
+                      required={!!(fields.email?.enabled && (fields.email?.required ?? false))} 
+                      aria-required={!!(fields.email?.enabled && (fields.email?.required ?? false))}
+                      aria-invalid={!!validationErrors.customer_email}
+                      aria-describedby={validationErrors.customer_email ? `customer_email-error-${element.id}` : undefined}
+                      className={`h-[3.75rem] rounded-md border-2 bg-background px-3 py-2 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:ring-2 transition-all duration-200 ${
+                        validationErrors.customer_email 
+                          ? 'border-destructive focus:border-destructive focus:ring-destructive/20' 
+                          : 'border-border focus:border-primary focus:ring-primary/20'
+                      }`}
+                    />
+                    {validationErrors.customer_email && (
+                      <p id={`customer_email-error-${element.id}`} className="text-sm text-destructive mt-1" role="alert">
+                        {validationErrors.customer_email}
+                      </p>
+                    )}
+                  </div>
                 )}
               </section>
             )}
