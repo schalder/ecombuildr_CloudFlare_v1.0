@@ -83,71 +83,106 @@ serve(async (req) => {
       try {
         const { data: orderDetails, error: orderFetchError } = await supabase
           .from('course_orders')
-          .select('store_id, course_id, customer_name, customer_email, customer_phone')
+          .select('store_id, course_id, customer_name, customer_email, customer_phone, is_new_student')
           .eq('id', orderId)
           .single();
 
         if (orderFetchError) {
           console.error('Error fetching order details:', orderFetchError);
         } else if (orderDetails) {
-          // Use provided password or generate secure one if missing
-          let memberPassword = password;
-          let isGeneratedPassword = false;
-          
-          if (!memberPassword) {
-            // Generate random secure password: 8 chars with mix of letters/numbers
-            const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-            memberPassword = Array.from({ length: 8 }, () => 
-              chars.charAt(Math.floor(Math.random() * chars.length))
-            ).join('');
-            isGeneratedPassword = true;
-            console.log('Generated password for member account (length:', memberPassword.length, ')');
-          }
-
-          // Create member account with plaintext password (DB function handles hashing)
-          const { data: memberId, error: memberError } = await supabase.rpc('create_member_account_with_password', {
-            p_store_id: orderDetails.store_id,
-            p_email: orderDetails.customer_email,
-            p_password: memberPassword,
-            p_full_name: orderDetails.customer_name,
-            p_phone: orderDetails.customer_phone,
-            p_course_order_id: orderId
-          });
-
-          if (memberError) {
-            console.error('Member account creation error for EPS:', memberError);
-          } else {
-            console.log('EPS verify: member account created successfully', { memberId, email: orderDetails.customer_email });
+          if (orderDetails.is_new_student) {
+            // Handle new student - create account
+            // Use provided password or generate secure one if missing
+            let memberPassword = password;
+            let isGeneratedPassword = false;
             
-            // Update order metadata with member password only if it was generated (not from checkout)
-            if (isGeneratedPassword) {
-              const currentMetadata = order.metadata || {};
-              const { error: updateError } = await supabase
-                .from('course_orders')
-                .update({ 
-                  metadata: { 
-                    ...currentMetadata, 
-                    member_password: memberPassword 
-                  } 
-                })
-                .eq('id', orderId);
-                
-              if (updateError) {
-                console.error('Error updating order with generated password:', updateError);
-              }
+            if (!memberPassword) {
+              // Generate random secure password: 8 chars with mix of letters/numbers
+              const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+              memberPassword = Array.from({ length: 8 }, () => 
+                chars.charAt(Math.floor(Math.random() * chars.length))
+              ).join('');
+              isGeneratedPassword = true;
+              console.log('Generated password for member account (length:', memberPassword.length, ')');
             }
-            
-            // Grant course access
-            const { error: accessError } = await supabase.rpc('grant_course_access', {
-              p_member_account_id: memberId,
-              p_course_id: orderDetails.course_id,
+
+            // Create member account with plaintext password (DB function handles hashing)
+            const { data: memberId, error: memberError } = await supabase.rpc('create_member_account_with_password', {
+              p_store_id: orderDetails.store_id,
+              p_email: orderDetails.customer_email,
+              p_password: memberPassword,
+              p_full_name: orderDetails.customer_name,
+              p_phone: orderDetails.customer_phone,
               p_course_order_id: orderId
             });
 
-            if (accessError) {
-              console.error('Course access grant error for EPS:', accessError);
+            if (memberError) {
+              console.error('Member account creation error for EPS:', memberError);
             } else {
-              console.log('EPS verify: course access granted successfully', { memberId, courseId: orderDetails.course_id });
+              console.log('EPS verify: member account created successfully', { memberId, email: orderDetails.customer_email });
+              
+              // Update order metadata with member password only if it was generated (not from checkout)
+              if (isGeneratedPassword) {
+                const currentMetadata = order.metadata || {};
+                const { error: updateError } = await supabase
+                  .from('course_orders')
+                  .update({ 
+                    metadata: { 
+                      ...currentMetadata, 
+                      member_password: memberPassword 
+                    } 
+                  })
+                  .eq('id', orderId);
+                  
+                if (updateError) {
+                  console.error('Error updating order with generated password:', updateError);
+                }
+              }
+              
+              // Grant course access
+              const { error: accessError } = await supabase.rpc('grant_course_access', {
+                p_member_account_id: memberId,
+                p_course_id: orderDetails.course_id,
+                p_course_order_id: orderId
+              });
+
+              if (accessError) {
+                console.error('Course access grant error for EPS:', accessError);
+              } else {
+                console.log('EPS verify: course access granted successfully', { memberId, courseId: orderDetails.course_id });
+              }
+            }
+          } else {
+            // Handle returning student - verify credentials and grant access
+            try {
+              const { data: memberData, error: memberError } = await supabase.rpc('verify_member_credentials', {
+                p_email: orderDetails.customer_email,
+                p_password: password,
+                p_store_id: orderDetails.store_id
+              });
+
+              if (memberError || !memberData || memberData.length === 0) {
+                console.error('Invalid member credentials for returning student:', memberError);
+                throw new Error('Invalid member credentials');
+              }
+
+              const memberAccount = memberData[0];
+              
+              // Grant course access for successful payment
+              const { error: accessError } = await supabase.rpc('grant_course_access', {
+                p_member_account_id: memberAccount.id,
+                p_course_id: orderDetails.course_id,
+                p_course_order_id: orderId
+              });
+
+              if (accessError) {
+                console.error('Error granting course access to returning student:', accessError);
+              } else {
+                console.log('Course access granted to returning student for EPS payment');
+              }
+            } catch (error) {
+              console.error('Returning student verification error for EPS:', error);
+              throw new Error('Failed to verify returning student credentials');
             }
           }
         }

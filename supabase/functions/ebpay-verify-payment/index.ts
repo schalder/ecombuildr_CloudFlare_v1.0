@@ -80,38 +80,72 @@ serve(async (req) => {
     // If payment is successful, create member account and grant access
     if (verificationResult === 'completed') {
       try {
-        console.log('Creating member account for successful payment...');
+        console.log('Processing successful payment...');
         
-        // Create member account
-        const { data: memberAccount, error: memberError } = await supabase.rpc('create_member_account_with_password', {
-          p_store_id: courseOrder.courses.store_id,
-          p_email: courseOrder.customer_email,
-          p_password: password,
-          p_full_name: courseOrder.customer_name,
-          p_phone: courseOrder.customer_phone,
-          p_course_order_id: courseOrder.id
-        });
+        if (courseOrder.is_new_student) {
+          // Handle new student - create account
+          console.log('Creating member account for new student...');
+          
+          const { data: memberAccount, error: memberError } = await supabase.rpc('create_member_account_with_password', {
+            p_store_id: courseOrder.courses.store_id,
+            p_email: courseOrder.customer_email,
+            p_password: password,
+            p_full_name: courseOrder.customer_name,
+            p_phone: courseOrder.customer_phone,
+            p_course_order_id: courseOrder.id
+          });
 
-        if (memberError) {
-          console.error('Failed to create member account:', memberError);
-          throw new Error('Failed to create member account');
+          if (memberError) {
+            console.error('Failed to create member account:', memberError);
+            throw new Error('Failed to create member account');
+          }
+
+          console.log('Member account created:', { memberAccountId: memberAccount });
+
+          // Grant course access
+          const { error: accessError } = await supabase.rpc('grant_course_access', {
+            p_member_account_id: memberAccount,
+            p_course_id: courseOrder.course_id,
+            p_course_order_id: courseOrder.id
+          });
+
+          if (accessError) {
+            console.error('Failed to grant course access:', accessError);
+            throw new Error('Failed to grant course access');
+          }
+
+          console.log('Course access granted successfully');
+        } else {
+          // Handle returning student - verify credentials and grant access
+          console.log('Verifying returning student credentials...');
+          
+          const { data: memberData, error: memberError } = await supabase.rpc('verify_member_credentials', {
+            p_email: courseOrder.customer_email,
+            p_password: password,
+            p_store_id: courseOrder.courses.store_id
+          });
+
+          if (memberError || !memberData || memberData.length === 0) {
+            console.error('Invalid member credentials for returning student:', memberError);
+            throw new Error('Invalid member credentials');
+          }
+
+          const memberAccount = memberData[0];
+          
+          // Grant course access for successful payment
+          const { error: accessError } = await supabase.rpc('grant_course_access', {
+            p_member_account_id: memberAccount.id,
+            p_course_id: courseOrder.course_id,
+            p_course_order_id: courseOrder.id
+          });
+
+          if (accessError) {
+            console.error('Error granting course access to returning student:', accessError);
+            throw new Error('Failed to grant course access');
+          } else {
+            console.log('Course access granted to returning student for EB Pay payment');
+          }
         }
-
-        console.log('Member account created:', { memberAccountId: memberAccount });
-
-        // Grant course access
-        const { error: accessError } = await supabase.rpc('grant_course_access', {
-          p_member_account_id: memberAccount,
-          p_course_id: courseOrder.course_id,
-          p_course_order_id: courseOrder.id
-        });
-
-        if (accessError) {
-          console.error('Failed to grant course access:', accessError);
-          throw new Error('Failed to grant course access');
-        }
-
-        console.log('Course access granted successfully');
 
       } catch (error) {
         console.error('Error in post-payment processing:', error);

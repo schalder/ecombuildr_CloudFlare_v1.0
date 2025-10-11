@@ -56,7 +56,8 @@ serve(async (req) => {
         customer_phone: customerData.phone,
         total: amount,
         payment_method: paymentMethod,
-        payment_status: (paymentMethod === 'eps' || paymentMethod === 'ebpay') ? 'pending' : 'pending_manual'
+        payment_status: (paymentMethod === 'eps' || paymentMethod === 'ebpay') ? 'pending' : 'pending_manual',
+        is_new_student: isNewStudent
       })
       .select()
       .single();
@@ -230,38 +231,72 @@ serve(async (req) => {
     // For manual payment methods (bKash, Nagad) or EPS fallback
     let message = '';
     
-    // Create member account for manual payments if new student
-    if (paymentMethod !== 'eps' && paymentMethod !== 'ebpay' && isNewStudent && customerData.password) {
-      try {
-        const { data: memberId, error: memberError } = await supabase.rpc('create_member_account_with_password', {
-          p_store_id: storeId,
-          p_email: customerData.email,
-          p_password: customerData.password,
-          p_full_name: customerData.name,
-          p_phone: customerData.phone,
-          p_course_order_id: orderData.id
-        });
+    // Handle member account creation or verification
+    if (paymentMethod !== 'eps' && paymentMethod !== 'ebpay') {
+      if (isNewStudent && customerData.password) {
+        // Create new member account
+        try {
+          const { data: memberId, error: memberError } = await supabase.rpc('create_member_account_with_password', {
+            p_store_id: storeId,
+            p_email: customerData.email,
+            p_password: customerData.password,
+            p_full_name: customerData.name,
+            p_phone: customerData.phone,
+            p_course_order_id: orderData.id
+          });
 
-        if (memberError) {
-          console.error('Error creating member account:', memberError);
-        } else {
-          console.log('Member account created:', memberId);
+          if (memberError) {
+            console.error('Error creating member account:', memberError);
+          } else {
+            console.log('Member account created:', memberId);
+            
+            // Grant course access for completed manual payments
+            const { error: accessError } = await supabase.rpc('grant_course_access', {
+              p_member_account_id: memberId,
+              p_course_id: courseId,
+              p_course_order_id: orderData.id
+            });
+
+            if (accessError) {
+              console.error('Error granting course access:', accessError);
+            } else {
+              console.log('Course access granted for manual payment');
+            }
+          }
+        } catch (error) {
+          console.error('Member account creation error:', error);
+        }
+      } else if (!isNewStudent) {
+        // Verify returning student credentials and grant access
+        try {
+          const { data: memberData, error: memberError } = await supabase.rpc('verify_member_credentials', {
+            p_email: customerData.email,
+            p_password: customerData.password,
+            p_store_id: storeId
+          });
+
+          if (memberError || !memberData || memberData.length === 0) {
+            throw new Error('Invalid member credentials');
+          }
+
+          const memberAccount = memberData[0];
           
-          // Grant course access for completed manual payments
+          // Grant course access for successful payments
           const { error: accessError } = await supabase.rpc('grant_course_access', {
-            p_member_account_id: memberId,
+            p_member_account_id: memberAccount.id,
             p_course_id: courseId,
             p_course_order_id: orderData.id
           });
 
           if (accessError) {
-            console.error('Error granting course access:', accessError);
+            console.error('Error granting course access to returning student:', accessError);
           } else {
-            console.log('Course access granted for manual payment');
+            console.log('Course access granted to returning student');
           }
+        } catch (error) {
+          console.error('Returning student verification error:', error);
+          throw new Error('Failed to verify returning student credentials');
         }
-      } catch (error) {
-        console.error('Member account creation error:', error);
       }
     }
     

@@ -75,6 +75,33 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
 
   const paymentMethod = searchParams.get('payment_method') || '';
 
+  // Check existing course access for logged-in members
+  useEffect(() => {
+    const checkExistingAccess = async () => {
+      const memberData = localStorage.getItem('member_session');
+      if (memberData && !isNewStudent) {
+        try {
+          const member = JSON.parse(memberData);
+          const { data: hasAccess } = await supabase.rpc('verify_member_course_access', {
+            p_member_account_id: member.id,
+            p_course_id: courseId
+          });
+          
+          if (hasAccess) {
+            toast.info('You already have access to this course!');
+            navigate(`/courses/${courseId}/learn`);
+          }
+        } catch (error) {
+          console.warn('Failed to check existing course access:', error);
+        }
+      }
+    };
+    
+    if (courseId) {
+      checkExistingAccess();
+    }
+  }, [courseId, isNewStudent, navigate]);
+
   const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ['course-checkout', courseId],
     queryFn: async () => {
@@ -190,6 +217,39 @@ const StorefrontCourseCheckout: React.FC<StorefrontCourseCheckoutProps> = ({ cou
 
     setLoading(true);
     try {
+      // Handle returning student authentication first
+      if (!isNewStudent) {
+        // Authenticate returning student
+        const { data: loginResponse, error: loginError } = await supabase.functions.invoke('member-login', {
+          body: { 
+            email: loginForm.email.trim(), 
+            password: loginForm.password.trim(),
+            store_id: store.id 
+          }
+        });
+
+        if (loginError || !loginResponse.member) {
+          toast.error('Invalid email or password');
+          setLoading(false);
+          return;
+        }
+
+        // Store member session
+        localStorage.setItem('member_session', JSON.stringify(loginResponse.member));
+        
+        // Check if member already has access to this course
+        const { data: hasAccess } = await supabase.rpc('verify_member_course_access', {
+          p_member_account_id: loginResponse.member.id,
+          p_course_id: course.id
+        });
+
+        if (hasAccess) {
+          toast.success('You already have access to this course!');
+          navigate(`/courses/${course.id}/learn`);
+          return;
+        }
+      }
+
       const customerData = isNewStudent ? {
         name: form.customer_name.trim(),
         email: form.customer_email.trim(),
