@@ -46,37 +46,6 @@ const Auth = () => {
     }
   }, [user, loading, navigate]);
 
-  // Redirect if already authenticated
-  if (user && !loading) {
-    return <Navigate to="/dashboard/overview" replace />;
-  }
-
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!signInData.email || !signInData.password) {
-      toast({
-        title: "Error",
-        description: "Please fill in all fields.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    const { error } = await signIn(signInData.email, signInData.password);
-    
-    if (error) {
-      toast({
-        title: "Sign in failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } else {
-      navigate('/dashboard/overview', { replace: true });
-    }
-    setIsLoading(false);
-  };
-
   // Debounced email validation
   const debouncedEmailValidation = useCallback(
     async (email: string) => {
@@ -112,6 +81,37 @@ const Auth = () => {
     },
     []
   );
+
+  // Redirect if already authenticated - MOVED AFTER ALL HOOKS
+  if (user && !loading) {
+    return <Navigate to="/dashboard/overview" replace />;
+  }
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signInData.email || !signInData.password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    const { error } = await signIn(signInData.email, signInData.password);
+    
+    if (error) {
+      toast({
+        title: "Sign in failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      navigate('/dashboard/overview', { replace: true });
+    }
+    setIsLoading(false);
+  };
 
   // Handle email change with validation
   const handleEmailChange = (email: string) => {
