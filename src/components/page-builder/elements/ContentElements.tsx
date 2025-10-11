@@ -602,7 +602,6 @@ const ImageFeatureElement: React.FC<{
                   maxHeight: '400px'
                 }}
                 priority={false}
-                aspectRatio="16/9"
                 preserveOriginal={true}
               />
             )

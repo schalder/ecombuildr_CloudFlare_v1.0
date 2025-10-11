@@ -142,47 +142,30 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
     const baseStyles: React.CSSProperties = {
       position: 'relative',
       overflow: 'hidden',
-      backgroundColor: 'hsl(var(--muted))',
+      // Remove default background color to preserve transparency
       ...style
     };
 
-    // Extract dimensions from style prop if available
-    const styleWidth = style?.width;
-    const styleHeight = style?.height;
-    const styleAspectRatio = style?.aspectRatio;
-
-    // Priority order: props > style prop > default
-    const finalWidth = width || styleWidth;
-    const finalHeight = height || styleHeight;
-    const finalAspectRatio = aspectRatio || styleAspectRatio;
-
-    // Explicit dimensions take precedence
-    if (finalWidth && finalHeight) {
-      return {
-        ...baseStyles,
-        width: finalWidth,
-        height: finalHeight,
-        aspectRatio: typeof finalWidth === 'number' && typeof finalHeight === 'number' 
-          ? `${finalWidth} / ${finalHeight}` 
-          : finalAspectRatio
-      };
+    // When preserving original, respect all styles from page builder
+    if (preserveOriginal) {
+      return baseStyles;
     }
 
-    // When preserving original, respect style dimensions but don't enforce aspect ratio
-    if (preserveOriginal) {
+    // Explicit dimensions take precedence for responsive mode
+    if (width && height) {
       return {
         ...baseStyles,
-        ...(finalWidth && { width: finalWidth }),
-        ...(finalHeight && { height: finalHeight }),
-        ...(finalAspectRatio && { aspectRatio: finalAspectRatio })
+        width,
+        height,
+        aspectRatio: `${width} / ${height}`
       };
     }
 
     // Use aspect ratio if provided (responsive layout mode)
-    if (finalAspectRatio) {
+    if (aspectRatio) {
       return {
         ...baseStyles,
-        aspectRatio: finalAspectRatio
+        aspectRatio
       };
     }
 
@@ -239,6 +222,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
             className={`${preserveOriginal ? 'block max-w-full h-auto' : 'absolute inset-0 w-full h-full object-cover'} transition-opacity duration-300 ${
               isLoaded ? 'opacity-100' : 'opacity-0'
             }`}
+            style={preserveOriginal ? style : undefined}
             loading={isCritical ? 'eager' : 'lazy'}
             decoding="async"
             sizes={preserveOriginal ? undefined : sizes}
