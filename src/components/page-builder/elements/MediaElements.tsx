@@ -155,13 +155,7 @@ const ImageCarouselElement: React.FC<{
     }
   };
 
-  // Group images into slides based on visibleImages
-  const slides = [];
-  for (let i = 0; i < images.length; i += visibleImages) {
-    slides.push(images.slice(i, i + visibleImages));
-  }
-
-  // Get grid class based on visibleImages
+  // Get grid class based on visibleImages for layout
   const getGridClass = (count: number) => {
     switch (count) {
       case 1: return 'grid-cols-1';
@@ -180,29 +174,36 @@ const ImageCarouselElement: React.FC<{
       <div className="relative">
         <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>
           <CarouselContent>
-            {slides.map((slideImages: string[], slideIndex: number) => (
-              <CarouselItem key={slideIndex}>
-                <div className={`grid gap-1 ${getGridClass(visibleImages)}`}>
-                  {slideImages.map((image: string, imageIndex: number) => {
-                    if (!image) return null;
-                    return (
-                      <div key={imageIndex} className="p-1">
-                        <img
-                          src={image}
-                          alt={`Carousel image ${slideIndex * visibleImages + imageIndex + 1}`}
-                          className="w-full"
-                          style={{
-                            height: `${height}px`,
-                            objectFit: imageFit as 'cover' | 'contain',
-                            borderRadius: 'inherit'
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </CarouselItem>
-            ))}
+            {images.map((image: string, imageIndex: number) => {
+              if (!image) return null;
+              return (
+                <CarouselItem key={imageIndex}>
+                  <div className={`grid gap-1 ${getGridClass(visibleImages)}`}>
+                    {/* Show current image and next visibleImages-1 images */}
+                    {Array.from({ length: visibleImages }, (_, i) => {
+                      const currentImageIndex = imageIndex + i;
+                      const currentImage = images[currentImageIndex];
+                      if (!currentImage) return null;
+                      
+                      return (
+                        <div key={i} className="p-1">
+                          <img
+                            src={currentImage}
+                            alt={`Carousel image ${currentImageIndex + 1}`}
+                            className="w-full"
+                            style={{
+                              height: `${height}px`,
+                              objectFit: imageFit as 'cover' | 'contain',
+                              borderRadius: 'inherit'
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CarouselItem>
+              );
+            })}
           </CarouselContent>
           {showArrows && (
             <>
@@ -212,15 +213,15 @@ const ImageCarouselElement: React.FC<{
           )}
         </Carousel>
         
-        {showDots && slides.length > 1 && (
+        {showDots && images.length > visibleImages && (
           <div className="flex justify-center mt-4 space-x-2">
-            {slides.map((_, slideIndex) => (
+            {images.map((_, imageIndex) => (
               <button
-                key={slideIndex}
+                key={imageIndex}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  slideIndex === currentIndex ? 'bg-primary' : 'bg-primary/30'
+                  imageIndex === currentIndex ? 'bg-primary' : 'bg-primary/30'
                 }`}
-                onClick={() => api?.scrollTo(slideIndex)}
+                onClick={() => api?.scrollTo(imageIndex)}
               />
             ))}
           </div>
