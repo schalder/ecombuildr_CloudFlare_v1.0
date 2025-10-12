@@ -299,6 +299,29 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
         </div>
       </div>
 
+      {/* Scroll Behavior Control */}
+      <div>
+        <Label htmlFor="scroll-behavior">Scroll Behavior</Label>
+        <Select 
+          value={element.content.scrollBehavior || 'group'} 
+          onValueChange={(value) => onUpdate('scrollBehavior', value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select scroll behavior" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="group">Scroll by Group (Default)</SelectItem>
+            <SelectItem value="individual">Scroll 1 by 1</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground mt-1">
+          {element.content.scrollBehavior === 'individual' 
+            ? 'Each navigation step moves one image at a time'
+            : 'Each navigation step moves all visible images together'
+          }
+        </p>
+      </div>
+
       <div className="flex items-center space-x-2">
         <Switch
           id="auto-play"
