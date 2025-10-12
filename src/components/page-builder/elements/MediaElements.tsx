@@ -210,15 +210,15 @@ const ImageCarouselElement: React.FC<{
           )}
         </Carousel>
         
-        {showDots && slides.length > 1 && (
+        {showDots && images.length > 1 && (
           <div className="flex justify-center mt-4 space-x-2">
-            {slides.map((_, slideIndex) => (
+            {images.map((_, imageIndex) => (
               <button
-                key={slideIndex}
+                key={imageIndex}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  slideIndex === currentIndex ? 'bg-primary' : 'bg-primary/30'
+                  imageIndex === currentIndex ? 'bg-primary' : 'bg-primary/30'
                 }`}
-                onClick={() => api?.scrollTo(slideIndex)}
+                onClick={() => api?.scrollTo(imageIndex)}
               />
             ))}
           </div>
