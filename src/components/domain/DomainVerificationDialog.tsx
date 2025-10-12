@@ -317,7 +317,7 @@ Note: This is the domain-specific CNAME target provided by Vercel. SSL will be a
               
               <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-sm text-green-800">
-                  <strong>🚀 Vercel Unlimited Domains:</strong> Your domain will be hosted on Vercel with automatic SSL certificates and unlimited scalability.
+                  <strong>🚀 Set The Above DNS Record:</strong> Your domain will be hosted on our servers with automatic SSL certificates.
                 </p>
               </div>
               
