@@ -155,6 +155,12 @@ const ImageCarouselElement: React.FC<{
     }
   };
 
+  // Create overlapping slides for one-by-one scrolling
+  const slides = [];
+  for (let i = 0; i <= images.length - visibleImages; i++) {
+    slides.push(images.slice(i, i + visibleImages));
+  }
+
   // Get grid class based on visibleImages
   const getGridClass = (count: number) => {
     switch (count) {
@@ -174,20 +180,16 @@ const ImageCarouselElement: React.FC<{
       <div className="relative">
         <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>
           <CarouselContent>
-            {images.map((image: string, imageIndex: number) => (
-              <CarouselItem key={imageIndex}>
+            {slides.map((slideImages: string[], slideIndex: number) => (
+              <CarouselItem key={slideIndex}>
                 <div className={`grid gap-1 ${getGridClass(visibleImages)}`}>
-                  {/* Render visible images starting from current index */}
-                  {Array.from({ length: visibleImages }, (_, i) => {
-                    const actualIndex = (imageIndex + i) % images.length;
-                    const actualImage = images[actualIndex];
-                    if (!actualImage) return null;
-                    
+                  {slideImages.map((image: string, imageIndex: number) => {
+                    if (!image) return null;
                     return (
-                      <div key={i} className="p-1">
+                      <div key={imageIndex} className="p-1">
                         <img
-                          src={actualImage}
-                          alt={`Carousel image ${actualIndex + 1}`}
+                          src={image}
+                          alt={`Carousel image ${slideIndex * visibleImages + imageIndex + 1}`}
                           className="w-full"
                           style={{
                             height: `${height}px`,
@@ -210,15 +212,15 @@ const ImageCarouselElement: React.FC<{
           )}
         </Carousel>
         
-        {showDots && images.length > 1 && (
+        {showDots && slides.length > 1 && (
           <div className="flex justify-center mt-4 space-x-2">
-            {images.map((_, imageIndex) => (
+            {slides.map((_, slideIndex) => (
               <button
-                key={imageIndex}
+                key={slideIndex}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  imageIndex === currentIndex ? 'bg-primary' : 'bg-primary/30'
+                  slideIndex === currentIndex ? 'bg-primary' : 'bg-primary/30'
                 }`}
-                onClick={() => api?.scrollTo(imageIndex)}
+                onClick={() => api?.scrollTo(slideIndex)}
               />
             ))}
           </div>
