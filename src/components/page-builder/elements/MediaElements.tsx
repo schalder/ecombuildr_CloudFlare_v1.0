@@ -178,7 +178,7 @@ const ImageCarouselElement: React.FC<{
       style={renderElementStyles(element, deviceType)}
     >
       <div className="relative">
-        <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>
+        <Carousel className="w-full" setApi={setApi} opts={{ loop: true, slidesToScroll: 1 }}>
           <CarouselContent>
             {slides.map((slideImages: string[], slideIndex: number) => (
               <CarouselItem key={slideIndex}>
