@@ -179,15 +179,15 @@ const ImageCarouselElement: React.FC<{
                 <div className={`grid gap-1 ${getGridClass(visibleImages)}`}>
                   {/* Render visible images starting from current index */}
                   {Array.from({ length: visibleImages }, (_, i) => {
-                    const currentImageIndex = (imageIndex + i) % images.length;
-                    const currentImage = images[currentImageIndex];
-                    if (!currentImage) return null;
+                    const actualIndex = (imageIndex + i) % images.length;
+                    const actualImage = images[actualIndex];
+                    if (!actualImage) return null;
                     
                     return (
                       <div key={i} className="p-1">
                         <img
-                          src={currentImage}
-                          alt={`Carousel image ${currentImageIndex + 1}`}
+                          src={actualImage}
+                          alt={`Carousel image ${actualIndex + 1}`}
                           className="w-full"
                           style={{
                             height: `${height}px`,
