@@ -155,7 +155,7 @@ const ImageCarouselElement: React.FC<{
     }
   };
 
-  // Get grid class based on visibleImages for layout
+  // Get grid class based on visibleImages
   const getGridClass = (count: number) => {
     switch (count) {
       case 1: return 'grid-cols-1';
@@ -215,13 +215,13 @@ const ImageCarouselElement: React.FC<{
         
         {showDots && images.length > visibleImages && (
           <div className="flex justify-center mt-4 space-x-2">
-            {images.map((_, imageIndex) => (
+            {Array.from({ length: Math.max(1, images.length - visibleImages + 1) }, (_, slideIndex) => (
               <button
-                key={imageIndex}
+                key={slideIndex}
                 className={`w-2 h-2 rounded-full transition-colors ${
-                  imageIndex === currentIndex ? 'bg-primary' : 'bg-primary/30'
+                  slideIndex === currentIndex ? 'bg-primary' : 'bg-primary/30'
                 }`}
-                onClick={() => api?.scrollTo(imageIndex)}
+                onClick={() => api?.scrollTo(slideIndex)}
               />
             ))}
           </div>
