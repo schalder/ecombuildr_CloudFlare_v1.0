@@ -18,6 +18,8 @@ import { FunnelStats } from '@/components/funnel/FunnelStats';
 import { FunnelSales } from '@/components/funnel/FunnelSales';
 import { FunnelSettings } from '@/components/funnel/FunnelSettings';
 import { FunnelContacts } from '@/components/funnel/FunnelContacts';
+import { FunnelHeaderBuilder } from '@/components/funnel/FunnelHeaderBuilder';
+import { FunnelFooterBuilder } from '@/components/funnel/FunnelFooterBuilder';
 
 interface Funnel {
   id: string;
@@ -322,6 +324,10 @@ const FunnelManagement = () => {
               id: 'contacts',
               label: 'Contacts',
               icon: Users
+            }, {
+              id: 'settings',
+              label: 'Settings',
+              icon: Settings
             }, {
               id: 'header',
               label: 'Header',
