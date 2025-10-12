@@ -122,15 +122,7 @@ export default function AddProduct() {
 
   // Preselect first website if available
   useEffect(() => {
-    console.log('🌐 AddProduct - Website preselection:', {
-      storeWebsites: storeWebsites.length,
-      selectedWebsiteId,
-      firstWebsiteId: storeWebsites[0]?.id,
-      firstWebsiteName: storeWebsites[0]?.name
-    });
-    
     if (storeWebsites.length > 0 && !selectedWebsiteId) {
-      console.log('🌐 AddProduct - Auto-selecting first website:', storeWebsites[0]);
       setSelectedWebsiteId(storeWebsites[0].id);
     }
   }, [storeWebsites, selectedWebsiteId]);
@@ -146,7 +138,6 @@ export default function AddProduct() {
 
       if (stores && stores.length > 0) {
         setStoreId(stores[0].id);
-        console.log('🏪 AddProduct - Store ID set to:', stores[0].id);
       }
     } catch (error) {
       console.error('🏪 AddProduct - Error fetching store ID:', error);
