@@ -118,7 +118,6 @@ const ImageCarouselElement: React.FC<{
   const showDots = element.content.showDots !== false;
   const height = element.content.height || 384;
   const imageFit = element.content.imageFit || 'cover';
-  const scrollBehavior = element.content.scrollBehavior || 'group';
   
   // Get visibleImages with device-aware support from content
   const visibleImagesByDevice = element.content.visibleImagesByDevice || { desktop: 1, tablet: 1, mobile: 1 };
@@ -156,27 +155,8 @@ const ImageCarouselElement: React.FC<{
     }
   };
 
-  // Group images into slides based on scroll behavior
-  const slides = [];
-  if (scrollBehavior === 'individual') {
-    // For individual scrolling, each image is its own slide
-    images.forEach(image => {
-      slides.push([image]);
-    });
-  } else {
-    // For group scrolling, group images based on visibleImages
-    for (let i = 0; i < images.length; i += visibleImages) {
-      slides.push(images.slice(i, i + visibleImages));
-    }
-  }
-
-  // Get grid class based on visibleImages and scroll behavior
+  // Get grid class based on visibleImages
   const getGridClass = (count: number) => {
-    if (scrollBehavior === 'individual') {
-      // For individual scrolling, always use single column
-      return 'grid-cols-1';
-    }
-    // For group scrolling, use the count of images in the slide
     switch (count) {
       case 1: return 'grid-cols-1';
       case 2: return 'grid-cols-2';
@@ -194,16 +174,20 @@ const ImageCarouselElement: React.FC<{
       <div className="relative">
         <Carousel className="w-full" setApi={setApi} opts={{ loop: true }}>
           <CarouselContent>
-            {slides.map((slideImages: string[], slideIndex: number) => (
-              <CarouselItem key={slideIndex}>
+            {images.map((image: string, imageIndex: number) => (
+              <CarouselItem key={imageIndex}>
                 <div className={`grid gap-1 ${getGridClass(visibleImages)}`}>
-                  {slideImages.map((image: string, imageIndex: number) => {
-                    if (!image) return null;
+                  {/* Render visible images starting from current index */}
+                  {Array.from({ length: visibleImages }, (_, i) => {
+                    const currentImageIndex = (imageIndex + i) % images.length;
+                    const currentImage = images[currentImageIndex];
+                    if (!currentImage) return null;
+                    
                     return (
-                      <div key={imageIndex} className="p-1">
+                      <div key={i} className="p-1">
                         <img
-                          src={image}
-                          alt={`Carousel image ${slideIndex * visibleImages + imageIndex + 1}`}
+                          src={currentImage}
+                          alt={`Carousel image ${currentImageIndex + 1}`}
                           className="w-full"
                           style={{
                             height: `${height}px`,
