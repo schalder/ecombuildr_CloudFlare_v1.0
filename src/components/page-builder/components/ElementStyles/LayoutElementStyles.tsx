@@ -135,6 +135,20 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
     const marginSpacing = parseSpacingProperty(element.styles?.margin, 'margin');
     const paddingSpacing = parseSpacingProperty(element.styles?.padding, 'padding');
 
+    // Convert string values to numbers for ResponsiveSpacingSliders
+    const marginNumbers = {
+      top: parsePixelValue(marginSpacing.top),
+      right: parsePixelValue(marginSpacing.right),
+      bottom: parsePixelValue(marginSpacing.bottom),
+      left: parsePixelValue(marginSpacing.left),
+    };
+    const paddingNumbers = {
+      top: parsePixelValue(paddingSpacing.top),
+      right: parsePixelValue(paddingSpacing.right),
+      bottom: parsePixelValue(paddingSpacing.bottom),
+      left: parsePixelValue(paddingSpacing.left),
+    };
+
     return (
       <div className="space-y-4">
         {/* Background */}
@@ -156,23 +170,23 @@ export const LayoutElementStyles: React.FC<LayoutElementStylesProps> = ({
           
           <ResponsiveSpacingSliders
             marginByDevice={{
-              desktop: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left },
-              tablet: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left },
-              mobile: { top: marginSpacing.top, right: marginSpacing.right, bottom: marginSpacing.bottom, left: marginSpacing.left }
+              desktop: marginNumbers,
+              tablet: marginNumbers,
+              mobile: marginNumbers
             }}
             paddingByDevice={{
-              desktop: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left },
-              tablet: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left },
-              mobile: { top: paddingSpacing.top, right: paddingSpacing.right, bottom: paddingSpacing.bottom, left: paddingSpacing.left }
+              desktop: paddingNumbers,
+              tablet: paddingNumbers,
+              mobile: paddingNumbers
             }}
             onMarginChange={(device, property, value) => {
-              const updated = { ...marginSpacing, [property]: value };
-              const spacingString = `${updated.top} ${updated.right} ${updated.bottom} ${updated.left}`;
+              const updated = { ...marginNumbers, [property]: value };
+              const spacingString = `${updated.top}px ${updated.right}px ${updated.bottom}px ${updated.left}px`;
               onStyleUpdate('margin', spacingString);
             }}
             onPaddingChange={(device, property, value) => {
-              const updated = { ...paddingSpacing, [property]: value };
-              const spacingString = `${updated.top} ${updated.right} ${updated.bottom} ${updated.left}`;
+              const updated = { ...paddingNumbers, [property]: value };
+              const spacingString = `${updated.top}px ${updated.right}px ${updated.bottom}px ${updated.left}px`;
               onStyleUpdate('padding', spacingString);
             }}
           />
