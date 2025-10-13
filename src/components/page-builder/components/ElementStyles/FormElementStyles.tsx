@@ -7,7 +7,7 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
 import { ResponsiveSpacingSliders } from './_shared/ResponsiveSpacingSliders';
 import { useDevicePreview } from '../../contexts/DevicePreviewContext';
-import { PageBuilderElement } from '../types';
+import { PageBuilderElement } from '../../types';
 import { Type, Palette, Layout, AlignLeft, Square, MessageSquare, MousePointer, Container } from 'lucide-react';
 
 interface FormElementStylesProps {
@@ -79,12 +79,27 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
     onStyleUpdate('paddingByDevice', updated);
   };
 
+  const getCurrentSpacingByDevice = () => {
+    const marginByDevice = element.styles?.marginByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+    
+    const paddingByDevice = element.styles?.paddingByDevice || {
+      desktop: { top: 0, right: 0, bottom: 0, left: 0 },
+      tablet: { top: 0, right: 0, bottom: 0, left: 0 },
+      mobile: { top: 0, right: 0, bottom: 0, left: 0 }
+    };
+
+    return { marginByDevice, paddingByDevice };
+  };
+
   return (
     <div className="space-y-4">
       {/* 📄 LABELS SECTION */}
       <CollapsibleGroup
         title="Labels"
-        icon={Type}
         isOpen={labelsOpen}
         onToggle={setLabelsOpen}
       >
@@ -170,7 +185,6 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
       {/* 📄 FIELDS SECTION */}
       <CollapsibleGroup
         title="Fields"
-        icon={Square}
         isOpen={fieldsOpen}
         onToggle={setFieldsOpen}
       >
@@ -265,7 +279,6 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
       {/* 💬 PLACEHOLDERS SECTION */}
       <CollapsibleGroup
         title="Placeholders"
-        icon={MessageSquare}
         isOpen={placeholdersOpen}
         onToggle={setPlaceholdersOpen}
       >
@@ -333,7 +346,6 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
       {/* 🔘 BUTTON SECTION */}
       <CollapsibleGroup
         title="Button"
-        icon={MousePointer}
         isOpen={buttonOpen}
         onToggle={setButtonOpen}
       >
@@ -428,7 +440,6 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
       {/* 📦 FORM CONTAINER SECTION */}
       <CollapsibleGroup
         title="Form Container"
-        icon={Container}
         isOpen={containerOpen}
         onToggle={setContainerOpen}
       >
@@ -562,13 +573,12 @@ export const FormElementStyles: React.FC<FormElementStylesProps> = ({
       {/* 📏 SPACING SECTION */}
       <CollapsibleGroup
         title="Spacing"
-        icon={Layout}
         isOpen={spacingOpen}
         onToggle={setSpacingOpen}
       >
         <ResponsiveSpacingSliders
-          marginByDevice={element.styles?.marginByDevice}
-          paddingByDevice={element.styles?.paddingByDevice}
+          marginByDevice={getCurrentSpacingByDevice().marginByDevice}
+          paddingByDevice={getCurrentSpacingByDevice().paddingByDevice}
           onMarginChange={handleMarginChange}
           onPaddingChange={handlePaddingChange}
         />

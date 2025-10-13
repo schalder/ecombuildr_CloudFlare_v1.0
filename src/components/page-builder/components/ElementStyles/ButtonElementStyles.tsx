@@ -551,7 +551,6 @@ export const ButtonElementStyles: React.FC<ButtonElementStylesProps> = ({
       {element.content.subtext && (
         <CollapsibleGroup
           title="Subtext Styling"
-          icon={Type}
           isOpen={subtextStylingOpen}
           onToggle={setSubtextStylingOpen}
         >

@@ -3,6 +3,15 @@
 // Background image modes
 export type BackgroundImageMode = 'full-center' | 'parallax' | 'fill-width' | 'no-repeat' | 'repeat';
 
+// Helper types for responsive styles
+export type ResponsiveStyle = {
+  desktop?: string;
+  tablet?: string;
+  mobile?: string;
+};
+
+export type ResponsiveValue = string | ResponsiveStyle;
+
 // Form Builder Types
 export interface FormField {
   id: string;
@@ -60,6 +69,7 @@ export interface PageBuilderElement {
   id: string;
   anchor?: string;
   type: string;
+  metadata?: Record<string, any>;
   content: {
     text?: string;
     url?: string;
@@ -85,6 +95,7 @@ export interface PageBuilderElement {
     backgroundColor?: string;
     backgroundImage?: string;
     boxShadow?: string;
+    aspectRatio?: string;
     paddingTop?: string;
     paddingRight?: string;
     paddingBottom?: string;
@@ -120,6 +131,17 @@ export interface PageBuilderElement {
     buttonTextColor?: string;
     buttonBorderWidth?: string;
     buttonBorderColor?: string;
+    // Responsive spacing properties
+    marginByDevice?: {
+      desktop?: { top: number; right: number; bottom: number; left: number };
+      tablet?: { top: number; right: number; bottom: number; left: number };
+      mobile?: { top: number; right: number; bottom: number; left: number };
+    };
+    paddingByDevice?: {
+      desktop?: { top: number; right: number; bottom: number; left: number };
+      tablet?: { top: number; right: number; bottom: number; left: number };
+      mobile?: { top: number; right: number; bottom: number; left: number };
+    };
     responsive?: {
       desktop?: Record<string, any>;
       tablet?: Record<string, any>;
