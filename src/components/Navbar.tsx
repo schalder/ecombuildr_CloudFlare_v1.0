@@ -19,14 +19,13 @@ export const Navbar = () => {
   const fetchNavigation = async () => {
     try {
       const { data, error } = await supabase
-        .from('platform_navigation_settings' as any)
+        .from('platform_navigation_settings')
         .select('*')
-        .maybeSingle();
+        .single();
 
-      if (data && !error) {
-        const navData = data as any;
-        setLogoUrl(navData.logo_url || logoUrl);
-        setNavItems((navData.nav_items || []).filter((item: PlatformNavItem) => item.enabled));
+      if (data) {
+        setLogoUrl(data.logo_url || logoUrl);
+        setNavItems((data.nav_items || []).filter((item: PlatformNavItem) => item.enabled));
       }
     } catch (error) {
       console.error('Error fetching navigation:', error);

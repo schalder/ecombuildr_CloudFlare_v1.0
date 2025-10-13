@@ -81,17 +81,16 @@ export const PlatformNavigationManager: React.FC = () => {
   const fetchSettings = async () => {
     try {
       const { data, error } = await supabase
-        .from('platform_navigation_settings' as any)
+        .from('platform_navigation_settings')
         .select('*')
-        .maybeSingle();
+        .single();
 
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        const navData = data as any;
-        setSettings(navData);
-        setLogoUrl(navData.logo_url || '');
-        setNavItems(navData.nav_items || []);
+        setSettings(data);
+        setLogoUrl(data.logo_url || '');
+        setNavItems(data.nav_items || []);
       }
     } catch (error) {
       console.error('Error fetching navigation settings:', error);
@@ -109,7 +108,7 @@ export const PlatformNavigationManager: React.FC = () => {
     setSaving(true);
     try {
       const { error } = await supabase
-        .from('platform_navigation_settings' as any)
+        .from('platform_navigation_settings')
         .update({
           logo_url: logoUrl,
           nav_items: navItems,
