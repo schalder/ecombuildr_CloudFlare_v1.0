@@ -33,6 +33,51 @@ export const PlatformNavigationManager: React.FC = () => {
     fetchSettings();
   }, []);
 
+  const handleLogoUpload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select a file smaller than 5MB",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      // Upload to user-scoped path in Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
+      const { data, error } = await supabase.storage
+        .from('images')
+        .upload(`${user.id}/${fileName}`, file);
+
+      if (error) throw error;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('images')
+        .getPublicUrl(`${user.id}/${fileName}`);
+
+      setLogoUrl(publicUrl);
+      
+      toast({
+        title: "Logo uploaded",
+        description: "Your logo has been uploaded successfully"
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload logo. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   const fetchSettings = async () => {
     try {
       const { data, error } = await supabase
@@ -275,11 +320,66 @@ export const PlatformNavigationManager: React.FC = () => {
         {/* Logo Section */}
         <div className="space-y-3">
           <Label>Logo</Label>
-          <ImageUpload
-            value={logoUrl}
-            onChange={setLogoUrl}
-            onRemove={() => setLogoUrl('')}
-          />
+          {logoUrl ? (
+            <div className="flex items-center gap-4">
+              <div className="w-32 h-16 bg-muted rounded-lg overflow-hidden border">
+                <img 
+                  src={logoUrl} 
+                  alt="Logo preview"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        // Handle file upload here - you can reuse the ImageUpload logic
+                        handleLogoUpload(file);
+                      }
+                    };
+                    input.click();
+                  }}
+                >
+                  Change Logo
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLogoUrl('')}
+                >
+                  Remove
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="w-32 h-16 border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const input = document.createElement('input');
+                  input.type = 'file';
+                  input.accept = 'image/*';
+                  input.onchange = (e) => {
+                    const file = (e.target as HTMLInputElement).files?.[0];
+                    if (file) {
+                      handleLogoUpload(file);
+                    }
+                  };
+                  input.click();
+                }}
+              >
+                Upload Logo
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Navigation Items */}
