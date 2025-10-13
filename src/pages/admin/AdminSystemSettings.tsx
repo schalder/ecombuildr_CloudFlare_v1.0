@@ -314,9 +314,7 @@ const AdminSystemSettings = () => {
             </Card>
 
             {/* Platform Navigation Section */}
-            <div className="mt-6">
-              <PlatformNavigationManager />
-            </div>
+            <PlatformNavigationManager />
           </TabsContent>
 
           {/* Email Settings */}
@@ -584,6 +582,7 @@ const AdminSystemSettings = () => {
             </Card>
           </TabsContent>
 
+          {/* Navigation Settings */}
         </Tabs>
       </div>
     </AdminLayout>
