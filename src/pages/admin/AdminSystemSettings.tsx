@@ -22,8 +22,7 @@ import {
   Server,
   Save,
   AlertTriangle,
-  Monitor,
-  Menu
+  Monitor
 } from 'lucide-react';
 
 const AdminSystemSettings = () => {
@@ -163,7 +162,7 @@ const AdminSystemSettings = () => {
     <AdminLayout title="System Settings" description="Configure platform-wide settings and preferences">
       <div className="space-y-6">
         <Tabs defaultValue="system" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="system" className="flex items-center gap-2">
               <Server className="h-4 w-4" />
               System
@@ -183,10 +182,6 @@ const AdminSystemSettings = () => {
             <TabsTrigger value="marketing" className="flex items-center gap-2">
               <Monitor className="h-4 w-4" />
               Marketing
-            </TabsTrigger>
-            <TabsTrigger value="navigation" className="flex items-center gap-2">
-              <Menu className="h-4 w-4" />
-              Navigation
             </TabsTrigger>
           </TabsList>
 
@@ -317,6 +312,11 @@ const AdminSystemSettings = () => {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Platform Navigation Section */}
+            <div className="mt-6">
+              <PlatformNavigationManager />
+            </div>
           </TabsContent>
 
           {/* Email Settings */}
@@ -584,10 +584,6 @@ const AdminSystemSettings = () => {
             </Card>
           </TabsContent>
 
-          {/* Navigation Settings */}
-          <TabsContent value="navigation">
-            <PlatformNavigationManager />
-          </TabsContent>
         </Tabs>
       </div>
     </AdminLayout>
