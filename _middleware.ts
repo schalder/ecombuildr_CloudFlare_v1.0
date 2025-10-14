@@ -1,8 +1,8 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4?target=deno';
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
-  Deno.env.get('SUPABASE_URL') ?? '',
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  Deno.env.get('VITE_SUPABASE_URL') ?? '',
+  Deno.env.get('VITE_SUPABASE_ANON_KEY') ?? ''
 );
 
 const SOCIAL_CRAWLERS = [
