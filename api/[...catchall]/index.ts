@@ -898,7 +898,13 @@ export default async function handler(request: Request): Promise<Response> {
   
     // For non-social crawlers or system domains, pass through
     console.log('👤 Non-social crawler or system domain - passing through');
-    return new Response(null, { status: 200 });
+    // Return empty HTML to let the request continue to the React app
+    return new Response('<!DOCTYPE html><html><head></head><body></body></html>', {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      }
+    });
     
   } catch (error) {
     console.error('💥 Edge Function error:', error);
