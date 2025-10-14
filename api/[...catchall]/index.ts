@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = Deno.env.get('VITE_SUPABASE_URL') ?? '';
-const SUPABASE_ANON_KEY = Deno.env.get('VITE_SUPABASE_ANON_KEY') ?? '';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? '';
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -807,8 +807,8 @@ export default async function handler(request: Request): Promise<Response> {
     console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
     
     // Check environment variables
-    const SUPABASE_URL = Deno.env.get('VITE_SUPABASE_URL') ?? '';
-    const SUPABASE_ANON_KEY = Deno.env.get('VITE_SUPABASE_ANON_KEY') ?? '';
+    const SUPABASE_URL = process.env.VITE_SUPABASE_URL ?? '';
+    const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
     
     if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       console.error('❌ Missing Supabase environment variables');
