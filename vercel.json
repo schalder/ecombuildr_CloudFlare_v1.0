@@ -1,9 +1,28 @@
 {
   "version": 2,
+  "functions": {
+    "api/[...catchall]/index.ts": {
+      "runtime": "edge"
+    },
+    "api/social-meta.ts": {
+      "runtime": "edge"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
       "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(bot|crawler|spider|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|DiscordBot|TelegramBot|SkypeUriPreview|facebookcatalog|facebookplatform|Facebot|FacebookBot|Googlebot|Bingbot).*"
+        }
+      ]
     },
     {
       "source": "/(.*)",
