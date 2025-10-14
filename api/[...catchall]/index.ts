@@ -122,7 +122,7 @@ function normalizeImageUrl(imageUrl: string | null | undefined): string | undefi
 }
 
 // Main SEO data resolution
-async function resolveSEOData(domain: string, path: string): Promise<SEOData | null> {
+async function resolveSEOData(domain: string, path: string, supabase: any): Promise<SEOData | null> {
   try {
     console.log(`🔍 Resolving SEO for ${domain}${path}`);
     
@@ -797,34 +797,46 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
 }
 
 export default async function handler(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const userAgent = request.headers.get('user-agent') || '';
-  const domain = url.hostname;
-  const pathname = url.pathname;
-  const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
-  
-  console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
-  
-  // Detect if this is a custom domain (not ecombuildr.com or localhost)
-  // BUT treat get.ecombuildr.com as custom domain for funnel steps
-  const isCustomDomain = !domain.includes('ecombuildr.com') && 
-                        !domain.includes('localhost') && 
-                        !domain.includes('lovable.dev') &&
-                        !domain.includes('lovable.app') &&
-                        !domain.includes('lovableproject.com') ||
-                        domain === 'get.ecombuildr.com';
-  
-  // Check if this is a social crawler
-  const isSocialBot = isSocialCrawler(userAgent);
-  
-  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | Social Bot: ${isSocialBot}`);
-  
-  // For custom domains, always handle social crawlers with SEO
-  if (isCustomDomain && isSocialBot) {
-    console.log(`🤖 Social crawler on custom domain - generating SEO HTML`);
+  try {
+    const url = new URL(request.url);
+    const userAgent = request.headers.get('user-agent') || '';
+    const domain = url.hostname;
+    const pathname = url.pathname;
+    const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
     
-    try {
-      const seoData = await resolveSEOData(domain, pathname);
+    console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
+    
+    // Check environment variables
+    const SUPABASE_URL = Deno.env.get('VITE_SUPABASE_URL') ?? '';
+    const SUPABASE_ANON_KEY = Deno.env.get('VITE_SUPABASE_ANON_KEY') ?? '';
+    
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      console.error('❌ Missing Supabase environment variables');
+      return new Response('Configuration Error', { status: 500 });
+    }
+    
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Detect if this is a custom domain (not ecombuildr.com or localhost)
+    // BUT treat get.ecombuildr.com as custom domain for funnel steps
+    const isCustomDomain = !domain.includes('ecombuildr.com') && 
+                          !domain.includes('localhost') && 
+                          !domain.includes('lovable.dev') &&
+                          !domain.includes('lovable.app') &&
+                          !domain.includes('lovableproject.com') ||
+                          domain === 'get.ecombuildr.com';
+    
+    // Check if this is a social crawler
+    const isSocialBot = isSocialCrawler(userAgent);
+    
+    console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | Social Bot: ${isSocialBot}`);
+    
+    // For custom domains, always handle social crawlers with SEO
+    if (isCustomDomain && isSocialBot) {
+      console.log(`🤖 Social crawler on custom domain - generating SEO HTML`);
+      
+      try {
+        const seoData = await resolveSEOData(domain, pathname, supabase);
       
       if (!seoData) {
         console.log(`[${traceId}] ❌ No SEO data found - rendering minimal fallback`);
@@ -884,9 +896,14 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
   
-  // For non-social crawlers or system domains, pass through
-  console.log('👤 Non-social crawler or system domain - passing through');
-  return new Response(null, { status: 200 });
+    // For non-social crawlers or system domains, pass through
+    console.log('👤 Non-social crawler or system domain - passing through');
+    return new Response(null, { status: 200 });
+    
+  } catch (error) {
+    console.error('💥 Edge Function error:', error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
 }
 
 export const config = {
