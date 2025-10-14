@@ -3,6 +3,10 @@
 // Background image modes
 export type BackgroundImageMode = 'full-center' | 'parallax' | 'fill-width' | 'no-repeat' | 'repeat';
 
+// Responsive types for form builder
+export type ResponsiveStyle = string;
+export type ResponsiveValue = string;
+
 // Form Builder Types
 export interface FormField {
   id: string;
@@ -125,6 +129,19 @@ export interface PageBuilderElement {
       tablet?: Record<string, any>;
       mobile?: Record<string, any>;
     };
+    marginByDevice?: {
+      desktop?: { top: number; right: number; bottom: number; left: number };
+      tablet?: { top: number; right: number; bottom: number; left: number };
+      mobile?: { top: number; right: number; bottom: number; left: number };
+    };
+    paddingByDevice?: {
+      desktop?: { top: number; right: number; bottom: number; left: number };
+      tablet?: { top: number; right: number; bottom: number; left: number };
+      mobile?: { top: number; right: number; bottom: number; left: number };
+    };
+  };
+  metadata?: {
+    aspectRatio?: string;
   };
 }
 

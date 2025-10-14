@@ -80,18 +80,10 @@ export const PlatformNavigationManager: React.FC = () => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('platform_navigation_settings')
-        .select('*')
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      
-      if (data) {
-        setSettings(data);
-        setLogoUrl(data.logo_url || '');
-        setNavItems(data.nav_items || []);
-      }
+      // Platform navigation settings table doesn't exist - using default settings
+      // TODO: Implement platform_navigation_settings table or remove this feature
+      console.log('Using default navigation settings');
+      setLoading(false);
     } catch (error) {
       console.error('Error fetching navigation settings:', error);
       toast({
@@ -99,7 +91,6 @@ export const PlatformNavigationManager: React.FC = () => {
         description: 'Failed to load navigation settings',
         variant: 'destructive',
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -107,19 +98,12 @@ export const PlatformNavigationManager: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('platform_navigation_settings')
-        .update({
-          logo_url: logoUrl,
-          nav_items: navItems,
-        })
-        .eq('id', settings?.id);
-
-      if (error) throw error;
-
+      // Platform navigation settings table doesn't exist
+      console.log('Save functionality disabled - platform_navigation_settings table not implemented');
       toast({
-        title: 'Success',
-        description: 'Navigation settings updated successfully',
+        title: 'Feature Not Available',
+        description: 'Platform navigation settings are not yet implemented.',
+        variant: 'destructive',
       });
       
       fetchSettings();

@@ -18,15 +18,9 @@ export const Navbar = () => {
 
   const fetchNavigation = async () => {
     try {
-      const { data, error } = await supabase
-        .from('platform_navigation_settings')
-        .select('*')
-        .single();
-
-      if (data) {
-        setLogoUrl(data.logo_url || logoUrl);
-        setNavItems((data.nav_items || []).filter((item: PlatformNavItem) => item.enabled));
-      }
+      // Platform navigation settings table doesn't exist - using default navigation
+      // TODO: Implement platform_navigation_settings table or remove this feature
+      console.log('Using default navigation settings');
     } catch (error) {
       console.error('Error fetching navigation:', error);
     }
