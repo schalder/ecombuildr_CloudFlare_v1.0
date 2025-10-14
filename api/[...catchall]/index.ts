@@ -798,7 +798,20 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
 
 export default async function handler(request: Request): Promise<Response> {
   try {
-    const url = new URL(request.url);
+    // Validate request URL
+    if (!request.url) {
+      console.error('❌ Request URL is undefined');
+      return new Response('Bad Request', { status: 400 });
+    }
+
+    let url: URL;
+    try {
+      url = new URL(request.url);
+    } catch (error) {
+      console.error('❌ Invalid request URL:', request.url, error);
+      return new Response('Bad Request', { status: 400 });
+    }
+
     const userAgent = request.headers.get('user-agent') || '';
     const domain = url.hostname;
     const pathname = url.pathname;
