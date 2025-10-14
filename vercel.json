@@ -1,13 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "api/[...catchall]/index.ts": {
-      "runtime": "edge"
-    },
-    "api/social-meta.ts": {
-      "runtime": "edge"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
