@@ -1,8 +1,8 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4?target=deno';
 
 const supabase = createClient(
-  Deno.env.get('VITE_SUPABASE_URL') ?? '',
-  Deno.env.get('VITE_SUPABASE_ANON_KEY') ?? ''
+  Deno.env.get('SUPABASE_URL') ?? '',
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
 const SOCIAL_CRAWLERS = [
@@ -703,9 +703,8 @@ export default async function handler(request: Request): Promise<Response> {
   console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | System: ${isSystemDomain} | Social Bot: ${isSocialBot}`);
   
   // For custom domains AND system domains, provide SEO for ALL visitors
-  // BUT skip social crawlers - let Edge Function handle them
-  if ((isCustomDomain || isSystemDomain) && !isSocialBot) {
-    console.log(`🌐 ${isCustomDomain ? 'Custom' : 'System'} domain request - generating SEO HTML for regular visitor`);
+  if (isCustomDomain || isSystemDomain) {
+    console.log(`🌐 ${isCustomDomain ? 'Custom' : 'System'} domain request - generating SEO HTML for ${isSocialBot ? 'social crawler' : 'regular visitor'}`);
     
     try {
       const seoData = await resolveSEOData(domain, pathname);
@@ -764,12 +763,6 @@ export default async function handler(request: Request): Promise<Response> {
       console.error('💥 SEO Handler error:', error);
       return new Response('Internal Server Error', { status: 500 });
     }
-  }
-  
-  // If this is a social crawler, let Edge Function handle it
-  if (isSocialBot) {
-    console.log(`🤖 Social crawler detected (${userAgent}) - passing through to Edge Function`);
-    return new Response(null, { status: 200 });
   }
   
   // For system domains (ecombuildr.com, localhost), pass through

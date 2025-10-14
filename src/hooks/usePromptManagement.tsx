@@ -2,9 +2,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Prompt, PromptCategory } from './usePrompts';
 
-// Re-export PromptCategory for consumers of this hook
-export type { PromptCategory };
-
 export interface CreatePromptData {
   title: string;
   description?: string;

@@ -14,9 +14,9 @@ interface SpacingValues {
 }
 
 interface ResponsiveSpacing {
-  desktop?: SpacingValues;
-  tablet?: SpacingValues;
-  mobile?: SpacingValues;
+  desktop: SpacingValues;
+  tablet: SpacingValues;
+  mobile: SpacingValues;
 }
 
 interface ResponsiveSpacingSlidersProps {
