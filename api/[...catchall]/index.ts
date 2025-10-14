@@ -123,6 +123,8 @@ function normalizeImageUrl(imageUrl: string | null | undefined): string | undefi
 
 // Main SEO data resolution
 async function resolveSEOData(domain: string, path: string, supabase: any): Promise<SEOData | null> {
+  const startTime = Date.now();
+  
   try {
     console.log(`🔍 Resolving SEO for ${domain}${path}`);
     
@@ -131,12 +133,21 @@ async function resolveSEOData(domain: string, path: string, supabase: any): Prom
     const domainVariants = [domain, apexDomain, `www.${apexDomain}`];
     const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
     
-    // Step 1: Find custom domain mapping  
-    const { data: customDomain } = await supabase
+    // Step 1: Find custom domain mapping (optimized query)
+    const domainQueryStart = Date.now();
+    const { data: customDomain, error: domainError } = await supabase
       .from('custom_domains')
       .select('id, domain, store_id')
       .in('domain', domainVariants)
+      .limit(1) // Add limit for performance
       .maybeSingle();
+    
+    if (domainError) {
+      console.error('❌ Domain query error:', domainError);
+      return null;
+    }
+    
+    console.log(`⏱️ Domain query took ${Date.now() - domainQueryStart}ms`);
     
     if (!customDomain) {
       console.log('❌ No custom domain found');
@@ -146,12 +157,21 @@ async function resolveSEOData(domain: string, path: string, supabase: any): Prom
     console.log(`✅ Found custom domain: ${customDomain.domain} -> store ${customDomain.store_id}`);
     
     // Step 2: Find content mapping via domain_connections (website or funnel)
-    const { data: contentConnection } = await supabase
+    const connectionQueryStart = Date.now();
+    const { data: contentConnection, error: connectionError } = await supabase
       .from('domain_connections')
       .select('content_type, content_id')
       .eq('domain_id', customDomain.id)
       .in('content_type', ['website', 'funnel'])
+      .limit(1) // Add limit for performance
       .maybeSingle();
+    
+    if (connectionError) {
+      console.error('❌ Connection query error:', connectionError);
+      return null;
+    }
+    
+    console.log(`⏱️ Connection query took ${Date.now() - connectionQueryStart}ms`);
     
     let websiteId: string | null = null;
     let funnelId: string | null = null;
@@ -797,6 +817,8 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
 }
 
 export default async function handler(request: Request): Promise<Response> {
+  const startTime = Date.now();
+  
   try {
     // Validate request URL
     if (!request.url) {
@@ -849,7 +871,13 @@ export default async function handler(request: Request): Promise<Response> {
       console.log(`🤖 Social crawler on custom domain - generating SEO HTML`);
       
       try {
-        const seoData = await resolveSEOData(domain, pathname, supabase);
+        // Add timeout protection for SEO resolution
+        const seoPromise = resolveSEOData(domain, pathname, supabase);
+        const timeoutPromise = new Promise<SEOData | null>((_, reject) => {
+          setTimeout(() => reject(new Error('SEO resolution timeout')), 10000); // 10 second timeout
+        });
+        
+        const seoData = await Promise.race([seoPromise, timeoutPromise]);
       
       if (!seoData) {
         console.log(`[${traceId}] ❌ No SEO data found - rendering minimal fallback`);
@@ -905,7 +933,27 @@ export default async function handler(request: Request): Promise<Response> {
 
     } catch (error) {
       console.error('💥 SEO Handler error:', error);
-      return new Response('Internal Server Error', { status: 500 });
+      // Return minimal fallback instead of 500 error to prevent timeouts
+      const fallback = {
+        title: domain,
+        description: `Preview of ${domain}`,
+        og_image: undefined,
+        keywords: [],
+        canonical: url.toString(),
+        robots: 'index, follow',
+        site_name: domain,
+        source: 'fallback_error'
+      } as SEOData;
+      const html = generateHTML(fallback, url.toString());
+      return new Response(html, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'public, max-age=60, s-maxage=60',
+          'X-Trace-Id': traceId,
+          'X-SEO-Source': 'fallback_error',
+        },
+      });
     }
   }
   
@@ -921,7 +969,17 @@ export default async function handler(request: Request): Promise<Response> {
     
   } catch (error) {
     console.error('💥 Edge Function error:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    // Return minimal response instead of 500 to prevent cascading timeouts
+    return new Response('<!DOCTYPE html><html><head><title>Error</title></head><body>Service temporarily unavailable</body></html>', {
+      status: 503,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Retry-After': '30',
+      }
+    });
+  } finally {
+    const totalTime = Date.now() - startTime;
+    console.log(`⏱️ Total Edge Function execution time: ${totalTime}ms`);
   }
 }
 
