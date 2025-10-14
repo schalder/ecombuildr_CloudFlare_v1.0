@@ -145,21 +145,27 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     
     console.log(`✅ Found custom domain: ${customDomain.domain} -> store ${customDomain.store_id}`);
     
-    // Step 2: Find website mapping via domain_connections
-    const { data: websiteConnection } = await supabase
+    // Step 2: Find content mapping via domain_connections (website or funnel)
+    const { data: contentConnection } = await supabase
       .from('domain_connections')
       .select('content_type, content_id')
       .eq('domain_id', customDomain.id)
-      .eq('content_type', 'website')
+      .in('content_type', ['website', 'funnel'])
       .maybeSingle();
     
     let websiteId: string | null = null;
+    let funnelId: string | null = null;
     
-    if (websiteConnection) {
-      websiteId = websiteConnection.content_id;
-      console.log(`✅ Found website connection: ${websiteId}`);
+    if (contentConnection) {
+      if (contentConnection.content_type === 'website') {
+        websiteId = contentConnection.content_id;
+        console.log(`✅ Found website connection: ${websiteId}`);
+      } else if (contentConnection.content_type === 'funnel') {
+        funnelId = contentConnection.content_id;
+        console.log(`✅ Found funnel connection: ${funnelId}`);
+      }
     } else {
-      console.log('⚠️ No website connection found for domain. Falling back to store websites');
+      console.log('⚠️ No content connection found for domain. Falling back to store websites');
       const { data: storeWebsites } = await supabase
         .from('websites')
         .select('id, domain')
@@ -171,6 +177,150 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         websiteId = exactMatch?.id || storeWebsites[0].id;
         console.log(`📦 Using store website fallback: ${websiteId}`);
       }
+    }
+    
+    // Handle funnel connections - return funnel SEO data
+    if (funnelId) {
+      console.log(`🎯 Processing funnel connection for funnel: ${funnelId}`);
+      
+      // Get funnel data
+      const { data: funnel } = await supabase
+        .from('funnels')
+        .select('id, name, seo_title, seo_description, og_image, social_image_url, seo_keywords, canonical_url, meta_robots')
+        .eq('id', funnelId)
+        .eq('is_published', true)
+        .maybeSingle();
+      
+      if (!funnel) {
+        console.log('❌ Funnel not found or not published');
+        return null;
+      }
+      
+      // For root path, return funnel landing page SEO
+      if (!cleanPath) {
+        const title = (funnel.seo_title && funnel.seo_title.trim()) 
+          ? funnel.seo_title.trim() 
+          : funnel.name;
+        
+        const description = (funnel.seo_description && funnel.seo_description.trim())
+          ? funnel.seo_description.trim()
+          : `Sales funnel: ${funnel.name}`;
+        
+        const image = normalizeImageUrl(funnel.social_image_url || funnel.og_image);
+        
+        return {
+          title,
+          description,
+          og_image: image,
+          keywords: funnel.seo_keywords || [],
+          canonical: funnel.canonical_url || `https://${domain}${path}`,
+          robots: funnel.meta_robots || 'index, follow',
+          site_name: funnel.name,
+          source: `funnel_landing|funnel:${funnel.id}`,
+          debug: {
+            funnelId: funnel.id,
+            titleSource: funnel.seo_title ? 'funnel_seo_title' : 'funnel_name',
+            descSource: funnel.seo_description ? 'funnel_seo_description' : 'funnel_name_fallback'
+          }
+        };
+      }
+      
+      // For specific paths, look for funnel steps
+      const pathParts = cleanPath.split('/').filter(Boolean);
+      
+      if (pathParts.length >= 2 && pathParts[0] === 'funnel') {
+        const funnelSlug = pathParts[1];
+        const stepSlug = pathParts[2];
+        
+        // Verify funnel slug matches
+        const { data: funnelBySlug } = await supabase
+          .from('funnels')
+          .select('id, slug')
+          .eq('id', funnelId)
+          .eq('slug', funnelSlug)
+          .maybeSingle();
+        
+        if (!funnelBySlug) {
+          console.log(`❌ Funnel slug mismatch: expected ${funnelSlug}`);
+          return null;
+        }
+        
+        if (stepSlug) {
+          // Get specific funnel step
+          const { data: step } = await supabase
+            .from('funnel_steps')
+            .select(`
+              name, seo_title, seo_description, og_image, social_image_url,
+              seo_keywords, canonical_url, meta_robots, meta_author, 
+              language_code, custom_meta_tags, content
+            `)
+            .eq('funnel_id', funnelId)
+            .eq('slug', stepSlug)
+            .eq('is_published', true)
+            .maybeSingle();
+          
+          if (step) {
+            const contentDesc = extractContentDescription(step.content);
+            
+            const title = (step.seo_title && step.seo_title.trim()) 
+              ? step.seo_title.trim() 
+              : `${step.name} | ${funnel.name}`;
+            
+            const description = (step.seo_description && step.seo_description.trim())
+              ? step.seo_description.trim()
+              : (contentDesc || `${step.name} - ${funnel.name}`);
+            
+            let image = step.og_image || step.social_image_url;
+            if (!image) {
+              image = funnel.og_image;
+            }
+            
+            return {
+              title,
+              description,
+              og_image: normalizeImageUrl(image),
+              keywords: step.seo_keywords || [],
+              canonical: step.canonical_url || `https://${domain}${path}`,
+              robots: step.meta_robots || 'index, follow',
+              site_name: funnel.name,
+              source: `funnel_step|funnel:${funnel.id}|step:${stepSlug}`,
+              debug: {
+                funnelId: funnel.id,
+                stepId: step.name,
+                titleSource: step.seo_title ? 'step_seo_title' : 'step_name',
+                descSource: step.seo_description ? 'step_seo_description' : 'step_content_fallback'
+              }
+            };
+          }
+        }
+      }
+      
+      // If we get here, return funnel landing page SEO
+      const title = (funnel.seo_title && funnel.seo_title.trim()) 
+        ? funnel.seo_title.trim() 
+        : funnel.name;
+      
+      const description = (funnel.seo_description && funnel.seo_description.trim())
+        ? funnel.seo_description.trim()
+        : `Sales funnel: ${funnel.name}`;
+      
+      const image = normalizeImageUrl(funnel.social_image_url || funnel.og_image);
+      
+      return {
+        title,
+        description,
+        og_image: image,
+        keywords: funnel.seo_keywords || [],
+        canonical: funnel.canonical_url || `https://${domain}${path}`,
+        robots: funnel.meta_robots || 'index, follow',
+        site_name: funnel.name,
+        source: `funnel_landing|funnel:${funnel.id}`,
+        debug: {
+          funnelId: funnel.id,
+          titleSource: funnel.seo_title ? 'funnel_seo_title' : 'funnel_name',
+          descSource: funnel.seo_description ? 'funnel_seo_description' : 'funnel_name_fallback'
+        }
+      };
     }
     
     if (!websiteId) {
