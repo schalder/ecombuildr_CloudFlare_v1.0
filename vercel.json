@@ -12,7 +12,150 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(bot|crawler|spider|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|DiscordBot|TelegramBot|SkypeUriPreview|facebookcatalog|facebookplatform|Facebot|FacebookBot|Googlebot|Bingbot).*"
+          "value": "facebookexternalhit"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "Twitterbot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "LinkedInBot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "WhatsApp"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "Googlebot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "Slackbot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "DiscordBot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "TelegramBot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "SkypeUriPreview"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "facebookcatalog"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "facebookplatform"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "Facebot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "FacebookBot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "Bingbot"
         }
       ]
     },
