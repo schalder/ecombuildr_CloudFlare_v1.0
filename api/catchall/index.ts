@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
-import { renderPageBuilderToHTML, convertToServerFormat } from '../lib/server-renderer';
-import { generateHTMLHead, generateStructuredData } from '../lib/server-seo';
-import { getPageData, getWebsiteData, generateFallbackPage } from '../lib/server-router';
+import { renderPageBuilderToHTML, convertToServerFormat } from '../lib/server-renderer.js';
+import { generateHTMLHead, generateStructuredData } from '../lib/server-seo.js';
+import { getPageData, getWebsiteData, generateFallbackPage } from '../lib/server-router.js';
 
 const SUPABASE_URL = "https://fhqwacmokbtbspkxjixf.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM";

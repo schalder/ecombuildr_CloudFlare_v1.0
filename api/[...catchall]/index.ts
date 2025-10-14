@@ -1,5 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4?target=deno';
+import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = "https://fhqwacmokbtbspkxjixf.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM";
@@ -647,8 +646,8 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
   }
 }
 
-export default async function middleware(request: NextRequest): Promise<NextResponse> {
-  const url = request.nextUrl;
+export default async function handler(request: Request): Promise<Response> {
+  const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
   const domain = url.hostname;
   const pathname = url.pathname;
@@ -688,7 +687,7 @@ export default async function middleware(request: NextRequest): Promise<NextResp
           source: 'fallback_no_data'
         } as SEOData;
         const html = generateHTML(minimal, url.toString());
-        return new NextResponse(html, {
+        return new Response(html, {
           status: 200,
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
@@ -707,7 +706,7 @@ export default async function middleware(request: NextRequest): Promise<NextResp
       
       const html = generateHTML(seoData, url.toString());
       
-      return new NextResponse(html, {
+      return new Response(html, {
         status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
@@ -729,13 +728,13 @@ export default async function middleware(request: NextRequest): Promise<NextResp
 
     } catch (error) {
       console.error('💥 SEO Handler error:', error);
-      return new NextResponse('Internal Server Error', { status: 500 });
+      return new Response('Internal Server Error', { status: 500 });
     }
   }
   
   // For non-social crawlers or system domains, pass through
   console.log('👤 Non-social crawler or system domain - passing through');
-  return NextResponse.next();
+  return new Response(null, { status: 200 });
 }
 
 export const config = {
