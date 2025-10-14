@@ -656,11 +656,13 @@ export default async function handler(request: Request): Promise<Response> {
   console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
   
   // Detect if this is a custom domain (not ecombuildr.com or localhost)
+  // BUT treat get.ecombuildr.com as custom domain for funnel steps
   const isCustomDomain = !domain.includes('ecombuildr.com') && 
                         !domain.includes('localhost') && 
                         !domain.includes('lovable.dev') &&
                         !domain.includes('lovable.app') &&
-                        !domain.includes('lovableproject.com');
+                        !domain.includes('lovableproject.com') ||
+                        domain === 'get.ecombuildr.com';
   
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);
