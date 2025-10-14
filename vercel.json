@@ -161,7 +161,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/api/[...catchall]"
     }
   ],
   "headers": [
