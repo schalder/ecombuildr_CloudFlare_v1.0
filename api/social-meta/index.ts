@@ -131,6 +131,251 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
     const domainVariants = [domain, apexDomain, `www.${apexDomain}`];
     const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
     
+    // ============================================
+    // SYSTEM DOMAIN ROUTES (get.ecombuildr.com)
+    // ============================================
+    
+    // Pattern: /websites/:websiteId or /websites/:websiteId/:pageSlug
+    if (cleanPath.startsWith('websites/')) {
+      const parts = cleanPath.split('/').filter(Boolean);
+      const websiteId = parts[1];
+      const pageSlug = parts[2];
+      
+      console.log(`📦 System domain - Website route: websiteId=${websiteId}, pageSlug=${pageSlug || 'homepage'}`);
+      
+      if (!websiteId) return null;
+      
+      // Fetch website
+      const { data: website } = await supabase
+        .from('websites')
+        .select('id, name, description, settings, store_id')
+        .eq('id', websiteId)
+        .eq('is_active', true)
+        .eq('is_published', true)
+        .maybeSingle();
+      
+      if (!website) {
+        console.log(`❌ Website ${websiteId} not found or not published`);
+        return null;
+      }
+      
+      // Get website-level SEO defaults
+      const ws: any = website.settings || {};
+      const websiteSeoTitle = ws.seo?.title || undefined;
+      const websiteSeoDescription = ws.seo?.description || website.description || `Welcome to ${website.name}`;
+      const websiteImage = normalizeImageUrl(
+        ws.seo?.og_image || ws.seo?.social_image_url || ws.branding?.social_image_url || ws.branding?.logo || ws.favicon
+      );
+      
+      if (pageSlug) {
+        // Fetch specific page by slug
+        const { data: page } = await supabase
+          .from('website_pages')
+          .select('id, title, slug, seo_title, seo_description, og_image, social_image_url, preview_image_url, seo_keywords, canonical_url, meta_robots, content')
+          .eq('website_id', websiteId)
+          .eq('slug', pageSlug)
+          .eq('is_published', true)
+          .maybeSingle();
+        
+        if (!page) {
+          console.log(`❌ Page ${pageSlug} not found`);
+          return null;
+        }
+        
+        const contentDesc = extractContentDescription(page.content);
+        const title = page.seo_title?.trim() || `${page.title} - ${website.name}`;
+        const description = page.seo_description?.trim() || contentDesc || `${page.title} - ${website.name}`;
+        const image = normalizeImageUrl(page.social_image_url || page.og_image || page.preview_image_url || websiteImage);
+        
+        console.log(`✅ System domain page SEO: ${title}`);
+        
+        return {
+          title,
+          description,
+          og_image: image,
+          keywords: page.seo_keywords || [],
+          canonical: page.canonical_url || `https://${domain}${path}`,
+          robots: page.meta_robots || 'index, follow',
+          site_name: website.name,
+          source: `system_website_page|website:${websiteId}|page:${page.id}`,
+          debug: {
+            titleSource: 'page.seo_title',
+            descSource: 'page.seo_description',
+            imageSource: 'page.social_image_url',
+            websiteId,
+            pageId: page.id,
+            slug: pageSlug
+          }
+        };
+      } else {
+        // Fetch homepage
+        const { data: homepage } = await supabase
+          .from('website_pages')
+          .select('id, title, slug, seo_title, seo_description, og_image, social_image_url, preview_image_url, seo_keywords, canonical_url, meta_robots, content')
+          .eq('website_id', websiteId)
+          .eq('is_homepage', true)
+          .eq('is_published', true)
+          .maybeSingle();
+        
+        if (homepage) {
+          const contentDesc = extractContentDescription(homepage.content);
+          const title = homepage.seo_title?.trim() || `${homepage.title} - ${website.name}`;
+          const description = homepage.seo_description?.trim() || contentDesc || `${homepage.title} - ${website.name}`;
+          const image = normalizeImageUrl(homepage.social_image_url || homepage.og_image || homepage.preview_image_url || websiteImage);
+          
+          console.log(`✅ System domain homepage SEO: ${title}`);
+          
+          return {
+            title,
+            description,
+            og_image: image,
+            keywords: homepage.seo_keywords || [],
+            canonical: homepage.canonical_url || `https://${domain}${path}`,
+            robots: homepage.meta_robots || 'index, follow',
+            site_name: website.name,
+            source: `system_website_homepage|website:${websiteId}|page:${homepage.id}`,
+            debug: {
+              titleSource: 'homepage.seo_title',
+              descSource: 'homepage.seo_description',
+              imageSource: 'homepage.social_image_url',
+              websiteId,
+              pageId: homepage.id,
+              slug: 'homepage'
+            }
+          };
+        }
+        
+        // Fallback to website-level SEO
+        console.log(`⚠️ No homepage found, using website-level SEO`);
+        return {
+          title: websiteSeoTitle?.trim() || website.name,
+          description: websiteSeoDescription,
+          og_image: websiteImage,
+          keywords: [],
+          canonical: `https://${domain}${path}`,
+          robots: 'index, follow',
+          site_name: website.name,
+          source: `system_website_fallback|website:${websiteId}`
+        };
+      }
+    }
+    
+    // Pattern: /funnels/:funnelId or /funnels/:funnelId/:stepSlug
+    if (cleanPath.startsWith('funnels/')) {
+      const parts = cleanPath.split('/').filter(Boolean);
+      const funnelId = parts[1];
+      const stepSlug = parts[2];
+      
+      console.log(`🎯 System domain - Funnel route: funnelId=${funnelId}, stepSlug=${stepSlug || 'first_step'}`);
+      
+      if (!funnelId) return null;
+      
+      // Fetch funnel
+      const { data: funnel } = await supabase
+        .from('funnels')
+        .select('id, name, description, seo_title, seo_description, og_image, seo_keywords, canonical_url, meta_robots, settings, store_id')
+        .eq('id', funnelId)
+        .eq('is_active', true)
+        .eq('is_published', true)
+        .maybeSingle();
+      
+      if (!funnel) {
+        console.log(`❌ Funnel ${funnelId} not found or not published`);
+        return null;
+      }
+      
+      if (stepSlug) {
+        // Fetch specific step by slug
+        const { data: step } = await supabase
+          .from('funnel_steps')
+          .select('id, title, slug, seo_title, seo_description, og_image, social_image_url, seo_keywords, canonical_url, meta_robots, content')
+          .eq('funnel_id', funnelId)
+          .eq('slug', stepSlug)
+          .eq('is_published', true)
+          .maybeSingle();
+        
+        if (!step) {
+          console.log(`❌ Step ${stepSlug} not found`);
+          return null;
+        }
+        
+        const contentDesc = extractContentDescription(step.content);
+        const title = step.seo_title?.trim() || `${step.title} | ${funnel.name}`;
+        const description = step.seo_description?.trim() || contentDesc || `${step.title} - ${funnel.name}`;
+        const image = normalizeImageUrl(step.social_image_url || step.og_image || funnel.og_image);
+        
+        console.log(`✅ System domain step SEO: ${title}`);
+        
+        return {
+          title,
+          description,
+          og_image: image,
+          keywords: step.seo_keywords || [],
+          canonical: step.canonical_url || `https://${domain}${path}`,
+          robots: step.meta_robots || 'index, follow',
+          site_name: funnel.name,
+          source: `system_funnel_step|funnel:${funnelId}|step:${step.id}`,
+          debug: {
+            titleSource: 'step.seo_title',
+            descSource: 'step.seo_description',
+            imageSource: 'step.social_image_url'
+          }
+        };
+      } else {
+        // Fetch first step (step_order = 1)
+        const { data: firstStep } = await supabase
+          .from('funnel_steps')
+          .select('id, title, slug, seo_title, seo_description, og_image, social_image_url, seo_keywords, canonical_url, meta_robots, content')
+          .eq('funnel_id', funnelId)
+          .eq('is_published', true)
+          .order('step_order', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        
+        if (firstStep) {
+          const contentDesc = extractContentDescription(firstStep.content);
+          const title = firstStep.seo_title?.trim() || `${firstStep.title} | ${funnel.name}`;
+          const description = firstStep.seo_description?.trim() || contentDesc || `${firstStep.title} - ${funnel.name}`;
+          const image = normalizeImageUrl(firstStep.social_image_url || firstStep.og_image || funnel.og_image);
+          
+          console.log(`✅ System domain first step SEO: ${title}`);
+          
+          return {
+            title,
+            description,
+            og_image: image,
+            keywords: firstStep.seo_keywords || [],
+            canonical: firstStep.canonical_url || `https://${domain}${path}`,
+            robots: firstStep.meta_robots || 'index, follow',
+            site_name: funnel.name,
+            source: `system_funnel_first_step|funnel:${funnelId}|step:${firstStep.id}`,
+            debug: {
+              titleSource: 'step.seo_title',
+              descSource: 'step.seo_description',
+              imageSource: 'step.social_image_url'
+            }
+          };
+        }
+        
+        // Fallback to funnel-level SEO
+        console.log(`⚠️ No steps found, using funnel-level SEO`);
+        return {
+          title: funnel.seo_title?.trim() || funnel.name,
+          description: funnel.seo_description?.trim() || funnel.description || `Sales funnel: ${funnel.name}`,
+          og_image: normalizeImageUrl(funnel.og_image),
+          keywords: funnel.seo_keywords || [],
+          canonical: funnel.canonical_url || `https://${domain}${path}`,
+          robots: funnel.meta_robots || 'index, follow',
+          site_name: funnel.name,
+          source: `system_funnel_fallback|funnel:${funnelId}`
+        };
+      }
+    }
+    
+    // ============================================
+    // CUSTOM DOMAIN ROUTES
+    // ============================================
+    
     // Step 1: Find custom domain mapping  
     const { data: customDomain } = await supabase
       .from('custom_domains')
@@ -139,7 +384,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       .maybeSingle();
     
     if (!customDomain) {
-      console.log('❌ No custom domain found');
+      console.log('❌ No custom domain or system route found');
       return null;
     }
     
@@ -655,21 +900,14 @@ export default async function handler(request: Request): Promise<Response> {
   
   console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
   
-  // Detect if this is a custom domain (not ecombuildr.com or localhost)
-  const isCustomDomain = !domain.includes('ecombuildr.com') && 
-                        !domain.includes('localhost') && 
-                        !domain.includes('lovable.dev') &&
-                        !domain.includes('lovable.app') &&
-                        !domain.includes('lovableproject.com');
-  
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);
   
-  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | Social Bot: ${isSocialBot}`);
+  console.log(`🔍 Domain: ${domain} | Social Bot: ${isSocialBot}`);
   
-  // For custom domains, always handle social crawlers with SEO
-  if (isCustomDomain && isSocialBot) {
-    console.log(`🤖 Social crawler on custom domain - generating SEO HTML`);
+  // For ALL DOMAINS, handle social crawlers with SEO
+  if (isSocialBot) {
+    console.log(`🤖 Social crawler detected - generating SEO HTML`);
     
     try {
       const seoData = await resolveSEOData(domain, pathname);
@@ -710,13 +948,14 @@ export default async function handler(request: Request): Promise<Response> {
         status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'public, max-age=300, s-maxage=300',
+          'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=600',
           'X-Trace-Id': traceId,
           'X-SEO-Source': seoData.source || 'unknown',
           'X-SEO-Website': seoData.site_name,
           'X-SEO-Page': seoData.title,
           'X-SEO-Domain': domain,
           'X-SEO-Path': pathname,
+          'X-Robots-Tag': seoData.robots,
           ...(seoData.debug?.websiteId ? { 'X-SEO-Website-Id': seoData.debug.websiteId } : {}),
           ...(seoData.debug?.pageId ? { 'X-SEO-Page-Id': seoData.debug.pageId } : {}),
           ...(seoData.debug?.slug ? { 'X-SEO-Slug': seoData.debug.slug } : {}),
@@ -732,8 +971,8 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
   
-  // For non-social crawlers or system domains, pass through
-  console.log('👤 Non-social crawler or system domain - passing through');
+  // For non-social crawlers (humans), pass through to SPA
+  console.log(`[${traceId}] 👤 Non-social crawler (human) - passing through to SPA`);
   return new Response(null, { status: 200 });
 }
 
