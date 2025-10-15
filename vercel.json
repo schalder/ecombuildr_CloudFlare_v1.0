@@ -2,7 +2,6 @@
   "functions": {
     "api/render.ts": {
       "runtime": "edge",
-      "regions": ["iad1"],
       "maxDuration": 30
     }
   },
