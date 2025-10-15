@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "api/[...catchall]/index.ts": {
-      "runtime": "edge"
+      "runtime": "@vercel/edge"
     }
   },
   "rewrites": [

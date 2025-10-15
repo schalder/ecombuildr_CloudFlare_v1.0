@@ -12,7 +12,8 @@ try {
   // Check if Edge Runtime is configured
   const hasEdgeRuntime = vercelConfig.functions && 
     vercelConfig.functions['api/[...catchall]/index.ts'] && 
-    vercelConfig.functions['api/[...catchall]/index.ts'].runtime === 'edge';
+    (vercelConfig.functions['api/[...catchall]/index.ts'].runtime === '@vercel/edge' || 
+     vercelConfig.functions['api/[...catchall]/index.ts'].runtime === 'edge');
   
   console.log(`✅ Edge Runtime configured: ${hasEdgeRuntime}`);
   
@@ -35,7 +36,7 @@ try {
   
   if (edgeConfigExists) {
     const edgeConfig = JSON.parse(fs.readFileSync(edgeConfigPath, 'utf8'));
-    console.log(`✅ Edge runtime configured: ${edgeConfig.runtime === 'edge'}`);
+    console.log(`✅ Edge runtime configured: ${edgeConfig.runtime === '@vercel/edge' || edgeConfig.runtime === 'edge'}`);
   }
 } catch (error) {
   console.log(`❌ Error checking edge config: ${error.message}`);
