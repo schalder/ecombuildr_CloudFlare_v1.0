@@ -131,7 +131,7 @@ const WebsiteManagement = () => {
 
   const regeneratePreviewMutation = useMutation({
     mutationFn: async () => {
-      // Preview regeneration is handled by social-meta edge function, no action needed
+      // Preview regeneration is handled by Vercel edge middleware, no action needed
       return Promise.resolve();
     },
     onSuccess: () => {
