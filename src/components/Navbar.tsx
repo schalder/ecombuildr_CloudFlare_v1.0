@@ -13,8 +13,44 @@ export const Navbar = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Navigation customization disabled - using default
-    // fetchNavigation();
+    const fetchNavigation = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('platform_navigation_settings')
+          .select('*')
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching navigation:', error);
+          return;
+        }
+
+        if (data) {
+          if (data.logo_url) setLogoUrl(data.logo_url);
+          if (data.nav_items) setNavItems(data.nav_items as unknown as PlatformNavItem[]);
+        }
+      } catch (error) {
+        console.error('Error fetching navigation:', error);
+      }
+    };
+
+    fetchNavigation();
+
+    // Real-time subscription for live updates
+    const channel = supabase
+      .channel('platform-nav-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'platform_navigation_settings'
+      }, () => {
+        fetchNavigation();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const renderNavItem = (item: PlatformNavItem) => {

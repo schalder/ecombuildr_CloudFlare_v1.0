@@ -30,9 +30,7 @@ export const PlatformNavigationManager: React.FC = () => {
 
   // Fetch navigation settings
   useEffect(() => {
-    // Navigation customization disabled - using default
-    // fetchSettings();
-    setLoading(false);
+    fetchSettings();
   }, []);
 
   const handleLogoUpload = async (file: File) => {
@@ -81,17 +79,63 @@ export const PlatformNavigationManager: React.FC = () => {
   };
 
   const fetchSettings = async () => {
-    // Platform navigation customization disabled
-    return;
+    try {
+      const { data, error } = await supabase
+        .from('platform_navigation_settings')
+        .select('*')
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No settings exist yet, keep defaults
+          return;
+        }
+        throw error;
+      }
+
+      if (data) {
+        setLogoUrl(data.logo_url || '');
+        setNavItems((data.nav_items as unknown as PlatformNavItem[]) || []);
+      }
+    } catch (error) {
+      console.error('Error fetching navigation settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load navigation settings",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSave = async () => {
-    // Platform navigation customization disabled
-    toast({
-      title: 'Not Available',
-      description: 'Navigation customization is currently disabled',
-      variant: 'destructive',
-    });
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('platform_navigation_settings')
+        .upsert({
+          logo_url: logoUrl || null,
+          nav_items: navItems as any,
+          updated_at: new Date().toISOString()
+        } as any);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Navigation settings saved successfully",
+      });
+    } catch (error) {
+      console.error('Error saving navigation settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save navigation settings",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const addMenuItem = (parentId?: string) => {
