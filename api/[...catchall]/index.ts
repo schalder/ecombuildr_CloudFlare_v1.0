@@ -123,7 +123,7 @@ function normalizeImageUrl(imageUrl: string | null | undefined): string | undefi
 
 // Parse URL to determine pattern type
 function parseUrlPattern(hostname: string, pathname: string): {
-  type: 'custom_domain' | 'store_slug' | 'site_slug' | 'lovable_subdomain';
+  type: 'custom_domain' | 'store_slug' | 'site_slug' | 'lovable_subdomain' | 'funnel_step' | 'funnel_step_short';
   identifier: string;
   pagePath: string;
 } {
@@ -136,6 +136,12 @@ function parseUrlPattern(hostname: string, pathname: string): {
   const subdomainMatch = hostname.match(/^([^.]+)\.lovable\.app$/);
   if (subdomainMatch && subdomainMatch[1] !== 'www' && subdomainMatch[1] !== 'app') {
     return { type: 'lovable_subdomain', identifier: subdomainMatch[1], pagePath: pathname };
+  }
+  
+  // Funnel step pattern: /f/{step-slug}
+  const shortFunnelMatch = pathname.match(/^\/f\/([^\/]+)$/);
+  if (shortFunnelMatch) {
+    return { type: 'funnel_step_short', identifier: shortFunnelMatch[1], pagePath: '/' };
   }
   
   // Store slug pattern (e.g., /store/mystore/page)
@@ -154,10 +160,31 @@ function parseUrlPattern(hostname: string, pathname: string): {
 }
 
 // Main SEO data resolution
-async function resolveSEOData(hostname: string, pathname: string): Promise<SEOData | null> {
+async function resolveSEOData(hostname: string, pathname: string): Promise<SEOData | { useSnapshot: true; html: string } | null> {
   try {
     const urlPattern = parseUrlPattern(hostname, pathname);
     console.log(`🔍 Resolving SEO for ${urlPattern.type}: ${urlPattern.identifier}${urlPattern.pagePath}`);
+    
+    // ✅ PHASE 1: Check for cached HTML snapshot first (fastest path)
+    const { data: snapshot } = await supabase
+      .from('html_snapshots')
+      .select('html_content, generated_at, content_type, content_id')
+      .or(`custom_domain.eq.${hostname},custom_domain.is.null`)
+      .order('generated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (snapshot && snapshot.html_content) {
+      const age = Math.floor((Date.now() - new Date(snapshot.generated_at).getTime()) / 1000);
+      
+      // Use snapshot if less than 24 hours old
+      if (age < 86400) {
+        console.log(`✅ Using cached HTML snapshot (${age}s old)`);
+        return { useSnapshot: true, html: snapshot.html_content };
+      } else {
+        console.log(`⚠️ Snapshot expired (${age}s old), regenerating...`);
+      }
+    }
     
     const path = urlPattern.pagePath;
     const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
@@ -270,6 +297,55 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         websiteId = website.id;
         storeId = website.store_id;
         console.log(`✅ Found site slug website: ${websiteId}`);
+      }
+    } else if (urlPattern.type === 'funnel_step_short') {
+      // ✅ PHASE 1: Handle /f/{step-slug} pattern
+      console.log(`🔗 Looking up funnel step by slug: ${urlPattern.identifier}`);
+      const { data: funnelStep } = await supabase
+        .from('funnel_steps')
+        .select(`
+          id, slug, title, seo_title, seo_description, og_image, social_image_url,
+          seo_keywords, canonical_url, meta_robots, content,
+          funnels!inner(id, store_id, name, is_active, is_published)
+        `)
+        .eq('slug', urlPattern.identifier)
+        .eq('is_published', true)
+        .eq('funnels.is_active', true)
+        .eq('funnels.is_published', true)
+        .maybeSingle();
+      
+      if (funnelStep) {
+        storeId = funnelStep.funnels.store_id;
+        console.log(`✅ Found funnel step: ${funnelStep.id} (funnel: ${funnelStep.funnels.name})`);
+        
+        // Extract and return SEO data for this step
+        const contentDesc = extractContentDescription(funnelStep.content);
+        
+        const title = (funnelStep.seo_title && funnelStep.seo_title.trim()) 
+          ? funnelStep.seo_title.trim() 
+          : `${funnelStep.title} | ${funnelStep.funnels.name}`;
+        
+        const description = (funnelStep.seo_description && funnelStep.seo_description.trim())
+          ? funnelStep.seo_description.trim()
+          : (contentDesc || `${funnelStep.title} - ${funnelStep.funnels.name}`);
+        
+        const image = normalizeImageUrl(funnelStep.og_image || funnelStep.social_image_url);
+        
+        let canonicalUrl = funnelStep.canonical_url;
+        if (!canonicalUrl) {
+          canonicalUrl = `https://${hostname}/f/${funnelStep.slug}`;
+        }
+        
+        return {
+          title,
+          description,
+          og_image: image,
+          keywords: funnelStep.seo_keywords || [],
+          canonical: canonicalUrl,
+          robots: funnelStep.meta_robots || 'index, follow',
+          site_name: funnelStep.funnels.name,
+          source: `funnel_step_short|step:${funnelStep.id}|funnel:${funnelStep.funnels.id}`
+        };
       }
     }
     
@@ -905,6 +981,20 @@ export default async function handler(request: Request): Promise<Response> {
     
     try {
       const seoData = await resolveSEOData(hostname, pathname);
+      
+      // ✅ PHASE 1: Handle cached HTML snapshot response
+      if (seoData && 'useSnapshot' in seoData && seoData.useSnapshot) {
+        console.log(`✅ Serving cached HTML snapshot`);
+        return new Response(seoData.html, {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+            'X-Trace-Id': traceId,
+            'X-SEO-Source': 'html_snapshot_cached'
+          },
+        });
+      }
       
       if (!seoData) {
         console.log(`[${traceId}] ❌ No SEO data found - rendering minimal fallback`);
