@@ -1,5 +1,70 @@
 {
   "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "facebookexternalhit"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "twitterbot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "googlebot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "linkedinbot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "whatsapp"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
