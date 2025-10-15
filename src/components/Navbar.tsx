@@ -15,10 +15,11 @@ export const Navbar = () => {
   useEffect(() => {
     const fetchNavigation = async () => {
       try {
-        const { data, error } = await supabase
-          .from('platform_navigation_settings')
-          .select('*')
-          .single();
+      const { data, error } = await supabase
+        .from('platform_navigation_settings')
+        .select('*')
+        .limit(1)
+        .maybeSingle();
 
         if (error && error.code !== 'PGRST116') {
           console.error('Error fetching navigation:', error);

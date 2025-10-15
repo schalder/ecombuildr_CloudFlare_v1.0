@@ -80,10 +80,11 @@ export const PlatformNavigationManager: React.FC = () => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('platform_navigation_settings')
-        .select('*')
-        .single();
+    const { data, error } = await supabase
+      .from('platform_navigation_settings')
+      .select('*')
+      .limit(1)
+      .maybeSingle();
 
       if (error) {
         if (error.code === 'PGRST116') {
