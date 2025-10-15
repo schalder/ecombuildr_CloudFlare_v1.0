@@ -147,7 +147,7 @@ function parseUrlPattern(hostname: string, pathname: string): {
   }
   
   // Custom domain (e.g., example.com) - not lovable.app or main platform domains
-  const systemDomains = ['get.ecombuildr.com', 'app.ecombuildr.com', 'lovable.app'];
+  const systemDomains = ['app.ecombuildr.com', 'lovable.app'];
   const isSystemDomain = systemDomains.some(domain => hostname.includes(domain));
   
   if (!hostname.includes('lovable.app') && !isSystemDomain) {
@@ -185,6 +185,21 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
   try {
     const urlPattern = parseUrlPattern(hostname, pathname);
     console.log(`🔍 Resolving SEO for ${urlPattern.type}: ${urlPattern.identifier}${urlPattern.pagePath}`);
+    
+    // Special case for get.ecombuildr.com marketing site
+    if (hostname === 'get.ecombuildr.com') {
+      return {
+        title: 'EcomBuildr - Build Your E-commerce Empire',
+        description: 'Create stunning e-commerce websites and sales funnels with EcomBuildr. No coding required. Start your online business today with our powerful drag-and-drop builder.',
+        og_image: 'https://get.ecombuildr.com/hero-ecommerce.jpg',
+        keywords: ['ecommerce', 'website builder', 'sales funnel', 'online business', 'drag and drop'],
+        canonical: `https://${hostname}${pathname}`,
+        robots: 'index, follow',
+        site_name: 'EcomBuildr',
+        source: 'marketing_site',
+        language_code: 'en'
+      };
+    }
     
     const path = urlPattern.pagePath;
     const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
@@ -1053,11 +1068,14 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
 }
 
 export default async function handler(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const userAgent = request.headers.get('user-agent') || '';
-  
   // Get actual hostname from x-forwarded-host header (Vercel sets this)
-  const hostname = request.headers.get('x-forwarded-host') || url.hostname;
+  const hostname = request.headers.get('x-forwarded-host') || 'get.ecombuildr.com';
+  const protocol = request.headers.get('x-forwarded-proto') || 'https';
+  
+  // Construct full URL for proper URL parsing
+  const fullUrl = `${protocol}://${hostname}${request.url}`;
+  const url = new URL(fullUrl);
+  const userAgent = request.headers.get('user-agent') || '';
   
   // Get original path from query param (set by vercel.json rewrite)
   const originalPath = url.searchParams.get('path') || url.pathname;
