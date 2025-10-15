@@ -123,10 +123,24 @@ function normalizeImageUrl(imageUrl: string | null | undefined): string | undefi
 
 // Parse URL to determine pattern type
 function parseUrlPattern(hostname: string, pathname: string): {
-  type: 'custom_domain' | 'store_slug' | 'site_slug' | 'lovable_subdomain';
+  type: 'custom_domain' | 'store_slug' | 'site_slug' | 'lovable_subdomain' | 'funnel_route';
   identifier: string;
   pagePath: string;
+  funnelIdentifier?: string;
+  stepSlug?: string;
 } {
+  // Funnel route pattern (e.g., /funnel/uuid-or-slug/step-slug)
+  const funnelMatch = pathname.match(/^\/funnel\/([^\/]+)(?:\/([^\/]+))?$/);
+  if (funnelMatch) {
+    return {
+      type: 'funnel_route',
+      identifier: funnelMatch[1], // funnel UUID or slug
+      pagePath: pathname,
+      funnelIdentifier: funnelMatch[1],
+      stepSlug: funnelMatch[2]
+    };
+  }
+  
   // Custom domain (e.g., example.com) - not lovable.app
   if (!hostname.includes('lovable.app')) {
     return { type: 'custom_domain', identifier: hostname, pagePath: pathname };
@@ -504,12 +518,26 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       }
     }
     
-    // Funnel routes
-    if (cleanPath.startsWith('funnel/')) {
+    // Funnel routes - handle both /funnel/uuid-or-slug pattern AND legacy cleanPath check
+    let funnelIdentifier: string | undefined;
+    let stepSlug: string | undefined;
+    
+    if (urlPattern.type === 'funnel_route') {
+      // Direct funnel route: /funnel/:identifier/:stepSlug?
+      funnelIdentifier = urlPattern.funnelIdentifier;
+      stepSlug = urlPattern.stepSlug;
+    } else if (cleanPath.startsWith('funnel/')) {
+      // Legacy fallback for custom domain with funnel/ path
       const pathParts = cleanPath.split('/');
-      const funnelSlug = pathParts[1];
-      const stepSlug = pathParts[2];
+      funnelIdentifier = pathParts[1];
+      stepSlug = pathParts[2];
+    }
+    
+    if (funnelIdentifier) {
+      // Check if identifier is UUID (v4 format)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(funnelIdentifier);
       
+      // Query by id if UUID, else by slug
       const { data: funnel } = await supabase
         .from('funnels')
         .select(`
@@ -517,7 +545,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           seo_keywords, canonical_url, meta_robots, meta_author,
           language_code, custom_meta_tags
         `)
-        .eq('slug', funnelSlug)
+        .eq(isUUID ? 'id' : 'slug', funnelIdentifier)
         .eq('is_active', true)
         .eq('is_published', true)
         .maybeSingle();
@@ -894,7 +922,8 @@ export default async function handler(request: Request): Promise<Response> {
     urlPattern.type === 'custom_domain' ||
     urlPattern.type === 'lovable_subdomain' ||
     urlPattern.type === 'store_slug' ||
-    urlPattern.type === 'site_slug'
+    urlPattern.type === 'site_slug' ||
+    urlPattern.type === 'funnel_route'
   );
   
   console.log(`🔍 Pattern: ${urlPattern.type} | Identifier: ${urlPattern.identifier} | Social Bot: ${isSocialBot} | Handle SEO: ${shouldHandleSEO}`);
