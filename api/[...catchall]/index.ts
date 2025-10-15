@@ -10,7 +10,9 @@ const SOCIAL_CRAWLERS = [
   'facebookexternalhit', 'Twitterbot', 'LinkedInBot', 'WhatsApp', 'Slackbot',
   'DiscordBot', 'TelegramBot', 'SkypeUriPreview', 'facebookcatalog', 
   'facebookplatform', 'Facebot', 'FacebookBot', 'Googlebot', 'Bingbot',
-  'bot', 'crawler', 'spider'
+  'bot', 'crawler', 'spider', 'baiduspider', 'yandex', 'duckduckbot',
+  'slurp', 'ia_archiver', 'semrushbot', 'ahrefsbot', 'dotbot',
+  'pinterestbot', 'applebot', 'yahoobot'
 ];
 
 function isSocialCrawler(userAgent: string): boolean {
@@ -633,8 +635,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     }
     
     // Funnel routes - handle direct routes, custom domain routing, and legacy paths
-    let funnelIdentifier: string | undefined;
-    let stepSlug: string | undefined;
     
     if (urlPattern.type === 'funnel_route') {
       // Direct funnel route: /funnel/:identifier/:stepSlug?
@@ -694,7 +694,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
               : (contentDesc || `${step.name} - ${funnel.name}`);
             
             // ✅ PRIORITIZE STEP IMAGES - Only fallback to funnel if step has no images
-            let image = step.og_image || step.social_image_url;
+            let image = step.social_image_url || step.og_image;
             if (!image) {
               image = funnel.og_image;
             }
@@ -899,13 +899,14 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
 
 // Generate complete HTML for crawlers
 function generateHTML(seo: SEOData, url: string): string {
-  const title = seo.title;
-  const description = seo.description;
+  const title = escapeHtml(seo.title);
+  const description = escapeHtml(seo.description);
   const image = seo.og_image || '';
   const canonical = seo.canonical;
-  const siteName = seo.site_name;
+  const siteName = escapeHtml(seo.site_name);
   const robots = seo.robots;
   const keywords = Array.isArray(seo.keywords) ? seo.keywords.join(', ') : '';
+  const escapedKeywords = escapeHtml(keywords);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -914,7 +915,7 @@ function generateHTML(seo: SEOData, url: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title}</title>
   <meta name="description" content="${description}" />
-  ${keywords ? `<meta name="keywords" content="${keywords}" />` : ''}
+  ${escapedKeywords ? `<meta name="keywords" content="${escapedKeywords}" />` : ''}
   <meta name="robots" content="${robots}" />
   <meta name="author" content="${siteName}" />
   
@@ -936,8 +937,8 @@ function generateHTML(seo: SEOData, url: string): string {
   <meta name="twitter:url" content="${canonical}" />
   <meta name="twitter:title" content="${title}" />
   <meta name="twitter:description" content="${description}" />
-  ${image ? `<meta name=\"twitter:image\" content=\"${image}\" />` : ''}
-  ${image ? `<meta name=\"twitter:image:alt\" content=\"${title}\" />` : ''}
+  ${image ? `<meta name="twitter:image" content="${image}" />` : ''}
+  ${image ? `<meta name="twitter:image:alt" content="${title}" />` : ''}
   
   <!-- Additional SEO -->
   <link rel="canonical" href="${canonical}" />
@@ -976,6 +977,17 @@ function generateHTML(seo: SEOData, url: string): string {
   </div>
 </body>
 </html>`;
+}
+
+// HTML escaping function for security
+function escapeHtml(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
 }
 
 // NEW: Function to get routing context for custom domains

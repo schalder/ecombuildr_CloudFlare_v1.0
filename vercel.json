@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/[...catchall]/index.ts": {
+      "runtime": "edge"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -12,7 +17,7 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": "(?i)(facebookexternalhit|twitterbot|linkedinbot|whatsapp|discordbot|telegrambot|slackbot|skypeuripreview|facebookcatalog|facebookplatform|facebot|facebookbot|googlebot|bingbot|bot|crawler|spider|baiduspider|yandex|duckduckbot|slurp|ia_archiver|semrushbot|ahrefsbot|dotbot)"
+          "value": "(?i)(facebookexternalhit|twitterbot|linkedinbot|whatsapp|discordbot|telegrambot|slackbot|skypeuripreview|facebookcatalog|facebookplatform|facebot|facebookbot|googlebot|bingbot|bot|crawler|spider|baiduspider|yandex|duckduckbot|slurp|ia_archiver|semrushbot|ahrefsbot|dotbot|pinterestbot|applebot|yahoobot)"
         }
       ]
     },
