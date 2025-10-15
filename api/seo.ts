@@ -1,3 +1,8 @@
+// Vercel Edge Function for Server-Side SEO
+export const config = {
+  runtime: 'edge',
+};
+
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = 'https://fhqwacmokbtbspkxjixf.supabase.co';
@@ -633,8 +638,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     }
     
     // Funnel routes - handle direct routes, custom domain routing, and legacy paths
-    let funnelIdentifier: string | undefined;
-    let stepSlug: string | undefined;
+    // Note: funnelIdentifier/stepSlug may already be set from custom_domain routing above
     
     if (urlPattern.type === 'funnel_route') {
       // Direct funnel route: /funnel/:identifier/:stepSlug?
@@ -646,7 +650,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       funnelIdentifier = pathParts[1];
       stepSlug = pathParts[2];
     }
-    // Note: funnelIdentifier may already be set from custom_domain routing above
     
     if (funnelIdentifier) {
       // Check if identifier is UUID (v4 format)
@@ -936,8 +939,8 @@ function generateHTML(seo: SEOData, url: string): string {
   <meta name="twitter:url" content="${canonical}" />
   <meta name="twitter:title" content="${title}" />
   <meta name="twitter:description" content="${description}" />
-  ${image ? `<meta name=\"twitter:image\" content=\"${image}\" />` : ''}
-  ${image ? `<meta name=\"twitter:image:alt\" content=\"${title}\" />` : ''}
+  ${image ? `<meta name="twitter:image" content="${image}" />` : ''}
+  ${image ? `<meta name="twitter:image:alt" content="${title}" />` : ''}
   
   <!-- Additional SEO -->
   <link rel="canonical" href="${canonical}" />
@@ -978,52 +981,6 @@ function generateHTML(seo: SEOData, url: string): string {
 </html>`;
 }
 
-// NEW: Function to get routing context for custom domains
-async function getRoutingContext(domain: string, pathname: string): Promise<any> {
-  try {
-    console.log(`🔍 Getting routing context for ${domain}${pathname}`);
-    
-    // Normalize domain variants
-    const apexDomain = domain.replace(/^www\./, '');
-    const domainVariants = [domain, apexDomain, `www.${apexDomain}`];
-    
-    // Get domain info
-    const { data: domainData } = await supabase
-      .from('custom_domains')
-      .select('id, store_id, is_verified, dns_configured')
-      .in('domain', domainVariants)
-      .eq('is_verified', true)
-      .eq('dns_configured', true)
-      .single();
-    
-    if (!domainData) {
-      console.log(`❌ No verified domain found for ${domain}`);
-      return null;
-    }
-    
-    console.log(`✅ Found verified domain: ${domainData.id} -> store ${domainData.store_id}`);
-    
-    // Get connections for this domain
-    const { data: connections } = await supabase
-      .from('domain_connections')
-      .select('content_type, content_id, path, is_homepage')
-      .eq('domain_id', domainData.id);
-    
-    console.log(`✅ Found ${connections?.length || 0} connections for domain`);
-    
-    return {
-      domainId: domainData.id,
-      storeId: domainData.store_id,
-      connections: connections || [],
-      domain: domain,
-      pathname: pathname
-    };
-  } catch (error) {
-    console.error('💥 Error getting routing context:', error);
-    return null;
-  }
-}
-
 export default async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
@@ -1037,7 +994,7 @@ export default async function handler(request: Request): Promise<Response> {
   
   const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
   
-  console.log(`[${traceId}] 🌐 Request: ${hostname}${pathname} | UA: ${userAgent.substring(0, 80)}`);
+  console.log(`[${traceId}] 🌐 Vercel Edge SEO Handler | Request: ${hostname}${pathname} | UA: ${userAgent.substring(0, 80)}`);
   
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);
@@ -1126,5 +1083,3 @@ export default async function handler(request: Request): Promise<Response> {
   console.log('👤 Non-social crawler or unsupported pattern - passing through');
   return new Response(null, { status: 200 });
 }
-
-
