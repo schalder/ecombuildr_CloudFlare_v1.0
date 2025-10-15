@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "api/[...catchall]/index.ts": {
-      "runtime": "edge@1.0.0"
+      "runtime": "edge"
     }
   },
   "rewrites": [

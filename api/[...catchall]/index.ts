@@ -602,7 +602,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           : (contentDesc || `${product.name} - Available at ${website.name}`);
         
         // ✅ PRIORITIZE PRODUCT IMAGES - Only fallback to website if product has no images
-        let image = product.og_image || product.images?.[0];
+        let image = product.social_image_url || product.og_image || product.images?.[0];
         if (!image) {
           image = websiteImage;
         }
@@ -635,6 +635,8 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     }
     
     // Funnel routes - handle direct routes, custom domain routing, and legacy paths
+    let funnelIdentifier: string | undefined;
+    let stepSlug: string | undefined;
     
     if (urlPattern.type === 'funnel_route') {
       // Direct funnel route: /funnel/:identifier/:stepSlug?
@@ -897,6 +899,17 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
   }
 }
 
+// HTML escaping function to prevent XSS
+function escapeHtml(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Generate complete HTML for crawlers
 function generateHTML(seo: SEOData, url: string): string {
   const title = escapeHtml(seo.title);
@@ -905,17 +918,17 @@ function generateHTML(seo: SEOData, url: string): string {
   const canonical = seo.canonical;
   const siteName = escapeHtml(seo.site_name);
   const robots = seo.robots;
-  const keywords = Array.isArray(seo.keywords) ? seo.keywords.join(', ') : '';
-  const escapedKeywords = escapeHtml(keywords);
+  const keywords = Array.isArray(seo.keywords) ? seo.keywords.map(k => escapeHtml(k)).join(', ') : '';
+  const languageCode = (seo as any).language_code || 'en';
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${languageCode}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${title}</title>
   <meta name="description" content="${description}" />
-  ${escapedKeywords ? `<meta name="keywords" content="${escapedKeywords}" />` : ''}
+  ${keywords ? `<meta name="keywords" content="${keywords}" />` : ''}
   <meta name="robots" content="${robots}" />
   <meta name="author" content="${siteName}" />
   
@@ -930,7 +943,7 @@ function generateHTML(seo: SEOData, url: string): string {
   ${image ? `<meta property="og:image:height" content="630" />` : ''}
   ${image ? `<meta property="og:image:type" content="image/png" />` : ''}
   <meta property="og:site_name" content="${siteName}" />
-  <meta property="og:locale" content="en_US" />
+  <meta property="og:locale" content="${languageCode}_US" />
   
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
@@ -965,29 +978,22 @@ function generateHTML(seo: SEOData, url: string): string {
 </head>
 <body>
   <div id="root">
-    <h1>${title}</h1>
-    <p>${description}</p>
-    <p>Please enable JavaScript to view the full content.</p>
-    <script>
-      // Redirect to React app after a short delay for crawlers that execute JS
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    </script>
+    <header>
+      <h1>${title}</h1>
+    </header>
+    <main>
+      <p>${description}</p>
+      <p>Loading content...</p>
+    </main>
   </div>
+  <script>
+    // Redirect to React app after a short delay for crawlers that execute JS
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  </script>
 </body>
 </html>`;
-}
-
-// HTML escaping function for security
-function escapeHtml(text: string): string {
-  if (!text) return '';
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 }
 
 // NEW: Function to get routing context for custom domains
