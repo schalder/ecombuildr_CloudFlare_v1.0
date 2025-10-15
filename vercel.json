@@ -3,7 +3,7 @@
   "routes": [
     {
       "src": "^/api/seo-health$",
-      "dest": "/api/seo?health=1"
+      "dest": "/api/render?health=1"
     },
     {
       "src": "^/(.*)$",
@@ -14,7 +14,7 @@
           "value": "1"
         }
       ],
-      "dest": "/api/seo?path=$1&force=1"
+      "dest": "/api/render?path=$1&force=1"
     },
     {
       "src": "^/(.*)$",
@@ -25,7 +25,7 @@
           "value": "1"
         }
       ],
-      "dest": "/api/seo?path=$1&force=1"
+      "dest": "/api/render?path=$1&force=1"
     },
     {
       "src": "^/(.*)$",
@@ -36,7 +36,7 @@
           "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|Googlebot|Bingbot|[Bb]ot|[Cc]rawler|[Ss]pider|DiscordBot|TelegramBot|Slackbot).*"
         }
       ],
-      "dest": "/api/seo?path=$1"
+      "dest": "/api/render?path=$1"
     },
     {
       "src": "^/api/(.*)$",

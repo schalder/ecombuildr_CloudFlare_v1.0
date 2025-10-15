@@ -4,8 +4,3 @@ project_id = "fhqwacmokbtbspkxjixf"
 # This allows anonymous users to load optimized images without authentication
 [functions.image-transform]
 verify_jwt = false
-
-# Disable JWT verification for SEO rendering
-# This allows bots and crawlers to access SEO content without authentication
-[functions.seo-render]
-verify_jwt = false
