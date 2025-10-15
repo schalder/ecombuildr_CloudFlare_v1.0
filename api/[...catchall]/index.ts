@@ -580,7 +580,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       const { data: product } = await supabase
         .from('products')
         .select(`
-          name, description, images, seo_title, seo_description, og_image,
+          name, description, images, seo_title, seo_description, og_image, social_image_url,
           seo_keywords, canonical_url, meta_robots, meta_author,
           language_code, custom_meta_tags
         `)
@@ -635,8 +635,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     }
     
     // Funnel routes - handle direct routes, custom domain routing, and legacy paths
-    let funnelIdentifier: string | undefined;
-    let stepSlug: string | undefined;
     
     if (urlPattern.type === 'funnel_route') {
       // Direct funnel route: /funnel/:identifier/:stepSlug?
