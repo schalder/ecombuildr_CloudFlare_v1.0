@@ -1,24 +1,38 @@
 {
   "version": 2,
-  "rewrites": [
+  "routes": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "src": "^/api/(.*)$",
+      "dest": "/api/$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "/api/seo?path=$1",
+      "src": "^/(.*)$",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-seo-test",
+          "value": "1"
+        }
+      ],
+      "dest": "/api/seo?path=$1"
+    },
+    {
+      "src": "^/(.*)$",
       "has": [
         {
           "type": "header",
           "key": "user-agent",
-          "value": "(?i)(facebookexternalhit|twitterbot|linkedinbot|whatsapp|discordbot|telegrambot|slackbot|skypeuripreview|facebookcatalog|facebookplatform|facebot|facebookbot|googlebot|bingbot|bot|crawler|spider|baiduspider|yandex|duckduckbot|slurp|ia_archiver|semrushbot|ahrefsbot|dotbot)"
+          "value": ".*(facebookexternalhit|[Ff]ace[Bb]ot|[Tt]witter[Bb]ot|[Ll]inked[Ii]n[Bb]ot|[Ww]hats[Aa]pp|[Dd]iscord[Bb]ot|[Tt]elegram[Bb]ot|[Ss]lack[Bb]ot|[Ss]kype[Uu]ri[Pp]review|[Gg]oogle[Bb]ot|[Bb]ing[Bb]ot|[Bb]aidu[Ss]pider|[Yy]andex|[Dd]uck[Dd]uck[Bb]ot|[Ss]lurp|ia_archiver|[Ss]emrush[Bb]ot|[Aa]hrefs[Bb]ot|[Dd]ot[Bb]ot|[Bb]ot|[Cc]rawler|[Ss]pider).*"
         }
-      ]
+      ],
+      "dest": "/api/seo?path=$1"
     },
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "handle": "filesystem"
+    },
+    {
+      "src": "^/(.*)$",
+      "dest": "/index.html"
     }
   ],
   "headers": [
