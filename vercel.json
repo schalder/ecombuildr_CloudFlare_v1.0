@@ -12,7 +12,29 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": "(facebookexternalhit|twitterbot|linkedinbot|whatsapp|discordbot|telegrambot|slackbot|skypeuripreview|facebookcatalog|facebookplatform|facebot|facebookbot|googlebot|bingbot|bot|crawler|spider|baiduspider|yandex|duckduckbot|slurp|ia_archiver|semrushbot|ahrefsbot|dotbot|pinterestbot|applebot|yahoobot)"
+          "value": "facebookexternalhit"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "twitterbot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "googlebot"
         }
       ]
     },
