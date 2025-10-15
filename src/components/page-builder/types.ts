@@ -1,5 +1,14 @@
 // Hierarchical page builder types: Section → Row → Column → Element
 
+// Responsive types for form styling
+export interface ResponsiveStyle {
+  fontSize?: string;
+  fontWeight?: string;
+  [key: string]: any;
+}
+
+export type ResponsiveValue = string | number;
+
 // Background image modes
 export type BackgroundImageMode = 'full-center' | 'parallax' | 'fill-width' | 'no-repeat' | 'repeat';
 
@@ -120,6 +129,16 @@ export interface PageBuilderElement {
     buttonTextColor?: string;
     buttonBorderWidth?: string;
     buttonBorderColor?: string;
+    marginByDevice?: {
+      desktop: { top: number; right: number; bottom: number; left: number };
+      tablet: { top: number; right: number; bottom: number; left: number };
+      mobile: { top: number; right: number; bottom: number; left: number };
+    };
+    paddingByDevice?: {
+      desktop: { top: number; right: number; bottom: number; left: number };
+      tablet: { top: number; right: number; bottom: number; left: number };
+      mobile: { top: number; right: number; bottom: number; left: number };
+    };
     responsive?: {
       desktop?: Record<string, any>;
       tablet?: Record<string, any>;

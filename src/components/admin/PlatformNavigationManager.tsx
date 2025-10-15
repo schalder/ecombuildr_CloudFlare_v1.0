@@ -30,7 +30,9 @@ export const PlatformNavigationManager: React.FC = () => {
 
   // Fetch navigation settings
   useEffect(() => {
-    fetchSettings();
+    // Navigation customization disabled - using default
+    // fetchSettings();
+    setLoading(false);
   }, []);
 
   const handleLogoUpload = async (file: File) => {
@@ -79,60 +81,17 @@ export const PlatformNavigationManager: React.FC = () => {
   };
 
   const fetchSettings = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('platform_navigation_settings')
-        .select('*')
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      
-      if (data) {
-        setSettings(data);
-        setLogoUrl(data.logo_url || '');
-        setNavItems(data.nav_items || []);
-      }
-    } catch (error) {
-      console.error('Error fetching navigation settings:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load navigation settings',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+    // Platform navigation customization disabled
+    return;
   };
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('platform_navigation_settings')
-        .update({
-          logo_url: logoUrl,
-          nav_items: navItems,
-        })
-        .eq('id', settings?.id);
-
-      if (error) throw error;
-
-      toast({
-        title: 'Success',
-        description: 'Navigation settings updated successfully',
-      });
-      
-      fetchSettings();
-    } catch (error) {
-      console.error('Error saving navigation settings:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to save navigation settings',
-        variant: 'destructive',
-      });
-    } finally {
-      setSaving(false);
-    }
+    // Platform navigation customization disabled
+    toast({
+      title: 'Not Available',
+      description: 'Navigation customization is currently disabled',
+      variant: 'destructive',
+    });
   };
 
   const addMenuItem = (parentId?: string) => {

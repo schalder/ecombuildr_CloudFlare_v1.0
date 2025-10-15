@@ -13,24 +13,9 @@ export const Navbar = () => {
   const { user } = useAuth();
 
   useEffect(() => {
-    fetchNavigation();
+    // Navigation customization disabled - using default
+    // fetchNavigation();
   }, []);
-
-  const fetchNavigation = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('platform_navigation_settings')
-        .select('*')
-        .single();
-
-      if (data) {
-        setLogoUrl(data.logo_url || logoUrl);
-        setNavItems((data.nav_items || []).filter((item: PlatformNavItem) => item.enabled));
-      }
-    } catch (error) {
-      console.error('Error fetching navigation:', error);
-    }
-  };
 
   const renderNavItem = (item: PlatformNavItem) => {
     const hasChildren = item.children && item.children.length > 0;
