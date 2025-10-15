@@ -34,6 +34,12 @@ interface SEOData {
     websiteId?: string;
     pageId?: string;
     slug?: string;
+    connType?: string;
+    connId?: string;
+    stepSlug?: string;
+  };
+}
+    slug?: string;
   };
 }
 
@@ -185,7 +191,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     
     // Step 1: Resolve website/store based on URL pattern
     if (urlPattern.type === 'custom_domain') {
-      // Existing custom domain logic
+      // Custom domain - implement full multitenant routing logic (mirrors DomainRouter)
       const apexDomain = urlPattern.identifier.replace(/^www\./, '');
       const domainVariants = [urlPattern.identifier, apexDomain, `www.${apexDomain}`];
       
@@ -203,30 +209,137 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       console.log(`✅ Found custom domain: ${customDomain.domain} -> store ${customDomain.store_id}`);
       storeId = customDomain.store_id;
       
-      // Find website mapping via domain_connections
-      const { data: websiteConnection } = await supabase
+      // Fetch ALL domain connections (not just website)
+      const { data: allConnections } = await supabase
         .from('domain_connections')
-        .select('content_type, content_id')
+        .select('id, content_type, content_id, path, is_homepage')
         .eq('domain_id', customDomain.id)
-        .eq('content_type', 'website')
-        .maybeSingle();
+        .order('is_homepage', { ascending: false });
       
-      if (websiteConnection) {
-        websiteId = websiteConnection.content_id;
-        console.log(`✅ Found website connection: ${websiteId}`);
+      if (!allConnections || allConnections.length === 0) {
+        console.log('⚠️ No domain connections found');
+        return null;
+      }
+      
+      console.log(`✅ Found ${allConnections.length} domain connections`);
+      
+      // Smart routing logic - mirrors DomainRouter.tsx
+      let selectedConnection: { content_type: string; content_id: string; id: string } | null = null;
+      
+      if (cleanPath === '') {
+        // Root path - prioritize: explicit homepage > website > course_area > funnel
+        selectedConnection = 
+          allConnections.find(c => c.is_homepage) ||
+          allConnections.find(c => c.content_type === 'website') ||
+          allConnections.find(c => c.content_type === 'course_area') ||
+          allConnections.find(c => c.content_type === 'funnel') ||
+          null;
+        
+        console.log(`🏠 Root path - selected connection: ${selectedConnection?.content_type}`);
       } else {
-        console.log('⚠️ No website connection found for domain. Falling back to store websites');
-        const { data: storeWebsites } = await supabase
-          .from('websites')
-          .select('id, domain')
-          .eq('store_id', customDomain.store_id)
-          .eq('is_active', true)
-          .eq('is_published', true);
-        if (storeWebsites && storeWebsites.length > 0) {
-          const exactMatch = storeWebsites.find(w => w.domain && w.domain.replace(/^www\./, '') === apexDomain);
-          websiteId = exactMatch?.id || storeWebsites[0].id;
-          console.log(`📦 Using store website fallback: ${websiteId}`);
+        // Non-root paths
+        const pathSegments = cleanPath.split('/').filter(Boolean);
+        const lastSegment = pathSegments[pathSegments.length - 1];
+        
+        // Course paths - prioritize course_area
+        if (cleanPath.startsWith('courses') || cleanPath.startsWith('members')) {
+          selectedConnection = allConnections.find(c => c.content_type === 'course_area') || null;
+          console.log(`📚 Course path detected: ${cleanPath}`);
         }
+        // System routes - prioritize based on type
+        else {
+          const websiteSystemRoutes = ['product', 'collection', 'search'];
+          const generalSystemRoutes = ['payment-processing', 'order-confirmation', 'cart', 'checkout'];
+          
+          if (websiteSystemRoutes.some(r => cleanPath.includes(r))) {
+            selectedConnection = allConnections.find(c => c.content_type === 'website') || null;
+            console.log(`🌐 Website system route: ${lastSegment}`);
+          } else if (generalSystemRoutes.includes(lastSegment)) {
+            const funnelConnection = allConnections.find(c => c.content_type === 'funnel');
+            selectedConnection = funnelConnection || allConnections.find(c => c.content_type === 'website') || null;
+            console.log(`⚙️ System route: ${lastSegment} -> ${selectedConnection?.content_type}`);
+          } else {
+            // Check if path matches a funnel step slug
+            const funnelConnections = allConnections.filter(c => c.content_type === 'funnel');
+            
+            for (const funnelConn of funnelConnections) {
+              const { data: stepExists } = await supabase
+                .from('funnel_steps')
+                .select('id')
+                .eq('funnel_id', funnelConn.content_id)
+                .eq('slug', lastSegment)
+                .eq('is_published', true)
+                .maybeSingle();
+              
+              if (stepExists) {
+                selectedConnection = funnelConn;
+                console.log(`🎯 Funnel step detected: ${lastSegment} for funnel ${funnelConn.content_id}`);
+                break;
+              }
+            }
+            
+            // Fallback to website for all other paths
+            if (!selectedConnection) {
+              selectedConnection = allConnections.find(c => c.content_type === 'website') || null;
+              console.log(`📄 Default to website for path: ${cleanPath}`);
+            }
+          }
+        }
+      }
+      
+      if (!selectedConnection) {
+        console.log('❌ No suitable connection selected');
+        return null;
+      }
+      
+      // Route based on selected connection type
+      if (selectedConnection.content_type === 'website') {
+        websiteId = selectedConnection.content_id;
+        console.log(`✅ Routing to website: ${websiteId}`);
+      } else if (selectedConnection.content_type === 'funnel') {
+        // Handle funnel routing - check if this is a step or landing
+        const pathSegments = cleanPath.split('/').filter(Boolean);
+        const potentialStepSlug = pathSegments[pathSegments.length - 1];
+        
+        const { data: step } = await supabase
+          .from('funnel_steps')
+          .select('id, slug')
+          .eq('funnel_id', selectedConnection.content_id)
+          .eq('slug', potentialStepSlug)
+          .eq('is_published', true)
+          .maybeSingle();
+        
+        if (step) {
+          // It's a funnel step - use existing funnel step resolution
+          funnelIdentifier = selectedConnection.content_id;
+          stepSlug = step.slug;
+          console.log(`✅ Routing to funnel step: ${funnelIdentifier}/${stepSlug}`);
+        } else if (cleanPath === '') {
+          // It's funnel landing (root path)
+          funnelIdentifier = selectedConnection.content_id;
+          console.log(`✅ Routing to funnel landing: ${funnelIdentifier}`);
+        } else {
+          // Not a valid funnel path - return null
+          console.log(`⚠️ Invalid funnel path: ${cleanPath}`);
+          return null;
+        }
+      } else if (selectedConnection.content_type === 'course_area') {
+        // Course area - return basic SEO (courses have their own routing)
+        console.log(`✅ Routing to course area`);
+        return {
+          title: 'Courses',
+          description: 'Browse our course offerings',
+          og_image: undefined,
+          keywords: [],
+          canonical: `https://${hostname}${path}`,
+          robots: 'index, follow',
+          site_name: 'Courses',
+          source: `course_area|domain:${customDomain.id}`,
+          debug: {
+            connType: 'course_area',
+            connId: selectedConnection.content_id
+          }
+        };
       }
       
     } else if (urlPattern.type === 'lovable_subdomain') {
@@ -424,7 +537,9 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
             imageSource,
             websiteId,
             pageId: homepagePage.id,
-            slug: homepagePage.slug
+            slug: homepagePage.slug,
+            connType: 'website',
+            connId: websiteId
           }
         };
       }
@@ -518,7 +633,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       }
     }
     
-    // Funnel routes - handle both /funnel/uuid-or-slug pattern AND legacy cleanPath check
+    // Funnel routes - handle direct routes, custom domain routing, and legacy paths
     let funnelIdentifier: string | undefined;
     let stepSlug: string | undefined;
     
@@ -527,11 +642,12 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       funnelIdentifier = urlPattern.funnelIdentifier;
       stepSlug = urlPattern.stepSlug;
     } else if (cleanPath.startsWith('funnel/')) {
-      // Legacy fallback for custom domain with funnel/ path
+      // Legacy fallback for paths with funnel/ prefix
       const pathParts = cleanPath.split('/');
       funnelIdentifier = pathParts[1];
       stepSlug = pathParts[2];
     }
+    // Note: funnelIdentifier may already be set from custom_domain routing above
     
     if (funnelIdentifier) {
       // Check if identifier is UUID (v4 format)
@@ -606,7 +722,12 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
               canonical: canonicalUrl,
               robots: step.meta_robots || 'index, follow',
               site_name: funnel.name,
-              source: `funnel_step|funnel:${funnel.id}|step:${stepSlug}`
+              source: `funnel_step|funnel:${funnel.id}|step:${stepSlug}`,
+              debug: {
+                connType: 'funnel',
+                connId: funnel.id,
+                stepSlug: stepSlug
+              }
             };
           }
         } else {
@@ -646,7 +767,11 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
             canonical: canonicalUrl,
             robots: funnel.meta_robots || 'index, follow',
             site_name: funnel.name,
-            source: `funnel_landing|funnel:${funnel.id}`
+            source: `funnel_landing|funnel:${funnel.id}`,
+            debug: {
+              connType: 'funnel',
+              connId: funnel.id
+            }
           };
         }
       }
@@ -731,7 +856,9 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           imageSource,
           websiteId,
           pageId: page.id,
-          slug: cleanPath
+          slug: cleanPath,
+          connType: 'website',
+          connId: websiteId
         }
       };
     }
@@ -984,6 +1111,9 @@ export default async function handler(request: Request): Promise<Response> {
           ...(seoData.debug?.titleSource ? { 'X-SEO-Title-Source': seoData.debug.titleSource } : {}),
           ...(seoData.debug?.descSource ? { 'X-SEO-Desc-Source': seoData.debug.descSource } : {}),
           ...(seoData.debug?.imageSource ? { 'X-SEO-Image-Source': seoData.debug.imageSource } : {}),
+          ...(seoData.debug?.connType ? { 'X-SEO-Conn-Type': seoData.debug.connType } : {}),
+          ...(seoData.debug?.connId ? { 'X-SEO-Conn-Id': seoData.debug.connId } : {}),
+          ...(seoData.debug?.stepSlug ? { 'X-SEO-Step-Slug': seoData.debug.stepSlug } : {}),
         },
       });
 
