@@ -256,7 +256,10 @@ const SocialShareElement: React.FC<{
   const { toast } = useToast();
   
   const title = element.content.title || '';
-  const url = element.content.url || window.location.href;
+  // Use social-meta proxy for SEO-optimized sharing if no custom URL is provided
+  const actualPageUrl = window.location.href;
+  const shareProxyUrl = `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/social-meta?url=${encodeURIComponent(actualPageUrl)}`;
+  const url = element.content.url || shareProxyUrl;
   const text = element.content.text || 'Check out this amazing content!';
   const platforms = element.content.platforms || {
     facebook: true,

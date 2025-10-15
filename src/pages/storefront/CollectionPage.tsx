@@ -9,8 +9,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ProductCard } from '@/components/storefront/ProductCard';
 import { ProductGridSkeleton } from '@/components/storefront/ProductGridSkeleton';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
-import { SEOHead } from '@/components/SEOHead';
 import { supabase } from '@/integrations/supabase/client';
+import { setSEO, buildCanonical } from '@/lib/seo';
 import { useToast } from '@/hooks/use-toast';
 import { useAddToCart } from '@/contexts/AddToCartProvider';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
@@ -55,6 +55,30 @@ function CollectionPage() {
       fetchCollectionAndProducts();
     }
   }, [collectionSlug]);
+
+  // Set SEO based on collection state
+  useEffect(() => {
+    if (loading) {
+      setSEO({
+        title: 'Loading Collection...',
+        description: 'Loading collection page',
+        robots: 'noindex, nofollow'
+      });
+    } else if (!collection) {
+      setSEO({
+        title: 'Collection Not Found',
+        description: 'The requested collection could not be found',
+        robots: 'noindex, nofollow'
+      });
+    } else {
+      setSEO({
+        title: collection.name,
+        description: collection.description || `Browse products in the ${collection.name} collection`,
+        canonical: buildCanonical(),
+        robots: 'index, follow'
+      });
+    }
+  }, [loading, collection]);
 
   const fetchCollectionAndProducts = async () => {
     try {
@@ -149,54 +173,36 @@ function CollectionPage() {
 
   if (loading) {
     return renderContent(
-      <>
-        <SEOHead 
-          title="Loading Collection..." 
-          description="Loading collection page"
-        />
-        <div className="container mx-auto px-4 py-8">
-          <div className="mb-8">
-            <Skeleton className="h-8 w-64 mb-4" />
-            <Skeleton className="h-4 w-96 mb-2" />
-            <Skeleton className="h-4 w-80" />
-          </div>
-          <ProductGridSkeleton count={6} />
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <Skeleton className="h-8 w-64 mb-4" />
+          <Skeleton className="h-4 w-96 mb-2" />
+          <Skeleton className="h-4 w-80" />
         </div>
-      </>
+        <ProductGridSkeleton count={6} />
+      </div>
     );
   }
 
   if (!collection) {
     return renderContent(
-      <>
-        <SEOHead 
-          title="Collection Not Found" 
-          description="The requested collection could not be found"
-        />
-        <div className="container mx-auto px-4 py-16 text-center">
-          <h1 className="text-2xl font-bold mb-4">Collection Not Found</h1>
-          <p className="text-muted-foreground mb-8">
-            The collection you're looking for doesn't exist or has been removed.
-          </p>
-          <Button asChild>
-            <Link to="/products">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Browse All Products
-            </Link>
-          </Button>
-        </div>
-      </>
+      <div className="container mx-auto px-4 py-16 text-center">
+        <h1 className="text-2xl font-bold mb-4">Collection Not Found</h1>
+        <p className="text-muted-foreground mb-8">
+          The collection you're looking for doesn't exist or has been removed.
+        </p>
+        <Button asChild>
+          <Link to="/products">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Browse All Products
+          </Link>
+        </Button>
+      </div>
     );
   }
 
   return renderContent(
-    <>
-      <SEOHead 
-        title={collection.name}
-        description={collection.description || `Browse products in the ${collection.name} collection`}
-      />
-      
-      <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         {/* Collection Header */}
         <div className="mb-8">
           <nav className="mb-4">
@@ -346,8 +352,7 @@ function CollectionPage() {
             </div>
           </>
         )}
-      </div>
-    </>
+    </div>
   );
 }
 

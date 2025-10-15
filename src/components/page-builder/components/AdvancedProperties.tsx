@@ -547,13 +547,16 @@ export const SocialShareProperties: React.FC<AdvancedPropertiesProps> = ({
       </div>
 
       <div>
-        <Label htmlFor="share-url">Share URL</Label>
+        <Label htmlFor="share-url">Share URL (Optional)</Label>
         <Input
           id="share-url"
           value={shareUrl}
           onChange={(e) => onUpdate('url', e.target.value)}
-          placeholder="Leave empty to use current page URL"
+          placeholder="Uses SEO-optimized share proxy by default"
         />
+        <p className="text-xs text-muted-foreground mt-1">
+          Leave empty to automatically use the SEO-optimized share URL with correct social previews
+        </p>
       </div>
 
       <div>
