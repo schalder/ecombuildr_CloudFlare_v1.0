@@ -39,9 +39,6 @@ interface SEOData {
     stepSlug?: string;
   };
 }
-    slug?: string;
-  };
-}
 
 // Extract meaningful description from page content
 function extractContentDescription(content: any, maxLength: number = 155): string {
@@ -184,6 +181,8 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     
     let websiteId: string | null = null;
     let storeId: string | null = null;
+    let funnelIdentifier: string | undefined;
+    let stepSlug: string | undefined;
     
     // Check for system domain fallback (platform marketing site)
     const systemDomains = ['get.ecombuildr.com', 'app.ecombuildr.com'];
@@ -1128,4 +1127,4 @@ export default async function handler(request: Request): Promise<Response> {
   return new Response(null, { status: 200 });
 }
 
-export default handler;
+
