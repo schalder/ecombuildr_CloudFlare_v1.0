@@ -1447,8 +1447,11 @@ export type Database = {
           offer_product_id: string | null
           offer_quantity: number | null
           og_image: string | null
+          on_accept_custom_url: string | null
           on_accept_step_id: string | null
+          on_decline_custom_url: string | null
           on_decline_step_id: string | null
+          on_success_custom_url: string | null
           on_success_step_id: string | null
           preview_image_url: string | null
           seo_description: string | null
@@ -1477,8 +1480,11 @@ export type Database = {
           offer_product_id?: string | null
           offer_quantity?: number | null
           og_image?: string | null
+          on_accept_custom_url?: string | null
           on_accept_step_id?: string | null
+          on_decline_custom_url?: string | null
           on_decline_step_id?: string | null
+          on_success_custom_url?: string | null
           on_success_step_id?: string | null
           preview_image_url?: string | null
           seo_description?: string | null
@@ -1507,8 +1513,11 @@ export type Database = {
           offer_product_id?: string | null
           offer_quantity?: number | null
           og_image?: string | null
+          on_accept_custom_url?: string | null
           on_accept_step_id?: string | null
+          on_decline_custom_url?: string | null
           on_decline_step_id?: string | null
+          on_success_custom_url?: string | null
           on_success_step_id?: string | null
           preview_image_url?: string | null
           seo_description?: string | null
