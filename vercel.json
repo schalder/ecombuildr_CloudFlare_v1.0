@@ -7,40 +7,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/api/[...catchall]?path=$1",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "facebookexternalhit"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/api/[...catchall]?path=$1",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "twitterbot"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/api/[...catchall]?path=$1",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "googlebot"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/api/[...catchall]?path=$1"
     }
   ],
   "headers": [

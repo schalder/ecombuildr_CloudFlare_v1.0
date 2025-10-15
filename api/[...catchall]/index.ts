@@ -1168,9 +1168,33 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
   
-  // For non-social crawlers or unsupported patterns, pass through
-  console.log('👤 Non-social crawler or unsupported pattern - passing through');
-  return new Response(null, { status: 200 });
+  // Regular users get the SPA
+  console.log(`👤 Regular user - serving SPA HTML`);
+  
+  return new Response(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading...</title>
+  <meta name="robots" content="noindex, nofollow" />
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    // Redirect to React app
+    window.location.reload();
+  </script>
+</body>
+</html>`, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'public, max-age=60',
+      'X-Trace-Id': traceId,
+      'X-User-Type': 'regular'
+    },
+  });
 }
 
 
