@@ -808,6 +808,7 @@ export type Database = {
       }
       custom_domains: {
         Row: {
+          cname_target: string | null
           created_at: string
           dns_configured: boolean
           dns_verified_at: string | null
@@ -822,6 +823,7 @@ export type Database = {
           verification_token: string | null
         }
         Insert: {
+          cname_target?: string | null
           created_at?: string
           dns_configured?: boolean
           dns_verified_at?: string | null
@@ -836,6 +838,7 @@ export type Database = {
           verification_token?: string | null
         }
         Update: {
+          cname_target?: string | null
           created_at?: string
           dns_configured?: boolean
           dns_verified_at?: string | null
@@ -1368,10 +1371,14 @@ export type Database = {
       form_submissions: {
         Row: {
           created_at: string
+          custom_fields: Json | null
           customer_email: string
           customer_name: string
           customer_phone: string | null
+          form_id: string | null
+          form_name: string | null
           form_type: string
+          funnel_id: string | null
           id: string
           message: string | null
           product_id: string | null
@@ -1381,10 +1388,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          custom_fields?: Json | null
           customer_email: string
           customer_name: string
           customer_phone?: string | null
+          form_id?: string | null
+          form_name?: string | null
           form_type?: string
+          funnel_id?: string | null
           id?: string
           message?: string | null
           product_id?: string | null
@@ -1394,10 +1405,14 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          custom_fields?: Json | null
           customer_email?: string
           customer_name?: string
           customer_phone?: string | null
+          form_id?: string | null
+          form_name?: string | null
           form_type?: string
+          funnel_id?: string | null
           id?: string
           message?: string | null
           product_id?: string | null
@@ -1405,7 +1420,15 @@ export type Database = {
           store_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "form_submissions_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       funnel_steps: {
         Row: {
@@ -2407,6 +2430,7 @@ export type Database = {
           created_at: string
           hero_image_url: string | null
           id: string
+          iframe_embed_code: string | null
           is_active: boolean
           section: string
           updated_at: string
@@ -2416,6 +2440,7 @@ export type Database = {
           created_at?: string
           hero_image_url?: string | null
           id?: string
+          iframe_embed_code?: string | null
           is_active?: boolean
           section: string
           updated_at?: string
@@ -2425,10 +2450,35 @@ export type Database = {
           created_at?: string
           hero_image_url?: string | null
           id?: string
+          iframe_embed_code?: string | null
           is_active?: boolean
           section?: string
           updated_at?: string
           youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      platform_navigation_settings: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          nav_items: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          nav_items?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          nav_items?: Json
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3006,16 +3056,21 @@ export type Database = {
       profiles: {
         Row: {
           account_status: string | null
+          avatar_url: string | null
           created_at: string | null
           email: string
           email_normalized: string | null
           full_name: string | null
           id: string
+          images_generated: number | null
+          is_admin: boolean | null
+          paid: boolean | null
           phone: string | null
           phone_duplicate_marker: string | null
           phone_normalized: string | null
           role: Database["public"]["Enums"]["user_role"] | null
           subscription_expires_at: string | null
+          subscription_id: string | null
           subscription_plan:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
@@ -3025,16 +3080,21 @@ export type Database = {
         }
         Insert: {
           account_status?: string | null
+          avatar_url?: string | null
           created_at?: string | null
           email: string
           email_normalized?: string | null
           full_name?: string | null
           id: string
+          images_generated?: number | null
+          is_admin?: boolean | null
+          paid?: boolean | null
           phone?: string | null
           phone_duplicate_marker?: string | null
           phone_normalized?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           subscription_expires_at?: string | null
+          subscription_id?: string | null
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
@@ -3044,16 +3104,21 @@ export type Database = {
         }
         Update: {
           account_status?: string | null
+          avatar_url?: string | null
           created_at?: string | null
           email?: string
           email_normalized?: string | null
           full_name?: string | null
           id?: string
+          images_generated?: number | null
+          is_admin?: boolean | null
+          paid?: boolean | null
           phone?: string | null
           phone_duplicate_marker?: string | null
           phone_normalized?: string | null
           role?: Database["public"]["Enums"]["user_role"] | null
           subscription_expires_at?: string | null
+          subscription_id?: string | null
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
             | null
@@ -3062,6 +3127,89 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      prompt_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      prompts: {
+        Row: {
+          category_id: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          is_published: boolean | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_published?: boolean | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          is_published?: boolean | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saas_subscriptions: {
         Row: {
@@ -3413,6 +3561,118 @@ export type Database = {
           details?: Json | null
           id?: string
           operation?: string
+        }
+        Relationships: []
+      }
+      tbi_designs: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string | null
+          name: string
+          text_config: Json | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name: string
+          text_config?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          text_config?: Json | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tbi_designs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "tbi_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tbi_usage: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tbi_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "tbi_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tbi_users: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          free_limit: number | null
+          full_name: string | null
+          id: string
+          images_generated: number | null
+          is_admin: boolean | null
+          paid: boolean | null
+          subscription_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          free_limit?: number | null
+          full_name?: string | null
+          id: string
+          images_generated?: number | null
+          is_admin?: boolean | null
+          paid?: boolean | null
+          subscription_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          free_limit?: number | null
+          full_name?: string | null
+          id?: string
+          images_generated?: number | null
+          is_admin?: boolean | null
+          paid?: boolean | null
+          subscription_id?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
