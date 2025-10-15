@@ -996,19 +996,12 @@ export default async function handler(request: Request): Promise<Response> {
   
   console.log(`[${traceId}] 🌐 Vercel Edge SEO Handler | Request: ${hostname}${pathname} | UA: ${userAgent.substring(0, 80)}`);
   
-  // Check for manual test header
-  const isManualTest = request.headers.get('x-seo-test') === '1';
-  
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);
   
-  if (isManualTest) {
-    console.log(`[${traceId}] 🧪 Manual SEO test triggered via x-seo-test header`);
-  }
-  
   // Detect URL pattern using original path
   const urlPattern = parseUrlPattern(hostname, pathname);
-  const shouldHandleSEO = (isSocialBot || isManualTest) && (
+  const shouldHandleSEO = isSocialBot && (
     urlPattern.type === 'custom_domain' ||
     urlPattern.type === 'lovable_subdomain' ||
     urlPattern.type === 'store_slug' ||
@@ -1016,7 +1009,7 @@ export default async function handler(request: Request): Promise<Response> {
     urlPattern.type === 'funnel_route'
   );
   
-  console.log(`🔍 Pattern: ${urlPattern.type} | Identifier: ${urlPattern.identifier} | Social Bot: ${isSocialBot} | Manual Test: ${isManualTest} | Handle SEO: ${shouldHandleSEO}`);
+  console.log(`🔍 Pattern: ${urlPattern.type} | Identifier: ${urlPattern.identifier} | Social Bot: ${isSocialBot} | Handle SEO: ${shouldHandleSEO}`);
   
   // Handle social crawlers with SEO for all supported patterns
   if (shouldHandleSEO) {
@@ -1042,14 +1035,12 @@ export default async function handler(request: Request): Promise<Response> {
           status: 200,
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': isManualTest ? 'no-cache, no-store, must-revalidate' : 'public, max-age=120, s-maxage=120',
-            'X-SEO-Handler': 'vercel-edge',
+            'Cache-Control': 'public, max-age=120, s-maxage=120',
             'X-Trace-Id': traceId,
             'X-SEO-Source': 'fallback_no_data',
             'X-SEO-Pattern': urlPattern.type,
             'X-SEO-Identifier': urlPattern.identifier,
-            'X-SEO-Path': pathname,
-            'X-SEO-Hostname': hostname
+            'X-SEO-Path': pathname
           },
         });
       }
@@ -1062,8 +1053,7 @@ export default async function handler(request: Request): Promise<Response> {
         status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': isManualTest ? 'no-cache, no-store, must-revalidate' : 'public, max-age=300, s-maxage=300',
-          'X-SEO-Handler': 'vercel-edge',
+          'Cache-Control': 'public, max-age=300, s-maxage=300',
           'X-Trace-Id': traceId,
           'X-SEO-Source': seoData.source || 'unknown',
           'X-SEO-Pattern': urlPattern.type,
@@ -1071,7 +1061,6 @@ export default async function handler(request: Request): Promise<Response> {
           'X-SEO-Website': seoData.site_name,
           'X-SEO-Page': seoData.title,
           'X-SEO-Path': pathname,
-          'X-SEO-Hostname': hostname,
           ...(seoData.debug?.websiteId ? { 'X-SEO-Website-Id': seoData.debug.websiteId } : {}),
           ...(seoData.debug?.pageId ? { 'X-SEO-Page-Id': seoData.debug.pageId } : {}),
           ...(seoData.debug?.slug ? { 'X-SEO-Slug': seoData.debug.slug } : {}),
