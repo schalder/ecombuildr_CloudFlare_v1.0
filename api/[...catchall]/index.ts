@@ -146,8 +146,11 @@ function parseUrlPattern(hostname: string, pathname: string): {
     };
   }
   
-  // Custom domain (e.g., example.com) - not lovable.app
-  if (!hostname.includes('lovable.app')) {
+  // Custom domain (e.g., example.com) - not lovable.app or main platform domains
+  const systemDomains = ['get.ecombuildr.com', 'app.ecombuildr.com', 'lovable.app'];
+  const isSystemDomain = systemDomains.some(domain => hostname.includes(domain));
+  
+  if (!hostname.includes('lovable.app') && !isSystemDomain) {
     return { type: 'custom_domain', identifier: hostname, pagePath: pathname };
   }
   
@@ -155,6 +158,11 @@ function parseUrlPattern(hostname: string, pathname: string): {
   const subdomainMatch = hostname.match(/^([^.]+)\.lovable\.app$/);
   if (subdomainMatch && subdomainMatch[1] !== 'www' && subdomainMatch[1] !== 'app') {
     return { type: 'lovable_subdomain', identifier: subdomainMatch[1], pagePath: pathname };
+  }
+  
+  // System domain fallback - return SPA for main platform
+  if (isSystemDomain) {
+    return { type: 'site_slug', identifier: 'system', pagePath: pathname };
   }
   
   // Store slug pattern (e.g., /store/mystore/page)
@@ -1068,7 +1076,7 @@ export default async function handler(request: Request): Promise<Response> {
     urlPattern.type === 'custom_domain' ||
     urlPattern.type === 'lovable_subdomain' ||
     urlPattern.type === 'store_slug' ||
-    urlPattern.type === 'site_slug' ||
+    (urlPattern.type === 'site_slug' && urlPattern.identifier !== 'system') ||
     urlPattern.type === 'funnel_route'
   );
   
