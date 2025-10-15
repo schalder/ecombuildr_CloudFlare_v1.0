@@ -918,6 +918,7 @@ function generateHTML(seo: SEOData, url: string): string {
   const robots = seo.robots;
   const keywords = Array.isArray(seo.keywords) ? seo.keywords.map(k => escapeHtml(k)).join(', ') : '';
   const languageCode = (seo as any).language_code || 'en';
+  const customMetaTags = (seo as any).custom_meta_tags || '';
 
   return `<!DOCTYPE html>
 <html lang="${languageCode}">
@@ -953,6 +954,9 @@ function generateHTML(seo: SEOData, url: string): string {
   
   <!-- Additional SEO -->
   <link rel="canonical" href="${canonical}" />
+  
+  <!-- Custom Meta Tags -->
+  ${customMetaTags ? customMetaTags : ''}
   
   <!-- Structured Data -->
   <script type="application/ld+json">
@@ -1112,6 +1116,7 @@ export default async function handler(request: Request): Promise<Response> {
         status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
+          'Content-Length': html.length.toString(),
           'Cache-Control': 'public, max-age=300, s-maxage=300',
           'X-Trace-Id': traceId,
           'X-SEO-Source': seoData.source || 'unknown',
