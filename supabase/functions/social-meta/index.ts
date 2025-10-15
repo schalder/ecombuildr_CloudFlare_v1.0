@@ -245,14 +245,54 @@ async function resolveSEOData(url: string): Promise<SEOData | null> {
   }
 }
 
-// Generate SEO HTML for social crawlers
-function generateSEOHTML(seo: SEOData): string {
+// Detect if request is from a bot/crawler
+function isBot(userAgent: string): boolean {
+  if (!userAgent) return false;
+  
+  const botPatterns = [
+    'facebookexternalhit',
+    'Facebot',
+    'Twitterbot',
+    'LinkedInBot',
+    'WhatsApp',
+    'Slackbot',
+    'TelegramBot',
+    'Discordbot',
+    'Googlebot',
+    'bingbot',
+    'Baiduspider',
+    'YandexBot',
+    'DuckDuckBot',
+    'crawler',
+    'spider',
+    'bot',
+    'crawl',
+    'slurp',
+  ];
+  
+  const lowerUA = userAgent.toLowerCase();
+  return botPatterns.some(pattern => lowerUA.includes(pattern.toLowerCase()));
+}
+
+// Generate SEO HTML for social crawlers (without redirect for bots)
+function generateSEOHTML(seo: SEOData, includeRedirect: boolean = true): string {
   const title = seo.title || 'Page';
   const description = seo.description || '';
   const image = seo.image || '';
   const canonical = seo.canonical || seo.url;
   const robots = seo.robots || 'index, follow';
   const siteName = seo.siteName || '';
+
+  const redirectMeta = includeRedirect 
+    ? `<meta http-equiv="refresh" content="0;url=${seo.url}">
+  <script>window.location.href="${seo.url}";</script>` 
+    : '';
+  
+  const bodyContent = includeRedirect
+    ? `<p>Redirecting to <a href="${seo.url}">${title}</a>...</p>`
+    : `<h1>${title}</h1>
+  <p>${description}</p>
+  <p><a href="${seo.url}">Visit this page</a></p>`;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -278,12 +318,10 @@ function generateSEOHTML(seo: SEOData): string {
   <meta name="twitter:description" content="${description}">
   ${image ? `<meta name="twitter:image" content="${image}">` : ''}
   
-  <!-- Redirect to actual page -->
-  <meta http-equiv="refresh" content="0;url=${seo.url}">
-  <script>window.location.href="${seo.url}";</script>
+  ${redirectMeta}
 </head>
 <body>
-  <p>Redirecting to <a href="${seo.url}">${title}</a>...</p>
+  ${bodyContent}
 </body>
 </html>`;
 }
@@ -296,17 +334,35 @@ Deno.serve(async (req) => {
 
   try {
     const url = new URL(req.url);
-    const targetUrl = url.searchParams.get('url');
+    const userAgent = req.headers.get('user-agent') || '';
+    const isFromBot = isBot(userAgent);
+    
+    // Get target URL from query parameter or use request URL
+    let targetUrl = url.searchParams.get('url');
+    
+    // If no url parameter, this is a direct request
+    const isDirectRequest = !targetUrl;
+    if (isDirectRequest) {
+      targetUrl = url.href.split('?')[0]; // Use the request URL without query params
+    }
 
+    // At this point targetUrl is guaranteed to be a string
     if (!targetUrl) {
       return new Response(
-        JSON.stringify({ error: 'Missing url parameter' }),
+        JSON.stringify({ error: 'Could not determine target URL' }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
+
+    console.log('Social-meta request:', {
+      targetUrl,
+      isDirectRequest,
+      isFromBot,
+      userAgent: userAgent.substring(0, 50)
+    });
 
     // Resolve SEO data
     const seoData = await resolveSEOData(targetUrl);
@@ -318,16 +374,35 @@ Deno.serve(async (req) => {
         description: 'The requested page could not be found.',
         url: targetUrl,
         robots: 'noindex, nofollow'
-      });
+      }, !isFromBot); // Only redirect if not a bot
 
       return new Response(notFoundHTML, {
         headers: { ...corsHeaders, 'Content-Type': 'text/html' }
       });
     }
 
-    // Return SEO-optimized HTML
-    const html = generateSEOHTML(seoData);
+    // If this is a direct request from a bot, serve SEO HTML without redirect
+    // This allows bots to scrape OG tags properly
+    if (isDirectRequest && isFromBot) {
+      const html = generateSEOHTML(seoData, false); // No redirect for bots
+      return new Response(html, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/html' }
+      });
+    }
 
+    // If this is a direct request from a human, redirect to the app
+    if (isDirectRequest && !isFromBot) {
+      return new Response(null, {
+        status: 302,
+        headers: { 
+          ...corsHeaders, 
+          'Location': targetUrl
+        }
+      });
+    }
+
+    // For proxy requests (?url=...), return SEO HTML with redirect (for share links)
+    const html = generateSEOHTML(seoData, true);
     return new Response(html, {
       headers: { ...corsHeaders, 'Content-Type': 'text/html' }
     });
