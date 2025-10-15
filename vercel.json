@@ -1,38 +1,25 @@
 {
   "version": 2,
+  "functions": {
+    "api/render.ts": { "runtime": "edge" },
+    "api/ping.ts": { "runtime": "edge" }
+  },
   "routes": [
     {
-      "src": "^/api/(.*)$",
-      "dest": "/api/$1"
+      "src": "^/api/ping$",
+      "dest": "/api/ping"
+    },
+    {
+      "src": "^/assets/(.*)$",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "^/.*\\.(ico|png|jpg|jpeg|svg|woff2|woff|ttf|eot|css|js|json|webp|gif)$",
+      "dest": "/$0"
     },
     {
       "src": "^/(.*)$",
-      "has": [
-        {
-          "type": "header",
-          "key": "x-seo-test",
-          "value": "1"
-        }
-      ],
-      "dest": "/api/seo?path=$1"
-    },
-    {
-      "src": "^/(.*)$",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": ".*(facebookexternalhit|[Ff]ace[Bb]ot|[Tt]witter[Bb]ot|[Ll]inked[Ii]n[Bb]ot|[Ww]hats[Aa]pp|[Dd]iscord[Bb]ot|[Tt]elegram[Bb]ot|[Ss]lack[Bb]ot|[Ss]kype[Uu]ri[Pp]review|[Gg]oogle[Bb]ot|[Bb]ing[Bb]ot|[Bb]aidu[Ss]pider|[Yy]andex|[Dd]uck[Dd]uck[Bb]ot|[Ss]lurp|ia_archiver|[Ss]emrush[Bb]ot|[Aa]hrefs[Bb]ot|[Dd]ot[Bb]ot|[Bb]ot|[Cc]rawler|[Ss]pider).*"
-        }
-      ],
-      "dest": "/api/seo?path=$1"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "^/(.*)$",
-      "dest": "/index.html"
+      "dest": "/api/render?path=$1"
     }
   ],
   "headers": [
