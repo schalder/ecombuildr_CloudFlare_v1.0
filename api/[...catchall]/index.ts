@@ -121,60 +121,156 @@ function normalizeImageUrl(imageUrl: string | null | undefined): string | undefi
   return undefined;
 }
 
+// Parse URL to determine pattern type
+function parseUrlPattern(hostname: string, pathname: string): {
+  type: 'custom_domain' | 'store_slug' | 'site_slug' | 'lovable_subdomain';
+  identifier: string;
+  pagePath: string;
+} {
+  // Custom domain (e.g., example.com) - not lovable.app
+  if (!hostname.includes('lovable.app')) {
+    return { type: 'custom_domain', identifier: hostname, pagePath: pathname };
+  }
+  
+  // Lovable subdomain (e.g., mysite.lovable.app)
+  const subdomainMatch = hostname.match(/^([^.]+)\.lovable\.app$/);
+  if (subdomainMatch && subdomainMatch[1] !== 'www' && subdomainMatch[1] !== 'app') {
+    return { type: 'lovable_subdomain', identifier: subdomainMatch[1], pagePath: pathname };
+  }
+  
+  // Store slug pattern (e.g., /store/mystore/page)
+  const storeMatch = pathname.match(/^\/store\/([^\/]+)(\/.*)?$/);
+  if (storeMatch) {
+    return { type: 'store_slug', identifier: storeMatch[1], pagePath: storeMatch[2] || '/' };
+  }
+  
+  // Site slug pattern (e.g., /site/mysite/page)
+  const siteMatch = pathname.match(/^\/site\/([^\/]+)(\/.*)?$/);
+  if (siteMatch) {
+    return { type: 'site_slug', identifier: siteMatch[1], pagePath: siteMatch[2] || '/' };
+  }
+  
+  return { type: 'custom_domain', identifier: hostname, pagePath: pathname };
+}
+
 // Main SEO data resolution
-async function resolveSEOData(domain: string, path: string): Promise<SEOData | null> {
+async function resolveSEOData(hostname: string, pathname: string): Promise<SEOData | null> {
   try {
-    console.log(`🔍 Resolving SEO for ${domain}${path}`);
+    const urlPattern = parseUrlPattern(hostname, pathname);
+    console.log(`🔍 Resolving SEO for ${urlPattern.type}: ${urlPattern.identifier}${urlPattern.pagePath}`);
     
-    // Normalize domain variants
-    const apexDomain = domain.replace(/^www\./, '');
-    const domainVariants = [domain, apexDomain, `www.${apexDomain}`];
+    const path = urlPattern.pagePath;
     const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');
     
-    // Step 1: Find custom domain mapping  
-    const { data: customDomain } = await supabase
-      .from('custom_domains')
-      .select('id, domain, store_id')
-      .in('domain', domainVariants)
-      .maybeSingle();
-    
-    if (!customDomain) {
-      console.log('❌ No custom domain found');
-      return null;
-    }
-    
-    console.log(`✅ Found custom domain: ${customDomain.domain} -> store ${customDomain.store_id}`);
-    
-    // Step 2: Find website mapping via domain_connections
-    const { data: websiteConnection } = await supabase
-      .from('domain_connections')
-      .select('content_type, content_id')
-      .eq('domain_id', customDomain.id)
-      .eq('content_type', 'website')
-      .maybeSingle();
-    
     let websiteId: string | null = null;
+    let storeId: string | null = null;
     
-    if (websiteConnection) {
-      websiteId = websiteConnection.content_id;
-      console.log(`✅ Found website connection: ${websiteId}`);
-    } else {
-      console.log('⚠️ No website connection found for domain. Falling back to store websites');
-      const { data: storeWebsites } = await supabase
+    // Step 1: Resolve website/store based on URL pattern
+    if (urlPattern.type === 'custom_domain') {
+      // Existing custom domain logic
+      const apexDomain = urlPattern.identifier.replace(/^www\./, '');
+      const domainVariants = [urlPattern.identifier, apexDomain, `www.${apexDomain}`];
+      
+      const { data: customDomain } = await supabase
+        .from('custom_domains')
+        .select('id, domain, store_id')
+        .in('domain', domainVariants)
+        .maybeSingle();
+      
+      if (!customDomain) {
+        console.log('❌ No custom domain found');
+        return null;
+      }
+      
+      console.log(`✅ Found custom domain: ${customDomain.domain} -> store ${customDomain.store_id}`);
+      storeId = customDomain.store_id;
+      
+      // Find website mapping via domain_connections
+      const { data: websiteConnection } = await supabase
+        .from('domain_connections')
+        .select('content_type, content_id')
+        .eq('domain_id', customDomain.id)
+        .eq('content_type', 'website')
+        .maybeSingle();
+      
+      if (websiteConnection) {
+        websiteId = websiteConnection.content_id;
+        console.log(`✅ Found website connection: ${websiteId}`);
+      } else {
+        console.log('⚠️ No website connection found for domain. Falling back to store websites');
+        const { data: storeWebsites } = await supabase
+          .from('websites')
+          .select('id, domain')
+          .eq('store_id', customDomain.store_id)
+          .eq('is_active', true)
+          .eq('is_published', true);
+        if (storeWebsites && storeWebsites.length > 0) {
+          const exactMatch = storeWebsites.find(w => w.domain && w.domain.replace(/^www\./, '') === apexDomain);
+          websiteId = exactMatch?.id || storeWebsites[0].id;
+          console.log(`📦 Using store website fallback: ${websiteId}`);
+        }
+      }
+      
+    } else if (urlPattern.type === 'lovable_subdomain') {
+      // NEW: Handle mysite.lovable.app
+      const { data: website } = await supabase
         .from('websites')
-        .select('id, domain')
-        .eq('store_id', customDomain.store_id)
+        .select('id, store_id')
+        .eq('slug', urlPattern.identifier)
+        .eq('is_published', true)
+        .maybeSingle();
+      
+      if (website) {
+        websiteId = website.id;
+        storeId = website.store_id;
+        console.log(`✅ Found lovable subdomain website: ${websiteId}`);
+      }
+      
+    } else if (urlPattern.type === 'store_slug') {
+      // NEW: Handle /store/mystore/
+      const { data: store } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('slug', urlPattern.identifier)
         .eq('is_active', true)
-        .eq('is_published', true);
-      if (storeWebsites && storeWebsites.length > 0) {
-        const exactMatch = storeWebsites.find(w => w.domain && w.domain.replace(/^www\./, '') === apexDomain);
-        websiteId = exactMatch?.id || storeWebsites[0].id;
-        console.log(`📦 Using store website fallback: ${websiteId}`);
+        .maybeSingle();
+      
+      if (store) {
+        storeId = store.id;
+        // Find default website for this store
+        const { data: website } = await supabase
+          .from('websites')
+          .select('id')
+          .eq('store_id', store.id)
+          .eq('is_published', true)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        
+        if (website) {
+          websiteId = website.id;
+          console.log(`✅ Found store slug website: ${websiteId}`);
+        }
+      }
+      
+    } else if (urlPattern.type === 'site_slug') {
+      // NEW: Handle /site/mysite/
+      const { data: website } = await supabase
+        .from('websites')
+        .select('id, store_id')
+        .eq('slug', urlPattern.identifier)
+        .eq('is_published', true)
+        .maybeSingle();
+      
+      if (website) {
+        websiteId = website.id;
+        storeId = website.store_id;
+        console.log(`✅ Found site slug website: ${websiteId}`);
       }
     }
     
     if (!websiteId) {
-      console.log('❌ No website resolved after fallback');
+      console.log('❌ No website resolved');
       return null;
     }
     
@@ -222,7 +318,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
       if (homepagePage) {
         const contentDesc = extractContentDescription(homepagePage.content);
         
-        // ✅ PRIORITIZE HOMEPAGE PAGE SEO - Only fallback to page title if SEO title is empty
+      // ✅ PRIORITIZE HOMEPAGE PAGE SEO - Only fallback to page title if SEO title is empty
         const title = (homepagePage.seo_title && homepagePage.seo_title.trim()) 
           ? homepagePage.seo_title.trim() 
           : `${homepagePage.title} - ${website.name}`;
@@ -246,7 +342,17 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         
         const image = normalizeImageUrl(pickedImage);
         
-        console.log(`🏠 Homepage SEO resolved for ${domain} (page:${homepagePage.id}, website:${websiteId})`);
+        // Build canonical URL based on URL pattern
+        let canonicalUrl = homepagePage.canonical_url;
+        if (!canonicalUrl) {
+          canonicalUrl = urlPattern.type === 'custom_domain'
+            ? `https://${urlPattern.identifier}/`
+            : urlPattern.type === 'lovable_subdomain'
+            ? `https://${urlPattern.identifier}.lovable.app/`
+            : `https://${hostname}${urlPattern.type === 'store_slug' ? '/store/' : '/site/'}${urlPattern.identifier}/`;
+        }
+        
+        console.log(`🏠 Homepage SEO resolved for ${urlPattern.identifier} (page:${homepagePage.id}, website:${websiteId})`);
         console.log(`   • title="${title}" [homepage.seo_title]`);
         console.log(`   • description="${description}" [homepage.seo_description]`);
         console.log(`   • image="${image}" [${imageSource}]`);
@@ -256,7 +362,7 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
           description,
           og_image: image,
           keywords: homepagePage.seo_keywords || [],
-          canonical: homepagePage.canonical_url || `https://${domain}/`,
+          canonical: canonicalUrl,
           robots: homepagePage.meta_robots || 'index, follow',
           site_name: website.name,
           source: `homepage_page|website:${websiteId}|page:${homepagePage.id}`,
@@ -276,12 +382,19 @@ async function resolveSEOData(domain: string, path: string): Promise<SEOData | n
         ? websiteSeoTitle.trim() 
         : website.name;
       
+      // Build canonical URL based on URL pattern
+      let canonicalUrl = urlPattern.type === 'custom_domain'
+        ? `https://${urlPattern.identifier}/`
+        : urlPattern.type === 'lovable_subdomain'
+        ? `https://${urlPattern.identifier}.lovable.app/`
+        : `https://${hostname}${urlPattern.type === 'store_slug' ? '/store/' : '/site/'}${urlPattern.identifier}/`;
+      
       return {
         title,
         description: websiteSeoDescription,
         og_image: websiteImage,
         keywords: [],
-        canonical: `https://${domain}/`,
+        canonical: canonicalUrl,
         robots: 'index, follow',
         site_name: website.name,
         source: `website_root_fallback|website:${websiteId}`
@@ -649,41 +762,43 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
 export default async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
-  const domain = url.hostname;
+  const hostname = url.hostname;
   const pathname = url.pathname;
   const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
   
-  console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
-  
-  // Detect if this is a custom domain (not ecombuildr.com or localhost)
-  const isCustomDomain = !domain.includes('ecombuildr.com') && 
-                        !domain.includes('localhost') && 
-                        !domain.includes('lovable.dev') &&
-                        !domain.includes('lovable.app') &&
-                        !domain.includes('lovableproject.com');
+  console.log(`[${traceId}] 🌐 Request: ${hostname}${pathname} | UA: ${userAgent.substring(0, 80)}`);
   
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);
   
-  console.log(`🔍 Domain: ${domain} | Custom: ${isCustomDomain} | Social Bot: ${isSocialBot}`);
+  // Detect URL pattern
+  const urlPattern = parseUrlPattern(hostname, pathname);
+  const shouldHandleSEO = isSocialBot && (
+    urlPattern.type === 'custom_domain' ||
+    urlPattern.type === 'lovable_subdomain' ||
+    urlPattern.type === 'store_slug' ||
+    urlPattern.type === 'site_slug'
+  );
   
-  // For custom domains, always handle social crawlers with SEO
-  if (isCustomDomain && isSocialBot) {
-    console.log(`🤖 Social crawler on custom domain - generating SEO HTML`);
+  console.log(`🔍 Pattern: ${urlPattern.type} | Identifier: ${urlPattern.identifier} | Social Bot: ${isSocialBot} | Handle SEO: ${shouldHandleSEO}`);
+  
+  // Handle social crawlers with SEO for all supported patterns
+  if (shouldHandleSEO) {
+    console.log(`🤖 Social crawler detected - generating SEO HTML`);
     
     try {
-      const seoData = await resolveSEOData(domain, pathname);
+      const seoData = await resolveSEOData(hostname, pathname);
       
       if (!seoData) {
         console.log(`[${traceId}] ❌ No SEO data found - rendering minimal fallback`);
         const minimal = {
-          title: domain,
-          description: `Preview of ${domain}`,
+          title: urlPattern.identifier,
+          description: `Preview of ${urlPattern.identifier}`,
           og_image: undefined,
           keywords: [],
           canonical: url.toString(),
           robots: 'index, follow',
-          site_name: domain,
+          site_name: urlPattern.identifier,
           source: 'fallback_no_data'
         } as SEOData;
         const html = generateHTML(minimal, url.toString());
@@ -694,9 +809,8 @@ export default async function handler(request: Request): Promise<Response> {
             'Cache-Control': 'public, max-age=120, s-maxage=120',
             'X-Trace-Id': traceId,
             'X-SEO-Source': 'fallback_no_data',
-            'X-SEO-Website': domain,
-            'X-SEO-Page': domain,
-            'X-SEO-Domain': domain,
+            'X-SEO-Pattern': urlPattern.type,
+            'X-SEO-Identifier': urlPattern.identifier,
             'X-SEO-Path': pathname
           },
         });
@@ -713,9 +827,10 @@ export default async function handler(request: Request): Promise<Response> {
           'Cache-Control': 'public, max-age=300, s-maxage=300',
           'X-Trace-Id': traceId,
           'X-SEO-Source': seoData.source || 'unknown',
+          'X-SEO-Pattern': urlPattern.type,
+          'X-SEO-Identifier': urlPattern.identifier,
           'X-SEO-Website': seoData.site_name,
           'X-SEO-Page': seoData.title,
-          'X-SEO-Domain': domain,
           'X-SEO-Path': pathname,
           ...(seoData.debug?.websiteId ? { 'X-SEO-Website-Id': seoData.debug.websiteId } : {}),
           ...(seoData.debug?.pageId ? { 'X-SEO-Page-Id': seoData.debug.pageId } : {}),
@@ -732,8 +847,8 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
   
-  // For non-social crawlers or system domains, pass through
-  console.log('👤 Non-social crawler or system domain - passing through');
+  // For non-social crawlers or unsupported patterns, pass through
+  console.log('👤 Non-social crawler or unsupported pattern - passing through');
   return new Response(null, { status: 200 });
 }
 
