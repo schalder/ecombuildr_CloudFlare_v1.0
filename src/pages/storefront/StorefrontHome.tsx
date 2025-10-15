@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
-import { ThemeRenderer } from '@/components/storefront/ThemeRenderer';
+import { StorefrontFallback } from '@/components/storefront/StorefrontFallback';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
@@ -207,8 +207,8 @@ export const StorefrontHome: React.FC = () => {
     );
   }
 
-  // Default theme renderer if no custom homepage
-  const content = <ThemeRenderer />;
+  // Fallback: No homepage found
+  const content = <StorefrontFallback />;
 
   if (isWebsiteContext) {
     return content;
