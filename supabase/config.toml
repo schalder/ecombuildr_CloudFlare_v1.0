@@ -1,1 +1,6 @@
 project_id = "fhqwacmokbtbspkxjixf"
+
+# Disable JWT verification for public image transformation
+# This allows anonymous users to load optimized images without authentication
+[functions.image-transform]
+verify_jwt = false
