@@ -1,58 +1,24 @@
 {
   "version": 2,
-  "routes": [
+  "rewrites": [
     {
-      "src": "^/api/seo-health$",
-      "dest": "/api/seo?health=1"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     },
     {
-      "src": "^/(.*)$",
-      "has": [
-        {
-          "type": "query",
-          "key": "seo",
-          "value": "1"
-        }
-      ],
-      "dest": "/api/seo?path=$1&force=1"
-    },
-    {
-      "src": "^/(.*)$",
-      "has": [
-        {
-          "type": "header",
-          "key": "x-seo-test",
-          "value": "1"
-        }
-      ],
-      "dest": "/api/seo?path=$1&force=1"
-    },
-    {
-      "src": "^/(.*)$",
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]?path=$1",
       "has": [
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|Googlebot|Bingbot|[Bb]ot|[Cc]rawler|[Ss]pider|DiscordBot|TelegramBot|Slackbot).*"
+          "value": "(?i)(facebookexternalhit|twitterbot|linkedinbot|whatsapp|discordbot|telegrambot|slackbot|skypeuripreview|facebookcatalog|facebookplatform|facebot|facebookbot|googlebot|bingbot|bot|crawler|spider|baiduspider|yandex|duckduckbot|slurp|ia_archiver|semrushbot|ahrefsbot|dotbot)"
         }
-      ],
-      "dest": "/api/seo?path=$1"
+      ]
     },
     {
-      "src": "^/api/(.*)$",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "^/assets/(.*)$",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "^/.*\\.(ico|png|jpg|jpeg|svg|woff2|woff|ttf|eot|css|js|json|webp|gif|mp4|webm|pdf)$",
-      "dest": "/$0"
-    },
-    {
-      "src": "^/(.*)$",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -88,19 +54,6 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/index.html",
-      "headers": [
-        {
-          "key": "Accept-Ranges",
-          "value": "none"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     }
