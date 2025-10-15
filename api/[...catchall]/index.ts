@@ -196,8 +196,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         canonical: `https://${hostname}${pathname}`,
         robots: 'index, follow',
         site_name: 'EcomBuildr',
-        source: 'marketing_site',
-        language_code: 'en'
+        source: 'marketing_site'
       };
     }
     
