@@ -169,7 +169,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           src={(Array.isArray(product.images) ? product.images[0] : product.images?.[0]) || '/placeholder.svg'}
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-110"
-          loading="lazy"
           priority={false}
           preserveOriginal={true}
         />

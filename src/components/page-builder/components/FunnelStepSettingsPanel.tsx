@@ -173,9 +173,10 @@ export const FunnelStepSettingsPanel: React.FC<FunnelStepSettingsPanelProps> = (
       setStep(stepData);
       
       // Initialize navigation type state based on existing data
-      setSuccessNavType(stepData.on_success_custom_url ? 'url' : 'step');
-      setAcceptNavType(stepData.on_accept_custom_url ? 'url' : 'step');
-      setDeclineNavType(stepData.on_decline_custom_url ? 'url' : 'step');
+      // Safe access with type checking
+      setSuccessNavType((stepData as any).on_success_custom_url ? 'url' : 'step');
+      setAcceptNavType((stepData as any).on_accept_custom_url ? 'url' : 'step');
+      setDeclineNavType((stepData as any).on_decline_custom_url ? 'url' : 'step');
 
       // Load all funnel steps for navigation
       const { data: stepsData, error: stepsError } = await supabase

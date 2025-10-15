@@ -51,7 +51,7 @@ export const usePromptManagement = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setPrompts(data || []);
+      setPrompts((data || []) as any);
     } catch (err) {
       console.error('Error fetching prompts:', err);
       setError('Failed to fetch prompts');
@@ -69,7 +69,7 @@ export const usePromptManagement = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setCategories(data || []);
+      setCategories((data || []) as any);
     } catch (err) {
       console.error('Error fetching categories:', err);
       setError('Failed to fetch categories');
@@ -92,7 +92,7 @@ export const usePromptManagement = () => {
       
       // Refresh prompts list
       await fetchPrompts();
-      return result;
+      return result as any;
     } catch (err) {
       console.error('Error creating prompt:', err);
       setError('Failed to create prompt');
@@ -118,7 +118,7 @@ export const usePromptManagement = () => {
       
       // Refresh prompts list
       await fetchPrompts();
-      return result;
+      return result as any;
     } catch (err) {
       console.error('Error updating prompt:', err);
       setError('Failed to update prompt');
@@ -179,7 +179,7 @@ export const usePromptManagement = () => {
       
       // Refresh categories list
       await fetchCategories();
-      return result;
+      return result as any;
     } catch (err) {
       console.error('Error creating category:', err);
       setError('Failed to create category');
@@ -202,7 +202,7 @@ export const usePromptManagement = () => {
       
       // Refresh categories list
       await fetchCategories();
-      return result;
+      return result as any;
     } catch (err) {
       console.error('Error updating category:', err);
       setError('Failed to update category');

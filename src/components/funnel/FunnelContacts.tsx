@@ -102,24 +102,22 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
   const loadSubmissions = async () => {
     try {
       setLoading(true);
-      const response: any = await supabase
+      const { data, error } = await supabase
         .from('form_submissions')
         .select('*')
         .eq('funnel_id', funnelId);
-      
-      const { data, error } = response;
 
       if (error) {
         console.error('Supabase error:', error);
         throw error;
       }
 
-      const submissionsData = data as FormSubmission[] || [];
+      const submissionsData = (data || []) as any;
       setSubmissions(submissionsData);
       
       // Extract unique form names
-      const uniqueFormNames = [...new Set(submissionsData.map(s => s.form_name).filter(Boolean))];
-      setFormNames(uniqueFormNames);
+      const uniqueFormNames = [...new Set(submissionsData.map((s: any) => s.form_name).filter(Boolean))];
+      setFormNames(uniqueFormNames as string[]);
     } catch (error) {
       console.error('Error loading submissions:', error);
       toast.error('Failed to load contacts');

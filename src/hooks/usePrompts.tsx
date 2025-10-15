@@ -48,7 +48,7 @@ export const usePrompts = (options: UsePromptsOptions = {}) => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setCategories(data || []);
+      setCategories((data || []) as any);
     } catch (err) {
       console.error('Error fetching categories:', err);
       setError('Failed to fetch categories');
@@ -85,7 +85,7 @@ export const usePrompts = (options: UsePromptsOptions = {}) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setPrompts(data || []);
+      setPrompts((data || []) as any);
     } catch (err) {
       console.error('Error fetching prompts:', err);
       setError('Failed to fetch prompts');
@@ -108,7 +108,7 @@ export const usePrompts = (options: UsePromptsOptions = {}) => {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as any;
     } catch (err) {
       console.error('Error fetching prompt:', err);
       setError('Failed to fetch prompt');

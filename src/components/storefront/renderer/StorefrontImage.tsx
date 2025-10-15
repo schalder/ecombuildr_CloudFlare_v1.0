@@ -24,6 +24,7 @@ interface StorefrontImageProps {
   height?: number;
   className?: string;
   priority?: boolean;
+  loading?: 'lazy' | 'eager';
   isCritical?: boolean;
   sizes?: string;
   aspectRatio?: string;
@@ -45,6 +46,7 @@ export const StorefrontImage: React.FC<StorefrontImageProps> = ({
   height,
   className,
   priority = false,
+  loading,
   isCritical,
   sizes,
   aspectRatio,
@@ -114,7 +116,7 @@ export const StorefrontImage: React.FC<StorefrontImageProps> = ({
       height={height}
       className={className}
       priority={priority ? 'high' : 'auto'}
-      loading={priority ? 'eager' : 'lazy'}
+      loading={loading || (priority ? 'eager' : 'lazy')}
       isCritical={isImageCritical}
       sizes={sizes || '(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw'}
       aspectRatio={aspectRatio}

@@ -69,6 +69,13 @@ export interface PageBuilderElement {
   id: string;
   anchor?: string;
   type: string;
+  metadata?: {
+    position?: 'above-fold' | 'below-fold';
+    sectionIndex?: number;
+    rowIndex?: number;
+    columnIndex?: number;
+    [key: string]: any;
+  };
   content: {
     text?: string;
     url?: string;
@@ -94,6 +101,7 @@ export interface PageBuilderElement {
     backgroundColor?: string;
     backgroundImage?: string;
     boxShadow?: string;
+    aspectRatio?: string;
     paddingTop?: string;
     paddingRight?: string;
     paddingBottom?: string;

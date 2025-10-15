@@ -60,13 +60,25 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       const mergedItems = mergeCartItems(allItems);
       
       const { total, itemCount } = calculateTotals(mergedItems);
-      return { items: mergedItems, total, itemCount };
+      return { 
+        items: mergedItems, 
+        total, 
+        itemCount,
+        discountCode: state.discountCode,
+        discountAmount: state.discountAmount
+      };
     }
     
     case 'REMOVE_ITEM': {
       const newItems = state.items.filter(item => item.id !== action.payload);
       const { total, itemCount } = calculateTotals(newItems);
-      return { items: newItems, total, itemCount };
+      return { 
+        items: newItems, 
+        total, 
+        itemCount,
+        discountCode: state.discountCode,
+        discountAmount: state.discountAmount
+      };
     }
     
     case 'UPDATE_QUANTITY': {
@@ -81,7 +93,13 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
       );
       
       const { total, itemCount } = calculateTotals(newItems);
-      return { items: newItems, total, itemCount };
+      return { 
+        items: newItems, 
+        total, 
+        itemCount,
+        discountCode: state.discountCode,
+        discountAmount: state.discountAmount
+      };
     }
     
     case 'CLEAR_CART':
