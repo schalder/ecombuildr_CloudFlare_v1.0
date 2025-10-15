@@ -1,12 +1,11 @@
 {
-  "version": 2,
-  "routes": [
+  "rewrites": [
     {
-      "src": "^/api/seo-health$",
-      "dest": "/api/render?health=1"
+      "source": "/api/seo-health",
+      "destination": "/api/render?health=1"
     },
     {
-      "src": "^/(.*)$",
+      "source": "/(.*)",
       "has": [
         {
           "type": "query",
@@ -14,10 +13,10 @@
           "value": "1"
         }
       ],
-      "dest": "/api/render?path=$1&force=1"
+      "destination": "/api/render?path=$1&force=1"
     },
     {
-      "src": "^/(.*)$",
+      "source": "/(.*)",
       "has": [
         {
           "type": "header",
@@ -25,10 +24,10 @@
           "value": "1"
         }
       ],
-      "dest": "/api/render?path=$1&force=1"
+      "destination": "/api/render?path=$1&force=1"
     },
     {
-      "src": "^/(.*)$",
+      "source": "/(.*)",
       "has": [
         {
           "type": "header",
@@ -36,23 +35,7 @@
           "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|Googlebot|Bingbot|[Bb]ot|[Cc]rawler|[Ss]pider|DiscordBot|TelegramBot|Slackbot).*"
         }
       ],
-      "dest": "/api/render?path=$1"
-    },
-    {
-      "src": "^/api/(.*)$",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "^/assets/(.*)$",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "^/.*\\.(ico|png|jpg|jpeg|svg|woff2|woff|ttf|eot|css|js|json|webp|gif|mp4|webm|pdf)$",
-      "dest": "/$0"
-    },
-    {
-      "src": "^/(.*)$",
-      "dest": "/index.html"
+      "destination": "/api/render?path=$1"
     }
   ],
   "headers": [
