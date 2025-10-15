@@ -102,7 +102,7 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
   const loadSubmissions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('form_submissions')
         .select('*')
         .eq('funnel_id', funnelId);
@@ -112,7 +112,7 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
         throw error;
       }
 
-      const submissionsData = (data || []) as any;
+      const submissionsData = data || [];
       setSubmissions(submissionsData);
       
       // Extract unique form names

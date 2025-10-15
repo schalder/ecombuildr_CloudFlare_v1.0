@@ -42,7 +42,7 @@ export const usePromptManagement = () => {
       setLoading(true);
       setError(null);
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('prompts')
         .select(`
           *,
@@ -51,7 +51,7 @@ export const usePromptManagement = () => {
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setPrompts((data || []) as any);
+      setPrompts(data || []);
     } catch (err) {
       console.error('Error fetching prompts:', err);
       setError('Failed to fetch prompts');
@@ -63,13 +63,13 @@ export const usePromptManagement = () => {
   // Fetch all categories
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('prompt_categories')
         .select('*')
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setCategories((data || []) as any);
+      setCategories(data || []);
     } catch (err) {
       console.error('Error fetching categories:', err);
       setError('Failed to fetch categories');
@@ -79,7 +79,7 @@ export const usePromptManagement = () => {
   // Create new prompt
   const createPrompt = async (data: CreatePromptData): Promise<Prompt | null> => {
     try {
-      const { data: result, error } = await supabase
+      const { data: result, error } = await (supabase as any)
         .from('prompts')
         .insert([data])
         .select(`
@@ -92,7 +92,7 @@ export const usePromptManagement = () => {
       
       // Refresh prompts list
       await fetchPrompts();
-      return result as any;
+      return result;
     } catch (err) {
       console.error('Error creating prompt:', err);
       setError('Failed to create prompt');
@@ -104,7 +104,7 @@ export const usePromptManagement = () => {
   const updatePrompt = async (data: UpdatePromptData): Promise<Prompt | null> => {
     try {
       const { id, ...updateData } = data;
-      const { data: result, error } = await supabase
+      const { data: result, error } = await (supabase as any)
         .from('prompts')
         .update(updateData)
         .eq('id', id)
@@ -118,7 +118,7 @@ export const usePromptManagement = () => {
       
       // Refresh prompts list
       await fetchPrompts();
-      return result as any;
+      return result;
     } catch (err) {
       console.error('Error updating prompt:', err);
       setError('Failed to update prompt');
@@ -129,7 +129,7 @@ export const usePromptManagement = () => {
   // Delete prompt
   const deletePrompt = async (id: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('prompts')
         .delete()
         .eq('id', id);
@@ -149,7 +149,7 @@ export const usePromptManagement = () => {
   // Toggle prompt published status
   const togglePromptPublished = async (id: string, isPublished: boolean): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('prompts')
         .update({ is_published: isPublished })
         .eq('id', id);
@@ -169,7 +169,7 @@ export const usePromptManagement = () => {
   // Create new category
   const createCategory = async (data: CreateCategoryData): Promise<PromptCategory | null> => {
     try {
-      const { data: result, error } = await supabase
+      const { data: result, error } = await (supabase as any)
         .from('prompt_categories')
         .insert([data])
         .select()
@@ -179,7 +179,7 @@ export const usePromptManagement = () => {
       
       // Refresh categories list
       await fetchCategories();
-      return result as any;
+      return result;
     } catch (err) {
       console.error('Error creating category:', err);
       setError('Failed to create category');
@@ -191,7 +191,7 @@ export const usePromptManagement = () => {
   const updateCategory = async (data: UpdateCategoryData): Promise<PromptCategory | null> => {
     try {
       const { id, ...updateData } = data;
-      const { data: result, error } = await supabase
+      const { data: result, error } = await (supabase as any)
         .from('prompt_categories')
         .update(updateData)
         .eq('id', id)
@@ -202,7 +202,7 @@ export const usePromptManagement = () => {
       
       // Refresh categories list
       await fetchCategories();
-      return result as any;
+      return result;
     } catch (err) {
       console.error('Error updating category:', err);
       setError('Failed to update category');
@@ -213,7 +213,7 @@ export const usePromptManagement = () => {
   // Delete category
   const deleteCategory = async (id: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('prompt_categories')
         .delete()
         .eq('id', id);

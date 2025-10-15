@@ -42,13 +42,13 @@ export const usePrompts = (options: UsePromptsOptions = {}) => {
   // Fetch categories
   const fetchCategories = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('prompt_categories')
         .select('*')
         .order('display_order', { ascending: true });
 
       if (error) throw error;
-      setCategories((data || []) as any);
+      setCategories(data || []);
     } catch (err) {
       console.error('Error fetching categories:', err);
       setError('Failed to fetch categories');
@@ -61,7 +61,7 @@ export const usePrompts = (options: UsePromptsOptions = {}) => {
       setLoading(true);
       setError(null);
 
-      let query = supabase
+      let query = (supabase as any)
         .from('prompts')
         .select(`
           *,
@@ -85,7 +85,7 @@ export const usePrompts = (options: UsePromptsOptions = {}) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      setPrompts((data || []) as any);
+      setPrompts(data || []);
     } catch (err) {
       console.error('Error fetching prompts:', err);
       setError('Failed to fetch prompts');
@@ -97,7 +97,7 @@ export const usePrompts = (options: UsePromptsOptions = {}) => {
   // Fetch single prompt by ID
   const fetchPromptById = async (id: string): Promise<Prompt | null> => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('prompts')
         .select(`
           *,
@@ -108,7 +108,7 @@ export const usePrompts = (options: UsePromptsOptions = {}) => {
         .single();
 
       if (error) throw error;
-      return data as any;
+      return data;
     } catch (err) {
       console.error('Error fetching prompt:', err);
       setError('Failed to fetch prompt');
