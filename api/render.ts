@@ -1,9 +1,9 @@
 // Primary Vercel Edge Function - handles all traffic and decides bot vs user routing
+import { createClient } from '@supabase/supabase-js';
+
 export const config = {
   runtime: 'edge',
 };
-
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.75.0';
 
 const SUPABASE_URL = 'https://fhqwacmokbtbspkxjixf.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM';
