@@ -7,12 +7,12 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/api/[...catchall]",
+      "destination": "/api/[...catchall]?path=$1",
       "has": [
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(bot|crawler|spider|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|DiscordBot|TelegramBot|SkypeUriPreview|facebookcatalog|facebookplatform|Facebot|FacebookBot|Googlebot|Bingbot|baiduspider|yandex|duckduckbot|slurp).*"
+          "value": ".*(bot|crawler|spider|facebookexternalhit|Twitterbot|LinkedInBot|WhatsApp|Slackbot|DiscordBot|TelegramBot|SkypeUriPreview|facebookcatalog|facebookplatform|Facebot|FacebookBot|Googlebot|Bingbot|baiduspider|yandex|duckduckbot|slurp|ia_archiver|SemrushBot|AhrefsBot|DotBot).*"
         }
       ]
     },

@@ -165,6 +165,10 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     let websiteId: string | null = null;
     let storeId: string | null = null;
     
+    // Check for system domain fallback (platform marketing site)
+    const systemDomains = ['get.ecombuildr.com', 'app.ecombuildr.com'];
+    const isSystemDomain = systemDomains.some(d => hostname.includes(d));
+    
     // Step 1: Resolve website/store based on URL pattern
     if (urlPattern.type === 'custom_domain') {
       // Existing custom domain logic
@@ -269,6 +273,36 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       }
     }
     
+    // Platform site fallback: query seo_pages for system domains
+    if (!websiteId && isSystemDomain) {
+      console.log('🏢 System domain detected - checking seo_pages table');
+      
+      const pageSlug = cleanPath || '/';
+      const { data: seoPage } = await supabase
+        .from('seo_pages')
+        .select('page_slug, title, description, og_image, keywords')
+        .eq('page_slug', pageSlug)
+        .maybeSingle();
+      
+      if (seoPage) {
+        const canonicalUrl = `https://${hostname}${path}`;
+        console.log(`✅ Platform SEO page found: ${seoPage.title}`);
+        
+        return {
+          title: seoPage.title,
+          description: seoPage.description || '',
+          og_image: normalizeImageUrl(seoPage.og_image),
+          keywords: seoPage.keywords || [],
+          canonical: canonicalUrl,
+          robots: 'index, follow',
+          site_name: 'EcomBuildr',
+          source: `seo_pages|slug:${pageSlug}`
+        };
+      }
+      
+      console.log(`⚠️ No seo_pages entry for slug: ${pageSlug}`);
+    }
+    
     if (!websiteId) {
       console.log('❌ No website resolved');
       return null;
@@ -345,11 +379,15 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         // Build canonical URL based on URL pattern
         let canonicalUrl = homepagePage.canonical_url;
         if (!canonicalUrl) {
-          canonicalUrl = urlPattern.type === 'custom_domain'
-            ? `https://${urlPattern.identifier}/`
-            : urlPattern.type === 'lovable_subdomain'
-            ? `https://${urlPattern.identifier}.lovable.app/`
-            : `https://${hostname}${urlPattern.type === 'store_slug' ? '/store/' : '/site/'}${urlPattern.identifier}/`;
+          const scheme = 'https://';
+          if (urlPattern.type === 'custom_domain') {
+            canonicalUrl = `${scheme}${hostname}${path}`;
+          } else if (urlPattern.type === 'lovable_subdomain') {
+            canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+          } else {
+            const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
+            canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
+          }
         }
         
         console.log(`🏠 Homepage SEO resolved for ${urlPattern.identifier} (page:${homepagePage.id}, website:${websiteId})`);
@@ -383,11 +421,16 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         : website.name;
       
       // Build canonical URL based on URL pattern
-      let canonicalUrl = urlPattern.type === 'custom_domain'
-        ? `https://${urlPattern.identifier}/`
-        : urlPattern.type === 'lovable_subdomain'
-        ? `https://${urlPattern.identifier}.lovable.app/`
-        : `https://${hostname}${urlPattern.type === 'store_slug' ? '/store/' : '/site/'}${urlPattern.identifier}/`;
+      const scheme = 'https://';
+      let canonicalUrl: string;
+      if (urlPattern.type === 'custom_domain') {
+        canonicalUrl = `${scheme}${hostname}${path}`;
+      } else if (urlPattern.type === 'lovable_subdomain') {
+        canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+      } else {
+        const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
+        canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
+      }
       
       return {
         title,
@@ -434,12 +477,26 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           image = websiteImage;
         }
         
+        // Build canonical URL
+        let canonicalUrl = product.canonical_url;
+        if (!canonicalUrl) {
+          const scheme = 'https://';
+          if (urlPattern.type === 'custom_domain') {
+            canonicalUrl = `${scheme}${hostname}${path}`;
+          } else if (urlPattern.type === 'lovable_subdomain') {
+            canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+          } else {
+            const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
+            canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
+          }
+        }
+        
         return {
           title,
           description,
           og_image: normalizeImageUrl(image),
           keywords: product.seo_keywords || [],
-          canonical: product.canonical_url || `https://${domain}${path}`,
+          canonical: canonicalUrl,
           robots: product.meta_robots || 'index, follow',
           site_name: website.name,
           source: `product_page|website:${websiteId}|slug:${productSlug}`
@@ -499,12 +556,26 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
               image = funnel.og_image;
             }
             
+            // Build canonical URL
+            let canonicalUrl = step.canonical_url;
+            if (!canonicalUrl) {
+              const scheme = 'https://';
+              if (urlPattern.type === 'custom_domain') {
+                canonicalUrl = `${scheme}${hostname}${path}`;
+              } else if (urlPattern.type === 'lovable_subdomain') {
+                canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+              } else {
+                const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
+                canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
+              }
+            }
+            
             return {
               title,
               description,
               og_image: normalizeImageUrl(image),
               keywords: step.seo_keywords || [],
-              canonical: step.canonical_url || `https://${domain}${path}`,
+              canonical: canonicalUrl,
               robots: step.meta_robots || 'index, follow',
               site_name: funnel.name,
               source: `funnel_step|funnel:${funnel.id}|step:${stepSlug}`
@@ -525,12 +596,26 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           // ✅ PRIORITIZE FUNNEL IMAGES
           const image = normalizeImageUrl(funnel.social_image_url || funnel.og_image);
           
+          // Build canonical URL
+          let canonicalUrl = funnel.canonical_url;
+          if (!canonicalUrl) {
+            const scheme = 'https://';
+            if (urlPattern.type === 'custom_domain') {
+              canonicalUrl = `${scheme}${hostname}${path}`;
+            } else if (urlPattern.type === 'lovable_subdomain') {
+              canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+            } else {
+              const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
+              canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
+            }
+          }
+          
           return {
             title,
             description,
             og_image: image,
             keywords: funnel.seo_keywords || [],
-            canonical: funnel.canonical_url || `https://${domain}${path}`,
+            canonical: canonicalUrl,
             robots: funnel.meta_robots || 'index, follow',
             site_name: funnel.name,
             source: `funnel_landing|funnel:${funnel.id}`
@@ -584,6 +669,20 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       
       const image = normalizeImageUrl(pickedImage);
 
+      // Build canonical URL
+      let canonicalUrl = page.canonical_url;
+      if (!canonicalUrl) {
+        const scheme = 'https://';
+        if (urlPattern.type === 'custom_domain') {
+          canonicalUrl = `${scheme}${hostname}${path}`;
+        } else if (urlPattern.type === 'lovable_subdomain') {
+          canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+        } else {
+          const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
+          canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
+        }
+      }
+
       console.log(`🔎 Page SEO resolved for slug="${cleanPath}" (page:${page.id}, website:${websiteId})`);
       console.log(`   • title="${rawTitle}" [${titleSource}]`);
       console.log(`   • description="${rawDesc}" [${descSource}]`);
@@ -594,7 +693,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         description: rawDesc,
         og_image: image,
         keywords: page.seo_keywords || [],
-        canonical: page.canonical_url || `https://${domain}${path}`,
+        canonical: canonicalUrl,
         robots: page.meta_robots || 'index, follow',
         site_name: website.name,
         source: `website_page|website:${websiteId}|slug:${cleanPath}`,
@@ -615,12 +714,24 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       ? websiteSeoTitle.trim() 
       : website.name;
     
+    // Build canonical URL
+    const scheme = 'https://';
+    let canonicalUrl: string;
+    if (urlPattern.type === 'custom_domain') {
+      canonicalUrl = `${scheme}${hostname}${path}`;
+    } else if (urlPattern.type === 'lovable_subdomain') {
+      canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+    } else {
+      const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
+      canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
+    }
+    
     return {
       title: fallbackTitle,
       description: websiteSeoDescription,
       og_image: websiteImage,
       keywords: [],
-      canonical: `https://${domain}${path}`,
+      canonical: canonicalUrl,
       robots: 'index, follow',
       site_name: website.name,
       source: `website_fallback|website:${websiteId}`
@@ -762,8 +873,14 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
 export default async function handler(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
-  const hostname = url.hostname;
-  const pathname = url.pathname;
+  
+  // Get actual hostname from x-forwarded-host header (Vercel sets this)
+  const hostname = request.headers.get('x-forwarded-host') || url.hostname;
+  
+  // Get original path from query param (set by vercel.json rewrite)
+  const originalPath = url.searchParams.get('path') || url.pathname;
+  const pathname = originalPath.startsWith('/') ? originalPath : `/${originalPath}`;
+  
   const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
   
   console.log(`[${traceId}] 🌐 Request: ${hostname}${pathname} | UA: ${userAgent.substring(0, 80)}`);
@@ -771,7 +888,7 @@ export default async function handler(request: Request): Promise<Response> {
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);
   
-  // Detect URL pattern
+  // Detect URL pattern using original path
   const urlPattern = parseUrlPattern(hostname, pathname);
   const shouldHandleSEO = isSocialBot && (
     urlPattern.type === 'custom_domain' ||
