@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { ViteSitemap } from 'vite-plugin-sitemap';
+import sitemap from 'vite-plugin-sitemap';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
 // Define routes for sitemap generation
@@ -26,8 +26,8 @@ export default defineConfig(({ mode }) => ({
     mode === 'development' &&
     componentTagger(),
     // Sitemap generation for static pages
-    ViteSitemap({
-      baseUrl: 'https://get.ecombuildr.com', // Update with your domain
+    sitemap({
+      hostname: 'https://get.ecombuildr.com', // Update with your domain
       routes,
       generateRobotsTxt: true,
       robots: [
