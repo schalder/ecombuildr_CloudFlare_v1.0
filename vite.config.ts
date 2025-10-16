@@ -43,8 +43,8 @@ export default defineConfig(({ mode }) => ({
       minify: true,
       inject: {
         data: {
-          title: 'EcomBuildr - Build Your E-commerce Empire',
-          description: 'Create stunning e-commerce websites and sales funnels with our drag-and-drop builder. No coding required.',
+          title: 'Loading...',
+          description: 'Loading content...',
         },
       },
     }),

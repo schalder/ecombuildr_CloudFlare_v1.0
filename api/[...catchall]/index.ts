@@ -1054,9 +1054,13 @@ export default async function handler(request: Request): Promise<Response> {
   const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
   
   console.log(`[${traceId}] 🌐 Request: ${hostname}${pathname} | UA: ${userAgent.substring(0, 80)}`);
+  console.log(`[${traceId}] 🔍 Full User Agent: ${userAgent}`);
+  console.log(`[${traceId}] 🔍 Hostname: ${hostname}`);
+  console.log(`[${traceId}] 🔍 Pathname: ${pathname}`);
   
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);
+  console.log(`[${traceId}] 🤖 Is Social Bot: ${isSocialBot}`);
   
   // Detect URL pattern using original path
   const urlPattern = parseUrlPattern(hostname, pathname);
@@ -1075,9 +1079,11 @@ export default async function handler(request: Request): Promise<Response> {
     console.log(`🤖 Social crawler detected - generating SEO HTML`);
     
     try {
+      console.log(`[${traceId}] 🔍 Starting SEO resolution for ${hostname}${pathname}`);
       const seoData = await resolveSEOData(hostname, pathname);
       
       if (!seoData) {
+        console.log(`[${traceId}] ❌ resolveSEOData returned null for ${hostname}${pathname}`);
         console.log(`[${traceId}] ❌ No SEO data found - rendering minimal fallback`);
         const minimal = {
           title: urlPattern.identifier,
@@ -1090,10 +1096,14 @@ export default async function handler(request: Request): Promise<Response> {
           source: 'fallback_no_data'
         } as SEOData;
         const html = generateHTML(minimal, url.toString());
+        console.log(`[${traceId}] ⚠️ Fallback HTML length: ${html.length} characters`);
+        
         return new Response(html, {
           status: 200,
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
+            'Content-Length': html.length.toString(),
+            'Accept-Ranges': 'none', // Prevent range requests that cause 206
             'Cache-Control': 'public, max-age=120, s-maxage=120',
             'X-Trace-Id': traceId,
             'X-SEO-Source': 'fallback_no_data',
@@ -1108,11 +1118,14 @@ export default async function handler(request: Request): Promise<Response> {
       
       const html = generateHTML(seoData, url.toString());
       
+      console.log(`[${traceId}] ✅ Generated HTML length: ${html.length} characters`);
+      
       return new Response(html, {
         status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Content-Length': html.length.toString(),
+          'Accept-Ranges': 'none', // Prevent range requests that cause 206
           'Cache-Control': 'public, max-age=300, s-maxage=300',
           'X-Trace-Id': traceId,
           'X-SEO-Source': seoData.source || 'unknown',
@@ -1134,8 +1147,38 @@ export default async function handler(request: Request): Promise<Response> {
       });
 
     } catch (error) {
-      console.error('💥 SEO Handler error:', error);
-      return new Response('Internal Server Error', { status: 500 });
+      console.error(`[${traceId}] 💥 SEO Handler error:`, error);
+      console.error(`[${traceId}] 💥 Error details:`, {
+        message: error.message,
+        stack: error.stack,
+        hostname,
+        pathname,
+        userAgent: userAgent.substring(0, 100)
+      });
+      
+      // Return a proper error response instead of crashing
+      const errorHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Error - ${hostname}</title>
+  <meta name="description" content="Error loading content">
+</head>
+<body>
+  <h1>Error</h1>
+  <p>Unable to load content for ${hostname}</p>
+</body>
+</html>`;
+      
+      return new Response(errorHtml, {
+        status: 500,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Content-Length': errorHtml.length.toString(),
+          'Accept-Ranges': 'none',
+          'X-Trace-Id': traceId,
+          'X-SEO-Error': 'handler-error'
+        },
+      });
     }
   }
   
