@@ -2,6 +2,19 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { ViteSitemap } from 'vite-plugin-sitemap';
+import { createHtmlPlugin } from 'vite-plugin-html';
+import { ViteSSG } from 'vite-ssg';
+
+// Define routes for SSG and sitemap
+const routes = [
+  { path: '/', name: 'Home' },
+  { path: '/about', name: 'About' },
+  { path: '/pricing', name: 'Pricing' },
+  { path: '/features', name: 'Features' },
+  { path: '/contact', name: 'Contact' },
+  // Add more static routes as needed
+];
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -13,6 +26,35 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
+    // SSG for static pages
+    ViteSSG({
+      includedRoutes: () => routes,
+      // Only pre-render static marketing pages, not dynamic user content
+      prerenderRoutes: routes.map(r => r.path),
+    }),
+    // Sitemap generation
+    ViteSitemap({
+      baseUrl: 'https://get.ecombuildr.com', // Update with your domain
+      routes,
+      generateRobotsTxt: true,
+      robots: [
+        {
+          userAgent: '*',
+          allow: '/',
+          disallow: ['/admin', '/dashboard', '/api/'],
+        },
+      ],
+    }),
+    // HTML plugin for meta injection
+    createHtmlPlugin({
+      minify: true,
+      inject: {
+        data: {
+          title: 'EcomBuildr - Build Your E-commerce Empire',
+          description: 'Create stunning e-commerce websites and sales funnels with our drag-and-drop builder. No coding required.',
+        },
+      },
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {

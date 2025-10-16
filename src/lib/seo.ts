@@ -62,24 +62,6 @@ export function buildCanonical(currentPath?: string, canonicalDomain?: string) {
   return undefined;
 }
 
-// Add this helper at the top of the file
-function updateMetaTag(selector: string, attribute: string, value: string) {
-  const element = document.querySelector(selector);
-  if (element) {
-    element.setAttribute(attribute, value);
-  } else {
-    // Create the tag if it doesn't exist
-    const meta = document.createElement('meta');
-    if (attribute === 'property') {
-      meta.setAttribute('property', selector.match(/\[property="(.+?)"\]/)?.[1] || '');
-    } else {
-      meta.setAttribute('name', selector.match(/\[name="(.+?)"\]/)?.[1] || '');
-    }
-    meta.setAttribute('content', value);
-    document.head.appendChild(meta);
-  }
-}
-
 export function setSEO(input: SEOConfig) {
   const callerInfo = new Error().stack?.split('\n')[2]?.trim() || 'unknown caller';
   logger.debug('🔍 setSEO called with:', { 
@@ -97,61 +79,56 @@ export function setSEO(input: SEOConfig) {
   // Title
   if (cfg.title) {
     document.title = cfg.title;
-    updateMetaTag('meta[property="og:title"]', 'content', cfg.title);
-    updateMetaTag('meta[name="twitter:title"]', 'content', cfg.title);
+    upsertMeta('meta[property="og:title"]', { property: 'og:title', content: cfg.title });
+    upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: cfg.title });
   }
 
   // Description
   if (cfg.description) {
-    updateMetaTag('meta[name="description"]', 'content', cfg.description);
-    updateMetaTag('meta[property="og:description"]', 'content', cfg.description);
-    updateMetaTag('meta[name="twitter:description"]', 'content', cfg.description);
+    upsertMeta('meta[name="description"]', { name: 'description', content: cfg.description });
+    upsertMeta('meta[property="og:description"]', { property: 'og:description', content: cfg.description });
+    upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: cfg.description });
   }
 
   // Image
   const imageUrl = cfg.socialImageUrl || cfg.image;
   if (imageUrl) {
-    updateMetaTag('meta[property="og:image"]', 'content', imageUrl);
-    updateMetaTag('meta[property="og:image:secure_url"]', 'content', imageUrl);
-    updateMetaTag('meta[name="twitter:image"]', 'content', imageUrl);
+    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: imageUrl });
+    upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: imageUrl });
   }
 
   // Keywords
   if (cfg.keywords && cfg.keywords.length > 0) {
-    updateMetaTag('meta[name="keywords"]', 'content', cfg.keywords.join(', '));
+    upsertMeta('meta[name="keywords"]', { name: 'keywords', content: cfg.keywords.join(', ') });
   }
 
   // Author
   if (cfg.author) {
-    updateMetaTag('meta[name="author"]', 'content', cfg.author);
+    upsertMeta('meta[name="author"]', { name: 'author', content: cfg.author });
   }
 
   // Language
   if (cfg.languageCode) {
-    updateMetaTag('meta[name="language"]', 'content', cfg.languageCode);
+    upsertMeta('meta[name="language"]', { name: 'language', content: cfg.languageCode });
     document.documentElement.lang = cfg.languageCode;
   }
 
   // Custom Meta Tags
   if (cfg.customMetaTags) {
-    cfg.customMetaTags.forEach(tag => {
-      updateMetaTag(`meta[name="${tag.name}"]`, 'content', tag.content);
+    cfg.customMetaTags.forEach((tag, index) => {
+      upsertMeta(`meta[name="${tag.name}"]`, { name: tag.name, content: tag.content });
     });
   }
 
-  // Site name
+  // Site name & type
   if (cfg.siteName) {
-    updateMetaTag('meta[property="og:site_name"]', 'content', cfg.siteName);
+    upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: cfg.siteName });
   }
-
-  // OG Type
   if (cfg.ogType) {
-    updateMetaTag('meta[property="og:type"]', 'content', cfg.ogType);
+    upsertMeta('meta[property="og:type"]', { property: 'og:type', content: cfg.ogType });
   }
-
-  // Locale
   if (cfg.locale) {
-    updateMetaTag('meta[property="og:locale"]', 'content', cfg.locale);
+    upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: cfg.locale });
   }
 
   // Twitter card
@@ -164,7 +141,7 @@ export function setSEO(input: SEOConfig) {
 
   // Robots
   if (cfg.robots) {
-    updateMetaTag('meta[name="robots"]', 'content', cfg.robots);
+    upsertMeta('meta[name="robots"]', { name: 'robots', content: cfg.robots });
   }
 
   // Favicon with race condition protection
