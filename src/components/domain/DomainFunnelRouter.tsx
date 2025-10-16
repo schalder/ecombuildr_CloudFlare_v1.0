@@ -16,6 +16,7 @@ import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
 import { PaymentProcessing } from '@/pages/storefront/PaymentProcessing';
 import { OrderConfirmation } from '@/pages/storefront/OrderConfirmation';
+import { SEOHead } from '@/components/SEOHead';
 
 interface FunnelData {
   id: string;
@@ -198,6 +199,19 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
 
   return (
     <FunnelStepProvider stepId={step.id} funnelId={funnel.id}>
+      <SEOHead
+        title={step.seo_title || step.title}
+        description={step.seo_description || step.description}
+        ogImage={step.social_image_url || step.og_image}
+        socialImageUrl={step.social_image_url}
+        keywords={step.seo_keywords ? step.seo_keywords.split(',').map(k => k.trim()) : []}
+        canonical={step.canonical_url || window.location.href}
+        noIndex={step.meta_robots === 'noindex, nofollow'}
+        author={step.meta_author}
+        languageCode={step.language_code}
+        metaRobots={step.meta_robots}
+        customMetaTags={step.custom_meta_tags || []}
+      />
       <FontOptimizer />
       <PerformanceMonitor page={`funnel-${stepSlug || 'home'}`} />
       {!useStorefront && (
