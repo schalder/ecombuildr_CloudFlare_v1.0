@@ -161,6 +161,7 @@ async function generateSEOHTML(content, env) {
     const contentData = await fetchContentData(content, env);
     
     if (!contentData) {
+      console.log('No content data found, using fallback');
       return generateFallbackHTML();
     }
     
@@ -258,7 +259,8 @@ async function fetchContentData(content, env) {
     switch (content.type) {
       case 'website_page':
         // First get the website to find the website_id
-        const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${content.storeSlug}&select=id,store_name,store_slug`, {
+        console.log(`🔍 Step 1: Getting website for store_slug: ${content.storeSlug}`);
+        const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,store_name,store_slug`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -266,22 +268,28 @@ async function fetchContentData(content, env) {
           }
         });
         
+        console.log(`🔍 Website query status: ${websiteResponse.status}`);
+        
         if (!websiteResponse.ok) {
-          console.error('Website query failed:', websiteResponse.status);
+          const errorText = await websiteResponse.text();
+          console.error('Website query failed:', websiteResponse.status, errorText);
           return null;
         }
         
         const websites = await websiteResponse.json();
+        console.log(`🔍 Found ${websites.length} websites`);
+        
         if (!websites || websites.length === 0) {
           console.log('Website not found');
           return null;
         }
         
         const website = websites[0];
-        console.log('Found website:', website);
+        console.log('✅ Found website:', { id: website.id, name: website.store_name });
         
         // Now get the website page with SEO data
-        const pageResponse = await fetch(`${supabaseUrl}/rest/v1/website_pages?website_id=eq.${website.id}&slug=eq.${content.pageSlug}&select=seo_title,seo_description,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots`, {
+        console.log(`🔍 Step 2: Getting page for website_id: ${website.id}, slug: ${content.pageSlug}`);
+        const pageResponse = await fetch(`${supabaseUrl}/rest/v1/website_pages?website_id=eq.${website.id}&slug=eq.${encodeURIComponent(content.pageSlug)}&select=seo_title,seo_description,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -289,19 +297,24 @@ async function fetchContentData(content, env) {
           }
         });
         
+        console.log(`🔍 Page query status: ${pageResponse.status}`);
+        
         if (!pageResponse.ok) {
-          console.error('Page query failed:', pageResponse.status);
+          const errorText = await pageResponse.text();
+          console.error('Page query failed:', pageResponse.status, errorText);
           return null;
         }
         
         const pages = await pageResponse.json();
+        console.log(`🔍 Found ${pages.length} pages`);
+        
         if (!pages || pages.length === 0) {
           console.log('Page not found');
           return null;
         }
         
         const page = pages[0];
-        console.log('Found page:', page);
+        console.log('✅ Found page:', { title: page.seo_title, description: page.seo_description });
         
         seoData = {
           title: page.seo_title || `${website.store_name} - EcomBuildr`,
@@ -318,8 +331,11 @@ async function fetchContentData(content, env) {
         break;
         
       case 'funnel_step':
-        // First get the website to find the website_id
-        const websiteResponse2 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${content.storeSlug}&select=id,store_name,store_slug`, {
+        // Similar logic for funnel steps
+        console.log(`🔍 Getting funnel step data for: ${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`);
+        
+        // First get the website
+        const websiteResponse2 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,store_name,store_slug`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -328,7 +344,8 @@ async function fetchContentData(content, env) {
         });
         
         if (!websiteResponse2.ok) {
-          console.error('Website query failed:', websiteResponse2.status);
+          const errorText = await websiteResponse2.text();
+          console.error('Website query failed:', websiteResponse2.status, errorText);
           return null;
         }
         
@@ -341,7 +358,7 @@ async function fetchContentData(content, env) {
         const website2 = websites2[0];
         
         // Get the funnel
-        const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website2.id}&funnel_slug=eq.${content.funnelSlug}&select=id,funnel_name,funnel_slug`, {
+        const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website2.id}&funnel_slug=eq.${encodeURIComponent(content.funnelSlug)}&select=id,funnel_name,funnel_slug`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -350,7 +367,8 @@ async function fetchContentData(content, env) {
         });
         
         if (!funnelResponse.ok) {
-          console.error('Funnel query failed:', funnelResponse.status);
+          const errorText = await funnelResponse.text();
+          console.error('Funnel query failed:', funnelResponse.status, errorText);
           return null;
         }
         
@@ -363,7 +381,7 @@ async function fetchContentData(content, env) {
         const funnel = funnels[0];
         
         // Get the funnel step with SEO data
-        const stepResponse = await fetch(`${supabaseUrl}/rest/v1/funnel_steps?funnel_id=eq.${funnel.id}&slug=eq.${content.stepSlug}&select=seo_title,seo_description,og_image,custom_scripts,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots`, {
+        const stepResponse = await fetch(`${supabaseUrl}/rest/v1/funnel_steps?funnel_id=eq.${funnel.id}&slug=eq.${encodeURIComponent(content.stepSlug)}&select=seo_title,seo_description,og_image,custom_scripts,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -372,7 +390,8 @@ async function fetchContentData(content, env) {
         });
         
         if (!stepResponse.ok) {
-          console.error('Step query failed:', stepResponse.status);
+          const errorText = await stepResponse.text();
+          console.error('Step query failed:', stepResponse.status, errorText);
           return null;
         }
         
@@ -400,7 +419,7 @@ async function fetchContentData(content, env) {
         
       case 'website_home':
         // Get website basic info
-        const websiteResponse3 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${content.storeSlug}&select=store_name,store_description,store_logo`, {
+        const websiteResponse3 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${encodeURIComponent(content.storeSlug)}&select=store_name,store_description,store_logo`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -409,7 +428,8 @@ async function fetchContentData(content, env) {
         });
         
         if (!websiteResponse3.ok) {
-          console.error('Website query failed:', websiteResponse3.status);
+          const errorText = await websiteResponse3.text();
+          console.error('Website query failed:', websiteResponse3.status, errorText);
           return null;
         }
         
@@ -437,7 +457,7 @@ async function fetchContentData(content, env) {
         
       case 'funnel_home':
         // Get funnel basic info
-        const websiteResponse4 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${content.storeSlug}&select=id,store_name`, {
+        const websiteResponse4 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,store_name`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -446,7 +466,8 @@ async function fetchContentData(content, env) {
         });
         
         if (!websiteResponse4.ok) {
-          console.error('Website query failed:', websiteResponse4.status);
+          const errorText = await websiteResponse4.text();
+          console.error('Website query failed:', websiteResponse4.status, errorText);
           return null;
         }
         
@@ -458,7 +479,7 @@ async function fetchContentData(content, env) {
         
         const website4 = websites4[0];
         
-        const funnelResponse2 = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website4.id}&funnel_slug=eq.${content.funnelSlug}&select=funnel_name,funnel_description,funnel_image`, {
+        const funnelResponse2 = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website4.id}&funnel_slug=eq.${encodeURIComponent(content.funnelSlug)}&select=funnel_name,funnel_description,funnel_image`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -467,7 +488,8 @@ async function fetchContentData(content, env) {
         });
         
         if (!funnelResponse2.ok) {
-          console.error('Funnel query failed:', funnelResponse2.status);
+          const errorText = await funnelResponse2.text();
+          console.error('Funnel query failed:', funnelResponse2.status, errorText);
           return null;
         }
         
