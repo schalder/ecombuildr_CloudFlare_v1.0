@@ -1041,7 +1041,8 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
 }
 
 export default async function handler(request: Request): Promise<Response> {
-  const url = new URL(request.url);
+  try {
+    const url = new URL(request.url);
   const userAgent = request.headers.get('user-agent') || '';
   
   // Get actual hostname from x-forwarded-host header (Vercel sets this)
@@ -1054,13 +1055,9 @@ export default async function handler(request: Request): Promise<Response> {
   const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
   
   console.log(`[${traceId}] 🌐 Request: ${hostname}${pathname} | UA: ${userAgent.substring(0, 80)}`);
-  console.log(`[${traceId}] 🔍 Full User Agent: ${userAgent}`);
-  console.log(`[${traceId}] 🔍 Hostname: ${hostname}`);
-  console.log(`[${traceId}] 🔍 Pathname: ${pathname}`);
   
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);
-  console.log(`[${traceId}] 🤖 Is Social Bot: ${isSocialBot}`);
   
   // Detect URL pattern using original path
   const urlPattern = parseUrlPattern(hostname, pathname);
@@ -1079,11 +1076,9 @@ export default async function handler(request: Request): Promise<Response> {
     console.log(`🤖 Social crawler detected - generating SEO HTML`);
     
     try {
-      console.log(`[${traceId}] 🔍 Starting SEO resolution for ${hostname}${pathname}`);
       const seoData = await resolveSEOData(hostname, pathname);
       
       if (!seoData) {
-        console.log(`[${traceId}] ❌ resolveSEOData returned null for ${hostname}${pathname}`);
         console.log(`[${traceId}] ❌ No SEO data found - rendering minimal fallback`);
         const minimal = {
           title: urlPattern.identifier,
@@ -1096,14 +1091,10 @@ export default async function handler(request: Request): Promise<Response> {
           source: 'fallback_no_data'
         } as SEOData;
         const html = generateHTML(minimal, url.toString());
-        console.log(`[${traceId}] ⚠️ Fallback HTML length: ${html.length} characters`);
-        
         return new Response(html, {
           status: 200,
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
-            'Content-Length': html.length.toString(),
-            'Accept-Ranges': 'none', // Prevent range requests that cause 206
             'Cache-Control': 'public, max-age=120, s-maxage=120',
             'X-Trace-Id': traceId,
             'X-SEO-Source': 'fallback_no_data',
@@ -1118,14 +1109,11 @@ export default async function handler(request: Request): Promise<Response> {
       
       const html = generateHTML(seoData, url.toString());
       
-      console.log(`[${traceId}] ✅ Generated HTML length: ${html.length} characters`);
-      
       return new Response(html, {
         status: 200,
         headers: {
           'Content-Type': 'text/html; charset=utf-8',
           'Content-Length': html.length.toString(),
-          'Accept-Ranges': 'none', // Prevent range requests that cause 206
           'Cache-Control': 'public, max-age=300, s-maxage=300',
           'X-Trace-Id': traceId,
           'X-SEO-Source': seoData.source || 'unknown',
@@ -1147,89 +1135,19 @@ export default async function handler(request: Request): Promise<Response> {
       });
 
     } catch (error) {
-      console.error(`[${traceId}] 💥 SEO Handler error:`, error);
-      console.error(`[${traceId}] 💥 Error details:`, {
-        message: error.message,
-        stack: error.stack,
-        hostname,
-        pathname,
-        userAgent: userAgent.substring(0, 100)
-      });
-      
-      // Return a proper error response instead of crashing
-      const errorHtml = `<!DOCTYPE html>
-<html>
-<head>
-  <title>Error - ${hostname}</title>
-  <meta name="description" content="Error loading content">
-</head>
-<body>
-  <h1>Error</h1>
-  <p>Unable to load content for ${hostname}</p>
-</body>
-</html>`;
-      
-      return new Response(errorHtml, {
-        status: 500,
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Content-Length': errorHtml.length.toString(),
-          'Accept-Ranges': 'none',
-          'X-Trace-Id': traceId,
-          'X-SEO-Error': 'handler-error'
-        },
-      });
+      console.error('💥 SEO Handler error:', error);
+      return new Response('Internal Server Error', { status: 500 });
     }
   }
   
-  // For non-social crawlers or unsupported patterns, serve the SPA
-  console.log(`[${traceId}] 👤 Non-social crawler or unsupported pattern - serving SPA`);
+  // For non-social crawlers or unsupported patterns, pass through
+  console.log('👤 Non-social crawler or unsupported pattern - passing through');
+  return new Response('', { status: 200 });
   
-  // Serve the static index.html for regular users
-  const indexHtml = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Loading...</title>
-    <meta name="description" content="Loading content..." />
-    <meta name="robots" content="index, follow" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
-    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
-    <style>
-      @keyframes shimmer {
-        0% { background-position: -200% 0; }
-        100% { background-position: 200% 0; }
-      }
-      .image-container { position: relative; overflow: hidden; background-color: hsl(var(--muted)); }
-      .image-container::before { content: ''; display: block; width: 100%; height: 0; padding-bottom: var(--aspect-ratio, 56.25%); }
-      .image-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s ease; }
-      .loading-shimmer { background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.1) 50%, hsl(var(--muted)) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
-      picture { display: block; width: 100%; height: 100%; }
-      img[width][height] { aspect-ratio: attr(width) / attr(height); }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>`;
-
-  return new Response(indexHtml, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Content-Length': indexHtml.length.toString(),
-      'Cache-Control': 'public, max-age=0, must-revalidate',
-      'X-Trace-Id': traceId,
-      'X-SEO-Source': 'spa-fallback'
-    },
-  });
+  } catch (error) {
+    console.error('💥 Handler error:', error);
+    return new Response('Internal Server Error', { status: 500 });
+  }
 }
 
 
