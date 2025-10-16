@@ -1,9 +1,9 @@
-// Cloudflare Pages Function - exact format from documentation
+// Cloudflare Pages Function for API routes
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     
-    // Simple test response
+    // Test endpoint
     if (url.pathname === '/api/test') {
       return new Response(JSON.stringify({
         message: 'Cloudflare Pages Function is working!',
