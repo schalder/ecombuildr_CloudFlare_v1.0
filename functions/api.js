@@ -1,14 +1,14 @@
-// Cloudflare Pages Function for API routes
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
+// Cloudflare Pages Function for API routes - correct format from documentation
+export async function onRequest(context) {
+  try {
+    const url = new URL(context.request.url);
     
     // Test endpoint
     if (url.pathname === '/api/test') {
       return new Response(JSON.stringify({
         message: 'Cloudflare Pages Function is working!',
         url: url.toString(),
-        method: request.method,
+        method: context.request.method,
         timestamp: new Date().toISOString()
       }), {
         headers: {
@@ -19,6 +19,9 @@ export default {
     }
     
     // For all other requests, pass through
-    return new Response(null, { status: 200 });
+    return await context.next();
+    
+  } catch (error) {
+    return new Response('Error: ' + error.message, { status: 500 });
   }
-};
+}

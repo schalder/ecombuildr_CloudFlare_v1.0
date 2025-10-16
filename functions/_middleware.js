@@ -1,8 +1,8 @@
-// Cloudflare Pages Functions middleware
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const userAgent = request.headers.get('user-agent') || '';
+// Cloudflare Pages Functions Middleware - correct format from documentation
+export async function onRequest(context) {
+  try {
+    const url = new URL(context.request.url);
+    const userAgent = context.request.headers.get('user-agent') || '';
     
     console.log(`🌐 Middleware: ${url.pathname} | UA: ${userAgent.substring(0, 80)}`);
     
@@ -14,8 +14,8 @@ export default {
         userAgent: userAgent.substring(0, 100),
         timestamp: new Date().toISOString(),
         env: {
-          hasSupabaseUrl: !!env.SUPABASE_URL,
-          hasSupabaseKey: !!env.SUPABASE_ANON_KEY
+          hasSupabaseUrl: !!context.env.SUPABASE_URL,
+          hasSupabaseKey: !!context.env.SUPABASE_ANON_KEY
         }
       }), {
         headers: {
@@ -26,6 +26,9 @@ export default {
     }
     
     // For all other requests, pass through to Pages
-    return new Response(null, { status: 200 });
+    return await context.next();
+    
+  } catch (err) {
+    return new Response(`${err.message}\n${err.stack}`, { status: 500 });
   }
-};
+}

@@ -1,18 +1,18 @@
-// Cloudflare Pages Function with proper types
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
+// Cloudflare Pages Function with proper types - correct format from documentation
+export async function onRequest(context) {
+  try {
+    const url = new URL(context.request.url);
     
     // Test endpoint
     if (url.pathname === '/test') {
       return new Response(JSON.stringify({
         message: 'Cloudflare Pages Function is working!',
         url: url.toString(),
-        method: request.method,
+        method: context.request.method,
         timestamp: new Date().toISOString(),
         env: {
-          hasSupabaseUrl: !!env.SUPABASE_URL,
-          hasSupabaseKey: !!env.SUPABASE_ANON_KEY
+          hasSupabaseUrl: !!context.env.SUPABASE_URL,
+          hasSupabaseKey: !!context.env.SUPABASE_ANON_KEY
         }
       }), {
         headers: {
@@ -23,6 +23,9 @@ export default {
     }
     
     // For all other requests, pass through
-    return new Response(null, { status: 200 });
+    return await context.next();
+    
+  } catch (error) {
+    return new Response('Error: ' + error.message, { status: 500 });
   }
-};
+}
