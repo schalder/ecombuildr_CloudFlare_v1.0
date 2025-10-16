@@ -8,10 +8,12 @@ import { useCart } from '@/contexts/CartContext';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { supabase } from '@/integrations/supabase/client';
 
+// Import centralized domain detection
 const isCustomDomain = () => {
   const currentHost = window.location.hostname;
   return !(
     currentHost === 'ecombuildr.com' || 
+    currentHost === 'ecombuildr.pages.dev' ||  // Cloudflare Pages system domain
     currentHost === 'localhost' || 
     currentHost.includes('lovable.app') ||
     currentHost.includes('lovableproject.com')

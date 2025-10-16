@@ -76,7 +76,13 @@ export const ProductDetail: React.FC = () => {
   // Detect if we're in a website context (either system domain or custom domain)
   const isCustomDomain = () => {
     const currentHost = window.location.hostname;
-    return !(currentHost === 'ecombuildr.com' || currentHost === 'localhost' || currentHost.includes('lovable.app'));
+    return !(
+      currentHost === 'ecombuildr.com' || 
+      currentHost === 'ecombuildr.pages.dev' ||  // Cloudflare Pages system domain
+      currentHost === 'localhost' || 
+      currentHost.includes('lovable.app') ||
+      currentHost.includes('lovableproject.com')
+    );
   };
   const isWebsiteContext = Boolean(websiteId || websiteSlug || isCustomDomain());
   
