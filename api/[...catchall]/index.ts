@@ -6,7 +6,19 @@ export default async function handler(request: Request): Promise<Response> {
   const protocol = request.headers.get('x-forwarded-proto') || 'https';
   
   // Get original path from query param (set by vercel.json rewrite)
-  const pathname = new URL(request.url).searchParams.get('path') || '/';
+  let pathname = '/';
+  try {
+    // Try to parse the URL safely
+    const url = new URL(request.url);
+    pathname = url.searchParams.get('path') || '/';
+  } catch (error) {
+    // If URL parsing fails, try to extract path from the URL string manually
+    const urlString = request.url;
+    const pathMatch = urlString.match(/[?&]path=([^&]*)/);
+    if (pathMatch) {
+      pathname = decodeURIComponent(pathMatch[1]) || '/';
+    }
+  }
   
   const traceId = Math.random().toString(36).slice(2);
   console.log(`[${traceId}] 🔍 SEO Handler - ${hostname}${pathname} | UA: ${userAgent.substring(0, 50)}...`);
