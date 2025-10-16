@@ -10,6 +10,10 @@ NODE_ENV = "production"
 SUPABASE_URL = "https://fhqwacmokbtbspkxjixf.supabase.co"
 SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM"
 
+# Pages Functions configuration
+[build]
+command = "npm run build"
+
 # Force new deployment
 # KV namespace for caching (optional but recommended for SEO data)
 # [[kv_namespaces]]
