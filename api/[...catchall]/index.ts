@@ -1,10 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-
-const SUPABASE_URL = 'https://fhqwacmokbtbspkxjixf.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZocXdhY21va2J0YnNwa3hqaXhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM2MjYyMzUsImV4cCI6MjA2OTIwMjIzNX0.BaqDCDcynSahyDxEUIyZLLtyXpd959y5Tv6t6tIF3GM';
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
 // Cache for the HTML template
 let htmlTemplateCache: string | null = null;
 let templateCacheTime = 0;
