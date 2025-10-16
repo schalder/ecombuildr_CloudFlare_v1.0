@@ -3,7 +3,7 @@
   "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
   "functions": {
-    "api/seo/index.ts": {
+    "seo.js": {
       "runtime": "nodejs18.x"
     }
   },
@@ -14,7 +14,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/api/seo"
+      "destination": "/seo.js"
     }
   ],
   "headers": [
