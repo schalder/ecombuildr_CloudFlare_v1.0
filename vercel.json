@@ -1,10 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "api/seo/index.ts": {
-      "runtime": "edge"
-    }
-  },
   "rewrites": [
     {
       "source": "/api/(.*)",
