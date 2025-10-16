@@ -164,15 +164,19 @@ async function generateSEOHTML(content, env) {
       return generateFallbackHTML();
     }
     
-    const { title, description, image, url } = contentData;
+    const { title, description, image, url, keywords, author, canonical, robots, customMetaTags, language } = contentData;
     
     return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${language || 'en'}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title || 'EcomBuildr'}</title>
     <meta name="description" content="${description || 'Build and manage your e-commerce store with EcomBuildr'}">
+    ${keywords ? `<meta name="keywords" content="${keywords}">` : ''}
+    ${author ? `<meta name="author" content="${author}">` : ''}
+    ${robots ? `<meta name="robots" content="${robots}">` : '<meta name="robots" content="index, follow">'}
+    ${canonical ? `<link rel="canonical" href="${canonical}">` : `<link rel="canonical" href="${url}">`}
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -180,6 +184,9 @@ async function generateSEOHTML(content, env) {
     <meta property="og:title" content="${title || 'EcomBuildr'}">
     <meta property="og:description" content="${description || 'Build and manage your e-commerce store with EcomBuildr'}">
     <meta property="og:image" content="${image || 'https://app.ecombuildr.com/og-image.jpg'}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="EcomBuildr">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -188,10 +195,8 @@ async function generateSEOHTML(content, env) {
     <meta property="twitter:description" content="${description || 'Build and manage your e-commerce store with EcomBuildr'}">
     <meta property="twitter:image" content="${image || 'https://app.ecombuildr.com/og-image.jpg'}">
     
-    <!-- Additional SEO -->
-    <meta name="robots" content="index, follow">
-    <meta name="author" content="EcomBuildr">
-    <link rel="canonical" href="${url}">
+    <!-- Custom Meta Tags -->
+    ${customMetaTags || ''}
     
     <style>
         body { 
@@ -235,7 +240,7 @@ async function generateSEOHTML(content, env) {
   }
 }
 
-// Fetch content data from Supabase
+// Fetch content data from Supabase using correct SEO columns
 async function fetchContentData(content, env) {
   try {
     const supabaseUrl = env.SUPABASE_URL;
@@ -246,106 +251,254 @@ async function fetchContentData(content, env) {
       return null;
     }
     
-    let query = '';
-    let params = {};
+    console.log(`🔍 Fetching SEO data for:`, content);
+    
+    let seoData = null;
     
     switch (content.type) {
       case 'website_page':
-        query = `
-          SELECT 
-            wp.title,
-            wp.description,
-            wp.seo_image,
-            ws.store_name,
-            ws.store_slug
-          FROM website_pages wp
-          JOIN websites ws ON wp.website_id = ws.id
-          WHERE ws.store_slug = $1 AND wp.slug = $2
-        `;
-        params = { $1: content.storeSlug, $2: content.pageSlug };
+        // First get the website to find the website_id
+        const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${content.storeSlug}&select=id,store_name,store_slug`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!websiteResponse.ok) {
+          console.error('Website query failed:', websiteResponse.status);
+          return null;
+        }
+        
+        const websites = await websiteResponse.json();
+        if (!websites || websites.length === 0) {
+          console.log('Website not found');
+          return null;
+        }
+        
+        const website = websites[0];
+        console.log('Found website:', website);
+        
+        // Now get the website page with SEO data
+        const pageResponse = await fetch(`${supabaseUrl}/rest/v1/website_pages?website_id=eq.${website.id}&slug=eq.${content.pageSlug}&select=seo_title,seo_description,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!pageResponse.ok) {
+          console.error('Page query failed:', pageResponse.status);
+          return null;
+        }
+        
+        const pages = await pageResponse.json();
+        if (!pages || pages.length === 0) {
+          console.log('Page not found');
+          return null;
+        }
+        
+        const page = pages[0];
+        console.log('Found page:', page);
+        
+        seoData = {
+          title: page.seo_title || `${website.store_name} - EcomBuildr`,
+          description: page.seo_description || `Visit ${website.store_name} on EcomBuildr`,
+          image: page.social_image_url || 'https://app.ecombuildr.com/og-image.jpg',
+          url: `https://app.ecombuildr.com/site/${content.storeSlug}/${content.pageSlug}`,
+          keywords: page.seo_keywords,
+          author: page.meta_author,
+          canonical: page.canonical_url,
+          robots: page.meta_robots,
+          customMetaTags: page.custom_meta_tags,
+          language: page.language_code
+        };
         break;
         
       case 'funnel_step':
-        query = `
-          SELECT 
-            fs.title,
-            fs.description,
-            fs.seo_image,
-            ws.store_name,
-            ws.store_slug,
-            f.funnel_name,
-            f.funnel_slug
-          FROM funnel_steps fs
-          JOIN funnels f ON fs.funnel_id = f.id
-          JOIN websites ws ON f.website_id = ws.id
-          WHERE ws.store_slug = $1 AND f.funnel_slug = $2 AND fs.slug = $3
-        `;
-        params = { $1: content.storeSlug, $2: content.funnelSlug, $3: content.stepSlug };
+        // First get the website to find the website_id
+        const websiteResponse2 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${content.storeSlug}&select=id,store_name,store_slug`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!websiteResponse2.ok) {
+          console.error('Website query failed:', websiteResponse2.status);
+          return null;
+        }
+        
+        const websites2 = await websiteResponse2.json();
+        if (!websites2 || websites2.length === 0) {
+          console.log('Website not found');
+          return null;
+        }
+        
+        const website2 = websites2[0];
+        
+        // Get the funnel
+        const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website2.id}&funnel_slug=eq.${content.funnelSlug}&select=id,funnel_name,funnel_slug`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!funnelResponse.ok) {
+          console.error('Funnel query failed:', funnelResponse.status);
+          return null;
+        }
+        
+        const funnels = await funnelResponse.json();
+        if (!funnels || funnels.length === 0) {
+          console.log('Funnel not found');
+          return null;
+        }
+        
+        const funnel = funnels[0];
+        
+        // Get the funnel step with SEO data
+        const stepResponse = await fetch(`${supabaseUrl}/rest/v1/funnel_steps?funnel_id=eq.${funnel.id}&slug=eq.${content.stepSlug}&select=seo_title,seo_description,og_image,custom_scripts,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!stepResponse.ok) {
+          console.error('Step query failed:', stepResponse.status);
+          return null;
+        }
+        
+        const steps = await stepResponse.json();
+        if (!steps || steps.length === 0) {
+          console.log('Step not found');
+          return null;
+        }
+        
+        const step = steps[0];
+        
+        seoData = {
+          title: step.seo_title || `${funnel.funnel_name} - ${website2.store_name}`,
+          description: step.seo_description || `Visit ${funnel.funnel_name} on ${website2.store_name}`,
+          image: step.social_image_url || step.og_image || 'https://app.ecombuildr.com/og-image.jpg',
+          url: `https://app.ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`,
+          keywords: step.seo_keywords,
+          author: step.meta_author,
+          canonical: step.canonical_url,
+          robots: step.meta_robots,
+          customMetaTags: step.custom_meta_tags,
+          language: step.language_code
+        };
         break;
         
       case 'website_home':
-        query = `
-          SELECT 
-            ws.store_name as title,
-            ws.store_description as description,
-            ws.store_logo as seo_image,
-            ws.store_slug
-          FROM websites ws
-          WHERE ws.store_slug = $1
-        `;
-        params = { $1: content.storeSlug };
+        // Get website basic info
+        const websiteResponse3 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${content.storeSlug}&select=store_name,store_description,store_logo`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!websiteResponse3.ok) {
+          console.error('Website query failed:', websiteResponse3.status);
+          return null;
+        }
+        
+        const websites3 = await websiteResponse3.json();
+        if (!websites3 || websites3.length === 0) {
+          console.log('Website not found');
+          return null;
+        }
+        
+        const website3 = websites3[0];
+        
+        seoData = {
+          title: website3.store_name || 'EcomBuildr',
+          description: website3.store_description || 'Build and manage your e-commerce store with EcomBuildr',
+          image: website3.store_logo || 'https://app.ecombuildr.com/og-image.jpg',
+          url: `https://app.ecombuildr.com/site/${content.storeSlug}`,
+          keywords: null,
+          author: null,
+          canonical: null,
+          robots: 'index, follow',
+          customMetaTags: null,
+          language: 'en'
+        };
         break;
         
       case 'funnel_home':
-        query = `
-          SELECT 
-            f.funnel_name as title,
-            f.funnel_description as description,
-            f.funnel_image as seo_image,
-            ws.store_name,
-            ws.store_slug,
-            f.funnel_slug
-          FROM funnels f
-          JOIN websites ws ON f.website_id = ws.id
-          WHERE ws.store_slug = $1 AND f.funnel_slug = $2
-        `;
-        params = { $1: content.storeSlug, $2: content.funnelSlug };
+        // Get funnel basic info
+        const websiteResponse4 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${content.storeSlug}&select=id,store_name`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!websiteResponse4.ok) {
+          console.error('Website query failed:', websiteResponse4.status);
+          return null;
+        }
+        
+        const websites4 = await websiteResponse4.json();
+        if (!websites4 || websites4.length === 0) {
+          console.log('Website not found');
+          return null;
+        }
+        
+        const website4 = websites4[0];
+        
+        const funnelResponse2 = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website4.id}&funnel_slug=eq.${content.funnelSlug}&select=funnel_name,funnel_description,funnel_image`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!funnelResponse2.ok) {
+          console.error('Funnel query failed:', funnelResponse2.status);
+          return null;
+        }
+        
+        const funnels2 = await funnelResponse2.json();
+        if (!funnels2 || funnels2.length === 0) {
+          console.log('Funnel not found');
+          return null;
+        }
+        
+        const funnel2 = funnels2[0];
+        
+        seoData = {
+          title: funnel2.funnel_name || 'EcomBuildr',
+          description: funnel2.funnel_description || 'Build and manage your e-commerce store with EcomBuildr',
+          image: funnel2.funnel_image || 'https://app.ecombuildr.com/og-image.jpg',
+          url: `https://app.ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}`,
+          keywords: null,
+          author: null,
+          canonical: null,
+          robots: 'index, follow',
+          customMetaTags: null,
+          language: 'en'
+        };
         break;
         
       default:
         return null;
     }
     
-    // Make request to Supabase using REST API
-    const response = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${content.storeSlug}&select=*`, {
-      headers: {
-        'Authorization': `Bearer ${supabaseKey}`,
-        'apikey': supabaseKey,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      console.error('Supabase query failed:', response.status, response.statusText);
-      return null;
-    }
-    
-    const data = await response.json();
-    
-    if (!data || data.length === 0) {
-      console.log('No content data found');
-      return null;
-    }
-    
-    const row = data[0];
-    const currentUrl = `https://app.ecombuildr.com/${content.type === 'website_page' ? 'site' : 'funnel'}/${content.storeSlug}${content.pageSlug ? `/${content.pageSlug}` : ''}${content.stepSlug ? `/${content.stepSlug}` : ''}`;
-    
-    return {
-      title: row.title || `${row.store_name || 'Store'} - EcomBuildr`,
-      description: row.description || `Visit ${row.store_name || 'this store'} on EcomBuildr`,
-      image: row.seo_image || row.store_logo || 'https://app.ecombuildr.com/og-image.jpg',
-      url: currentUrl
-    };
+    console.log('📊 SEO Data found:', seoData);
+    return seoData;
     
   } catch (error) {
     console.error('Content data fetch error:', error);
