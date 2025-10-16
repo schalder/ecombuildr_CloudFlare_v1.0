@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/[...catchall]/index.ts": {
+      "runtime": "edge"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
