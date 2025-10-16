@@ -12,7 +12,51 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": "(?i)(facebookexternalhit|twitterbot|linkedinbot|whatsapp|discordbot|telegrambot|slackbot|skypeuripreview|facebookcatalog|facebookplatform|facebot|facebookbot|googlebot|bingbot|bot|crawler|spider|baiduspider|yandex|duckduckbot|slurp|ia_archiver|semrushbot|ahrefsbot|dotbot|pinterestbot|applebot|yahoobot)"
+          "value": "facebookexternalhit"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/seo?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "Twitterbot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/seo?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "LinkedInBot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/seo?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "WhatsApp"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/seo?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "Googlebot"
         }
       ]
     },

@@ -445,20 +445,38 @@ export default async function handler(request: Request): Promise<Response> {
   const domain = request.headers.get('x-forwarded-host') || url.hostname;
   const path = url.searchParams.get('path') || '/';
   
+  // Debug logging
+  console.log('SEO API called:', {
+    domain,
+    path,
+    userAgent: userAgent.substring(0, 100),
+    isCrawler: isSocialCrawler(userAgent)
+  });
+  
   // Only serve SEO HTML to crawlers
   if (!isSocialCrawler(userAgent)) {
+    console.log('Not a crawler, redirecting to SPA');
     // Redirect regular users to the SPA
     return Response.redirect(url.toString(), 302);
   }
 
   try {
+    console.log('Crawler detected, fetching SEO data for:', domain, path);
+    
     // Fetch SEO data for this domain and path
     const seoData = await getSEODataForDomain(domain, path);
     
     if (!seoData) {
+      console.log('No SEO data found for:', domain, path);
       // No SEO data found, serve default SPA
       return Response.redirect(url.toString(), 302);
     }
+
+    console.log('SEO data found:', {
+      title: seoData.title,
+      description: seoData.description.substring(0, 50) + '...',
+      site_name: seoData.site_name
+    });
 
     // Generate HTML with SEO meta tags
     const html = generateHTML(seoData, url.toString());
@@ -468,7 +486,9 @@ export default async function handler(request: Request): Promise<Response> {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=300, s-maxage=300',
-        'X-SEO-Source': 'ssr'
+        'X-SEO-Source': 'ssr',
+        'X-Debug-Domain': domain,
+        'X-Debug-Path': path
       },
     });
   } catch (error) {
