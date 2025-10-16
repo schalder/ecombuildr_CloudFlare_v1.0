@@ -10,7 +10,9 @@
     "start": "vite preview",
     "vercel-build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:seo": "node test-seo-medium.js",
+    "test:seo:prod": "TEST_URL=https://yourdomain.com node test-seo-medium.js"
   },
   "dependencies": {
     "@hello-pangea/dnd": "^18.0.1",

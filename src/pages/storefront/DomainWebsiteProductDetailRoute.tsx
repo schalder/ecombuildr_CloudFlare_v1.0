@@ -5,8 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { ProductDetail } from '@/pages/storefront/ProductDetail';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { setGlobalCurrency } from '@/lib/currency';
-import { buildCanonical } from '@/lib/seo';
-import { SEOHead } from '@/components/SEOHead';
+import { setSEO, buildCanonical } from '@/lib/seo';
 import { MetaTags, generateDescriptionFromContent } from '@/components/MetaTags';
 import { SocialDebugger } from '@/components/SocialDebugger';
 
@@ -99,17 +98,58 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
     fetchTemplate();
   }, [websiteId, isPreview, website, websiteMeta]);
 
-  // Custom scripts handling
+  // Provisional website-level SEO (runs as soon as website meta loads)
   React.useEffect(() => {
-    if (!page?.custom_scripts) return;
+    const currentWebsite = websiteMeta || website;
+    if (!currentWebsite) return;
+    const canonical = buildCanonical(undefined, currentWebsite?.canonical_domain || currentWebsite?.domain);
+    setSEO({
+      title: currentWebsite?.seo_title || currentWebsite?.name,
+      description: currentWebsite?.seo_description,
+      image: currentWebsite?.og_image,
+      canonical,
+      robots: isPreview ? 'noindex, nofollow' : (currentWebsite?.meta_robots || 'index, follow'),
+      siteName: currentWebsite?.name,
+      ogType: 'website',
+      favicon: currentWebsite?.settings?.favicon_url,
+    });
+  }, [websiteMeta, website, isPreview]);
 
-    const scriptElement = document.createElement('div');
-    scriptElement.innerHTML = page.custom_scripts;
-    document.head.appendChild(scriptElement);
-    return () => {
-      document.head.removeChild(scriptElement);
-    };
-  }, [page?.custom_scripts]);
+  // SEO handling using centralized utility
+  React.useEffect(() => {
+    if (!page) return;
+    const currentWebsite = websiteMeta || website;
+
+    const title = page.seo_title || currentWebsite?.seo_title || page.title;
+    const description = page.seo_description || currentWebsite?.seo_description;
+    const image = page.og_image || currentWebsite?.og_image;
+    const canonical = buildCanonical(undefined, currentWebsite?.canonical_domain || currentWebsite?.domain);
+
+    setSEO({
+      title,
+      description,
+      image,
+      canonical,
+      robots: isPreview ? 'noindex, nofollow' : (page.meta_robots || currentWebsite?.meta_robots || 'index, follow'),
+      siteName: currentWebsite?.name,
+      ogType: 'product',
+      favicon: currentWebsite?.settings?.favicon_url,
+      keywords: page.keywords ? page.keywords.split(',').map(k => k.trim()) : undefined,
+      author: page.author,
+      languageCode: page.language_code,
+      customMetaTags: page.custom_meta_tags ? (typeof page.custom_meta_tags === 'string' ? JSON.parse(page.custom_meta_tags) : page.custom_meta_tags) : undefined,
+      structuredData: page.structured_data ? (typeof page.structured_data === 'string' ? JSON.parse(page.structured_data) : page.structured_data) : undefined,
+    });
+
+    if (page.custom_scripts) {
+      const scriptElement = document.createElement('div');
+      scriptElement.innerHTML = page.custom_scripts;
+      document.head.appendChild(scriptElement);
+      return () => {
+        document.head.removeChild(scriptElement);
+      };
+    }
+  }, [page, websiteMeta, website]);
 
   if (loading) {
     return (
@@ -133,21 +173,19 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
 
   return (
     <>
-      <SEOHead
-        title={page.seo_title || currentWebsite?.seo_title || page.title}
-        description={page.seo_description || currentWebsite?.seo_description}
-        ogImage={page.og_image}
-        socialImageUrl={page.social_image_url}
-        keywords={page.keywords ? page.keywords.split(',').map(k => k.trim()) : undefined}
-        canonical={buildCanonical(undefined, currentWebsite?.canonical_domain || currentWebsite?.domain)}
-        noIndex={isPreview}
-        metaRobots={page.meta_robots || currentWebsite?.meta_robots}
-        author={page.author}
-        languageCode={page.language_code}
-        customMetaTags={page.custom_meta_tags ? (typeof page.custom_meta_tags === 'string' ? JSON.parse(page.custom_meta_tags) : page.custom_meta_tags) : undefined}
-        siteName={currentWebsite?.name}
-        ogType="product"
-        useUserData={true}
+      <MetaTags
+        title={enhancedTitle}
+        description={enhancedDescription}
+        image={enhancedImage}
+        url={enhancedUrl}
+        type="product"
+        siteName={currentWebsite?.name || 'EcomBuildr Store'}
+        robots={isPreview ? 'noindex, nofollow' : (page?.meta_robots || currentWebsite?.meta_robots || 'index, follow')}
+        canonical={enhancedUrl}
+        favicon={currentWebsite?.settings?.favicon_url}
+        keywords={page?.keywords ? page.keywords.split(',').map(k => k.trim()) : []}
+        author={page?.author}
+        customMetaTags={page?.custom_meta_tags ? (typeof page.custom_meta_tags === 'string' ? JSON.parse(page.custom_meta_tags) : page.custom_meta_tags) : undefined}
       />
       {page.content?.sections ? (
         <PageBuilderRenderer data={page.content} />
@@ -155,10 +193,10 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
         <ProductDetail />
       )}
       <SocialDebugger
-        url={buildCanonical(undefined, currentWebsite?.canonical_domain || currentWebsite?.domain)}
-        title={page.seo_title || currentWebsite?.seo_title || page.title}
-        description={page.seo_description || currentWebsite?.seo_description}
-        image={page.social_image_url || page.og_image}
+        url={enhancedUrl}
+        title={enhancedTitle}
+        description={enhancedDescription}
+        image={enhancedImage}
       />
     </>
   );

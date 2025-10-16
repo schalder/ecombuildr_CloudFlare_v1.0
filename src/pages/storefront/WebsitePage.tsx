@@ -5,8 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
-import { buildCanonical } from '@/lib/seo';
-import { SEOHead } from '@/components/SEOHead';
+import { setSEO, buildCanonical } from '@/lib/seo';
 import { logger } from '@/lib/logger';
 interface WebsitePageData {
   id: string;
@@ -173,17 +172,37 @@ export const WebsitePage: React.FC = () => {
     fetchWebsiteAndPage();
   }, [resolvedWebsiteId, pageSlug, loadStoreById, isPreview, resolvingSiteId]);
 
-  // Inject custom scripts if they exist
+  // Set up SEO metadata from page-level settings only
   useEffect(() => {
-    if (!page?.custom_scripts) return;
+    if (!page || !website) return;
 
-    const scriptElement = document.createElement('div');
-    scriptElement.innerHTML = page.custom_scripts;
-    document.head.appendChild(scriptElement);
-    return () => {
-      document.head.removeChild(scriptElement);
-    };
-  }, [page?.custom_scripts]);
+    // Use only page-level SEO - no website fallbacks
+    const title = page.seo_title || `${page.title} - ${website.name}`;
+    const description = page.seo_description;
+    const image = page.og_image;
+    const canonical = page.canonical_url;
+
+    setSEO({
+      title: title || undefined,
+      description,
+      image,
+      canonical,
+      robots: isPreview ? 'noindex, nofollow' : (page.meta_robots || 'index, follow'),
+      siteName: website.name,
+      ogType: 'website',
+      favicon: (website as any)?.settings?.favicon_url,
+    });
+
+    // Inject custom scripts if they exist
+    if (page.custom_scripts) {
+      const scriptElement = document.createElement('div');
+      scriptElement.innerHTML = page.custom_scripts;
+      document.head.appendChild(scriptElement);
+      return () => {
+        document.head.removeChild(scriptElement);
+      };
+    }
+  }, [page, website]);
 
   // Ensure global currency matches website settings on WebsitePage routes
   useEffect(() => {
@@ -214,19 +233,6 @@ export const WebsitePage: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen">
-      <SEOHead
-        title={page.seo_title || `${page.title} - ${website.name}`}
-        description={page.seo_description}
-        ogImage={page.og_image}
-        socialImageUrl={page.social_image_url}
-        keywords={page.seo_keywords}
-        canonical={page.canonical_url}
-        noIndex={isPreview}
-        metaRobots={page.meta_robots}
-        siteName={website.name}
-        ogType="website"
-        useUserData={true}
-      />
       <main>
         {page.content?.sections ? (
           <PageBuilderRenderer data={page.content} />

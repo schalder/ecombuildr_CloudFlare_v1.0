@@ -4,8 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { useStore } from '@/contexts/StoreContext';
-import { buildCanonical } from '@/lib/seo';
-import { SEOHead } from '@/components/SEOHead';
+import { setSEO, buildCanonical } from '@/lib/seo';
 import { PixelManager } from '@/components/pixel/PixelManager';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
@@ -141,17 +140,54 @@ export const FunnelStepPage: React.FC = () => {
     fetchFunnelAndStep();
   }, [funnelId, stepSlug, loadStoreById]);
 
-  // Inject custom scripts if they exist
+  // Provisional funnel-level SEO (runs as soon as funnel loads)
   useEffect(() => {
-    if (!step?.custom_scripts) return;
+    if (!funnel) return;
+    const canonical = buildCanonical(undefined, (funnel as any)?.canonical_domain);
+    setSEO({
+      title: ((funnel as any)?.seo_title || funnel.name) || undefined,
+      description: ((funnel as any)?.seo_description || funnel.description) || undefined,
+      image: (funnel as any)?.og_image,
+      canonical,
+      robots: (funnel as any)?.meta_robots || 'index, follow',
+      siteName: funnel.name,
+      ogType: 'website',
+      favicon: store?.favicon_url,
+    });
+  }, [funnel, store]);
 
-    const scriptElement = document.createElement('div');
-    scriptElement.innerHTML = step.custom_scripts;
-    document.head.appendChild(scriptElement);
-    return () => {
-      document.head.removeChild(scriptElement);
-    };
-  }, [step?.custom_scripts]);
+  // Set up SEO metadata using centralized utility
+  useEffect(() => {
+    if (!step || !funnel) return;
+
+    const title = step.seo_title || (step.title && funnel.name ? `${step.title} - ${funnel.name}` : step.title);
+    const description = step.seo_description || (funnel as any)?.seo_description || funnel.description;
+    const image = step.og_image || (funnel as any)?.og_image;
+    const canonical = buildCanonical(undefined, (funnel as any)?.canonical_domain);
+
+    setSEO({
+      title: title || undefined,
+      description,
+      image,
+      canonical,
+      robots: (funnel as any)?.meta_robots || 'index, follow',
+      siteName: funnel.name,
+      ogType: 'website',
+      favicon: funnel?.settings?.favicon_url || store?.favicon_url,
+    });
+
+    // Inject custom scripts if they exist
+    if (step.custom_scripts) {
+      const scriptElement = document.createElement('div');
+      scriptElement.innerHTML = step.custom_scripts;
+      document.head.appendChild(scriptElement);
+
+      // Cleanup function to remove scripts when component unmounts
+      return () => {
+        document.head.removeChild(scriptElement);
+      };
+    }
+  }, [step, funnel, store]);
 
   if (loading) {
     return (
@@ -176,18 +212,6 @@ export const FunnelStepPage: React.FC = () => {
   return (
     <FunnelStepProvider stepId={step.id} funnelId={funnel.id}>
       <PixelManager storeId={funnel.store_id}>
-        <SEOHead
-          title={step.seo_title || (step.title && funnel.name ? `${step.title} - ${funnel.name}` : step.title)}
-          description={step.seo_description || (funnel as any)?.seo_description || funnel.description}
-          ogImage={step.og_image}
-          socialImageUrl={step.social_image_url}
-          keywords={step.seo_keywords}
-          canonical={buildCanonical(undefined, (funnel as any)?.canonical_domain)}
-          metaRobots={(funnel as any)?.meta_robots}
-          siteName={funnel.name}
-          ogType="website"
-          useUserData={true}
-        />
         <div className="w-full min-h-screen">
           <FunnelHeader funnel={funnel} />
           {/* Render funnel step content using PageBuilderRenderer */}

@@ -5,8 +5,7 @@ import { Loader2 } from 'lucide-react';
 import ProductDetail from '@/pages/storefront/ProductDetail';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { setGlobalCurrency } from '@/lib/currency';
-import { buildCanonical } from '@/lib/seo';
-import { SEOHead } from '@/components/SEOHead';
+import { setSEO, buildCanonical } from '@/lib/seo';
 import { MetaTags, generateDescriptionFromContent } from '@/components/MetaTags';
 import { SocialDebugger } from '@/components/SocialDebugger';
 
@@ -120,17 +119,51 @@ export const WebsiteProductDetailRoute: React.FC = () => {
     fetchTemplate();
   }, [resolvedWebsiteId, isPreview]);
 
-  // Custom scripts handling
+  // Provisional website-level SEO (runs as soon as website meta loads)
   React.useEffect(() => {
-    if (!page?.custom_scripts) return;
+    if (!websiteMeta) return;
+    const canonical = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
+  setSEO({
+      title: websiteMeta?.seo_title || websiteMeta?.name,
+      description: websiteMeta?.seo_description,
+      image: websiteMeta?.og_image,
+      canonical,
+      robots: isPreview ? 'noindex, nofollow' : (websiteMeta?.meta_robots || 'index, follow'),
+      siteName: websiteMeta?.name,
+      ogType: 'website',
+      favicon: websiteMeta?.settings?.favicon_url,
+    });
+  }, [websiteMeta, isPreview]);
 
-    const scriptElement = document.createElement('div');
-    scriptElement.innerHTML = page.custom_scripts;
-    document.head.appendChild(scriptElement);
-    return () => {
-      document.head.removeChild(scriptElement);
-    };
-  }, [page?.custom_scripts]);
+  // SEO handling using centralized utility
+  React.useEffect(() => {
+    if (!page) return;
+
+    const title = page.seo_title || websiteMeta?.seo_title || page.title;
+    const description = page.seo_description || websiteMeta?.seo_description;
+    const image = page.og_image || websiteMeta?.og_image;
+    const canonical = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
+
+    setSEO({
+      title,
+      description,
+      image,
+      canonical,
+      robots: websiteMeta?.meta_robots || 'index, follow',
+      siteName: websiteMeta?.name,
+      ogType: 'product',
+      favicon: websiteMeta?.settings?.favicon_url,
+    });
+
+    if (page.custom_scripts) {
+      const scriptElement = document.createElement('div');
+      scriptElement.innerHTML = page.custom_scripts;
+      document.head.appendChild(scriptElement);
+      return () => {
+        document.head.removeChild(scriptElement);
+      };
+    }
+  }, [page, websiteMeta]);
 
   if (loading) {
     return (
@@ -153,18 +186,16 @@ export const WebsiteProductDetailRoute: React.FC = () => {
 
   return (
     <>
-      <SEOHead
-        title={page.seo_title || websiteMeta?.seo_title || page.title}
-        description={page.seo_description || websiteMeta?.seo_description}
-        ogImage={page.og_image}
-        socialImageUrl={page.social_image_url}
-        keywords={page.seo_keywords}
-        canonical={buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain)}
-        noIndex={isPreview}
-        metaRobots={websiteMeta?.meta_robots}
-        siteName={websiteMeta?.name}
-        ogType="product"
-        useUserData={true}
+      <MetaTags
+        title={enhancedTitle}
+        description={enhancedDescription}
+        image={enhancedImage}
+        url={enhancedUrl}
+        type="product"
+        siteName={websiteMeta?.name || 'EcomBuildr Store'}
+        robots={isPreview ? 'noindex, nofollow' : 'index, follow'}
+        canonical={enhancedUrl}
+        favicon={websiteMeta?.settings?.favicon_url}
       />
       <main>
         {page.content?.sections ? (
@@ -174,10 +205,10 @@ export const WebsiteProductDetailRoute: React.FC = () => {
         )}
       </main>
       <SocialDebugger
-        url={buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain)}
-        title={page.seo_title || websiteMeta?.seo_title || page.title}
-        description={page.seo_description || websiteMeta?.seo_description}
-        image={page.social_image_url || page.og_image}
+        url={enhancedUrl}
+        title={enhancedTitle}
+        description={enhancedDescription}
+        image={enhancedImage}
       />
     </>
   );

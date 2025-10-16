@@ -7,56 +7,12 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/api/seo?path=$1",
+      "destination": "/api/[...catchall]?path=$1",
       "has": [
         {
           "type": "header",
           "key": "user-agent",
-          "value": "facebookexternalhit"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/api/seo?path=$1",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "Twitterbot"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/api/seo?path=$1",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "LinkedInBot"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/api/seo?path=$1",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "WhatsApp"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/api/seo?path=$1",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "Googlebot"
+          "value": "(?i)(facebookexternalhit|twitterbot|linkedinbot|whatsapp|discordbot|telegrambot|slackbot|skypeuripreview|facebookcatalog|facebookplatform|facebot|facebookbot|googlebot|bingbot|bot|crawler|spider|baiduspider|yandex|duckduckbot|slurp|ia_archiver|semrushbot|ahrefsbot|dotbot|pinterestbot|applebot|yahoobot)"
         }
       ]
     },
@@ -85,6 +41,15 @@
     },
     {
       "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*\\.woff2)",
       "headers": [
         {
           "key": "Cache-Control",
