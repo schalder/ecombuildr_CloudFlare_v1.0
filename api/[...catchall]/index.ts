@@ -19,23 +19,90 @@ async function getHTMLTemplate(baseUrl: string): Promise<string> {
   }
   
   try {
-    // Fetch the built index.html from the deployment
-    const response = await fetch(`${baseUrl}/index.html`, {
-      headers: { 'User-Agent': 'EcomBuildr-SSR/1.0' }
-    });
+    // Use a different approach - construct the template directly
+    // This avoids circular dependency issues
+    const template = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    if (!response.ok) {
-      throw new Error(`Failed to fetch template: ${response.status}`);
-    }
+    <!-- Placeholder SEO Meta Tags (replaced by SSR for bots) -->
+    <title>__PAGE_TITLE__</title>
+    <meta name="description" content="__PAGE_DESCRIPTION__" />
+    <meta name="keywords" content="__PAGE_KEYWORDS__" />
+    <meta name="robots" content="__PAGE_ROBOTS__" />
+    <meta name="author" content="__PAGE_AUTHOR__" />
     
-    htmlTemplateCache = await response.text();
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="__PAGE_URL__" />
+    <meta property="og:title" content="__PAGE_TITLE__" />
+    <meta property="og:description" content="__PAGE_DESCRIPTION__" />
+    <meta property="og:image" content="__PAGE_IMAGE__" />
+    <meta property="og:image:secure_url" content="__PAGE_IMAGE__" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="__SITE_NAME__" />
+    <meta property="og:locale" content="__PAGE_LOCALE__" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="__PAGE_URL__" />
+    <meta name="twitter:title" content="__PAGE_TITLE__" />
+    <meta name="twitter:description" content="__PAGE_DESCRIPTION__" />
+    <meta name="twitter:image" content="__PAGE_IMAGE__" />
+    <meta name="twitter:image:alt" content="__PAGE_TITLE__" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="__PAGE_URL__" />
+    
+    <!-- Performance optimizations -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+    
+    <!-- Critical resource hints -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    
+    <!-- Critical CSS for image optimization -->
+    <style>
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      .image-container { position: relative; overflow: hidden; background-color: hsl(var(--muted)); }
+      .image-container::before { content: ''; display: block; width: 100%; height: 0; padding-bottom: var(--aspect-ratio, 56.25%); }
+      .image-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s ease; }
+      .loading-shimmer { background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.1) 50%, hsl(var(--muted)) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+      picture { display: block; width: 100%; height: 100%; }
+      img[width][height] { aspect-ratio: attr(width) / attr(height); }
+    </style>
+    
+    <!-- Font Awesome for icon lists -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>`;
+    
+    htmlTemplateCache = template;
     templateCacheTime = now;
     
     return htmlTemplateCache;
   } catch (error) {
-    console.error('Error fetching HTML template:', error);
+    console.error('Error creating HTML template:', error);
     
-    // Fallback to minimal template if fetch fails
+    // Fallback to minimal template if anything fails
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1049,8 +1116,10 @@ export default async function handler(request: Request): Promise<Response> {
   console.log(`[${traceId}] 🔍 SEO Handler - ${hostname}${pathname} | UA: ${userAgent.substring(0, 50)}...`);
   
   try {
+    console.log(`[${traceId}] 📝 Getting HTML template...`);
     // Fetch the HTML template
     const htmlTemplate = await getHTMLTemplate(baseUrl);
+    console.log(`[${traceId}] ✅ HTML template obtained (${htmlTemplate.length} chars)`);
     
     // Check if this is a social media crawler
     if (isSocialCrawler(userAgent)) {
