@@ -1,6 +1,6 @@
-// Minimal test function for Cloudflare Pages Functions
+// Simple JavaScript function for Cloudflare Pages Functions
 export default {
-  async fetch(request: Request): Promise<Response> {
+  async fetch(request) {
     return new Response('Hello from Cloudflare Pages Function!', {
       headers: {
         'Content-Type': 'text/plain',
