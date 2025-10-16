@@ -1,45 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "npm run vercel-build",
-  "outputDirectory": "dist",
-  "functions": {
-    "api/social-meta.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
       "source": "/(.*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "facebookexternalhit"
-        }
-      ],
-      "destination": "/api/social-meta"
-    },
-    {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "twitterbot"
-        }
-      ],
-      "destination": "/api/social-meta"
-    },
-    {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "linkedinbot"
-        }
-      ],
-      "destination": "/api/social-meta"
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -62,15 +26,6 @@
     },
     {
       "source": "/assets/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/(.*\\.woff2)",
       "headers": [
         {
           "key": "Cache-Control",

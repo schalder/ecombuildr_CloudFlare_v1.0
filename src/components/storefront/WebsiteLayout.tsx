@@ -12,7 +12,6 @@ import { FloatingCartButton } from '@/components/storefront/FloatingCartButton';
 import { SupportWidget } from '@/components/storefront/SupportWidget';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
 import { FOMOManager } from '@/components/storefront/FOMOManager';
-import { SEOHead } from '@/components/SEOHead';
 
 interface WebsiteData {
   id: string;
@@ -110,19 +109,6 @@ export const WebsiteLayout: React.FC = () => {
 
   return (
     <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
-      <SEOHead
-        title={website.seo_title || website.name}
-        description={website.seo_description || website.description}
-        ogImage={website.social_image_url || website.og_image}
-        socialImageUrl={website.social_image_url}
-        keywords={website.seo_keywords ? website.seo_keywords.split(',').map(k => k.trim()) : []}
-        canonical={website.canonical_url || window.location.href}
-        noIndex={website.meta_robots === 'noindex, nofollow'}
-        author={website.meta_author}
-        languageCode={website.language_code}
-        metaRobots={website.meta_robots}
-        customMetaTags={website.custom_meta_tags || []}
-      />
       <PixelManager websitePixels={website.settings} storeId={website.store_id}>
         <TrackingCodeManager 
           headerCode={website.settings?.header_tracking_code}

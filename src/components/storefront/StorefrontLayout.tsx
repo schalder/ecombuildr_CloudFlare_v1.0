@@ -6,7 +6,6 @@ import { StorefrontHeader } from './StorefrontHeader';
 import { StorefrontFooter } from './StorefrontFooter';
 import { Loader2 } from 'lucide-react';
 import { PixelManager } from '@/components/pixel/PixelManager';
-import { SEOHead } from '@/components/SEOHead';
 
 interface StorefrontLayoutProps {
   children: React.ReactNode;
@@ -36,19 +35,6 @@ export const StorefrontLayout: React.FC<StorefrontLayoutProps> = ({ children }) 
 
   return (
     <CartProvider storeId={store.id}>
-      <SEOHead
-        title={store.seo_title || store.name}
-        description={store.seo_description || store.description}
-        ogImage={store.social_image_url || store.og_image}
-        socialImageUrl={store.social_image_url}
-        keywords={store.seo_keywords ? store.seo_keywords.split(',').map(k => k.trim()) : []}
-        canonical={store.canonical_url || window.location.href}
-        noIndex={store.meta_robots === 'noindex, nofollow'}
-        author={store.meta_author}
-        languageCode={store.language_code}
-        metaRobots={store.meta_robots}
-        customMetaTags={store.custom_meta_tags || []}
-      />
       <PixelManager websitePixels={store?.settings} storeId={store?.id}>
         <div className="min-h-screen flex flex-col bg-background">
             <style>{`

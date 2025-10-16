@@ -6,7 +6,8 @@ import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer
 import { StorefrontPageBuilder } from '@/components/storefront/renderer/StorefrontPageBuilder';
 import { ScriptManager } from '@/components/storefront/optimized/ScriptManager';
 import { setGlobalCurrency } from '@/lib/currency';
-import { setSEO, buildCanonical } from '@/lib/seo';
+import { buildCanonical } from '@/lib/seo';
+import { SEOHead } from '@/components/SEOHead';
 import { optimizedWebsitePageQuery } from '@/components/storefront/optimized/DataOptimizer';
 import { PerformanceMonitor } from '@/components/storefront/optimized/PerformanceMonitor';
 import { FontOptimizer } from '@/components/storefront/optimized/FontOptimizer';
@@ -129,52 +130,9 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
     })();
   }, [resolvedWebsiteId]);
 
-  // Provisional website-level SEO (runs as soon as website meta loads)
+  // Custom scripts are now handled by ScriptManager for storefront renderer
   React.useEffect(() => {
-    if (!websiteMeta) return;
-    const canonical = buildCanonical(undefined, websiteMeta?.domain);
-    setSEO({
-      title: websiteMeta?.name,
-      canonical,
-      robots: isPreview ? 'noindex, nofollow' : 'index, follow',
-      siteName: websiteMeta?.name,
-      ogType: 'website',
-      favicon: websiteMeta?.settings?.favicon_url,
-    });
-  }, [websiteMeta, isPreview]);
-
-  // SEO handling using centralized utility
-  React.useEffect(() => {
-    if (!page) return;
-
-    const title = page.seo_title || (websiteMeta?.name ? `${page.title} - ${websiteMeta.name}` : page.title);
-    const description = page.seo_description;
-    const image = page.social_image_url || page.og_image;
-    const canonical = page.canonical_url || buildCanonical(undefined, websiteMeta?.domain);
-    const keywords = page.seo_keywords || [];
-    const author = page.meta_author;
-    const robots = page.meta_robots || 'index, follow';
-    const languageCode = page.language_code || 'en';
-    const customMetaTags = Object.entries((page.custom_meta_tags as Record<string, string>) || {}).map(([name, content]) => ({ name, content }));
-
-    setSEO({
-      title,
-      description,
-      image,
-      socialImageUrl: page.social_image_url,
-      keywords,
-      canonical,
-      robots: isPreview ? 'noindex, nofollow' : robots,
-      author,
-      languageCode,
-      customMetaTags,
-      siteName: websiteMeta?.name,
-      ogType: 'website',
-      favicon: websiteMeta?.settings?.favicon_url,
-    });
-
-    // Custom scripts are now handled by ScriptManager for storefront renderer
-    if (!useStorefront && page.custom_scripts) {
+    if (!useStorefront && page?.custom_scripts) {
       const scriptElement = document.createElement('div');
       scriptElement.innerHTML = page.custom_scripts;
       document.head.appendChild(scriptElement);
@@ -182,7 +140,7 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
         document.head.removeChild(scriptElement);
       };
     }
-  }, [page, websiteMeta, isPreview]);
+  }, [useStorefront, page?.custom_scripts]);
 
   if (isCourseOrderOverride) {
     console.log('[WebsiteOverrideRoute] rendering CourseOrderConfirmation override');
@@ -209,6 +167,22 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
 
   return (
     <>
+      <SEOHead
+        title={page.seo_title || (websiteMeta?.name ? `${page.title} - ${websiteMeta.name}` : page.title)}
+        description={page.seo_description}
+        ogImage={page.og_image}
+        socialImageUrl={page.social_image_url}
+        keywords={page.seo_keywords}
+        canonical={page.canonical_url || buildCanonical(undefined, websiteMeta?.domain)}
+        noIndex={isPreview}
+        metaRobots={page.meta_robots}
+        author={page.meta_author}
+        languageCode={page.language_code}
+        customMetaTags={Object.entries((page.custom_meta_tags as Record<string, string>) || {}).map(([name, content]) => ({ name, content }))}
+        siteName={websiteMeta?.name}
+        ogType="website"
+        useUserData={true}
+      />
       <FontOptimizer />
       <PerformanceMonitor page={`website-${slug}`} />
       <main>
