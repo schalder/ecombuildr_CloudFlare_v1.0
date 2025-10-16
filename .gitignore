@@ -22,4 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Deployment platforms
 .vercel
+.wrangler
+wrangler.toml.bak
+
+# Cloudflare specific
+.dev.vars

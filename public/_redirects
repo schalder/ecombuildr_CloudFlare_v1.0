@@ -1,0 +1,5 @@
+# Redirect API calls to Supabase Edge Functions
+/api/* https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/:splat 200
+
+# Handle SPA routing - all non-API routes go to index.html
+/*    /index.html   200
