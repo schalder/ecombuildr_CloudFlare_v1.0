@@ -13,7 +13,7 @@
           "value": "1"
         }
       ],
-      "destination": "/api/render?path=$1&force=1"
+      "destination": "/api/render?path=$1&force=1&bot=1"
     },
     {
       "source": "/(.*)",
@@ -24,7 +24,7 @@
           "value": "1"
         }
       ],
-      "destination": "/api/render?path=$1&force=1"
+      "destination": "/api/render?path=$1&force=1&bot=1"
     },
     {
       "source": "/(.*)",
@@ -32,10 +32,10 @@
         {
           "type": "header",
           "key": "user-agent",
-          "value": ".*(facebookexternalhit|Facebot|Twitterbot|LinkedInBot|WhatsApp|Googlebot|Bingbot|[Bb]ot|[Cc]rawler|[Ss]pider|DiscordBot|TelegramBot|Slackbot).*"
+          "value": ".*(facebookexternalhit|Facebot|facebook|Twitterbot|LinkedInBot|WhatsApp|Googlebot|Bingbot|[Bb]ot|[Cc]rawler|[Ss]pider|DiscordBot|TelegramBot|Slackbot).*"
         }
       ],
-      "destination": "/api/render?path=$1"
+      "destination": "/api/render?path=$1&bot=1"
     }
   ],
   "headers": [

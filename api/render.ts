@@ -192,20 +192,14 @@ export default async function handler(request: Request) {
     forceMode
   });
 
-  // If not a bot and not forced, serve the SPA
+  // If not a bot and not forced, this shouldn't happen with proper routing
+  // Vercel should route regular users directly to index.html
   if (!isBotRequest) {
-    console.log('Regular user detected, serving SPA');
-    const indexResponse = await fetch(new URL('/index.html', request.url).toString());
-    const html = await indexResponse.text();
-    const htmlBytes = new TextEncoder().encode(html);
-    
-    return new Response(html, {
-      status: 200,
+    console.log('Regular user reached edge function - redirecting to index');
+    return new Response(null, {
+      status: 302,
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Content-Length': htmlBytes.length.toString(),
-        'Accept-Ranges': 'none'
+        'Location': '/'
       }
     });
   }
@@ -224,20 +218,8 @@ export default async function handler(request: Request) {
       hostname.includes('lovable.app') ||
       hostname.includes('lovableproject.com')
     ) {
-      console.log('Staging domain detected, serving SPA');
-      const indexResponse = await fetch(new URL('/index.html', request.url).toString());
-      const html = await indexResponse.text();
-      const htmlBytes = new TextEncoder().encode(html);
-      
-      return new Response(html, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Content-Length': htmlBytes.length.toString(),
-          'Accept-Ranges': 'none'
-        }
-      });
+      console.log('Staging domain detected - bots get SEO HTML');
+      // Continue to generate SEO HTML for bots even on staging
     }
 
     // Query for custom domain
@@ -447,10 +429,13 @@ export default async function handler(request: Request) {
         'Content-Type': 'text/html; charset=utf-8',
         'Content-Length': htmlBytes.length.toString(),
         'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+        'Connection': 'close',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Facebook-Optimized': 'true',
+        'Accept-Ranges': 'none',
         'X-SEO-Rendered': 'true',
         'X-Bot-Detected': isBotRequest ? 'true' : 'false',
-        'X-Content-Type': selectedConnection.content_type,
-        'Accept-Ranges': 'none'
+        'X-Content-Type': selectedConnection.content_type
       }
     });
 
