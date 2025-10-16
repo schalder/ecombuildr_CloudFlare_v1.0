@@ -1106,70 +1106,63 @@ export default async function handler(request: Request): Promise<Response> {
   const hostname = request.headers.get('x-forwarded-host') || url.hostname;
   const protocol = request.headers.get('x-forwarded-proto') || 'https';
   
-  // Construct base URL for fetching template
-  const baseUrl = `${protocol}://${hostname}`;
-  
   // Get original path from query param (set by vercel.json rewrite)
   const pathname = new URL(request.url).searchParams.get('path') || url.pathname;
   
-  const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
+  const traceId = Math.random().toString(36).slice(2);
   console.log(`[${traceId}] 🔍 SEO Handler - ${hostname}${pathname} | UA: ${userAgent.substring(0, 50)}...`);
   
   try {
-    console.log(`[${traceId}] 📝 Getting HTML template...`);
-    // Fetch the HTML template
-    const htmlTemplate = await getHTMLTemplate(baseUrl);
-    console.log(`[${traceId}] ✅ HTML template obtained (${htmlTemplate.length} chars)`);
-    
     // Check if this is a social media crawler
-    const isBot = isSocialCrawler(userAgent);
+    const isBot = userAgent.toLowerCase().includes('facebookexternalhit') || 
+                  userAgent.toLowerCase().includes('twitterbot') || 
+                  userAgent.toLowerCase().includes('googlebot');
+    
     console.log(`[${traceId}] 🤖 Bot detected: ${isBot}`);
     
     if (isBot) {
       console.log(`[${traceId}] 🤖 Bot detected - serving SEO HTML`);
       
-      const urlPattern = parseUrlPattern(hostname, pathname);
-      console.log(`[${traceId}] 🔍 Resolving SEO for ${urlPattern.type}: ${urlPattern.identifier}${urlPattern.pagePath}`);
-      
-      // Only process supported URL patterns
-      const isSupported = (
-        urlPattern.type === 'custom_domain' ||
-        urlPattern.type === 'lovable_subdomain' ||
-        urlPattern.type === 'store_slug' ||
-        urlPattern.type === 'site_slug' ||
-        urlPattern.type === 'funnel_route'
-      );
-      
-      if (!isSupported) {
-        console.log(`[${traceId}] ⚠️ Unsupported pattern - serving template as-is`);
-        return new Response(htmlTemplate, {
-          status: 200,
-          headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'public, max-age=60',
-            'X-Trace-Id': traceId,
-            'X-User-Type': 'bot',
-            'X-Pattern': urlPattern.type
-          },
-        });
-      }
-      
-      // For now, just return the template with basic SEO data
-      const basicSEO = {
-        title: 'EcomBuildr - Build Your E-commerce Empire',
-        description: 'Create stunning e-commerce websites and sales funnels with EcomBuildr. No coding required.',
-        og_image: 'https://get.ecombuildr.com/hero-ecommerce.jpg',
-        keywords: ['ecommerce', 'website builder', 'sales funnel'],
-        canonical: `https://${hostname}${pathname}`,
-        robots: 'index, follow',
-        site_name: 'EcomBuildr',
-        source: 'basic_fallback'
-      };
-      
-      console.log(`[${traceId}] ✅ Using basic SEO fallback`);
-      
-      // Replace placeholders with basic SEO data
-      const html = replacePlaceholders(htmlTemplate, basicSEO);
+      // Return basic SEO HTML for bots
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcomBuildr - Build Your E-commerce Empire</title>
+  <meta name="description" content="Create stunning e-commerce websites and sales funnels with EcomBuildr. No coding required." />
+  <meta name="keywords" content="ecommerce, website builder, sales funnel" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="EcomBuildr" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://${hostname}${pathname}" />
+  <meta property="og:title" content="EcomBuildr - Build Your E-commerce Empire" />
+  <meta property="og:description" content="Create stunning e-commerce websites and sales funnels with EcomBuildr. No coding required." />
+  <meta property="og:image" content="https://get.ecombuildr.com/hero-ecommerce.jpg" />
+  <meta property="og:image:secure_url" content="https://get.ecombuildr.com/hero-ecommerce.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:site_name" content="EcomBuildr" />
+  <meta property="og:locale" content="en_US" />
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://${hostname}${pathname}" />
+  <meta name="twitter:title" content="EcomBuildr - Build Your E-commerce Empire" />
+  <meta name="twitter:description" content="Create stunning e-commerce websites and sales funnels with EcomBuildr. No coding required." />
+  <meta name="twitter:image" content="https://get.ecombuildr.com/hero-ecommerce.jpg" />
+  <meta name="twitter:image:alt" content="EcomBuildr - Build Your E-commerce Empire" />
+  
+  <!-- Canonical URL -->
+  <link rel="canonical" href="https://${hostname}${pathname}" />
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>`;
       
       return new Response(html, {
         status: 200,
@@ -1178,7 +1171,6 @@ export default async function handler(request: Request): Promise<Response> {
           'Cache-Control': 'public, max-age=300, s-maxage=300',
           'X-Trace-Id': traceId,
           'X-SEO-Source': 'basic_fallback',
-          'X-SEO-Pattern': urlPattern.type,
           'X-User-Type': 'bot'
         },
       });
@@ -1186,6 +1178,24 @@ export default async function handler(request: Request): Promise<Response> {
     
     // For regular users, serve the template as-is (React will hydrate)
     console.log(`[${traceId}] 👤 Regular user - serving SPA template`);
+    const htmlTemplate = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>__PAGE_TITLE__</title>
+  <meta name="description" content="__PAGE_DESCRIPTION__" />
+  <meta property="og:title" content="__PAGE_TITLE__" />
+  <meta property="og:description" content="__PAGE_DESCRIPTION__" />
+  <meta property="og:image" content="__PAGE_IMAGE__" />
+  <link rel="canonical" href="__PAGE_URL__" />
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>`;
+    
     return new Response(htmlTemplate, {
       status: 200,
       headers: {
