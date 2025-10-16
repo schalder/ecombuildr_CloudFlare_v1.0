@@ -438,29 +438,41 @@ async function getSEODataForDomain(domain: string, path: string): Promise<SEODat
 }
 
 export default async function handler(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const userAgent = request.headers.get('user-agent') || '';
-  
-  // Get domain from x-forwarded-host header (Vercel sets this)
-  const domain = request.headers.get('x-forwarded-host') || url.hostname;
-  const path = url.searchParams.get('path') || '/';
-  
-  // Debug logging
-  console.log('SEO API called:', {
-    domain,
-    path,
-    userAgent: userAgent.substring(0, 100),
-    isCrawler: isSocialCrawler(userAgent)
-  });
-  
-  // Only serve SEO HTML to crawlers
-  if (!isSocialCrawler(userAgent)) {
-    console.log('Not a crawler, redirecting to SPA');
-    // Redirect regular users to the SPA
-    return Response.redirect(url.toString(), 302);
-  }
-
   try {
+    const userAgent = request.headers.get('user-agent') || '';
+    
+    // Get domain from x-forwarded-host header (Vercel sets this)
+    const domain = request.headers.get('x-forwarded-host') || 'localhost';
+    
+    // Get path from URL search params or default to /
+    let path = '/';
+    try {
+      const url = new URL(request.url);
+      path = url.searchParams.get('path') || '/';
+    } catch (error) {
+      // If URL parsing fails, try to extract path from request.url
+      const urlMatch = request.url.match(/[?&]path=([^&]*)/);
+      if (urlMatch) {
+        path = decodeURIComponent(urlMatch[1]);
+      }
+    }
+    
+    // Debug logging
+    console.log('SEO API called:', {
+      domain,
+      path,
+      userAgent: userAgent.substring(0, 100),
+      isCrawler: isSocialCrawler(userAgent),
+      requestUrl: request.url
+    });
+    
+    // Only serve SEO HTML to crawlers
+    if (!isSocialCrawler(userAgent)) {
+      console.log('Not a crawler, redirecting to SPA');
+      // Redirect regular users to the SPA
+      return Response.redirect(`https://${domain}${path}`, 302);
+    }
+
     console.log('Crawler detected, fetching SEO data for:', domain, path);
     
     // Fetch SEO data for this domain and path
@@ -469,7 +481,7 @@ export default async function handler(request: Request): Promise<Response> {
     if (!seoData) {
       console.log('No SEO data found for:', domain, path);
       // No SEO data found, serve default SPA
-      return Response.redirect(url.toString(), 302);
+      return Response.redirect(`https://${domain}${path}`, 302);
     }
 
     console.log('SEO data found:', {
@@ -479,7 +491,7 @@ export default async function handler(request: Request): Promise<Response> {
     });
 
     // Generate HTML with SEO meta tags
-    const html = generateHTML(seoData, url.toString());
+    const html = generateHTML(seoData, `https://${domain}${path}`);
     
     return new Response(html, {
       status: 200,
@@ -494,6 +506,7 @@ export default async function handler(request: Request): Promise<Response> {
   } catch (error) {
     console.error('SEO SSR Error:', error);
     // Fallback to SPA on error
-    return Response.redirect(url.toString(), 302);
+    const domain = request.headers.get('x-forwarded-host') || 'localhost';
+    return Response.redirect(`https://${domain}/`, 302);
   }
 }
