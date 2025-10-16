@@ -195,8 +195,19 @@ export default async function handler(request: Request) {
   // If not a bot and not forced, serve the SPA
   if (!isBotRequest) {
     console.log('Regular user detected, serving SPA');
-    // Return the normal index.html for the SPA
-    return fetch(new URL('/index.html', request.url).toString());
+    const indexResponse = await fetch(new URL('/index.html', request.url).toString());
+    const html = await indexResponse.text();
+    const htmlBytes = new TextEncoder().encode(html);
+    
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Content-Length': htmlBytes.length.toString(),
+        'Accept-Ranges': 'none'
+      }
+    });
   }
 
   // Bot detected - generate SEO HTML
@@ -214,7 +225,19 @@ export default async function handler(request: Request) {
       hostname.includes('lovableproject.com')
     ) {
       console.log('Staging domain detected, serving SPA');
-      return fetch(new URL('/index.html', request.url).toString());
+      const indexResponse = await fetch(new URL('/index.html', request.url).toString());
+      const html = await indexResponse.text();
+      const htmlBytes = new TextEncoder().encode(html);
+      
+      return new Response(html, {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Content-Length': htmlBytes.length.toString(),
+          'Accept-Ranges': 'none'
+        }
+      });
     }
 
     // Query for custom domain
@@ -416,15 +439,18 @@ export default async function handler(request: Request) {
 
     // Generate and return SEO HTML
     const html = generateSEOHTML(seoData);
+    const htmlBytes = new TextEncoder().encode(html);
 
     return new Response(html, {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
+        'Content-Length': htmlBytes.length.toString(),
         'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
         'X-SEO-Rendered': 'true',
         'X-Bot-Detected': isBotRequest ? 'true' : 'false',
-        'X-Content-Type': selectedConnection.content_type
+        'X-Content-Type': selectedConnection.content_type,
+        'Accept-Ranges': 'none'
       }
     });
 
@@ -432,20 +458,22 @@ export default async function handler(request: Request) {
     console.error('Error in SEO render:', error);
     
     // Return minimal HTML on error
-    return new Response(
-      generateSEOHTML({
-        title: 'Welcome',
-        description: 'Welcome to our site',
-        image: 'https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-og-image_default.jpg',
-        url: request.url
-      }),
-      {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'X-SEO-Error': 'true'
-        }
+    const html = generateSEOHTML({
+      title: 'Welcome',
+      description: 'Welcome to our site',
+      image: 'https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-og-image_default.jpg',
+      url: request.url
+    });
+    const htmlBytes = new TextEncoder().encode(html);
+    
+    return new Response(html, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Length': htmlBytes.length.toString(),
+        'X-SEO-Error': 'true',
+        'Accept-Ranges': 'none'
       }
-    );
+    });
   }
 }

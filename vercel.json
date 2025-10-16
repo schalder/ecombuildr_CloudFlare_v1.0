@@ -78,10 +78,6 @@
       "source": "/index.html",
       "headers": [
         {
-          "key": "Accept-Ranges",
-          "value": "none"
-        },
-        {
           "key": "Cache-Control",
           "value": "no-cache, no-store, must-revalidate"
         }
