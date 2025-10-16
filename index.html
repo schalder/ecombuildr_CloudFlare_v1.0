@@ -4,13 +4,38 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     
-    <!-- Default SEO meta tags - will be overridden by react-helmet-async -->
-    <title><%- title %></title>
-    <meta name="description" content="<%- description %>" />
-    <meta name="robots" content="index, follow" />
+    <!-- Placeholder SEO Meta Tags (replaced by SSR for bots) -->
+    <title>__PAGE_TITLE__</title>
+    <meta name="description" content="__PAGE_DESCRIPTION__" />
+    <meta name="keywords" content="__PAGE_KEYWORDS__" />
+    <meta name="robots" content="__PAGE_ROBOTS__" />
+    <meta name="author" content="__PAGE_AUTHOR__" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="__PAGE_URL__" />
+    <meta property="og:title" content="__PAGE_TITLE__" />
+    <meta property="og:description" content="__PAGE_DESCRIPTION__" />
+    <meta property="og:image" content="__PAGE_IMAGE__" />
+    <meta property="og:image:secure_url" content="__PAGE_IMAGE__" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="__SITE_NAME__" />
+    <meta property="og:locale" content="__PAGE_LOCALE__" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="__PAGE_URL__" />
+    <meta name="twitter:title" content="__PAGE_TITLE__" />
+    <meta name="twitter:description" content="__PAGE_DESCRIPTION__" />
+    <meta name="twitter:image" content="__PAGE_IMAGE__" />
+    <meta name="twitter:image:alt" content="__PAGE_TITLE__" />
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="__PAGE_URL__" />
     
     <!-- Dynamic SEO handled by setSEO() in each page component -->
-    <!-- Social media previews handled by /social-meta edge function -->
+    <!-- Social media previews handled by SSR edge function -->
     
     <!-- Performance optimizations -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

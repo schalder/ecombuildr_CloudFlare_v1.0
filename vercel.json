@@ -7,7 +7,40 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/api/[...catchall]?path=$1"
+      "destination": "/api/[...catchall]?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "facebookexternalhit"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "Twitterbot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/api/[...catchall]?path=$1",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "Googlebot"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
@@ -25,30 +58,6 @@
         {
           "key": "Referrer-Policy",
           "value": "strict-origin-when-cross-origin"
-        }
-      ]
-    },
-    {
-      "source": "/(.*)",
-      "has": [
-        {
-          "type": "header",
-          "key": "user-agent",
-          "value": "(?i)(facebookexternalhit|facebookcatalog|facebookplatform|facebot|facebookbot|twitterbot|linkedinbot|whatsapp|discordbot|telegrambot|slackbot|skypeuripreview|googlebot|bingbot|bot|crawler|spider|baiduspider|yandex|duckduckbot|slurp|ia_archiver|semrushbot|ahrefsbot|dotbot|pinterestbot|applebot|yahoobot)"
-        }
-      ],
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        },
-        {
-          "key": "Pragma",
-          "value": "no-cache"
-        },
-        {
-          "key": "Expires",
-          "value": "0"
         }
       ]
     },
