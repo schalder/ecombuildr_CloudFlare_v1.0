@@ -23,8 +23,13 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    // Conditionally import and use lovable-tagger only in development
+    ...(mode === 'development' ? [
+      (async () => {
+        const { componentTagger } = await import('lovable-tagger');
+        return componentTagger();
+      })()
+    ] : []),
     // Sitemap generation for static pages
     sitemap({
       hostname: 'https://get.ecombuildr.com', // Update with your domain
