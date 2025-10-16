@@ -259,8 +259,8 @@ async function fetchContentData(content, env) {
     switch (content.type) {
       case 'website_page':
         // First get the website to find the website_id
-        console.log(`🔍 Step 1: Getting website for store_slug: ${content.storeSlug}`);
-        const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,store_name,store_slug`, {
+        console.log(`🔍 Step 1: Getting website for slug: ${content.storeSlug}`);
+        const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,name,slug`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -285,7 +285,7 @@ async function fetchContentData(content, env) {
         }
         
         const website = websites[0];
-        console.log('✅ Found website:', { id: website.id, name: website.store_name });
+        console.log('✅ Found website:', { id: website.id, name: website.name });
         
         // Now get the website page with SEO data
         console.log(`🔍 Step 2: Getting page for website_id: ${website.id}, slug: ${content.pageSlug}`);
@@ -317,8 +317,8 @@ async function fetchContentData(content, env) {
         console.log('✅ Found page:', { title: page.seo_title, description: page.seo_description });
         
         seoData = {
-          title: page.seo_title || `${website.store_name} - EcomBuildr`,
-          description: page.seo_description || `Visit ${website.store_name} on EcomBuildr`,
+          title: page.seo_title || `${website.name} - EcomBuildr`,
+          description: page.seo_description || `Visit ${website.name} on EcomBuildr`,
           image: page.social_image_url || 'https://app.ecombuildr.com/og-image.jpg',
           url: `https://app.ecombuildr.com/site/${content.storeSlug}/${content.pageSlug}`,
           keywords: page.seo_keywords,
@@ -335,7 +335,7 @@ async function fetchContentData(content, env) {
         console.log(`🔍 Getting funnel step data for: ${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`);
         
         // First get the website
-        const websiteResponse2 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,store_name,store_slug`, {
+        const websiteResponse2 = await fetch(`${supabaseUrl}/rest/v1/websites?slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,name,slug`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -358,7 +358,7 @@ async function fetchContentData(content, env) {
         const website2 = websites2[0];
         
         // Get the funnel
-        const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website2.id}&funnel_slug=eq.${encodeURIComponent(content.funnelSlug)}&select=id,funnel_name,funnel_slug`, {
+        const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website2.id}&slug=eq.${encodeURIComponent(content.funnelSlug)}&select=id,name,slug`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -404,8 +404,8 @@ async function fetchContentData(content, env) {
         const step = steps[0];
         
         seoData = {
-          title: step.seo_title || `${funnel.funnel_name} - ${website2.store_name}`,
-          description: step.seo_description || `Visit ${funnel.funnel_name} on ${website2.store_name}`,
+          title: step.seo_title || `${funnel.name} - ${website2.name}`,
+          description: step.seo_description || `Visit ${funnel.name} on ${website2.name}`,
           image: step.social_image_url || step.og_image || 'https://app.ecombuildr.com/og-image.jpg',
           url: `https://app.ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`,
           keywords: step.seo_keywords,
@@ -419,7 +419,7 @@ async function fetchContentData(content, env) {
         
       case 'website_home':
         // Get website basic info
-        const websiteResponse3 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${encodeURIComponent(content.storeSlug)}&select=store_name,store_description,store_logo`, {
+        const websiteResponse3 = await fetch(`${supabaseUrl}/rest/v1/websites?slug=eq.${encodeURIComponent(content.storeSlug)}&select=name,description`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -442,9 +442,9 @@ async function fetchContentData(content, env) {
         const website3 = websites3[0];
         
         seoData = {
-          title: website3.store_name || 'EcomBuildr',
-          description: website3.store_description || 'Build and manage your e-commerce store with EcomBuildr',
-          image: website3.store_logo || 'https://app.ecombuildr.com/og-image.jpg',
+          title: website3.name || 'EcomBuildr',
+          description: website3.description || 'Build and manage your e-commerce store with EcomBuildr',
+          image: 'https://app.ecombuildr.com/og-image.jpg',
           url: `https://app.ecombuildr.com/site/${content.storeSlug}`,
           keywords: null,
           author: null,
@@ -457,7 +457,7 @@ async function fetchContentData(content, env) {
         
       case 'funnel_home':
         // Get funnel basic info
-        const websiteResponse4 = await fetch(`${supabaseUrl}/rest/v1/websites?store_slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,store_name`, {
+        const websiteResponse4 = await fetch(`${supabaseUrl}/rest/v1/websites?slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,name`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -479,7 +479,7 @@ async function fetchContentData(content, env) {
         
         const website4 = websites4[0];
         
-        const funnelResponse2 = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website4.id}&funnel_slug=eq.${encodeURIComponent(content.funnelSlug)}&select=funnel_name,funnel_description,funnel_image`, {
+        const funnelResponse2 = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website4.id}&slug=eq.${encodeURIComponent(content.funnelSlug)}&select=name,description`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -502,9 +502,9 @@ async function fetchContentData(content, env) {
         const funnel2 = funnels2[0];
         
         seoData = {
-          title: funnel2.funnel_name || 'EcomBuildr',
-          description: funnel2.funnel_description || 'Build and manage your e-commerce store with EcomBuildr',
-          image: funnel2.funnel_image || 'https://app.ecombuildr.com/og-image.jpg',
+          title: funnel2.name || 'EcomBuildr',
+          description: funnel2.description || 'Build and manage your e-commerce store with EcomBuildr',
+          image: 'https://app.ecombuildr.com/og-image.jpg',
           url: `https://app.ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}`,
           keywords: null,
           author: null,
