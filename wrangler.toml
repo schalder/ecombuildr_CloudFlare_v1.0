@@ -8,6 +8,7 @@ pages_build_output_dir = "./dist"
 [vars]
 NODE_ENV = "production"
 
+# Force new deployment
 # KV namespace for caching (optional but recommended for SEO data)
 # [[kv_namespaces]]
 # binding = "SEO_CACHE"
