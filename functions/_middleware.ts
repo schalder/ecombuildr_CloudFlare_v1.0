@@ -133,12 +133,13 @@ function parseContentFromUrl(hostname: string, pathname: string): {
   isCustomDomain?: boolean;
 } {
   // System domain patterns - direct content resolution
-  const siteMatch = pathname.match(/^\/site\/([^\/]+)\/(.+)$/);
+  // Handle both /site/website-slug (homepage) and /site/website-slug/page-slug
+  const siteMatch = pathname.match(/^\/site\/([^\/]+)(?:\/(.+))?$/);
   if (siteMatch) {
     return {
       type: 'website_page',
       websiteSlug: siteMatch[1],
-      pageSlug: siteMatch[2]
+      pageSlug: siteMatch[2] || 'homepage' // Default to 'homepage' if no page slug
     };
   }
   
@@ -203,20 +204,66 @@ async function resolveSEOData(supabase: any, hostname: string, pathname: string)
 async function resolveWebsitePageSEO(supabase: any, websiteSlug: string, pageSlug: string, hostname: string, pathname: string): Promise<SEOData | null> {
   console.log(`📄 Resolving website page: ${websiteSlug}/${pageSlug}`);
   
-  const { data: page } = await supabase
+  let pageQuery = supabase
     .from('website_pages')
     .select(`
       id, title, slug, seo_title, seo_description, og_image, social_image_url, preview_image_url,
       seo_keywords, canonical_url, meta_robots, meta_author, language_code,
-      custom_meta_tags, content,
+      custom_meta_tags, content, is_homepage,
       websites!inner(id, name, slug, description, settings)
     `)
-    .eq('slug', pageSlug)
-    .eq('websites.slug', websiteSlug)
-    .maybeSingle();
+    .eq('websites.slug', websiteSlug);
+  
+  // If pageSlug is 'homepage', look for homepage page, otherwise look for specific slug
+  if (pageSlug === 'homepage') {
+    pageQuery = pageQuery.eq('is_homepage', true);
+  } else {
+    pageQuery = pageQuery.eq('slug', pageSlug);
+  }
+  
+  const { data: page } = await pageQuery.maybeSingle();
   
   if (!page) {
     console.log(`❌ Website page not found: ${websiteSlug}/${pageSlug}`);
+    
+    // Fallback: try to get website-level SEO
+    const { data: website } = await supabase
+      .from('websites')
+      .select('id, name, description, settings')
+      .eq('slug', websiteSlug)
+      .maybeSingle();
+    
+    if (website) {
+      console.log(`✅ Using website-level SEO fallback for: ${website.name}`);
+      const ws: any = website.settings || {};
+      
+      const title = (ws.seo && ws.seo.title) || website.name;
+      const description = (ws.seo && ws.seo.description) || website.description || `Welcome to ${website.name}`;
+      const image = normalizeImageUrl(
+        (ws.seo && (ws.seo.og_image || ws.seo.social_image_url)) ||
+        (ws.branding && (ws.branding.social_image_url || ws.branding.logo)) ||
+        ws.favicon
+      );
+      
+      return {
+        title,
+        description,
+        og_image: image,
+        keywords: [],
+        canonical: `https://${hostname}${pathname}`,
+        robots: 'index, follow',
+        site_name: website.name,
+        source: `website_fallback|website:${website.id}`,
+        debug: {
+          titleSource: 'website.settings.seo.title',
+          descSource: 'website.description',
+          imageSource: 'website.settings',
+          websiteId: website.id,
+          slug: websiteSlug
+        }
+      };
+    }
+    
     return null;
   }
   
@@ -582,6 +629,8 @@ export default {
     );
     
     console.log(`🔍 Content: ${contentInfo.type} | Social Bot: ${isSocialBot} | Handle SEO: ${shouldHandleSEO}`);
+    console.log(`🔍 Content Info:`, JSON.stringify(contentInfo, null, 2));
+    console.log(`🔍 User Agent: ${userAgent}`);
     
     // Handle social crawlers with SEO
     if (shouldHandleSEO) {
