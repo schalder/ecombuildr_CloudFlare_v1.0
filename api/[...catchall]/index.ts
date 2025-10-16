@@ -1112,7 +1112,7 @@ export default async function handler(request: Request): Promise<Response> {
   // Get original path from query param (set by vercel.json rewrite)
   const pathname = new URL(request.url).searchParams.get('path') || url.pathname;
   
-  const traceId = crypto.randomUUID();
+  const traceId = (globalThis as any).crypto?.randomUUID?.() || Math.random().toString(36).slice(2);
   console.log(`[${traceId}] 🔍 SEO Handler - ${hostname}${pathname} | UA: ${userAgent.substring(0, 50)}...`);
   
   try {
@@ -1122,7 +1122,10 @@ export default async function handler(request: Request): Promise<Response> {
     console.log(`[${traceId}] ✅ HTML template obtained (${htmlTemplate.length} chars)`);
     
     // Check if this is a social media crawler
-    if (isSocialCrawler(userAgent)) {
+    const isBot = isSocialCrawler(userAgent);
+    console.log(`[${traceId}] 🤖 Bot detected: ${isBot}`);
+    
+    if (isBot) {
       console.log(`[${traceId}] 🤖 Bot detected - serving SEO HTML`);
       
       const urlPattern = parseUrlPattern(hostname, pathname);
@@ -1145,29 +1148,28 @@ export default async function handler(request: Request): Promise<Response> {
             'Content-Type': 'text/html; charset=utf-8',
             'Cache-Control': 'public, max-age=60',
             'X-Trace-Id': traceId,
+            'X-User-Type': 'bot',
+            'X-Pattern': urlPattern.type
           },
         });
       }
       
-      // Resolve SEO data from database
-      const seoData = await resolveSEOData(hostname, pathname);
+      // For now, just return the template with basic SEO data
+      const basicSEO = {
+        title: 'EcomBuildr - Build Your E-commerce Empire',
+        description: 'Create stunning e-commerce websites and sales funnels with EcomBuildr. No coding required.',
+        og_image: 'https://get.ecombuildr.com/hero-ecommerce.jpg',
+        keywords: ['ecommerce', 'website builder', 'sales funnel'],
+        canonical: `https://${hostname}${pathname}`,
+        robots: 'index, follow',
+        site_name: 'EcomBuildr',
+        source: 'basic_fallback'
+      };
       
-      if (!seoData) {
-        console.log(`[${traceId}] ⚠️ No SEO data found - serving template as-is`);
-        return new Response(htmlTemplate, {
-          status: 200,
-          headers: {
-            'Content-Type': 'text/html; charset=utf-8',
-            'Cache-Control': 'public, max-age=60',
-            'X-Trace-Id': traceId,
-          },
-        });
-      }
+      console.log(`[${traceId}] ✅ Using basic SEO fallback`);
       
-      console.log(`[${traceId}] ✅ SEO resolved via ${seoData.source}: ${seoData.title}`);
-      
-      // Replace placeholders with actual SEO data
-      const html = replacePlaceholders(htmlTemplate, seoData);
+      // Replace placeholders with basic SEO data
+      const html = replacePlaceholders(htmlTemplate, basicSEO);
       
       return new Response(html, {
         status: 200,
@@ -1175,7 +1177,7 @@ export default async function handler(request: Request): Promise<Response> {
           'Content-Type': 'text/html; charset=utf-8',
           'Cache-Control': 'public, max-age=300, s-maxage=300',
           'X-Trace-Id': traceId,
-          'X-SEO-Source': seoData.source || 'unknown',
+          'X-SEO-Source': 'basic_fallback',
           'X-SEO-Pattern': urlPattern.type,
           'X-User-Type': 'bot'
         },
@@ -1197,23 +1199,33 @@ export default async function handler(request: Request): Promise<Response> {
   } catch (error) {
     console.error(`[${traceId}] 💥 SEO Handler error:`, error);
     
-    // On error, try to serve the template anyway
-    try {
-      const htmlTemplate = await getHTMLTemplate(baseUrl);
-      return new Response(htmlTemplate, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'X-Trace-Id': traceId,
-          'X-Error': 'SEO-processing-failed'
-        },
-      });
-    } catch (fallbackError) {
-      return new Response('Internal Server Error', { 
-        status: 500,
-        headers: { 'X-Trace-Id': traceId }
-      });
-    }
+    // On error, return a basic template
+    const basicTemplate = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcomBuildr - Build Your E-commerce Empire</title>
+  <meta name="description" content="Create stunning e-commerce websites and sales funnels with EcomBuildr. No coding required." />
+  <meta property="og:title" content="EcomBuildr - Build Your E-commerce Empire" />
+  <meta property="og:description" content="Create stunning e-commerce websites and sales funnels with EcomBuildr. No coding required." />
+  <meta property="og:image" content="https://get.ecombuildr.com/hero-ecommerce.jpg" />
+  <link rel="canonical" href="https://${hostname}${pathname}" />
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>`;
+    
+    return new Response(basicTemplate, {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'X-Trace-Id': traceId,
+        'X-Error': 'SEO-processing-failed'
+      },
+    });
   }
 }
 
