@@ -4,9 +4,8 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { ViteSitemap } from 'vite-plugin-sitemap';
 import { createHtmlPlugin } from 'vite-plugin-html';
-import { ViteSSG } from 'vite-ssg';
 
-// Define routes for SSG and sitemap
+// Define routes for sitemap generation
 const routes = [
   { path: '/', name: 'Home' },
   { path: '/about', name: 'About' },
@@ -26,13 +25,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
-    // SSG for static pages
-    ViteSSG({
-      includedRoutes: () => routes,
-      // Only pre-render static marketing pages, not dynamic user content
-      prerenderRoutes: routes.map(r => r.path),
-    }),
-    // Sitemap generation
+    // Sitemap generation for static pages
     ViteSitemap({
       baseUrl: 'https://get.ecombuildr.com', // Update with your domain
       routes,
