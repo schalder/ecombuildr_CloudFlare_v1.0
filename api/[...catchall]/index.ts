@@ -1182,9 +1182,54 @@ export default async function handler(request: Request): Promise<Response> {
     }
   }
   
-  // For non-social crawlers or unsupported patterns, pass through
-  console.log('👤 Non-social crawler or unsupported pattern - passing through');
-  return new Response(null, { status: 200 });
+  // For non-social crawlers or unsupported patterns, serve the SPA
+  console.log(`[${traceId}] 👤 Non-social crawler or unsupported pattern - serving SPA`);
+  
+  // Serve the static index.html for regular users
+  const indexHtml = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loading...</title>
+    <meta name="description" content="Loading content..." />
+    <meta name="robots" content="index, follow" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <style>
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      .image-container { position: relative; overflow: hidden; background-color: hsl(var(--muted)); }
+      .image-container::before { content: ''; display: block; width: 100%; height: 0; padding-bottom: var(--aspect-ratio, 56.25%); }
+      .image-container img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.3s ease; }
+      .loading-shimmer { background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--muted-foreground) / 0.1) 50%, hsl(var(--muted)) 75%); background-size: 200% 100%; animation: shimmer 2s infinite; }
+      picture { display: block; width: 100%; height: 100%; }
+      img[width][height] { aspect-ratio: attr(width) / attr(height); }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>`;
+
+  return new Response(indexHtml, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Content-Length': indexHtml.length.toString(),
+      'Cache-Control': 'public, max-age=0, must-revalidate',
+      'X-Trace-Id': traceId,
+      'X-SEO-Source': 'spa-fallback'
+    },
+  });
 }
 
 
