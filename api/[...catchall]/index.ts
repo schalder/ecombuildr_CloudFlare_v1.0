@@ -270,7 +270,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
                 .select('id')
                 .eq('funnel_id', funnelConn.content_id)
                 .eq('slug', lastSegment)
-                .eq('is_published', true)
                 .maybeSingle();
               
               if (stepExists) {
@@ -308,7 +307,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           .select('id, slug')
           .eq('funnel_id', selectedConnection.content_id)
           .eq('slug', potentialStepSlug)
-          .eq('is_published', true)
           .maybeSingle();
         
         if (step) {
@@ -350,7 +348,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         .from('websites')
         .select('id, store_id')
         .eq('slug', urlPattern.identifier)
-        .eq('is_published', true)
         .maybeSingle();
       
       if (website) {
@@ -375,7 +372,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           .from('websites')
           .select('id')
           .eq('store_id', store.id)
-          .eq('is_published', true)
           .order('created_at', { ascending: true })
           .limit(1)
           .maybeSingle();
@@ -392,7 +388,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         .from('websites')
         .select('id, store_id')
         .eq('slug', urlPattern.identifier)
-        .eq('is_published', true)
         .maybeSingle();
       
       if (website) {
@@ -475,7 +470,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         `)
         .eq('website_id', websiteId)
         .eq('is_homepage', true)
-        .eq('is_published', true)
         .maybeSingle();
       
       if (homepagePage) {
@@ -663,7 +657,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         `)
         .eq(isUUID ? 'id' : 'slug', funnelIdentifier)
         .eq('is_active', true)
-        .eq('is_published', true)
         .maybeSingle();
       
       if (funnel) {
@@ -678,7 +671,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
             `)
             .eq('funnel_id', funnel.id)
             .eq('slug', stepSlug)
-            .eq('is_published', true)
             .maybeSingle();
           
           if (step) {
@@ -788,7 +780,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       `)
       .eq('website_id', websiteId)
       .eq('slug', cleanPath)
-      .eq('is_published', true)
       .maybeSingle();
     
     if (page) {
