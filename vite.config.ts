@@ -22,23 +22,54 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Split vendor libraries
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
-          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          'chart-vendor': ['recharts'],
-          'date-vendor': ['date-fns', 'react-day-picker'],
+        manualChunks: (id) => {
+          // Split node_modules into smaller chunks
+          if (id.includes('node_modules')) {
+            // React ecosystem
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            // UI libraries
+            if (id.includes('@radix-ui') || id.includes('lucide-react')) {
+              return 'ui-vendor';
+            }
+            // Form handling
+            if (id.includes('react-hook-form') || id.includes('zod') || id.includes('@hookform')) {
+              return 'form-vendor';
+            }
+            // Charts and visualization
+            if (id.includes('recharts')) {
+              return 'chart-vendor';
+            }
+            // Date handling
+            if (id.includes('date-fns') || id.includes('react-day-picker')) {
+              return 'date-vendor';
+            }
+            // Page builder (admin only)
+            if (id.includes('react-dnd') || id.includes('@hello-pangea/dnd')) {
+              return 'page-builder';
+            }
+            // Supabase
+            if (id.includes('@supabase')) {
+              return 'supabase-vendor';
+            }
+            // TanStack Query
+            if (id.includes('@tanstack')) {
+              return 'query-vendor';
+            }
+            // Everything else from node_modules
+            return 'vendor';
+          }
           
-          // Split page builder (admin only)
-          'page-builder': [
-            'react-dnd',
-            'react-dnd-html5-backend',
-            '@hello-pangea/dnd'
-          ],
+          // Split large page builder components
+          if (id.includes('src/components/page-builder')) {
+            return 'page-builder-components';
+          }
           
-          // Split major libraries that are actually used
-          'ui-libs': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority']
+          // Split storefront components
+          if (id.includes('src/components/storefront')) {
+            return 'storefront-components';
+          }
         },
       },
     },
@@ -47,8 +78,8 @@ export default defineConfig(({ mode }) => ({
     minify: 'esbuild', // Use ESBuild for faster minification
     // Enable CSS code splitting
     cssCodeSplit: true,
-    // Reduce chunk size warnings for better performance
-    chunkSizeWarningLimit: 1000,
+    // Increase chunk size warning limit (default is 500kb)
+    chunkSizeWarningLimit: 2000, // 2MB warning limit
   },
   // Environment variable defaults
   define: {
