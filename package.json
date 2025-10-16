@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run install:optional && vite build",
+    "install:optional": "npm install --include=optional",
     "build:dev": "vite build --mode development",
     "start": "vite preview",
     "vercel-build": "vite build",
