@@ -147,19 +147,20 @@ const CartProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ children
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToHash />
-          <AuthProvider>
-            <StoreProvider>
-              <PixelManager>
-                <CartDrawerProvider>
-                  <CartProviderWrapper>
-                    <AddToCartProvider>
-                      <CartDrawer />
-                      <DomainRouter>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToHash />
+            <AuthProvider>
+              <StoreProvider>
+                <PixelManager>
+                  <CartDrawerProvider>
+                    <CartProviderWrapper>
+                      <AddToCartProvider>
+                        <CartDrawer />
+                        <DomainRouter>
                 <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Auth />} />
@@ -408,8 +409,9 @@ const App = () => (
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
-    </HelmetProvider>
-  </QueryClientProvider>
+    </ThemeProvider>
+  </HelmetProvider>
+</QueryClientProvider>
 );
 
 export default App;
