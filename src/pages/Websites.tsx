@@ -292,7 +292,7 @@ export default function Websites() {
         ) : (
           <div className="text-center py-12">
             <Globe className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900">No websites</h3>
+            <h3 className="mt-2 text-sm font-semibold text-foreground">No websites</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Get started by creating your first website.
             </p>

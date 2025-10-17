@@ -193,7 +193,7 @@ const UserManagement = () => {
       case 'trial': return 'bg-blue-100 text-blue-800';
       case 'suspended': return 'bg-red-100 text-red-800';
       case 'expired': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -203,7 +203,7 @@ const UserManagement = () => {
       case 'starter': return 'bg-blue-100 text-blue-800';
       case 'professional': return 'bg-purple-100 text-purple-800';
       case 'enterprise': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 

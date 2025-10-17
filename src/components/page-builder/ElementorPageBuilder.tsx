@@ -1538,7 +1538,7 @@ const SectionComponent: React.FC<SectionComponentProps> = ({
       )}
       {/* Section Toolbar */}
       {shouldShowToolbar && (
-        <div className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-sky-100 text-gray-800 border border-sky-200 px-3 py-1 rounded-md text-xs shadow-lg">
+        <div className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-sky-100 text-gray-800 dark:bg-sky-900 dark:text-sky-200 border border-sky-200 dark:border-sky-700 px-3 py-1 rounded-md text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Section</span>
           <Separator orientation="vertical" className="mx-1 h-4" />
@@ -1822,7 +1822,7 @@ const RowComponent: React.FC<RowComponentProps> = ({
 
       {/* Row Toolbar */}
       {shouldShowToolbar && (
-        <div className="absolute -top-10 left-0 z-40 flex items-center gap-1 bg-violet-100 text-gray-800 border border-violet-200 px-3 py-1 rounded-md text-xs shadow-lg">
+        <div className="absolute -top-10 left-0 z-40 flex items-center gap-1 bg-violet-100 text-gray-800 dark:bg-violet-900 dark:text-violet-200 border border-violet-200 dark:border-violet-700 px-3 py-1 rounded-md text-xs shadow-lg">
           <div ref={dragRef} className="cursor-move">
             <Grip className="h-3 w-3" />
           </div>
@@ -2046,7 +2046,7 @@ const ColumnComponent: React.FC<ColumnComponentProps> = ({
 
       {/* Column Toolbar */}
       {shouldShowToolbar && (
-        <div className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-emerald-100 text-gray-800 border border-emerald-200 px-2 py-1 rounded text-xs shadow-lg">
+        <div className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-emerald-100 text-gray-800 dark:bg-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-700 px-2 py-1 rounded text-xs shadow-lg">
           <Grip className="h-3 w-3" />
           <span className="font-medium">Column</span>
           <Separator orientation="vertical" className="mx-1 h-3" />
@@ -2276,7 +2276,7 @@ const ElementWrapper: React.FC<ElementWrapperProps> = ({
     >
       {/* Element Toolbar */}
       {shouldShowToolbar && (
-        <div data-pb-toolbar className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-amber-100 text-gray-800 border border-amber-200 px-2 py-1 rounded text-xs shadow-lg min-w-max">
+        <div data-pb-toolbar className="absolute -top-8 left-0 z-40 flex items-center gap-1 bg-amber-100 text-gray-800 dark:bg-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-700 px-2 py-1 rounded text-xs shadow-lg min-w-max">
           <div 
             ref={dragRef}
             className="flex items-center cursor-move hover:bg-gray-100 p-1 rounded"

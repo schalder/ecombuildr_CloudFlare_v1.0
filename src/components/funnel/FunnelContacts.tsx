@@ -286,7 +286,7 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
       new: 'bg-blue-100 text-blue-800',
       read: 'bg-yellow-100 text-yellow-800',
       replied: 'bg-green-100 text-green-800',
-      closed: 'bg-gray-100 text-gray-800'
+      closed: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
     };
 
     return (

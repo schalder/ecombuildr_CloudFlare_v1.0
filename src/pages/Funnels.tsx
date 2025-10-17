@@ -344,7 +344,7 @@ export default function Funnels() {
         ) : (
           <div className="text-center py-12">
             <TrendingUp className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-2 text-sm font-semibold text-gray-900">No funnels</h3>
+            <h3 className="mt-2 text-sm font-semibold text-foreground">No funnels</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Get started by creating your first sales funnel.
             </p>
