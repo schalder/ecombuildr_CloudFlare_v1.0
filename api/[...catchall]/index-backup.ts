@@ -193,7 +193,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     let stepSlug: string | undefined;
     
     // Check for system domain fallback (platform marketing site)
-    const systemDomains = ['get.ecombuildr.com', 'app.ecombuildr.com'];
+    const systemDomains = ['ecombuildr.com'];
     const isSystemDomain = systemDomains.some(d => hostname.includes(d));
     
     // Step 1: Resolve website/store based on URL pattern
@@ -1044,7 +1044,7 @@ async function getRoutingContext(domain: string, pathname: string): Promise<any>
 
 export default async function handler(request: Request): Promise<Response> {
   // Get actual hostname from x-forwarded-host header (Vercel sets this)
-  const hostname = request.headers.get('x-forwarded-host') || 'get.ecombuildr.com';
+  const hostname = request.headers.get('x-forwarded-host') || 'ecombuildr.com';
   const protocol = request.headers.get('x-forwarded-proto') || 'https';
   
   // Construct full URL for proper URL parsing
