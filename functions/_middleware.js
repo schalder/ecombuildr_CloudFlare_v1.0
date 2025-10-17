@@ -79,16 +79,17 @@ function isSocialMediaCrawler(userAgent) {
 async function handleSEORequest(url, env) {
   try {
     const pathname = url.pathname;
+    const hostname = url.hostname;
     
-    // Parse content from URL path
-    const content = parseContentFromUrl(pathname);
+    // Parse content from URL path and hostname
+    const content = await parseContentFromUrl(pathname, hostname, env);
     
     if (!content) {
       console.log(`No content found for path: ${pathname}`);
       return null;
     }
     
-    console.log(`📄 Generating SEO for: ${content.type} - ${content.slug}`);
+    console.log(`📄 Generating SEO for: ${content.type} - ${content.slug || content.pageSlug}`);
     
     // Generate dynamic HTML with SEO meta tags
     const html = await generateSEOHTML(content, env);
@@ -106,52 +107,133 @@ async function handleSEORequest(url, env) {
   }
 }
 
-// Parse content from URL path
-function parseContentFromUrl(pathname) {
-  // Remove leading slash
-  const path = pathname.startsWith('/') ? pathname.slice(1) : pathname;
-  
-  // Handle website pages: /site/{store-slug}/{page-slug}
-  const websitePageMatch = path.match(/^site\/([^\/]+)\/(.+)$/);
-  if (websitePageMatch) {
-    return {
-      type: 'website_page',
-      storeSlug: websitePageMatch[1],
-      pageSlug: websitePageMatch[2]
-    };
+// Parse content from URL path and hostname
+async function parseContentFromUrl(pathname, hostname, env) {
+  // Check if it's a system domain (e.g., app.ecombuildr.com, ecombuildr.pages.dev)
+  if (hostname.includes('ecombuildr.com') || hostname.includes('ecombuildr.pages.dev')) {
+    // Existing logic for system domains
+    const path = pathname.startsWith('/') ? pathname.slice(1) : pathname;
+    
+    // Handle website pages: /site/{store-slug}/{page-slug}
+    const websitePageMatch = path.match(/^site\/([^\/]+)\/(.+)$/);
+    if (websitePageMatch) {
+      return {
+        type: 'website_page',
+        storeSlug: websitePageMatch[1],
+        pageSlug: websitePageMatch[2]
+      };
+    }
+    
+    // Handle funnel steps: /funnel/{store-slug}/{funnel-slug}/{step-slug}
+    const funnelStepMatch = path.match(/^funnel\/([^\/]+)\/([^\/]+)\/(.+)$/);
+    if (funnelStepMatch) {
+      return {
+        type: 'funnel_step',
+        storeSlug: funnelStepMatch[1],
+        funnelSlug: funnelStepMatch[2],
+        stepSlug: funnelStepMatch[3]
+      };
+    }
+    
+    // Handle website home: /site/{store-slug}
+    const websiteHomeMatch = path.match(/^site\/([^\/]+)$/);
+    if (websiteHomeMatch) {
+      return {
+        type: 'website_home',
+        storeSlug: websiteHomeMatch[1]
+      };
+    }
+    
+    // Handle funnel home: /funnel/{store-slug}/{funnel-slug}
+    const funnelHomeMatch = path.match(/^funnel\/([^\/]+)\/([^\/]+)$/);
+    if (funnelHomeMatch) {
+      return {
+        type: 'funnel_home',
+        storeSlug: funnelHomeMatch[1],
+        funnelSlug: funnelHomeMatch[2]
+      };
+    }
+    
+    return null;
+  } else {
+    // Logic for custom domains
+    console.log(`[Middleware] Custom domain detected: ${hostname}`);
+    
+    try {
+      const supabaseUrl = env.SUPABASE_URL;
+      const supabaseKey = env.SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        console.error('[Middleware] Missing Supabase credentials');
+        return null;
+      }
+      
+      // Step 1: Find store_id associated with this custom domain
+      const customDomainResponse = await fetch(`${supabaseUrl}/rest/v1/custom_domains?domain=eq.${encodeURIComponent(hostname)}&select=store_id`, {
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!customDomainResponse.ok) {
+        console.error('[Middleware] Custom domain query failed:', customDomainResponse.status);
+        return null;
+      }
+      
+      const customDomains = await customDomainResponse.json();
+      
+      if (!customDomains || customDomains.length === 0) {
+        console.log(`[Middleware] Custom domain ${hostname} not found in database`);
+        return null;
+      }
+      
+      const storeId = customDomains[0].store_id;
+      console.log(`[Middleware] Found storeId ${storeId} for custom domain ${hostname}`);
+      
+      // Step 2: Find the website slug for this store_id
+      const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?store_id=eq.${storeId}&select=slug`, {
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!websiteResponse.ok) {
+        console.error('[Middleware] Website query failed:', websiteResponse.status);
+        return null;
+      }
+      
+      const websites = await websiteResponse.json();
+      
+      if (!websites || websites.length === 0) {
+        console.error('[Middleware] Website not found for storeId');
+        return null;
+      }
+      
+      const storeSlug = websites[0].slug;
+      let pageSlug = pathname.substring(1); // Remove leading slash
+      
+      if (!pageSlug || pageSlug === 'home-page') {
+        pageSlug = 'home-page'; // Default to home-page for root or explicit home-page path
+      }
+      
+      console.log(`[Middleware] Custom domain parsing: storeSlug=${storeSlug}, pageSlug=${pageSlug}`);
+      return { 
+        type: 'website_page', 
+        storeSlug, 
+        pageSlug,
+        isCustomDomain: true,
+        customDomainUrl: `https://${hostname}${pathname}`
+      };
+      
+    } catch (error) {
+      console.error('[Middleware] Custom domain parsing error:', error);
+      return null;
+    }
   }
-  
-  // Handle funnel steps: /funnel/{store-slug}/{funnel-slug}/{step-slug}
-  const funnelStepMatch = path.match(/^funnel\/([^\/]+)\/([^\/]+)\/(.+)$/);
-  if (funnelStepMatch) {
-    return {
-      type: 'funnel_step',
-      storeSlug: funnelStepMatch[1],
-      funnelSlug: funnelStepMatch[2],
-      stepSlug: funnelStepMatch[3]
-    };
-  }
-  
-  // Handle website home: /site/{store-slug}
-  const websiteHomeMatch = path.match(/^site\/([^\/]+)$/);
-  if (websiteHomeMatch) {
-    return {
-      type: 'website_home',
-      storeSlug: websiteHomeMatch[1]
-    };
-  }
-  
-  // Handle funnel home: /funnel/{store-slug}/{funnel-slug}
-  const funnelHomeMatch = path.match(/^funnel\/([^\/]+)\/([^\/]+)$/);
-  if (funnelHomeMatch) {
-    return {
-      type: 'funnel_home',
-      storeSlug: funnelHomeMatch[1],
-      funnelSlug: funnelHomeMatch[2]
-    };
-  }
-  
-  return null;
 }
 
 // Generate SEO HTML with dynamic meta tags
@@ -320,7 +402,7 @@ async function fetchContentData(content, env) {
           title: page.seo_title || `${website.name} - EcomBuildr`,
           description: page.seo_description || `Visit ${website.name} on EcomBuildr`,
           image: page.social_image_url || 'https://app.ecombuildr.com/og-image.jpg',
-          url: `https://app.ecombuildr.com/site/${content.storeSlug}/${content.pageSlug}`,
+          url: content.customDomainUrl || `https://app.ecombuildr.com/site/${content.storeSlug}/${content.pageSlug}`,
           keywords: page.seo_keywords,
           author: page.meta_author,
           canonical: page.canonical_url,
@@ -441,11 +523,43 @@ async function fetchContentData(content, env) {
         
         const website3 = websites3[0];
         
+        // For custom domains, we need to get the actual home page from website_pages
+        if (content.isCustomDomain) {
+          console.log(`🔍 Getting home page for website_id: ${website3.id}`);
+          const homePageResponse = await fetch(`${supabaseUrl}/rest/v1/website_pages?website_id=eq.${website3.id}&is_homepage=eq.true&select=seo_title,seo_description,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots`, {
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'apikey': supabaseKey,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (homePageResponse.ok) {
+            const homePages = await homePageResponse.json();
+            if (homePages && homePages.length > 0) {
+              const homePage = homePages[0];
+              seoData = {
+                title: homePage.seo_title || website3.name || 'EcomBuildr',
+                description: homePage.seo_description || website3.description || 'Build and manage your e-commerce store with EcomBuildr',
+                image: homePage.social_image_url || 'https://app.ecombuildr.com/og-image.jpg',
+                url: content.customDomainUrl || `https://app.ecombuildr.com/site/${content.storeSlug}`,
+                keywords: homePage.seo_keywords,
+                author: homePage.meta_author,
+                canonical: homePage.canonical_url,
+                robots: homePage.meta_robots,
+                customMetaTags: homePage.custom_meta_tags,
+                language: homePage.language_code
+              };
+              break;
+            }
+          }
+        }
+        
         seoData = {
           title: website3.name || 'EcomBuildr',
           description: website3.description || 'Build and manage your e-commerce store with EcomBuildr',
           image: 'https://app.ecombuildr.com/og-image.jpg',
-          url: `https://app.ecombuildr.com/site/${content.storeSlug}`,
+          url: content.customDomainUrl || `https://app.ecombuildr.com/site/${content.storeSlug}`,
           keywords: null,
           author: null,
           canonical: null,
