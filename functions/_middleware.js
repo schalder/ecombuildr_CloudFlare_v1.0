@@ -499,54 +499,81 @@ async function fetchContentData(content, env) {
         break;
         
       case 'funnel_step':
-        // Similar logic for funnel steps
-        console.log(`🔍 Getting funnel step data for: ${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`);
+        let funnel = null;
         
-        // First get the website
-        const websiteResponse2 = await fetch(`${supabaseUrl}/rest/v1/websites?slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,name,slug`, {
-          headers: {
-            'Authorization': `Bearer ${supabaseKey}`,
-            'apikey': supabaseKey,
-            'Content-Type': 'application/json'
+        // For custom domains, we already have the funnelId
+        if (content.funnelId) {
+          console.log(`🔍 Using provided funnelId: ${content.funnelId}`);
+          const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?id=eq.${content.funnelId}&select=id,name,slug,website_id,websites!inner(id,name,slug)`, {
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'apikey': supabaseKey,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (funnelResponse.ok) {
+            const funnels = await funnelResponse.json();
+            if (funnels && funnels.length > 0) {
+              funnel = funnels[0];
+              console.log('✅ Found funnel by ID:', { id: funnel.id, name: funnel.name });
+            }
           }
-        });
-        
-        if (!websiteResponse2.ok) {
-          const errorText = await websiteResponse2.text();
-          console.error('Website query failed:', websiteResponse2.status, errorText);
-          return null;
-        }
-        
-        const websites2 = await websiteResponse2.json();
-        if (!websites2 || websites2.length === 0) {
-          console.log('Website not found');
-          return null;
-        }
-        
-        const website2 = websites2[0];
-        
-        // Get the funnel
-        const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website2.id}&slug=eq.${encodeURIComponent(content.funnelSlug)}&select=id,name,slug`, {
-          headers: {
-            'Authorization': `Bearer ${supabaseKey}`,
-            'apikey': supabaseKey,
-            'Content-Type': 'application/json'
+        } else {
+          // For system domains, get funnel by website slug and funnel slug
+          console.log(`🔍 Getting funnel step data for: ${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`);
+          
+          // First get the website
+          const websiteResponse2 = await fetch(`${supabaseUrl}/rest/v1/websites?slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,name,slug`, {
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'apikey': supabaseKey,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (!websiteResponse2.ok) {
+            const errorText = await websiteResponse2.text();
+            console.error('Website query failed:', websiteResponse2.status, errorText);
+            return null;
           }
-        });
-        
-        if (!funnelResponse.ok) {
-          const errorText = await funnelResponse.text();
-          console.error('Funnel query failed:', funnelResponse.status, errorText);
-          return null;
+          
+          const websites2 = await websiteResponse2.json();
+          if (!websites2 || websites2.length === 0) {
+            console.log('Website not found');
+            return null;
+          }
+          
+          const website2 = websites2[0];
+          
+          // Get the funnel
+          const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?website_id=eq.${website2.id}&slug=eq.${encodeURIComponent(content.funnelSlug)}&select=id,name,slug`, {
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'apikey': supabaseKey,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (!funnelResponse.ok) {
+            const errorText = await funnelResponse.text();
+            console.error('Funnel query failed:', funnelResponse.status, errorText);
+            return null;
+          }
+          
+          const funnels = await funnelResponse.json();
+          if (!funnels || funnels.length === 0) {
+            console.log('Funnel not found');
+            return null;
+          }
+          
+          funnel = funnels[0];
         }
         
-        const funnels = await funnelResponse.json();
-        if (!funnels || funnels.length === 0) {
+        if (!funnel) {
           console.log('Funnel not found');
           return null;
         }
-        
-        const funnel = funnels[0];
         
         // Get the funnel step with SEO data
         const stepResponse = await fetch(`${supabaseUrl}/rest/v1/funnel_steps?funnel_id=eq.${funnel.id}&slug=eq.${encodeURIComponent(content.stepSlug)}&select=seo_title,seo_description,og_image,custom_scripts,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots`, {
@@ -572,10 +599,10 @@ async function fetchContentData(content, env) {
         const step = steps[0];
         
         seoData = {
-          title: step.seo_title || `${funnel.name} - ${website2.name}`,
-          description: step.seo_description || `Visit ${funnel.name} on ${website2.name}`,
+          title: step.seo_title || `${funnel.name} - ${funnel.websites?.name || 'EcomBuildr'}`,
+          description: step.seo_description || `Visit ${funnel.name} on ${funnel.websites?.name || 'EcomBuildr'}`,
           image: step.social_image_url || step.og_image || 'https://app.ecombuildr.com/og-image.jpg',
-          url: `https://app.ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`,
+          url: content.customDomainUrl || `https://app.ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`,
           keywords: step.seo_keywords,
           author: step.meta_author,
           canonical: step.canonical_url,
