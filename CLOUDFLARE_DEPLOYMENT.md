@@ -1,5 +1,49 @@
 # Cloudflare Pages Deployment Guide
 
+## Custom Domain Setup for Users
+
+### DNS-Only Approach (Cloudflare Pages)
+
+Users configure their DNS to point to `ecombuildr.pages.dev`. The app verifies DNS propagation and handles routing.
+
+### How It Works
+
+1. User adds domain in `/dashboard/domains`
+2. App shows: `CNAME www → ecombuildr.pages.dev`
+3. User configures DNS at their provider
+4. User verifies DNS in app
+5. App confirms DNS propagation
+6. Domain becomes active
+7. Middleware routes traffic to correct content
+
+### DNS Configuration
+
+#### Subdomain (www.example.com)
+```
+Type: CNAME
+Name: www
+Value: ecombuildr.pages.dev
+TTL: 300
+```
+
+#### Apex Domain (example.com)
+```
+Option 1: CNAME Flattening
+Type: CNAME
+Name: @
+Value: ecombuildr.pages.dev
+
+Option 2: Contact DNS provider for Cloudflare A records
+```
+
+### Benefits
+
+- No Cloudflare API needed
+- Unlimited domains
+- Works on Free plan
+- Automatic SSL
+- Standard industry practice
+
 ## Environment Variables for Cloudflare Pages
 
 ### Required Environment Variables

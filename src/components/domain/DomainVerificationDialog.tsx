@@ -29,81 +29,10 @@ export const DomainVerificationDialog: React.FC<DomainVerificationDialogProps> =
   const [isAdding, setIsAdding] = useState(false);
   const [verificationStatus, setVerificationStatus] = useState<any>(null);
   const [verificationAttempts, setVerificationAttempts] = useState(0);
-  const [vercelCnameTarget, setVercelCnameTarget] = useState<string | null>(null);
-  const [isLoadingCname, setIsLoadingCname] = useState(false);
-  
   const { store } = useUserStore();
 
-  const fetchVercelCname = async (domainName: string) => {
-    if (!store?.id) return;
-    
-    setIsLoadingCname(true);
-    try {
-      // Get the CNAME target for this domain
-      const { data: cnameData, error: cnameError } = await supabase.functions.invoke('dns-domain-manager', {
-        body: {
-          action: 'get_vercel_cname',
-          domain: domainName,
-          storeId: store.id
-        }
-      });
-
-      if (cnameError) throw cnameError;
-      
-      console.log('CNAME response:', cnameData);
-      
-      if (cnameData.success) {
-        // Use the CNAME target from the Edge Function response
-        let cnameTarget = cnameData.cnameTarget;
-        
-        // If no CNAME target from Edge Function, generate domain-specific one
-        if (!cnameTarget) {
-          // Generate domain-specific CNAME using same logic as Edge Function
-          const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domainName));
-          const hashHex = Array.from(new Uint8Array(domainHash))
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('')
-            .substring(0, 16);
-          cnameTarget = `${hashHex}.vercel-dns-017.com`;
-        }
-        
-        setVercelCnameTarget(cnameTarget);
-        console.log(`Domain ${domainName} CNAME target:`, cnameTarget);
-      } else {
-        console.error('Edge Function returned success: false', cnameData);
-        // Generate domain-specific CNAME as fallback
-        try {
-          const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domainName));
-          const hashHex = Array.from(new Uint8Array(domainHash))
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('')
-            .substring(0, 16);
-          const fallbackCname = `${hashHex}.vercel-dns-017.com`;
-          setVercelCnameTarget(fallbackCname);
-        } catch (hashError) {
-          console.error('Hash generation failed:', hashError);
-          setVercelCnameTarget('cname.vercel-dns.com');
-        }
-      }
-    } catch (error) {
-      console.error('Failed to get Vercel CNAME:', error);
-      // Generate domain-specific CNAME as fallback
-      try {
-        const domainHash = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(domainName));
-        const hashHex = Array.from(new Uint8Array(domainHash))
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('')
-          .substring(0, 16);
-        const fallbackCname = `${hashHex}.vercel-dns-017.com`;
-        setVercelCnameTarget(fallbackCname);
-      } catch (hashError) {
-        console.error('Hash generation failed:', hashError);
-        setVercelCnameTarget('cname.vercel-dns.com');
-      }
-    } finally {
-      setIsLoadingCname(false);
-    }
-  };
+  // Cloudflare DNS target is always the same
+  const cloudflareTarget = 'ecombuildr.pages.dev';
 
   const handleDomainSubmit = async () => {
     if (!domain.trim()) return;
@@ -112,26 +41,33 @@ export const DomainVerificationDialog: React.FC<DomainVerificationDialogProps> =
     setDomain(cleanDomain);
     setStep('setup');
     
-    // Fetch Vercel CNAME target for this domain
-    await fetchVercelCname(cleanDomain);
+    // No need to fetch CNAME target - Cloudflare target is always the same
   };
 
   const copyDNSInstructions = () => {
-    const cnameTarget = vercelCnameTarget || 'cname.vercel-dns.com';
     const instructions = `DNS Configuration for ${domain}:
 
-CNAME Record:
+CNAME Record (Subdomain):
 Type: CNAME
-Name: ${domain.split('.')[0]} (or @ for root domain)
-Value: ${cnameTarget}
+Name: www
+Value: ecombuildr.pages.dev
 TTL: 300 (or Auto)
 
-Note: This is the domain-specific CNAME target provided by Vercel. SSL will be automatically issued once DNS is configured.`;
+For Apex Domain (@):
+Option 1: CNAME Flattening (if supported)
+  Type: CNAME
+  Name: @
+  Value: ecombuildr.pages.dev
+
+Option 2: A Records (if CNAME flattening not available)
+  Contact Cloudflare support for IPs
+
+SSL: Automatically provisioned by Cloudflare`;
     
     navigator.clipboard.writeText(instructions);
     toast({
       title: "DNS Instructions Copied",
-      description: `The domain-specific DNS configuration for ${domain} has been copied to your clipboard.`
+      description: `Configuration for ${domain} copied to clipboard.`
     });
   };
 
@@ -303,21 +239,15 @@ Note: This is the domain-specific CNAME target provided by Vercel. SSL will be a
                   <div>
                     <span className="font-medium">Value:</span>
                     <div className="font-mono bg-background px-2 py-1 rounded mt-1">
-                      {isLoadingCname ? (
-                        <span className="text-muted-foreground">Loading Vercel CNAME...</span>
-                      ) : vercelCnameTarget ? (
-                        vercelCnameTarget
-                      ) : (
-                        <span className="text-red-500">Failed to get CNAME target</span>
-                      )}
+                      ecombuildr.pages.dev
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-800">
-                  <strong>🚀 Set The Above DNS Record:</strong> Your domain will be hosted on our servers with automatic SSL certificates.
+              <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>🚀 Cloudflare Pages DNS:</strong> Point your domain to ecombuildr.pages.dev. SSL certificates are automatic.
                 </p>
               </div>
               
@@ -335,7 +265,7 @@ Note: This is the domain-specific CNAME target provided by Vercel. SSL will be a
             <Alert>
               <Clock className="h-4 w-4" />
               <AlertDescription>
-                DNS changes can take 5-30 minutes to propagate. Vercel will automatically issue SSL certificates once DNS is configured.
+                DNS changes can take 5-30 minutes to propagate. Cloudflare will automatically issue SSL certificates once DNS is configured.
               </AlertDescription>
             </Alert>
           </div>
@@ -373,7 +303,7 @@ Note: This is the domain-specific CNAME target provided by Vercel. SSL will be a
                     <Alert variant="destructive">
                       <XCircle className="h-4 w-4" />
                       <AlertDescription>
-                        {verificationStatus.status?.errorMessage || `DNS must point to Vercel. Please add CNAME record: ${domain} -> ${vercelCnameTarget || 'vercel-dns.com'}`}
+                        {verificationStatus.status?.errorMessage || `DNS not configured. Add CNAME: ${domain} → ecombuildr.pages.dev`}
                       </AlertDescription>
                     </Alert>
                   )}

@@ -122,7 +122,7 @@ export const useDomainManagement = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke(
-        'dns-domain-manager',
+        'dns-domain-manager-cloudflare',
         {
           body: {
             action: 'pre_verify',
@@ -144,26 +144,25 @@ export const useDomainManagement = () => {
     if (!store?.id) throw new Error('No store found');
 
     try {
-      // Add domain to Vercel project and database via dns-domain-manager
+      // Add domain to database via Cloudflare function
       const { data: dnsData, error: dnsError } = await supabase.functions.invoke(
-        'dns-domain-manager',
+        'dns-domain-manager-cloudflare',
         {
           body: {
             action: 'add_domain',
             domain: domain,
-            storeId: store.id,
-            isDnsVerified: isDnsVerified || false
+            storeId: store.id
           }
         }
       );
 
       if (dnsError) throw dnsError;
 
-      // Domain added successfully to Vercel and database
+      // Domain added successfully to database
       
       toast({
         title: "Domain Added Successfully",
-        description: `${domain} has been added. Configure DNS to point to the provided CNAME target.`,
+        description: `${domain} has been added. Configure DNS to point to ecombuildr.pages.dev.`,
       });
 
       refetch();
@@ -174,27 +173,19 @@ export const useDomainManagement = () => {
     }
   };
 
-  const getVercelCNAME = async (domain: string): Promise<any> => {
-    if (!store?.id) throw new Error('No store found');
-
-    try {
-      const { data, error } = await supabase.functions.invoke(
-        'dns-domain-manager',
-        {
-          body: {
-            action: 'get_vercel_cname',
-            domain: domain,
-            storeId: store.id
-          }
-        }
-      );
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      
-      throw error;
-    }
+  const getCloudflareTarget = async (domain: string): Promise<any> => {
+    // Cloudflare target is always the same
+    return {
+      success: true,
+      cloudflareTarget: 'ecombuildr.pages.dev',
+      instructions: {
+        type: 'CNAME',
+        name: 'www',
+        value: 'ecombuildr.pages.dev',
+        apexInstructions: 'For apex (@), use CNAME flattening or A records',
+        description: 'Add CNAME record pointing to ecombuildr.pages.dev'
+      }
+    };
   };
 
   const removeDomain = async (domainId: string): Promise<void> => {
@@ -205,8 +196,8 @@ export const useDomainManagement = () => {
     if (!domain) throw new Error('Domain not found');
 
     try {
-      // Call Edge Function to remove domain from both Vercel and database
-      const { data, error } = await supabase.functions.invoke('dns-domain-manager', {
+      // Call Cloudflare Edge Function to remove domain from database
+      const { data, error } = await supabase.functions.invoke('dns-domain-manager-cloudflare', {
         body: {
           action: 'remove_domain',
           domain: domain.domain,
@@ -220,16 +211,10 @@ export const useDomainManagement = () => {
         throw new Error(data.error || 'Failed to remove domain');
       }
 
-      
-      
-      // Show success message with details
-      const message = data.vercelRemoved 
-        ? `Domain ${domain.domain} removed from database successfully`
-        : `Domain ${domain.domain} removed from database successfully (Host removal skipped)`;
-      
+      // Show success message
       toast({
         title: "Domain Removed",
-        description: message
+        description: `Domain ${domain.domain} removed successfully`
       });
       
       refetch();
@@ -324,7 +309,7 @@ export const useDomainManagement = () => {
     if (!domain) throw new Error('Domain not found');
 
     try {
-      const { data, error } = await supabase.functions.invoke('dns-domain-manager', {
+      const { data, error } = await supabase.functions.invoke('dns-domain-manager-cloudflare', {
         body: { 
           action: 'verify',
           domain: domain.domain,
@@ -484,7 +469,7 @@ export const useDomainManagement = () => {
     error: error?.message || '',
     verifyDomainDNS,
     addDomain,
-    getVercelCNAME,
+    getCloudflareTarget,
     removeDomain,
     connectContent,
     removeConnection,
