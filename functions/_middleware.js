@@ -169,7 +169,7 @@ async function parseContentFromUrl(pathname, hostname, env) {
       }
       
       // Step 1: Find store_id associated with this custom domain
-      const customDomainResponse = await fetch(`${supabaseUrl}/rest/v1/custom_domains?domain=eq.${encodeURIComponent(hostname)}&select=store_id`, {
+      const customDomainResponse = await fetch(`${supabaseUrl}/rest/v1/custom_domains?domain=eq.${encodeURIComponent(hostname)}&select=id,store_id`, {
         headers: {
           'Authorization': `Bearer ${supabaseKey}`,
           'apikey': supabaseKey,
