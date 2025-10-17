@@ -593,7 +593,7 @@ async function fetchContentData(content, env) {
         // For custom domains, we already have the funnelId
         if (content.funnelId) {
           console.log(`🔍 Using provided funnelId: ${content.funnelId}`);
-          const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?id=eq.${content.funnelId}&select=id,name,slug,website_id,websites!inner(id,name,slug)`, {
+          const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?id=eq.${content.funnelId}&select=id,name,slug,website_id`, {
             headers: {
               'Authorization': `Bearer ${supabaseKey}`,
               'apikey': supabaseKey,
@@ -601,12 +601,20 @@ async function fetchContentData(content, env) {
             }
           });
           
+          console.log(`🔍 Funnel query status: ${funnelResponse.status}`);
+          
           if (funnelResponse.ok) {
             const funnels = await funnelResponse.json();
+            console.log(`🔍 Found ${funnels.length} funnels`);
             if (funnels && funnels.length > 0) {
               funnel = funnels[0];
               console.log('✅ Found funnel by ID:', { id: funnel.id, name: funnel.name });
+            } else {
+              console.log('❌ No funnels found for funnelId:', content.funnelId);
             }
+          } else {
+            const errorText = await funnelResponse.text();
+            console.error('❌ Funnel query failed:', funnelResponse.status, errorText);
           }
         } else {
           // For system domains, get funnel by website slug and funnel slug
