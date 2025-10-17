@@ -148,13 +148,13 @@ const CartProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ children
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToHash />
-          <AuthProvider>
-            <ThemeProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToHash />
+            <AuthProvider>
             <StoreProvider>
               <PixelManager>
                 <CartDrawerProvider>
@@ -407,10 +407,10 @@ const App = () => (
                 </CartDrawerProvider>
               </PixelManager>
             </StoreProvider>
-            </ThemeProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
+      </ThemeProvider>
     </HelmetProvider>
   </QueryClientProvider>
 );
