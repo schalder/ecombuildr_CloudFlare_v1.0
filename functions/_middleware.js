@@ -270,42 +270,91 @@ async function parseContentFromUrl(pathname, hostname, env) {
             const funnel = funnels[0];
             console.log(`[Middleware] Funnel data:`, { id: funnel.id, name: funnel.name, website_id: funnel.website_id });
             
-            // Get website info separately
-            console.log(`[Middleware] Querying website with ID: ${funnel.website_id}`);
-            const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?id=eq.${funnel.website_id}&select=slug,name`, {
-              headers: {
-                'Authorization': `Bearer ${supabaseKey}`,
-                'apikey': supabaseKey,
-                'Content-Type': 'application/json'
-              }
-            });
-            
-            console.log(`[Middleware] Website query status: ${websiteResponse.status}`);
-            
-            if (websiteResponse.ok) {
-              const websites = await websiteResponse.json();
-              console.log(`[Middleware] Found ${websites.length} websites`);
+            // Get website info separately - handle null website_id
+            if (funnel.website_id) {
+              console.log(`[Middleware] Querying website with ID: ${funnel.website_id}`);
+              const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?id=eq.${funnel.website_id}&select=slug,name`, {
+                headers: {
+                  'Authorization': `Bearer ${supabaseKey}`,
+                  'apikey': supabaseKey,
+                  'Content-Type': 'application/json'
+                }
+              });
               
-              if (websites && websites.length > 0) {
-                const website = websites[0];
-                console.log(`[Middleware] Website data:`, { id: website.id, name: website.name, slug: website.slug });
+              console.log(`[Middleware] Website query status: ${websiteResponse.status}`);
+              
+              if (websiteResponse.ok) {
+                const websites = await websiteResponse.json();
+                console.log(`[Middleware] Found ${websites.length} websites`);
                 
-                contentData = {
-                  type: 'funnel_step',
-                  storeSlug: website.slug,
-                  funnelSlug: funnel.slug,
-                  stepSlug: cleanPageSlug,
-                  funnelId: connection.content_id,
-                  funnelName: funnel.name,
-                  websiteName: website.name
-                };
-                console.log(`[Middleware] Using funnel: ${funnel.name} (${funnel.slug}) from website: ${website.name} (${website.slug})`);
+                if (websites && websites.length > 0) {
+                  const website = websites[0];
+                  console.log(`[Middleware] Website data:`, { id: website.id, name: website.name, slug: website.slug });
+                  
+                  contentData = {
+                    type: 'funnel_step',
+                    storeSlug: website.slug,
+                    funnelSlug: funnel.slug,
+                    stepSlug: cleanPageSlug,
+                    funnelId: connection.content_id,
+                    funnelName: funnel.name,
+                    websiteName: website.name
+                  };
+                  console.log(`[Middleware] Using funnel: ${funnel.name} (${funnel.slug}) from website: ${website.name} (${website.slug})`);
+                } else {
+                  console.log(`[Middleware] No websites found for website_id: ${funnel.website_id}`);
+                }
               } else {
-                console.log(`[Middleware] No websites found for website_id: ${funnel.website_id}`);
+                const errorText = await websiteResponse.text();
+                console.error(`[Middleware] Website query failed: ${websiteResponse.status}`, errorText);
               }
             } else {
-              const errorText = await websiteResponse.text();
-              console.error(`[Middleware] Website query failed: ${websiteResponse.status}`, errorText);
+              console.log(`[Middleware] Funnel has no website_id, using fallback approach`);
+              
+              // Fallback: Try to find website by store_id from custom domain
+              const customDomainResponse = await fetch(`${supabaseUrl}/rest/v1/custom_domains?domain=eq.${encodeURIComponent(hostname)}&select=store_id`, {
+                headers: {
+                  'Authorization': `Bearer ${supabaseKey}`,
+                  'apikey': supabaseKey,
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              if (customDomainResponse.ok) {
+                const customDomains = await customDomainResponse.json();
+                if (customDomains && customDomains.length > 0) {
+                  const storeId = customDomains[0].store_id;
+                  console.log(`[Middleware] Using store_id fallback: ${storeId}`);
+                  
+                  // Get first website for this store
+                  const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?store_id=eq.${storeId}&select=slug,name&limit=1`, {
+                    headers: {
+                      'Authorization': `Bearer ${supabaseKey}`,
+                      'apikey': supabaseKey,
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  
+                  if (websiteResponse.ok) {
+                    const websites = await websiteResponse.json();
+                    if (websites && websites.length > 0) {
+                      const website = websites[0];
+                      console.log(`[Middleware] Fallback website data:`, { id: website.id, name: website.name, slug: website.slug });
+                      
+                      contentData = {
+                        type: 'funnel_step',
+                        storeSlug: website.slug,
+                        funnelSlug: funnel.slug,
+                        stepSlug: cleanPageSlug,
+                        funnelId: connection.content_id,
+                        funnelName: funnel.name,
+                        websiteName: website.name
+                      };
+                      console.log(`[Middleware] Using funnel: ${funnel.name} (${funnel.slug}) from fallback website: ${website.name} (${website.slug})`);
+                    }
+                  }
+                }
+              }
             }
           } else {
             console.log(`[Middleware] No funnels found for funnel_id: ${connection.content_id}`);
