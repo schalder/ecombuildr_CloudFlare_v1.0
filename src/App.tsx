@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
 import { DomainRouter } from "@/components/domain/DomainRouter";
 import { AuthProvider } from "@/hooks/useAuth";
-import { ThemeProvider } from "@/contexts/ThemeContext";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { PixelManager } from "@/components/pixel/PixelManager";
 import { CartProvider } from "@/contexts/CartContext";
@@ -148,20 +147,19 @@ const CartProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ children
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <HelmetProvider>
-      <ThemeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToHash />
-            <AuthProvider>
-              <StoreProvider>
-                <PixelManager>
-                  <CartDrawerProvider>
-                    <CartProviderWrapper>
-                      <AddToCartProvider>
-                        <CartDrawer />
-                        <DomainRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <ScrollToHash />
+          <AuthProvider>
+            <StoreProvider>
+              <PixelManager>
+                <CartDrawerProvider>
+                  <CartProviderWrapper>
+                    <AddToCartProvider>
+                      <CartDrawer />
+                      <DomainRouter>
                 <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Auth />} />
@@ -410,9 +408,8 @@ const App = () => (
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
-    </ThemeProvider>
-  </HelmetProvider>
-</QueryClientProvider>
+    </HelmetProvider>
+  </QueryClientProvider>
 );
 
 export default App;

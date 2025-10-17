@@ -15,23 +15,25 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   useEffect(() => {
     // Load theme from localStorage on mount
-    const savedTheme = localStorage.getItem('theme') as Theme;
+    const savedTheme = localStorage.getItem('dashboard-theme') as Theme;
     if (savedTheme) {
       setTheme(savedTheme);
     }
   }, []);
 
   useEffect(() => {
-    // Apply theme to document
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
+    // Apply theme to dashboard container only (not the entire document)
+    const dashboardContainer = document.querySelector('[data-dashboard-container]');
+    if (dashboardContainer) {
+      if (theme === 'dark') {
+        dashboardContainer.classList.add('dark');
+      } else {
+        dashboardContainer.classList.remove('dark');
+      }
     }
     
-    // Save to localStorage
-    localStorage.setItem('theme', theme);
+    // Save to localStorage with dashboard-specific key
+    localStorage.setItem('dashboard-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {

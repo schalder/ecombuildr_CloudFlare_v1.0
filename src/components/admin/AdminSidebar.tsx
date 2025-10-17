@@ -36,6 +36,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const adminMenuItems = [
   {
@@ -253,6 +254,16 @@ export function AdminSidebar() {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Theme Toggle */}
+        <SidebarGroup>
+          <SidebarGroupContent className="p-4">
+            <div className="flex items-center justify-between">
+              {!isCollapsed && <span className="text-sm text-muted-foreground">Theme</span>}
+              <ThemeToggle />
+            </div>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

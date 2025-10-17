@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 const navigationItems = [{
   title: "Dashboard",
   url: "/dashboard/overview",
@@ -236,6 +237,14 @@ export function AppSidebar() {
                   Add Product
                 </NavLink>
               </Button>
+            </div>
+          </div>}
+
+        {/* Theme Toggle */}
+        {!collapsed && <div className="p-4 border-b border-sidebar-border">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Theme</span>
+              <ThemeToggle />
             </div>
           </div>}
 
