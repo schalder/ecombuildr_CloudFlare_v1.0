@@ -109,8 +109,16 @@ async function handleSEORequest(url, env) {
 
 // Parse content from URL path and hostname
 async function parseContentFromUrl(pathname, hostname, env) {
-  // Check if it's a system domain (e.g., ecombuildr.com, get.ecombuildr.com, ecombuildr.pages.dev)
-  if (hostname.includes('ecombuildr.com') || hostname.includes('ecombuildr.pages.dev')) {
+  // Check if it's a system domain (e.g., ecombuildr.com, ecombuildr.pages.dev)
+  // Exclude subdomains that should be treated as custom domains
+  const isSystemDomain = (
+    hostname === 'ecombuildr.com' || 
+    hostname === 'www.ecombuildr.com' ||
+    hostname === 'ecombuildr.pages.dev' ||
+    hostname === 'www.ecombuildr.pages.dev'
+  );
+  
+  if (isSystemDomain) {
     // Existing logic for system domains
     const path = pathname.startsWith('/') ? pathname.slice(1) : pathname;
     

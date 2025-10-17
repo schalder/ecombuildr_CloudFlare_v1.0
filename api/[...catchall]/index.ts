@@ -148,8 +148,13 @@ function parseUrlPattern(hostname: string, pathname: string): {
   }
   
   // Custom domain (e.g., example.com) - not system domains
-  const systemDomains = ['ecombuildr.com', 'get.ecombuildr.com', 'ecombuildr.pages.dev'];
-  const isSystemDomain = systemDomains.some(domain => hostname.includes(domain));
+  // Exclude subdomains that should be treated as custom domains
+  const isSystemDomain = (
+    hostname === 'ecombuildr.com' || 
+    hostname === 'www.ecombuildr.com' ||
+    hostname === 'ecombuildr.pages.dev' ||
+    hostname === 'www.ecombuildr.pages.dev'
+  );
   
   if (!isSystemDomain) {
     return { type: 'custom_domain', identifier: hostname, pagePath: pathname };
@@ -185,8 +190,10 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     let stepSlug: string | undefined;
     
     // Check for system domain fallback (platform marketing site)
-    const systemDomains = ['ecombuildr.com', 'get.ecombuildr.com'];
-    const isSystemDomain = systemDomains.some(d => hostname.includes(d));
+    const isSystemDomain = (
+      hostname === 'ecombuildr.com' || 
+      hostname === 'www.ecombuildr.com'
+    );
     
     // Step 1: Resolve website/store based on URL pattern
     if (urlPattern.type === 'custom_domain') {
