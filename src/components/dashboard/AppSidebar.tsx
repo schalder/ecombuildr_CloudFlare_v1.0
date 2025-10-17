@@ -239,14 +239,6 @@ export function AppSidebar() {
             </div>
           </div>}
 
-        {/* Theme Toggle */}
-        {!collapsed && <div className="p-4 border-b border-sidebar-border">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Theme</span>
-              <ThemeToggle />
-            </div>
-          </div>}
-
         {/* Search */}
         {!collapsed && <div className="p-4 border-b border-sidebar-border">
             <div className="relative">

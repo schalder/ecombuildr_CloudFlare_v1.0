@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Store, LogIn, ChevronDown } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
-import { PlatformNavItem } from '@/types/platformNavigation';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -139,6 +139,7 @@ export const Navbar = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-4">
+            <ThemeToggle />
             {user ? (
               <Button asChild variant="accent" size="sm">
                 <Link to="/dashboard">Dashboard</Link>
@@ -209,6 +210,10 @@ export const Navbar = () => {
               })}
               
               <div className="pt-4 space-y-3 border-t border-border/50">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Theme</span>
+                  <ThemeToggle />
+                </div>
                 {user ? (
                   <Button asChild variant="accent" className="w-full" onClick={() => setIsMenuOpen(false)}>
                     <Link to="/dashboard">Dashboard</Link>

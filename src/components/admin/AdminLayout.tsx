@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -54,6 +54,7 @@ export function AdminLayout({ children, title, description, fluid = false }: Adm
             </div>
 
             <div className="flex items-center gap-4">
+              <ThemeToggle />
               <Badge variant="destructive" className="font-medium">
                 Admin Mode
               </Badge>
