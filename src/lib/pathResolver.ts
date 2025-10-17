@@ -5,6 +5,7 @@ const isCustomDomain = () => {
   const currentHost = window.location.hostname;
   return !(
     currentHost === 'ecombuildr.com' ||  // Main app domain
+    currentHost === 'get.ecombuildr.com' ||  // Marketing site domain
     currentHost === 'ecombuildr.pages.dev' ||  // Cloudflare Pages system domain
     currentHost === 'localhost' || 
     currentHost === '127.0.0.1'
