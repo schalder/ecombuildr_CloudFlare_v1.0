@@ -71,6 +71,14 @@ SSL: Automatically provisioned by Cloudflare`;
     });
   };
 
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    toast({
+      title: `${label} Copied`,
+      description: `${label} copied to clipboard.`
+    });
+  };
+
   const handleVerifyDNS = async () => {
     if (verificationAttempts >= 5) {
       toast({
@@ -222,23 +230,63 @@ SSL: Automatically provisioned by Cloudflare`;
                   <h5 className="font-medium text-sm">CNAME Record</h5>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="font-medium">Type:</span>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium">Type:</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={() => copyToClipboard('CNAME', 'Type')}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
                       <div className="font-mono bg-background px-2 py-1 rounded">CNAME</div>
                     </div>
                     <div>
-                      <span className="font-medium">TTL:</span>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-medium">TTL:</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={() => copyToClipboard('300', 'TTL')}
+                        >
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
                       <div className="font-mono bg-background px-2 py-1 rounded">300</div>
                     </div>
                   </div>
                   <div>
-                    <span className="font-medium">Name:</span>
-                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">Name:</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => copyToClipboard(domain.split('.')[0], 'Name')}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="font-mono bg-background px-2 py-1 rounded">
                       {domain.split('.')[0]} (or @ for root domain)
                     </div>
                   </div>
                   <div>
-                    <span className="font-medium">Value:</span>
-                    <div className="font-mono bg-background px-2 py-1 rounded mt-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium">Value:</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => copyToClipboard('ecombuildr.pages.dev', 'Value')}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    <div className="font-mono bg-background px-2 py-1 rounded">
                       ecombuildr.pages.dev
                     </div>
                   </div>
@@ -247,7 +295,7 @@ SSL: Automatically provisioned by Cloudflare`;
               
               <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  <strong>🚀 Cloudflare Pages DNS:</strong> Point your domain to ecombuildr.pages.dev. SSL certificates are automatic.
+                  <strong>🚀 Set the above DNS record:</strong> Point your domain to ecombuildr.pages.dev. SSL certificates are automatic.
                 </p>
               </div>
               
