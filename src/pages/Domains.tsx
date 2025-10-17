@@ -77,15 +77,15 @@ export default function Domains() {
 
   const getStatusBadge = (domain: any) => {
     if (domain.ssl_status === 'active') {
-      return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Active & Ready</Badge>;
+      return <Badge variant="default" className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700">Active & Ready</Badge>;
     } else if (domain.ssl_status === 'pending_validation') {
-      return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-600">Validating DNS</Badge>;
+      return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-600 dark:hover:bg-yellow-700">Validating DNS</Badge>;
     } else if (domain.ssl_status === 'pending_deployment') {
-      return <Badge variant="secondary" className="bg-blue-500 hover:bg-blue-600">Deploying</Badge>;
+      return <Badge variant="secondary" className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700">Deploying</Badge>;
     } else if (domain.is_verified && domain.dns_configured) {
-      return <Badge variant="default" className="bg-green-500 hover:bg-green-600">DNS Configured</Badge>;
+      return <Badge variant="default" className="bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700">DNS Configured</Badge>;
     } else if (domain.dns_configured) {
-      return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-600">DNS Configured</Badge>;
+      return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-600 dark:bg-yellow-600 dark:hover:bg-yellow-700">DNS Configured</Badge>;
     } else {
       return <Badge variant="outline">Pending Setup</Badge>;
     }

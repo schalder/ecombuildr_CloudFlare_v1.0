@@ -198,12 +198,12 @@ const AdminSystemSettings = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center justify-between p-4 border rounded-lg bg-yellow-50 border-yellow-200">
+                <div className="flex items-center justify-between p-4 border rounded-lg bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
                   <div className="flex items-center gap-3">
-                    <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                    <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
                     <div>
-                      <Label className="font-medium text-yellow-800">Maintenance Mode</Label>
-                      <p className="text-sm text-yellow-700">
+                      <Label className="font-medium text-yellow-800 dark:text-yellow-200">Maintenance Mode</Label>
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
                         Temporarily disable access to the platform
                       </p>
                     </div>
