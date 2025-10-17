@@ -26,7 +26,14 @@ export default defineConfig(({ mode }) => ({
     sitemap({
       hostname: 'https://ecombuildr.com', // Update with your domain
       routes,
-      generateRobotsTxt: false, // Disable robots.txt generation to avoid build issues
+      generateRobotsTxt: false, // Disable robots.txt generation to fix build error
+      robots: [
+        {
+          userAgent: '*',
+          allow: '/',
+          disallow: ['/admin', '/dashboard', '/api/'],
+        },
+      ],
     }),
     // HTML plugin for meta injection
     createHtmlPlugin({
