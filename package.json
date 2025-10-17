@@ -74,7 +74,6 @@
     "input-otp": "^1.2.4",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.462.0",
-    "next-themes": "^0.3.0",
     "postcss": "^8.4.47",
     "react": "^18.3.1",
     "react-day-picker": "^9.8.1",

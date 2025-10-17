@@ -4,7 +4,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { DashboardHeader } from "./DashboardHeader";
 import { WhatsAppWidget } from "@/components/WhatsAppWidget";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+import { useDashboardTheme } from "@/hooks/useDashboardTheme";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -14,6 +14,7 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children, title, description }: DashboardLayoutProps) {
   const pageTitle = title ? `${title} | EcomBuildr` : "Dashboard | EcomBuildr";
+  const { dashboardThemeClass } = useDashboardTheme();
   
   return (
     <>
@@ -21,22 +22,20 @@ export function DashboardLayout({ children, title, description }: DashboardLayou
         <title>{pageTitle}</title>
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
-      <ThemeProvider>
-        <SidebarProvider defaultOpen={true}>
-        <div className="min-h-screen flex w-full bg-background" data-dashboard-container>
-          <AppSidebar />
-          <SidebarInset className="flex-1">
-            <DashboardHeader title={title} description={description} />
-            <main className="flex-1 overflow-auto">
-              <div className="container mx-auto p-6 space-y-6">
-                {children}
-              </div>
-            </main>
-          </SidebarInset>
-          <WhatsAppWidget />
-        </div>
-      </SidebarProvider>
-      </ThemeProvider>
+      <SidebarProvider defaultOpen={true}>
+      <div className={`min-h-screen flex w-full bg-background ${dashboardThemeClass}`}>
+        <AppSidebar />
+        <SidebarInset className="flex-1">
+          <DashboardHeader title={title} description={description} />
+          <main className="flex-1 overflow-auto">
+            <div className="container mx-auto p-6 space-y-6">
+              {children}
+            </div>
+          </main>
+        </SidebarInset>
+        <WhatsAppWidget />
+      </div>
+    </SidebarProvider>
     </>
   );
 }

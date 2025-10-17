@@ -7,7 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
-import { ThemeProvider } from '@/contexts/ThemeContext';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { useDashboardTheme } from '@/hooks/useDashboardTheme';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -19,6 +20,7 @@ interface AdminLayoutProps {
 export function AdminLayout({ children, title, description, fluid = false }: AdminLayoutProps) {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { dashboardThemeClass } = useDashboardTheme();
   
   const pageTitle = title ? `${title} | Admin | EcomBuildr` : "Admin | EcomBuildr";
 
@@ -33,70 +35,69 @@ export function AdminLayout({ children, title, description, fluid = false }: Adm
         <title>{pageTitle}</title>
         <meta name="robots" content="noindex,nofollow" />
       </Helmet>
-      <ThemeProvider>
-        <SidebarProvider defaultOpen={true}>
-        <div className="min-h-screen flex w-full bg-background" data-dashboard-container>
-          <AdminSidebar />
-          <SidebarInset className="flex-1">
-            {/* Admin Header */}
-            <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b bg-background px-4">
-              <div className="flex items-center gap-4">
-                <SidebarTrigger className="h-8 w-8" />
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/dashboard')}
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-1" />
-                    Back to Dashboard
-                  </Button>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <Badge variant="destructive" className="font-medium">
-                  Admin Mode
-                </Badge>
+      <SidebarProvider defaultOpen={true}>
+      <div className={`min-h-screen flex w-full bg-background ${dashboardThemeClass}`}>
+        <AdminSidebar />
+        <SidebarInset className="flex-1">
+          {/* Admin Header */}
+          <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b bg-background px-4">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="h-8 w-8" />
+              <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  onClick={handleSignOut}
-                  className="gap-2"
+                  onClick={() => navigate('/dashboard')}
+                  className="text-muted-foreground hover:text-foreground"
                 >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
+                  <ArrowLeft className="h-4 w-4 mr-1" />
+                  Back to Dashboard
                 </Button>
               </div>
-            </header>
+            </div>
 
-            {/* Page Header */}
-            {(title || description) && (
-              <div className="flex flex-col gap-2 px-6 py-4 border-b bg-muted/30">
-                {title && (
-                  <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-                )}
-                {description && (
-                  <p className="text-muted-foreground">{description}</p>
-                )}
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <Badge variant="destructive" className="font-medium">
+                Admin Mode
+              </Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSignOut}
+                className="gap-2"
+              >
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
+          </header>
+
+          {/* Page Header */}
+          {(title || description) && (
+            <div className="flex flex-col gap-2 px-6 py-4 border-b bg-muted/30">
+              {title && (
+                <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+              )}
+              {description && (
+                <p className="text-muted-foreground">{description}</p>
+              )}
+            </div>
+          )}
+
+          {/* Main Content */}
+          <main className="flex-1 overflow-auto">
+            {fluid ? (
+              children
+            ) : (
+              <div className="container mx-auto p-6 space-y-6">
+                {children}
               </div>
             )}
-
-            {/* Main Content */}
-            <main className="flex-1 overflow-auto">
-              {fluid ? (
-                children
-              ) : (
-                <div className="container mx-auto p-6 space-y-6">
-                  {children}
-                </div>
-              )}
-            </main>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
-      </ThemeProvider>
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
     </>
   );
 }

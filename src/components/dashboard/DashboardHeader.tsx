@@ -16,7 +16,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuth";
 import { useSearch } from "@/hooks/useSearch";
 import { useNotifications } from "@/hooks/useNotifications";
-import { SearchDropdown } from "./SearchDropdown";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
@@ -164,6 +164,9 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
             >
               <Search className="h-4 w-4" />
             </Button>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Notifications */}
             <DropdownMenu>

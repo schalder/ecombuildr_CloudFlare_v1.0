@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
 import { DomainRouter } from "@/components/domain/DomainRouter";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { PixelManager } from "@/components/pixel/PixelManager";
 import { CartProvider } from "@/contexts/CartContext";
@@ -153,6 +154,7 @@ const App = () => (
         <BrowserRouter>
           <ScrollToHash />
           <AuthProvider>
+            <ThemeProvider>
             <StoreProvider>
               <PixelManager>
                 <CartDrawerProvider>
@@ -405,6 +407,7 @@ const App = () => (
                 </CartDrawerProvider>
               </PixelManager>
             </StoreProvider>
+            </ThemeProvider>
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
