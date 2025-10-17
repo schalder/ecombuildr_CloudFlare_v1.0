@@ -198,7 +198,7 @@ async function parseContentFromUrl(pathname, hostname, env) {
       
       console.log(`[Middleware] Looking for domain connection for ${hostname}`);
       
-      const domainConnectionResponse = await fetch(`${supabaseUrl}/rest/v1/domain_connections?domain_id=eq.${customDomains[0].id}&select=content_type,content_id,path,is_homepage`, {
+      const domainConnectionResponse = await fetch(`${supabaseUrl}/rest/v1/domain_connections?domain_id=eq.${encodeURIComponent(customDomains[0].id)}&select=content_type,content_id,path,is_homepage`, {
         headers: {
           'Authorization': `Bearer ${supabaseKey}`,
           'apikey': supabaseKey,
@@ -207,7 +207,8 @@ async function parseContentFromUrl(pathname, hostname, env) {
       });
       
       if (!domainConnectionResponse.ok) {
-        console.error('[Middleware] Domain connection query failed:', domainConnectionResponse.status);
+        const errorText = await domainConnectionResponse.text();
+        console.error('[Middleware] Domain connection query failed:', domainConnectionResponse.status, errorText);
         return null;
       }
       
