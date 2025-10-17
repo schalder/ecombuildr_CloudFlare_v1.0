@@ -8,7 +8,6 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductCard } from '@/components/storefront/ProductCard';
 import { ProductGridSkeleton } from '@/components/storefront/ProductGridSkeleton';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { supabase } from '@/integrations/supabase/client';
 import { setSEO, buildCanonical } from '@/lib/seo';
 import { useToast } from '@/hooks/use-toast';
@@ -161,14 +160,7 @@ function CollectionPage() {
   const isWebsiteContext = !!(websiteId || websiteSlug);
 
   const renderContent = (content: React.ReactNode) => {
-    if (isWebsiteContext) {
-      // Don't wrap in StorefrontLayout if we're in website context
-      // The layout is already provided by DomainWebsiteRouter or WebsiteLayout
-      return content;
-    } else {
-      // Wrap in StorefrontLayout for standalone access
-      return <StorefrontLayout>{content}</StorefrontLayout>;
-    }
+    return content;
   };
 
   if (loading) {

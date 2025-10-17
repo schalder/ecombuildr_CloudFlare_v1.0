@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
@@ -480,7 +479,7 @@ useEffect(() => {
       </div>
     );
     
-    return isWebsiteContext ? loadingContent : <StorefrontLayout>{loadingContent}</StorefrontLayout>;
+    return loadingContent;
   }
 
   if (!order) {
@@ -496,7 +495,7 @@ useEffect(() => {
       </div>
     );
     
-    return isWebsiteContext ? notFoundContent : <StorefrontLayout>{notFoundContent}</StorefrontLayout>;
+    return notFoundContent;
   }
 
   const content = (
@@ -595,13 +594,5 @@ useEffect(() => {
     </div>
   );
 
-  if (isWebsiteContext) {
-    return content;
-  }
-
-  return (
-    <StorefrontLayout>
-      {content}
-    </StorefrontLayout>
-  );
+  return content;
 };

@@ -7,7 +7,6 @@ import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useChannelContext } from '@/hooks/useChannelContext';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -578,15 +577,7 @@ export const ProductDetail: React.FC = () => {
 
   const content = renderContent();
 
-  if (isWebsiteContext) {
-    return content;
-  }
-
-  return (
-    <StorefrontLayout>
-      {content}
-    </StorefrontLayout>
-  );
+  return content;
 };
 
 export default ProductDetail;

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { StoreProvider } from '@/contexts/StoreContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -108,13 +107,11 @@ export const SearchResults: React.FC = () => {
 
   if (!store) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold">Store not found</h1>
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Store not found</h1>
         </div>
-      </StorefrontLayout>
+      </div>
     );
   }
 
@@ -211,9 +208,5 @@ export const SearchResults: React.FC = () => {
     return content;
   }
 
-  return (
-    <StorefrontLayout>
-      {content}
-    </StorefrontLayout>
-  );
+  return content;
 };

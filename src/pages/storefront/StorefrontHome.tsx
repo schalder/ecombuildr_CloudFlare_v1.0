@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { StorefrontFallback } from '@/components/storefront/StorefrontFallback';
 import { useCart } from '@/contexts/CartContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -152,16 +151,7 @@ export const StorefrontHome: React.FC = () => {
       </div>
     );
 
-    if (isWebsiteContext) {
-      return content;
-    }
-
-    return (
-      <StorefrontLayout>
-        {content}
-      </StorefrontLayout>
-    );
-  }
+    return content;
 
   // Check if there's a custom homepage
   if (homepage) {
@@ -196,27 +186,10 @@ export const StorefrontHome: React.FC = () => {
       </div>
     );
 
-    if (isWebsiteContext) {
-      return content;
-    }
-
-    return (
-      <StorefrontLayout>
-        {content}
-      </StorefrontLayout>
-    );
-  }
+    return content;
 
   // Fallback: No homepage found
   const content = <StorefrontFallback />;
 
-  if (isWebsiteContext) {
-    return content;
-  }
-
-  return (
-    <StorefrontLayout>
-      {content}
-    </StorefrontLayout>
-  );
+  return content;
 };

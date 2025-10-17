@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -264,44 +263,38 @@ useEffect(() => {
 
   if (!store && !loading) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center">Store not found</div>
-        </div>
-      </StorefrontLayout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">Store not found</div>
+      </div>
     );
   }
 
   if (loading) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto">
-            <div className="animate-pulse space-y-4">
-              <div className="h-8 bg-muted rounded w-1/2 mx-auto" />
-              <div className="h-64 bg-muted rounded" />
-            </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 bg-muted rounded w-1/2 mx-auto" />
+            <div className="h-64 bg-muted rounded" />
           </div>
         </div>
-      </StorefrontLayout>
+      </div>
     );
   }
 
   if (!order) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-2xl mx-auto text-center">
-            <h1 className="text-2xl font-bold text-destructive mb-4">Order Processing</h1>
-            <p className="text-muted-foreground mb-6">
-              Please wait while we process your order...
-            </p>
-            <Link to={paths.home}>
-              <Button>Return to Store</Button>
-            </Link>
-          </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-4">Order Processing</h1>
+          <p className="text-muted-foreground mb-6">
+            Please wait while we process your order...
+          </p>
+          <Link to={paths.home}>
+            <Button>Return to Store</Button>
+          </Link>
         </div>
-      </StorefrontLayout>
+      </div>
     );
   }
 
@@ -473,9 +466,5 @@ useEffect(() => {
     return content;
   }
 
-  return (
-    <StorefrontLayout>
-      {content}
-    </StorefrontLayout>
-  );
+  return content;
 };

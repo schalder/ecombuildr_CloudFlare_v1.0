@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
-import { StorefrontHeader } from '@/components/storefront/StorefrontHeader';
 import { ProductCard } from '@/components/storefront/ProductCard';
 
 import { ProductFilters } from '@/components/storefront/ProductFilters';
@@ -575,11 +573,7 @@ export const StorefrontProducts: React.FC = () => {
       return loadingContent;
     }
 
-    return (
-      <StorefrontLayout>
-        {loadingContent}
-      </StorefrontLayout>
-    );
+    return loadingContent;
   }
 
   const content = (
@@ -776,9 +770,5 @@ export const StorefrontProducts: React.FC = () => {
     return content;
   }
 
-  return (
-    <StorefrontLayout>
-      {content}
-    </StorefrontLayout>
-  );
+  return content;
 };

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { StorefrontLayout } from '@/components/storefront/StorefrontLayout';
 import { useStore } from '@/contexts/StoreContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
@@ -238,38 +237,32 @@ export const StorefrontPage: React.FC = () => {
 
   if (storeLoading || loading) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </div>
-      </StorefrontLayout>
+      <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
     );
   }
 
   if (storeError) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-destructive mb-2">Store Not Found</h1>
-            <p className="text-muted-foreground">{storeError}</p>
-          </div>
+      <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-2">Store Not Found</h1>
+          <p className="text-muted-foreground">{storeError}</p>
         </div>
-      </StorefrontLayout>
+      </div>
     );
   }
 
   if (error || !page) {
     return (
-      <StorefrontLayout>
-        <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
-            <p className="text-muted-foreground">{error || 'The requested page could not be found.'}</p>
-            <p className="text-sm text-muted-foreground mt-2">Store: {slug} | Page: {pageSlug}</p>
-          </div>
+      <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
+          <p className="text-muted-foreground">{error || 'The requested page could not be found.'}</p>
+          <p className="text-sm text-muted-foreground mt-2">Store: {slug} | Page: {pageSlug}</p>
         </div>
-      </StorefrontLayout>
+      </div>
     );
   }
 
@@ -285,26 +278,24 @@ export const StorefrontPage: React.FC = () => {
   }
 
   return (
-    <StorefrontLayout>
-      <div className="w-full">
-        {/* Check for page builder content first (sections format) */}
-        {page.content?.sections ? (
-          <PageBuilderRenderer data={page.content} />
-        ) : (page.content as any)?.blocks ? (
-          <div className="container mx-auto px-4 py-8">
-            <BlockRenderer blocks={(page.content as any).blocks} />
-          </div>
-        ) : page.content?.sections ? (
-          <div className="container mx-auto px-4 py-8">
-            <PageContentRenderer sections={page.content.sections} />
-          </div>
-        ) : (
-          <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
-            <p className="text-muted-foreground">This page is still being set up.</p>
-          </div>
-        )}
-      </div>
-    </StorefrontLayout>
+    <div className="w-full">
+      {/* Check for page builder content first (sections format) */}
+      {page.content?.sections ? (
+        <PageBuilderRenderer data={page.content} />
+      ) : (page.content as any)?.blocks ? (
+        <div className="container mx-auto px-4 py-8">
+          <BlockRenderer blocks={(page.content as any).blocks} />
+        </div>
+      ) : page.content?.sections ? (
+        <div className="container mx-auto px-4 py-8">
+          <PageContentRenderer sections={page.content.sections} />
+        </div>
+      ) : (
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
+          <p className="text-muted-foreground">This page is still being set up.</p>
+        </div>
+      )}
+    </div>
   );
 };

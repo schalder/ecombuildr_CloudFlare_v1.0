@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { StorefrontHeader } from '@/components/storefront/StorefrontHeader';
-import { StorefrontFooter } from '@/components/storefront/StorefrontFooter';
 import { WebsiteHeader } from '@/components/storefront/WebsiteHeader';
 import { WebsiteFooter } from '@/components/storefront/WebsiteFooter';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
@@ -67,14 +65,12 @@ export const CourseStorefrontLayout: React.FC<CourseStorefrontLayoutProps> = ({ 
     );
   }
 
-  // Fallback to StorefrontHeader/Footer
+  // Fallback: render children without header/footer
   return (
     <div className="min-h-screen bg-background">
-      <StorefrontHeader />
       <main>
         {children}
       </main>
-      <StorefrontFooter />
     </div>
   );
 };
