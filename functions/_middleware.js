@@ -192,16 +192,13 @@ async function parseContentFromUrl(pathname, hostname, env) {
       const storeId = customDomains[0].store_id;
       console.log(`[Middleware] Found storeId ${storeId} for custom domain ${hostname}`);
       
-      // Step 2: Find the correct website for this store_id and page
-      let storeSlug = null;
-      
-      // First, try to find a website that has the requested page
+      // Step 2: Find the domain connection to get the specific content (website/funnel)
       const pageSlug = pathname.substring(1); // Remove leading slash
       const cleanPageSlug = !pageSlug || pageSlug === 'home-page' ? 'home-page' : pageSlug;
       
-      console.log(`[Middleware] Looking for page '${cleanPageSlug}' in store ${storeId}`);
+      console.log(`[Middleware] Looking for domain connection for ${hostname}`);
       
-      const pageResponse = await fetch(`${supabaseUrl}/rest/v1/website_pages?slug=eq.${encodeURIComponent(cleanPageSlug)}&select=website_id,websites!inner(slug,store_id)`, {
+      const domainConnectionResponse = await fetch(`${supabaseUrl}/rest/v1/domain_connections?domain_id=eq.${customDomains[0].id}&select=content_type,content_id,path,is_homepage`, {
         headers: {
           'Authorization': `Bearer ${supabaseKey}`,
           'apikey': supabaseKey,
@@ -209,20 +206,27 @@ async function parseContentFromUrl(pathname, hostname, env) {
         }
       });
       
-      if (pageResponse.ok) {
-        const pages = await pageResponse.json();
-        const matchingPage = pages.find(page => page.websites.store_id === storeId);
-        
-        if (matchingPage) {
-          storeSlug = matchingPage.websites.slug;
-          console.log(`[Middleware] Found page '${cleanPageSlug}' in website '${storeSlug}'`);
-        }
+      if (!domainConnectionResponse.ok) {
+        console.error('[Middleware] Domain connection query failed:', domainConnectionResponse.status);
+        return null;
       }
       
-      // If no specific page found, get the first website for this store
-      if (!storeSlug) {
-        console.log(`[Middleware] No specific page found, getting first website for store ${storeId}`);
-        const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?store_id=eq.${storeId}&select=slug&limit=1`, {
+      const domainConnections = await domainConnectionResponse.json();
+      
+      if (!domainConnections || domainConnections.length === 0) {
+        console.log(`[Middleware] No domain connections found for ${hostname}`);
+        return null;
+      }
+      
+      // For now, use the first connection (could be enhanced to match specific paths)
+      const connection = domainConnections[0];
+      console.log(`[Middleware] Found domain connection:`, connection);
+      
+      let contentData = null;
+      
+      if (connection.content_type === 'website') {
+        // Get website info
+        const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?id=eq.${connection.content_id}&select=slug,name`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -230,27 +234,55 @@ async function parseContentFromUrl(pathname, hostname, env) {
           }
         });
         
-        if (!websiteResponse.ok) {
-          console.error('[Middleware] Website query failed:', websiteResponse.status);
-          return null;
+        if (websiteResponse.ok) {
+          const websites = await websiteResponse.json();
+          if (websites && websites.length > 0) {
+            const website = websites[0];
+            contentData = {
+              type: 'website_page',
+              storeSlug: website.slug,
+              pageSlug: cleanPageSlug,
+              websiteId: connection.content_id,
+              websiteName: website.name
+            };
+            console.log(`[Middleware] Using website: ${website.name} (${website.slug})`);
+          }
         }
+      } else if (connection.content_type === 'funnel') {
+        // Get funnel info
+        const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?id=eq.${connection.content_id}&select=slug,name,website_id,websites!inner(slug)`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
         
-        const websites = await websiteResponse.json();
-        
-        if (!websites || websites.length === 0) {
-          console.error('[Middleware] Website not found for storeId');
-          return null;
+        if (funnelResponse.ok) {
+          const funnels = await funnelResponse.json();
+          if (funnels && funnels.length > 0) {
+            const funnel = funnels[0];
+            contentData = {
+              type: 'funnel_step',
+              storeSlug: funnel.websites.slug,
+              funnelSlug: funnel.slug,
+              stepSlug: cleanPageSlug,
+              funnelId: connection.content_id,
+              funnelName: funnel.name
+            };
+            console.log(`[Middleware] Using funnel: ${funnel.name} (${funnel.slug})`);
+          }
         }
-        
-        storeSlug = websites[0].slug;
-        console.log(`[Middleware] Using first website: ${storeSlug}`);
       }
       
-      console.log(`[Middleware] Custom domain parsing: storeSlug=${storeSlug}, pageSlug=${cleanPageSlug}`);
+      if (!contentData) {
+        console.error('[Middleware] Could not determine content type or fetch content data');
+        return null;
+      }
+      
+      console.log(`[Middleware] Custom domain parsing:`, contentData);
       return { 
-        type: 'website_page', 
-        storeSlug, 
-        pageSlug: cleanPageSlug,
+        ...contentData,
         isCustomDomain: true,
         customDomainUrl: `https://${hostname}${pathname}`
       };
@@ -366,34 +398,61 @@ async function fetchContentData(content, env) {
     
     switch (content.type) {
       case 'website_page':
-        // First get the website to find the website_id
-        console.log(`🔍 Step 1: Getting website for slug: ${content.storeSlug}`);
-        const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,name,slug`, {
-          headers: {
-            'Authorization': `Bearer ${supabaseKey}`,
-            'apikey': supabaseKey,
-            'Content-Type': 'application/json'
+        let website = null;
+        
+        // For custom domains, we already have the websiteId
+        if (content.websiteId) {
+          console.log(`🔍 Using provided websiteId: ${content.websiteId}`);
+          const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?id=eq.${content.websiteId}&select=id,name,slug`, {
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'apikey': supabaseKey,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (websiteResponse.ok) {
+            const websites = await websiteResponse.json();
+            if (websites && websites.length > 0) {
+              website = websites[0];
+              console.log('✅ Found website by ID:', { id: website.id, name: website.name });
+            }
           }
-        });
-        
-        console.log(`🔍 Website query status: ${websiteResponse.status}`);
-        
-        if (!websiteResponse.ok) {
-          const errorText = await websiteResponse.text();
-          console.error('Website query failed:', websiteResponse.status, errorText);
-          return null;
+        } else {
+          // For system domains, get website by slug
+          console.log(`🔍 Step 1: Getting website for slug: ${content.storeSlug}`);
+          const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?slug=eq.${encodeURIComponent(content.storeSlug)}&select=id,name,slug`, {
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'apikey': supabaseKey,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          console.log(`🔍 Website query status: ${websiteResponse.status}`);
+          
+          if (!websiteResponse.ok) {
+            const errorText = await websiteResponse.text();
+            console.error('Website query failed:', websiteResponse.status, errorText);
+            return null;
+          }
+          
+          const websites = await websiteResponse.json();
+          console.log(`🔍 Found ${websites.length} websites`);
+          
+          if (!websites || websites.length === 0) {
+            console.log('Website not found');
+            return null;
+          }
+          
+          website = websites[0];
+          console.log('✅ Found website:', { id: website.id, name: website.name });
         }
         
-        const websites = await websiteResponse.json();
-        console.log(`🔍 Found ${websites.length} websites`);
-        
-        if (!websites || websites.length === 0) {
+        if (!website) {
           console.log('Website not found');
           return null;
         }
-        
-        const website = websites[0];
-        console.log('✅ Found website:', { id: website.id, name: website.name });
         
         // Now get the website page with SEO data
         console.log(`🔍 Step 2: Getting page for website_id: ${website.id}, slug: ${content.pageSlug}`);
