@@ -112,9 +112,9 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
         // Environment-aware redirect to next step
         const isAppEnvironment = (
           window.location.hostname === 'localhost' || 
-          window.location.hostname.includes('ecombuildr.com') ||
-          window.location.hostname.includes('ecombuildr.com') ||
-          window.location.hostname.includes('ecombuildr.com')
+          window.location.hostname === 'ecombuildr.com' ||
+          window.location.hostname === 'ecombuildr.com' ||
+          window.location.hostname === 'ecombuildr.com'
         );
         
         if (isAppEnvironment) {

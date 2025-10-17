@@ -655,10 +655,10 @@ export default async function handler(request: Request): Promise<Response> {
   
   console.log(`[${traceId}] 🌐 Request: ${domain}${pathname} | UA: ${userAgent.substring(0, 80)}`);
   
-  // Detect if this is a custom domain (not ecombuildr.com, get.ecombuildr.com, or localhost)
-  const isCustomDomain = !domain.includes('ecombuildr.com') && 
-                        !domain.includes('localhost') && 
-                        !domain.includes('ecombuildr.pages.dev');
+  // Detect if this is a custom domain (not ecombuildr.com or localhost)
+  const isCustomDomain = domain !== 'ecombuildr.com' && 
+                        domain !== 'ecombuildr.pages.dev' &&
+                        !domain.includes('localhost');
   
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);

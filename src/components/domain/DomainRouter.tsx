@@ -153,7 +153,7 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
       if (currentHost === 'ecombuildr.com' || 
           currentHost === 'localhost' || 
           
-          currentHost.includes('ecombuildr.com')) {
+          currentHost === 'ecombuildr.com') {
         setLoading(false);
         return;
       }

@@ -109,9 +109,8 @@ async function handleSEORequest(url, env) {
 
 // Parse content from URL path and hostname
 async function parseContentFromUrl(pathname, hostname, env) {
-  // Check if it's a system domain (exact matches only)
-  const systemDomains = ['ecombuildr.com', 'www.ecombuildr.com', 'ecombuildr.pages.dev', 'www.ecombuildr.pages.dev'];
-  if (systemDomains.includes(hostname)) {
+  // Check if it's a system domain (e.g., ecombuildr.com, ecombuildr.pages.dev)
+  if (hostname === 'ecombuildr.com' || hostname === 'ecombuildr.pages.dev') {
     // Existing logic for system domains
     const path = pathname.startsWith('/') ? pathname.slice(1) : pathname;
     
