@@ -195,7 +195,7 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
         isPublished: funnel.is_published,
         createdAt: funnel.created_at,
         updatedAt: funnel.updated_at,
-        funnelUrl: `https://app.ecombuildr.com/funnel/${funnel.slug}`,
+        funnelUrl: `https://ecombuildr.com/funnel/${funnel.slug}`,
       });
 
     } catch (err: any) {

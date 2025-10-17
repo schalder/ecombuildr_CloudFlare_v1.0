@@ -302,7 +302,7 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
           orderStatuses,
         },
         funnelName: funnel.name,
-        funnelUrl: `https://app.ecombuildr.com/funnel/${funnel.slug}`,
+        funnelUrl: `https://ecombuildr.com/funnel/${funnel.slug}`,
         dateRange,
       });
 

@@ -148,7 +148,7 @@ function parseUrlPattern(hostname: string, pathname: string): {
   }
   
   // Custom domain (e.g., example.com) - not system domains
-  const systemDomains = ['app.ecombuildr.com', 'ecombuildr.com', 'ecombuildr.pages.dev'];
+  const systemDomains = ['ecombuildr.com', 'ecombuildr.pages.dev'];
   const isSystemDomain = systemDomains.some(domain => hostname.includes(domain));
   
   if (!isSystemDomain) {
@@ -185,7 +185,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     let stepSlug: string | undefined;
     
     // Check for system domain fallback (platform marketing site)
-    const systemDomains = ['get.ecombuildr.com', 'app.ecombuildr.com'];
+    const systemDomains = ['ecombuildr.com'];
     const isSystemDomain = systemDomains.some(d => hostname.includes(d));
     
     // Step 1: Resolve website/store based on URL pattern

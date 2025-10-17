@@ -109,7 +109,7 @@ async function handleSEORequest(url, env) {
 
 // Parse content from URL path and hostname
 async function parseContentFromUrl(pathname, hostname, env) {
-  // Check if it's a system domain (e.g., app.ecombuildr.com, ecombuildr.pages.dev)
+  // Check if it's a system domain (e.g., ecombuildr.com, ecombuildr.pages.dev)
   if (hostname.includes('ecombuildr.com') || hostname.includes('ecombuildr.pages.dev')) {
     // Existing logic for system domains
     const path = pathname.startsWith('/') ? pathname.slice(1) : pathname;
@@ -414,7 +414,7 @@ async function generateSEOHTML(content, env) {
     <meta property="og:url" content="${url}">
     <meta property="og:title" content="${title || 'EcomBuildr'}">
     <meta property="og:description" content="${description || 'Build and manage your e-commerce store with EcomBuildr'}">
-    <meta property="og:image" content="${image || 'https://app.ecombuildr.com/og-image.jpg'}">
+    <meta property="og:image" content="${image || 'https://ecombuildr.com/og-image.jpg'}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="EcomBuildr">
@@ -424,7 +424,7 @@ async function generateSEOHTML(content, env) {
     <meta property="twitter:url" content="${url}">
     <meta property="twitter:title" content="${title || 'EcomBuildr'}">
     <meta property="twitter:description" content="${description || 'Build and manage your e-commerce store with EcomBuildr'}">
-    <meta property="twitter:image" content="${image || 'https://app.ecombuildr.com/og-image.jpg'}">
+    <meta property="twitter:image" content="${image || 'https://ecombuildr.com/og-image.jpg'}">
     
     <!-- Custom Meta Tags -->
     ${customMetaTags || ''}
@@ -576,8 +576,8 @@ async function fetchContentData(content, env) {
         seoData = {
           title: page.seo_title || `${website.name} - EcomBuildr`,
           description: page.seo_description || `Visit ${website.name} on EcomBuildr`,
-          image: page.social_image_url || 'https://app.ecombuildr.com/og-image.jpg',
-          url: content.customDomainUrl || `https://app.ecombuildr.com/site/${content.storeSlug}/${content.pageSlug}`,
+          image: page.social_image_url || 'https://ecombuildr.com/og-image.jpg',
+          url: content.customDomainUrl || `https://ecombuildr.com/site/${content.storeSlug}/${content.pageSlug}`,
           keywords: page.seo_keywords,
           author: page.meta_author,
           canonical: page.canonical_url,
@@ -698,8 +698,8 @@ async function fetchContentData(content, env) {
         seoData = {
           title: step.seo_title || `${funnel.name} - ${content.websiteName || funnel.websites?.name || 'EcomBuildr'}`,
           description: step.seo_description || `Visit ${funnel.name} on ${content.websiteName || funnel.websites?.name || 'EcomBuildr'}`,
-          image: step.social_image_url || step.og_image || 'https://app.ecombuildr.com/og-image.jpg',
-          url: content.customDomainUrl || `https://app.ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`,
+          image: step.social_image_url || step.og_image || 'https://ecombuildr.com/og-image.jpg',
+          url: content.customDomainUrl || `https://ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`,
           keywords: step.seo_keywords,
           author: step.meta_author,
           canonical: step.canonical_url,
@@ -751,8 +751,8 @@ async function fetchContentData(content, env) {
               seoData = {
                 title: homePage.seo_title || website3.name || 'EcomBuildr',
                 description: homePage.seo_description || website3.description || 'Build and manage your e-commerce store with EcomBuildr',
-                image: homePage.social_image_url || 'https://app.ecombuildr.com/og-image.jpg',
-                url: content.customDomainUrl || `https://app.ecombuildr.com/site/${content.storeSlug}`,
+                image: homePage.social_image_url || 'https://ecombuildr.com/og-image.jpg',
+                url: content.customDomainUrl || `https://ecombuildr.com/site/${content.storeSlug}`,
                 keywords: homePage.seo_keywords,
                 author: homePage.meta_author,
                 canonical: homePage.canonical_url,
@@ -768,8 +768,8 @@ async function fetchContentData(content, env) {
         seoData = {
           title: website3.name || 'EcomBuildr',
           description: website3.description || 'Build and manage your e-commerce store with EcomBuildr',
-          image: 'https://app.ecombuildr.com/og-image.jpg',
-          url: content.customDomainUrl || `https://app.ecombuildr.com/site/${content.storeSlug}`,
+          image: 'https://ecombuildr.com/og-image.jpg',
+          url: content.customDomainUrl || `https://ecombuildr.com/site/${content.storeSlug}`,
           keywords: null,
           author: null,
           canonical: null,
@@ -828,8 +828,8 @@ async function fetchContentData(content, env) {
         seoData = {
           title: funnel2.name || 'EcomBuildr',
           description: funnel2.description || 'Build and manage your e-commerce store with EcomBuildr',
-          image: 'https://app.ecombuildr.com/og-image.jpg',
-          url: `https://app.ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}`,
+          image: 'https://ecombuildr.com/og-image.jpg',
+          url: `https://ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}`,
           keywords: null,
           author: null,
           canonical: null,
@@ -864,17 +864,17 @@ function generateFallbackHTML() {
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://app.ecombuildr.com">
+    <meta property="og:url" content="https://ecombuildr.com">
     <meta property="og:title" content="EcomBuildr - Build Your E-commerce Store">
     <meta property="og:description" content="Build and manage your e-commerce store with EcomBuildr. Create beautiful online stores, funnels, and manage your business effortlessly.">
-    <meta property="og:image" content="https://app.ecombuildr.com/og-image.jpg">
+    <meta property="og:image" content="https://ecombuildr.com/og-image.jpg">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="https://app.ecombuildr.com">
+    <meta property="twitter:url" content="https://ecombuildr.com">
     <meta property="twitter:title" content="EcomBuildr - Build Your E-commerce Store">
     <meta property="twitter:description" content="Build and manage your e-commerce store with EcomBuildr. Create beautiful online stores, funnels, and manage your business effortlessly.">
-    <meta property="twitter:image" content="https://app.ecombuildr.com/og-image.jpg">
+    <meta property="twitter:image" content="https://ecombuildr.com/og-image.jpg">
     
     <style>
         body { 

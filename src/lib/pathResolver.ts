@@ -4,8 +4,7 @@ import { useStore } from '@/contexts/StoreContext';
 const isCustomDomain = () => {
   const currentHost = window.location.hostname;
   return !(
-    currentHost === 'ecombuildr.com' || 
-    currentHost === 'app.ecombuildr.com' ||  // Main app domain
+    currentHost === 'ecombuildr.com' ||  // Main app domain
     currentHost === 'ecombuildr.pages.dev' ||  // Cloudflare Pages system domain
     currentHost === 'localhost' || 
     currentHost === '127.0.0.1'

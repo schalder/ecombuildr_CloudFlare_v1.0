@@ -18,7 +18,7 @@ VITE_EPS_MERCHANT_ID=your_eps_merchant_id
 VITE_EPS_SECRET_KEY=your_eps_secret_key
 VITE_EBPAY_MERCHANT_ID=your_ebpay_merchant_id
 VITE_EBPAY_SECRET_KEY=your_ebpay_secret_key
-VITE_APP_URL=https://app.ecombuildr.com
+VITE_APP_URL=https://ecombuildr.com
 VITE_STOREFRONT_RENDERER_DEFAULT=true
 NODE_ENV=production
 ```

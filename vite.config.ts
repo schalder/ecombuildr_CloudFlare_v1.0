@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     // Sitemap generation for static pages
     sitemap({
-      hostname: 'https://get.ecombuildr.com', // Update with your domain
+      hostname: 'https://ecombuildr.com', // Update with your domain
       routes,
       generateRobotsTxt: true,
       robots: [

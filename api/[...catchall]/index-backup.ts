@@ -146,7 +146,7 @@ function parseUrlPattern(hostname: string, pathname: string): {
   }
   
   // Custom domain (e.g., example.com) - not ecombuildr.com or main platform domains
-  const systemDomains = ['app.ecombuildr.com', 'ecombuildr.com'];
+  const systemDomains = ['ecombuildr.com'];
   const isSystemDomain = systemDomains.some(domain => hostname.includes(domain));
   
   if (!hostname.includes('ecombuildr.com') && !isSystemDomain) {
@@ -183,20 +183,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
   try {
     const urlPattern = parseUrlPattern(hostname, pathname);
     console.log(`🔍 Resolving SEO for ${urlPattern.type}: ${urlPattern.identifier}${urlPattern.pagePath}`);
-    
-    // Special case for get.ecombuildr.com marketing site
-    if (hostname === 'get.ecombuildr.com') {
-      return {
-        title: 'EcomBuildr - Build Your E-commerce Empire',
-        description: 'Create stunning e-commerce websites and sales funnels with EcomBuildr. No coding required. Start your online business today with our powerful drag-and-drop builder.',
-        og_image: 'https://get.ecombuildr.com/hero-ecommerce.jpg',
-        keywords: ['ecommerce', 'website builder', 'sales funnel', 'online business', 'drag and drop'],
-        canonical: `https://${hostname}${pathname}`,
-        robots: 'index, follow',
-        site_name: 'EcomBuildr',
-        source: 'marketing_site'
-      };
-    }
     
     const path = urlPattern.pagePath;
     const cleanPath = path === '/' ? '' : path.replace(/^\/+|\/+$/g, '');

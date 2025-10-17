@@ -91,31 +91,31 @@ function isSocialCrawler(userAgent) {
 const testCases = [
   {
     name: 'Facebook Debugger Test',
-    hostname: 'app.ecombuildr.com',
+    hostname: 'ecombuildr.com',
     pathname: '/site/bd-ecommerce',
     userAgent: 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)'
   },
   {
     name: 'Twitter Bot Test',
-    hostname: 'app.ecombuildr.com',
+    hostname: 'ecombuildr.com',
     pathname: '/site/bd-ecommerce',
     userAgent: 'Twitterbot/1.0'
   },
   {
     name: 'Regular Browser Test',
-    hostname: 'app.ecombuildr.com',
+    hostname: 'ecombuildr.com',
     pathname: '/site/bd-ecommerce',
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
   },
   {
     name: 'Specific Page Test',
-    hostname: 'app.ecombuildr.com',
+    hostname: 'ecombuildr.com',
     pathname: '/site/bd-ecommerce/about',
     userAgent: 'facebookexternalhit/1.1'
   },
   {
     name: 'Funnel Test',
-    hostname: 'app.ecombuildr.com',
+    hostname: 'ecombuildr.com',
     pathname: '/funnel/0672f6c3-ced8-411c-ae2f-2b7fb5e60963/sales-page-r6ygzx',
     userAgent: 'facebookexternalhit/1.1'
   }
