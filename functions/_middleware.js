@@ -202,7 +202,12 @@ async function parseContentFromUrl(pathname, hostname, env) {
       
       // Step 2: Find the domain connection to get the specific content (website/funnel)
       const pageSlug = pathname.substring(1); // Remove leading slash
-      const cleanPageSlug = !pageSlug || pageSlug === 'home-page' ? 'home-page' : pageSlug;
+      let cleanPageSlug = pageSlug;
+      
+      // Handle empty path (root domain) - will be resolved later based on content type
+      if (!pageSlug) {
+        cleanPageSlug = null; // Will be handled based on content type
+      }
       
       console.log(`[Middleware] Looking for domain connection for ${hostname}`);
       
@@ -306,7 +311,8 @@ async function parseContentFromUrl(pathname, hostname, env) {
                     stepSlug: cleanPageSlug,
                     funnelId: connection.content_id,
                     funnelName: funnel.name,
-                    websiteName: website.name
+                    websiteName: website.name,
+                    isHomepage: !cleanPageSlug // Mark if this is a homepage request
                   };
                   console.log(`[Middleware] Using funnel: ${funnel.name} (${funnel.slug}) from website: ${website.name} (${website.slug})`);
                 } else {
@@ -356,7 +362,8 @@ async function parseContentFromUrl(pathname, hostname, env) {
                         stepSlug: cleanPageSlug,
                         funnelId: connection.content_id,
                         funnelName: funnel.name,
-                        websiteName: website.name
+                        websiteName: website.name,
+                        isHomepage: !cleanPageSlug // Mark if this is a homepage request
                       };
                       console.log(`[Middleware] Using funnel: ${funnel.name} (${funnel.slug}) from fallback website: ${website.name} (${website.slug})`);
                     }
@@ -681,13 +688,29 @@ async function fetchContentData(content, env) {
         }
         
         // Get the funnel step with SEO data
-        const stepResponse = await fetch(`${supabaseUrl}/rest/v1/funnel_steps?funnel_id=eq.${funnel.id}&slug=eq.${encodeURIComponent(content.stepSlug)}&select=seo_title,seo_description,og_image,custom_scripts,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots`, {
-          headers: {
-            'Authorization': `Bearer ${supabaseKey}`,
-            'apikey': supabaseKey,
-            'Content-Type': 'application/json'
-          }
-        });
+        let stepResponse;
+        
+        if (content.isHomepage) {
+          // For homepage, get the first published funnel step
+          console.log(`🔍 Getting first published funnel step for homepage`);
+          stepResponse = await fetch(`${supabaseUrl}/rest/v1/funnel_steps?funnel_id=eq.${funnel.id}&is_published=eq.true&select=seo_title,seo_description,og_image,custom_scripts,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots&order=created_at.asc&limit=1`, {
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'apikey': supabaseKey,
+              'Content-Type': 'application/json'
+            }
+          });
+        } else {
+          // For specific step, get by slug
+          console.log(`🔍 Getting funnel step by slug: ${content.stepSlug}`);
+          stepResponse = await fetch(`${supabaseUrl}/rest/v1/funnel_steps?funnel_id=eq.${funnel.id}&slug=eq.${encodeURIComponent(content.stepSlug)}&select=seo_title,seo_description,og_image,custom_scripts,seo_keywords,meta_author,canonical_url,custom_meta_tags,social_image_url,language_code,meta_robots`, {
+            headers: {
+              'Authorization': `Bearer ${supabaseKey}`,
+              'apikey': supabaseKey,
+              'Content-Type': 'application/json'
+            }
+          });
+        }
         
         if (!stepResponse.ok) {
           const errorText = await stepResponse.text();
@@ -703,11 +726,21 @@ async function fetchContentData(content, env) {
         
         const step = steps[0];
         
+        // Generate URL based on whether it's homepage or specific step
+        let url;
+        if (content.isHomepage) {
+          // For homepage, use the custom domain root
+          url = content.customDomainUrl || `https://ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}`;
+        } else {
+          // For specific step, include the step slug
+          url = content.customDomainUrl || `https://ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`;
+        }
+        
         seoData = {
           title: step.seo_title || `${funnel.name} - ${content.websiteName || funnel.websites?.name || 'EcomBuildr'}`,
           description: step.seo_description || `Visit ${funnel.name} on ${content.websiteName || funnel.websites?.name || 'EcomBuildr'}`,
           image: step.social_image_url || step.og_image || 'https://ecombuildr.com/og-image.jpg',
-          url: content.customDomainUrl || `https://ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`,
+          url: url,
           keywords: step.seo_keywords,
           author: step.meta_author,
           canonical: step.canonical_url,
