@@ -192,8 +192,16 @@ async function parseContentFromUrl(pathname, hostname, env) {
       const storeId = customDomains[0].store_id;
       console.log(`[Middleware] Found storeId ${storeId} for custom domain ${hostname}`);
       
-      // Step 2: Find the website slug for this store_id
-      const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?store_id=eq.${storeId}&select=slug`, {
+      // Step 2: Find the correct website for this store_id and page
+      let storeSlug = null;
+      
+      // First, try to find a website that has the requested page
+      const pageSlug = pathname.substring(1); // Remove leading slash
+      const cleanPageSlug = !pageSlug || pageSlug === 'home-page' ? 'home-page' : pageSlug;
+      
+      console.log(`[Middleware] Looking for page '${cleanPageSlug}' in store ${storeId}`);
+      
+      const pageResponse = await fetch(`${supabaseUrl}/rest/v1/website_pages?slug=eq.${encodeURIComponent(cleanPageSlug)}&select=website_id,websites!inner(slug,store_id)`, {
         headers: {
           'Authorization': `Bearer ${supabaseKey}`,
           'apikey': supabaseKey,
@@ -201,30 +209,48 @@ async function parseContentFromUrl(pathname, hostname, env) {
         }
       });
       
-      if (!websiteResponse.ok) {
-        console.error('[Middleware] Website query failed:', websiteResponse.status);
-        return null;
+      if (pageResponse.ok) {
+        const pages = await pageResponse.json();
+        const matchingPage = pages.find(page => page.websites.store_id === storeId);
+        
+        if (matchingPage) {
+          storeSlug = matchingPage.websites.slug;
+          console.log(`[Middleware] Found page '${cleanPageSlug}' in website '${storeSlug}'`);
+        }
       }
       
-      const websites = await websiteResponse.json();
-      
-      if (!websites || websites.length === 0) {
-        console.error('[Middleware] Website not found for storeId');
-        return null;
+      // If no specific page found, get the first website for this store
+      if (!storeSlug) {
+        console.log(`[Middleware] No specific page found, getting first website for store ${storeId}`);
+        const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?store_id=eq.${storeId}&select=slug&limit=1`, {
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!websiteResponse.ok) {
+          console.error('[Middleware] Website query failed:', websiteResponse.status);
+          return null;
+        }
+        
+        const websites = await websiteResponse.json();
+        
+        if (!websites || websites.length === 0) {
+          console.error('[Middleware] Website not found for storeId');
+          return null;
+        }
+        
+        storeSlug = websites[0].slug;
+        console.log(`[Middleware] Using first website: ${storeSlug}`);
       }
       
-      const storeSlug = websites[0].slug;
-      let pageSlug = pathname.substring(1); // Remove leading slash
-      
-      if (!pageSlug || pageSlug === 'home-page') {
-        pageSlug = 'home-page'; // Default to home-page for root or explicit home-page path
-      }
-      
-      console.log(`[Middleware] Custom domain parsing: storeSlug=${storeSlug}, pageSlug=${pageSlug}`);
+      console.log(`[Middleware] Custom domain parsing: storeSlug=${storeSlug}, pageSlug=${cleanPageSlug}`);
       return { 
         type: 'website_page', 
         storeSlug, 
-        pageSlug,
+        pageSlug: cleanPageSlug,
         isCustomDomain: true,
         customDomainUrl: `https://${hostname}${pathname}`
       };
