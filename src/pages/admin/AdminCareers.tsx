@@ -203,7 +203,7 @@ const AdminCareers = () => {
       case 'part-time': return 'bg-blue-100 text-blue-800';
       case 'contract': return 'bg-orange-100 text-orange-800';
       case 'internship': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 

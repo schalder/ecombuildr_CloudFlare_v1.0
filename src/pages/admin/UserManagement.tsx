@@ -189,21 +189,21 @@ const UserManagement = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'trial': return 'bg-blue-100 text-blue-800';
-      case 'suspended': return 'bg-red-100 text-red-800';
-      case 'expired': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'active': return 'bg-green-500 text-white';
+      case 'trial': return 'bg-blue-500 text-white';
+      case 'suspended': return 'bg-red-500 text-white';
+      case 'expired': return 'bg-yellow-500 text-white';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
   const getPlanColor = (plan: string) => {
     switch (plan) {
-      case 'free': return 'bg-gray-100 text-gray-800';
-      case 'starter': return 'bg-blue-100 text-blue-800';
-      case 'professional': return 'bg-purple-100 text-purple-800';
-      case 'enterprise': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      case 'free': return 'bg-muted text-muted-foreground';
+      case 'starter': return 'bg-blue-500 text-white';
+      case 'professional': return 'bg-purple-500 text-white';
+      case 'enterprise': return 'bg-yellow-500 text-white';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 

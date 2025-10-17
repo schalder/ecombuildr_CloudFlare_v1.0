@@ -30,7 +30,7 @@ export default function StoreSettings() {
       <DashboardLayout>
         <div className="text-center py-8">
           <h2 className="text-2xl font-bold text-foreground">Store not found</h2>
-          <p className="text-muted-foreground mt-2">The store you're looking for doesn't exist or you don't have access to it.</p>
+          <p className="text-gray-600 mt-2">The store you're looking for doesn't exist or you don't have access to it.</p>
         </div>
       </DashboardLayout>
     );
