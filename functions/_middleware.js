@@ -251,6 +251,7 @@ async function parseContentFromUrl(pathname, hostname, env) {
         }
       } else if (connection.content_type === 'funnel') {
         // Get funnel info
+        console.log(`[Middleware] Querying funnel with ID: ${connection.content_id}`);
         const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?id=eq.${connection.content_id}&select=slug,name,website_id`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
@@ -259,12 +260,18 @@ async function parseContentFromUrl(pathname, hostname, env) {
           }
         });
         
+        console.log(`[Middleware] Funnel query status: ${funnelResponse.status}`);
+        
         if (funnelResponse.ok) {
           const funnels = await funnelResponse.json();
+          console.log(`[Middleware] Found ${funnels.length} funnels`);
+          
           if (funnels && funnels.length > 0) {
             const funnel = funnels[0];
+            console.log(`[Middleware] Funnel data:`, { id: funnel.id, name: funnel.name, website_id: funnel.website_id });
             
             // Get website info separately
+            console.log(`[Middleware] Querying website with ID: ${funnel.website_id}`);
             const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?id=eq.${funnel.website_id}&select=slug,name`, {
               headers: {
                 'Authorization': `Bearer ${supabaseKey}`,
@@ -273,10 +280,16 @@ async function parseContentFromUrl(pathname, hostname, env) {
               }
             });
             
+            console.log(`[Middleware] Website query status: ${websiteResponse.status}`);
+            
             if (websiteResponse.ok) {
               const websites = await websiteResponse.json();
+              console.log(`[Middleware] Found ${websites.length} websites`);
+              
               if (websites && websites.length > 0) {
                 const website = websites[0];
+                console.log(`[Middleware] Website data:`, { id: website.id, name: website.name, slug: website.slug });
+                
                 contentData = {
                   type: 'funnel_step',
                   storeSlug: website.slug,
@@ -287,9 +300,19 @@ async function parseContentFromUrl(pathname, hostname, env) {
                   websiteName: website.name
                 };
                 console.log(`[Middleware] Using funnel: ${funnel.name} (${funnel.slug}) from website: ${website.name} (${website.slug})`);
+              } else {
+                console.log(`[Middleware] No websites found for website_id: ${funnel.website_id}`);
               }
+            } else {
+              const errorText = await websiteResponse.text();
+              console.error(`[Middleware] Website query failed: ${websiteResponse.status}`, errorText);
             }
+          } else {
+            console.log(`[Middleware] No funnels found for funnel_id: ${connection.content_id}`);
           }
+        } else {
+          const errorText = await funnelResponse.text();
+          console.error(`[Middleware] Funnel query failed: ${funnelResponse.status}`, errorText);
         }
       }
       
