@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useTheme } from '@/contexts/ThemeContext';
+import { ThemeContext } from '@/contexts/ThemeContext';
 
 export const ThemeToggle: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  const themeContext = useContext(ThemeContext);
+  
+  // If theme context is not available, don't render anything
+  if (!themeContext) {
+    return null;
+  }
+
+  const { theme, toggleTheme } = themeContext;
 
   return (
     <Button
