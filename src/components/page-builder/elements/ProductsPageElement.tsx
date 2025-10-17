@@ -267,7 +267,7 @@ export const ProductsPageElement: React.FC<{
           if (!(currentHost === 'ecombuildr.com' || 
                 currentHost === 'localhost' || 
                 
-                currentHost.includes('lovableproject.com'))) {
+                currentHost.includes('ecombuildr.com'))) {
             
             try {
               // Check if this is a custom domain
@@ -375,7 +375,7 @@ export const ProductsPageElement: React.FC<{
             if (!(currentHost === 'ecombuildr.com' || 
                   currentHost === 'localhost' || 
                   
-                  currentHost.includes('lovableproject.com'))) {
+                  currentHost.includes('ecombuildr.com'))) {
               
               try {
                 // Check if this is a custom domain

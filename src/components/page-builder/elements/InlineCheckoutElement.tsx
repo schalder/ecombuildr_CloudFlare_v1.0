@@ -658,9 +658,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
               // Environment-aware redirect to next step
               const isAppEnvironment = (
                 window.location.hostname === 'localhost' || 
-                window.location.hostname.includes('lovable.dev') ||
-                window.location.hostname.includes('lovable.app') ||
-                window.location.hostname.includes('lovableproject.com')
+                window.location.hostname.includes('ecombuildr.com') ||
+                window.location.hostname.includes('ecombuildr.com') ||
+                window.location.hostname.includes('ecombuildr.com')
               );
               
               if (isAppEnvironment) {

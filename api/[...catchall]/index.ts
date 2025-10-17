@@ -349,7 +349,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       if (website) {
         websiteId = website.id;
         storeId = website.store_id;
-        console.log(`✅ Found lovable subdomain website: ${websiteId}`);
+        console.log(`✅ Found ecombuildr subdomain website: ${websiteId}`);
       }
       
     } else if (urlPattern.type === 'store_slug') {

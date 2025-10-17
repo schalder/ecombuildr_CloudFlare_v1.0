@@ -145,15 +145,15 @@ function parseUrlPattern(hostname: string, pathname: string): {
     };
   }
   
-  // Custom domain (e.g., example.com) - not lovable.app or main platform domains
-  const systemDomains = ['app.ecombuildr.com', 'lovable.app'];
+  // Custom domain (e.g., example.com) - not ecombuildr.com or main platform domains
+  const systemDomains = ['app.ecombuildr.com', 'ecombuildr.com'];
   const isSystemDomain = systemDomains.some(domain => hostname.includes(domain));
   
-  if (!hostname.includes('lovable.app') && !isSystemDomain) {
+  if (!hostname.includes('ecombuildr.com') && !isSystemDomain) {
     return { type: 'custom_domain', identifier: hostname, pagePath: pathname };
   }
   
-  // Lovable subdomain (e.g., mysite.lovable.app)
+  // Lovable subdomain (e.g., mysite.ecombuildr.com)
   const subdomainMatch = hostname.match(/^([^.]+)\.lovable\.app$/);
   if (subdomainMatch && subdomainMatch[1] !== 'www' && subdomainMatch[1] !== 'app') {
   }
@@ -363,7 +363,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         };
       }
       
-      // NEW: Handle mysite.lovable.app
+      // NEW: Handle mysite.ecombuildr.com
       const { data: website } = await supabase
         .from('websites')
         .select('id, store_id')
@@ -374,7 +374,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       if (website) {
         websiteId = website.id;
         storeId = website.store_id;
-        console.log(`✅ Found lovable subdomain website: ${websiteId}`);
+        console.log(`✅ Found ecombuildr subdomain website: ${websiteId}`);
       }
       
     } else if (urlPattern.type === 'store_slug') {
@@ -529,7 +529,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           const scheme = 'https://';
           if (urlPattern.type === 'custom_domain') {
             canonicalUrl = `${scheme}${hostname}${path}`;
-            canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+            canonicalUrl = `${scheme}${urlPattern.identifier}.ecombuildr.com${path}`;
           } else {
             const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
             canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
@@ -573,7 +573,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       let canonicalUrl: string;
       if (urlPattern.type === 'custom_domain') {
         canonicalUrl = `${scheme}${hostname}${path}`;
-        canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+        canonicalUrl = `${scheme}${urlPattern.identifier}.ecombuildr.com${path}`;
       } else {
         const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
         canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
@@ -630,7 +630,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           const scheme = 'https://';
           if (urlPattern.type === 'custom_domain') {
             canonicalUrl = `${scheme}${hostname}${path}`;
-            canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+            canonicalUrl = `${scheme}${urlPattern.identifier}.ecombuildr.com${path}`;
           } else {
             const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
             canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
@@ -721,7 +721,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
               const scheme = 'https://';
               if (urlPattern.type === 'custom_domain') {
                 canonicalUrl = `${scheme}${hostname}${path}`;
-                canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+                canonicalUrl = `${scheme}${urlPattern.identifier}.ecombuildr.com${path}`;
               } else {
                 const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
                 canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
@@ -765,7 +765,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
             const scheme = 'https://';
             if (urlPattern.type === 'custom_domain') {
               canonicalUrl = `${scheme}${hostname}${path}`;
-              canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+              canonicalUrl = `${scheme}${urlPattern.identifier}.ecombuildr.com${path}`;
             } else {
               const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
               canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
@@ -841,7 +841,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         const scheme = 'https://';
         if (urlPattern.type === 'custom_domain') {
           canonicalUrl = `${scheme}${hostname}${path}`;
-          canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+          canonicalUrl = `${scheme}${urlPattern.identifier}.ecombuildr.com${path}`;
         } else {
           const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
           canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;
@@ -886,7 +886,7 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     let canonicalUrl: string;
     if (urlPattern.type === 'custom_domain') {
       canonicalUrl = `${scheme}${hostname}${path}`;
-      canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
+      canonicalUrl = `${scheme}${urlPattern.identifier}.ecombuildr.com${path}`;
     } else {
       const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
       canonicalUrl = `${scheme}${hostname}${prefix}${urlPattern.identifier}${path}`;

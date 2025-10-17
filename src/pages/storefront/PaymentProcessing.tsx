@@ -28,7 +28,7 @@ export const PaymentProcessing: React.FC = () => {
   const paymentMethod = searchParams.get('pm') || '';
   
   // Improved website context detection - check URL params or if we're on a custom domain route
-  const isWebsiteContext = Boolean(websiteId || websiteSlug || window.location.hostname !== 'localhost' && !window.location.hostname.includes('lovableproject.com'));
+  const isWebsiteContext = Boolean(websiteId || websiteSlug || window.location.hostname !== 'localhost' && !window.location.hostname.includes('ecombuildr.com'));
   
   // Get status from URL - this takes priority over database status
   const urlStatus = searchParams.get('status');
@@ -246,9 +246,9 @@ useEffect(() => {
                 // Environment-aware redirect to next step
                 const isAppEnvironment = (
                   window.location.hostname === 'localhost' || 
-                  window.location.hostname.includes('lovable.dev') ||
-                  window.location.hostname.includes('lovable.app') ||
-                  window.location.hostname.includes('lovableproject.com') ||
+                  window.location.hostname.includes('ecombuildr.com') ||
+                  window.location.hostname.includes('ecombuildr.com') ||
+                  window.location.hostname.includes('ecombuildr.com') ||
                   window.location.hostname === 'ecombuildr.com'
                 );
                 

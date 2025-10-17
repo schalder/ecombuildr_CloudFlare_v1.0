@@ -143,7 +143,7 @@ export const StorefrontProducts: React.FC = () => {
       if (currentHost === 'ecombuildr.com' || 
           currentHost === 'localhost' || 
           
-          currentHost.includes('lovableproject.com')) {
+          currentHost.includes('ecombuildr.com')) {
         return;
       }
       
