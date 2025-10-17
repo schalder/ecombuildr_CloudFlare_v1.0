@@ -142,7 +142,7 @@ export const StorefrontProducts: React.FC = () => {
       // Skip detection for staging domains
       if (currentHost === 'ecombuildr.com' || 
           currentHost === 'localhost' || 
-          currentHost.includes('lovable.app') ||
+          
           currentHost.includes('lovableproject.com')) {
         return;
       }

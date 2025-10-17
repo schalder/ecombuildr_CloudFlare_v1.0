@@ -128,7 +128,6 @@ function normalizeImageUrl(imageUrl: string | null | undefined): string | undefi
 
 // Parse URL to determine pattern type
 function parseUrlPattern(hostname: string, pathname: string): {
-  type: 'custom_domain' | 'store_slug' | 'site_slug' | 'lovable_subdomain' | 'funnel_route';
   identifier: string;
   pagePath: string;
   funnelIdentifier?: string;
@@ -157,7 +156,6 @@ function parseUrlPattern(hostname: string, pathname: string): {
   // Lovable subdomain (e.g., mysite.lovable.app)
   const subdomainMatch = hostname.match(/^([^.]+)\.lovable\.app$/);
   if (subdomainMatch && subdomainMatch[1] !== 'www' && subdomainMatch[1] !== 'app') {
-    return { type: 'lovable_subdomain', identifier: subdomainMatch[1], pagePath: pathname };
   }
   
   // System domain fallback - return SPA for main platform
@@ -365,7 +363,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         };
       }
       
-    } else if (urlPattern.type === 'lovable_subdomain') {
       // NEW: Handle mysite.lovable.app
       const { data: website } = await supabase
         .from('websites')
@@ -532,7 +529,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           const scheme = 'https://';
           if (urlPattern.type === 'custom_domain') {
             canonicalUrl = `${scheme}${hostname}${path}`;
-          } else if (urlPattern.type === 'lovable_subdomain') {
             canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
           } else {
             const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -577,7 +573,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       let canonicalUrl: string;
       if (urlPattern.type === 'custom_domain') {
         canonicalUrl = `${scheme}${hostname}${path}`;
-      } else if (urlPattern.type === 'lovable_subdomain') {
         canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
       } else {
         const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -635,7 +630,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           const scheme = 'https://';
           if (urlPattern.type === 'custom_domain') {
             canonicalUrl = `${scheme}${hostname}${path}`;
-          } else if (urlPattern.type === 'lovable_subdomain') {
             canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
           } else {
             const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -727,7 +721,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
               const scheme = 'https://';
               if (urlPattern.type === 'custom_domain') {
                 canonicalUrl = `${scheme}${hostname}${path}`;
-              } else if (urlPattern.type === 'lovable_subdomain') {
                 canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
               } else {
                 const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -772,7 +765,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
             const scheme = 'https://';
             if (urlPattern.type === 'custom_domain') {
               canonicalUrl = `${scheme}${hostname}${path}`;
-            } else if (urlPattern.type === 'lovable_subdomain') {
               canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
             } else {
               const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -849,7 +841,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         const scheme = 'https://';
         if (urlPattern.type === 'custom_domain') {
           canonicalUrl = `${scheme}${hostname}${path}`;
-        } else if (urlPattern.type === 'lovable_subdomain') {
           canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
         } else {
           const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -895,7 +886,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     let canonicalUrl: string;
     if (urlPattern.type === 'custom_domain') {
       canonicalUrl = `${scheme}${hostname}${path}`;
-    } else if (urlPattern.type === 'lovable_subdomain') {
       canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
     } else {
       const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -1091,7 +1081,6 @@ export default async function handler(request: Request): Promise<Response> {
   const urlPattern = parseUrlPattern(hostname, pathname);
   const shouldHandleSEO = isSocialBot && (
     urlPattern.type === 'custom_domain' ||
-    urlPattern.type === 'lovable_subdomain' ||
     urlPattern.type === 'store_slug' ||
     (urlPattern.type === 'site_slug' && urlPattern.identifier !== 'system') ||
     urlPattern.type === 'funnel_route'

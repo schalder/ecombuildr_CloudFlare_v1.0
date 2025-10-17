@@ -129,7 +129,7 @@ function normalizeImageUrl(imageUrl: string | null | undefined): string | undefi
 
 // Parse URL to determine pattern type
 function parseUrlPattern(hostname: string, pathname: string): {
-  type: 'custom_domain' | 'store_slug' | 'site_slug' | 'lovable_subdomain' | 'funnel_route';
+  type: 'custom_domain' | 'store_slug' | 'site_slug' | 'funnel_route';
   identifier: string;
   pagePath: string;
   funnelIdentifier?: string;
@@ -147,15 +147,12 @@ function parseUrlPattern(hostname: string, pathname: string): {
     };
   }
   
-  // Custom domain (e.g., example.com) - not lovable.app
-  if (!hostname.includes('lovable.app')) {
-    return { type: 'custom_domain', identifier: hostname, pagePath: pathname };
-  }
+  // Custom domain (e.g., example.com) - not system domains
+  const systemDomains = ['app.ecombuildr.com', 'ecombuildr.com', 'ecombuildr.pages.dev'];
+  const isSystemDomain = systemDomains.some(domain => hostname.includes(domain));
   
-  // Lovable subdomain (e.g., mysite.lovable.app)
-  const subdomainMatch = hostname.match(/^([^.]+)\.lovable\.app$/);
-  if (subdomainMatch && subdomainMatch[1] !== 'www' && subdomainMatch[1] !== 'app') {
-    return { type: 'lovable_subdomain', identifier: subdomainMatch[1], pagePath: pathname };
+  if (!isSystemDomain) {
+    return { type: 'custom_domain', identifier: hostname, pagePath: pathname };
   }
   
   // Store slug pattern (e.g., /store/mystore/page)
@@ -342,7 +339,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         };
       }
       
-    } else if (urlPattern.type === 'lovable_subdomain') {
       // NEW: Handle mysite.lovable.app
       const { data: website } = await supabase
         .from('websites')
@@ -505,7 +501,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           const scheme = 'https://';
           if (urlPattern.type === 'custom_domain') {
             canonicalUrl = `${scheme}${hostname}${path}`;
-          } else if (urlPattern.type === 'lovable_subdomain') {
             canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
           } else {
             const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -550,7 +545,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
       let canonicalUrl: string;
       if (urlPattern.type === 'custom_domain') {
         canonicalUrl = `${scheme}${hostname}${path}`;
-      } else if (urlPattern.type === 'lovable_subdomain') {
         canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
       } else {
         const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -608,7 +602,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
           const scheme = 'https://';
           if (urlPattern.type === 'custom_domain') {
             canonicalUrl = `${scheme}${hostname}${path}`;
-          } else if (urlPattern.type === 'lovable_subdomain') {
             canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
           } else {
             const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -698,7 +691,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
               const scheme = 'https://';
               if (urlPattern.type === 'custom_domain') {
                 canonicalUrl = `${scheme}${hostname}${path}`;
-              } else if (urlPattern.type === 'lovable_subdomain') {
                 canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
               } else {
                 const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -743,7 +735,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
             const scheme = 'https://';
             if (urlPattern.type === 'custom_domain') {
               canonicalUrl = `${scheme}${hostname}${path}`;
-            } else if (urlPattern.type === 'lovable_subdomain') {
               canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
             } else {
               const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -819,7 +810,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
         const scheme = 'https://';
         if (urlPattern.type === 'custom_domain') {
           canonicalUrl = `${scheme}${hostname}${path}`;
-        } else if (urlPattern.type === 'lovable_subdomain') {
           canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
         } else {
           const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -865,7 +855,6 @@ async function resolveSEOData(hostname: string, pathname: string): Promise<SEODa
     let canonicalUrl: string;
     if (urlPattern.type === 'custom_domain') {
       canonicalUrl = `${scheme}${hostname}${path}`;
-    } else if (urlPattern.type === 'lovable_subdomain') {
       canonicalUrl = `${scheme}${urlPattern.identifier}.lovable.app${path}`;
     } else {
       const prefix = urlPattern.type === 'store_slug' ? '/store/' : '/site/';
@@ -1065,7 +1054,6 @@ export default async function handler(request: Request): Promise<Response> {
   const urlPattern = parseUrlPattern(hostname, pathname);
   const shouldHandleSEO = isSocialBot && (
     urlPattern.type === 'custom_domain' ||
-    urlPattern.type === 'lovable_subdomain' ||
     urlPattern.type === 'store_slug' ||
     urlPattern.type === 'site_slug' ||
     urlPattern.type === 'funnel_route'

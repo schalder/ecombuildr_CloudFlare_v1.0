@@ -36,7 +36,7 @@ function parseContentFromUrl(hostname, pathname) {
   }
   
   // Custom domain patterns - need to resolve via custom_domains table
-  const isSystemDomain = hostname.includes('ecombuildr.com') || hostname.includes('lovable.app');
+  const isSystemDomain = hostname.includes('ecombuildr.com') || hostname.includes('ecombuildr.pages.dev');
   if (!isSystemDomain) {
     const pathSegments = pathname.split('/').filter(Boolean);
     const lastSegment = pathSegments[pathSegments.length - 1];

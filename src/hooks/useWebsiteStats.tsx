@@ -182,7 +182,7 @@ export function useWebsiteStats(websiteId: string): WebsiteStatsHookReturn {
       } else if (website.domain) {
         websiteUrl = `https://${website.domain}`;
       } else if (store?.slug && website.slug) {
-        websiteUrl = `https://${website.slug}.${store.slug}.lovable.app`;
+        websiteUrl = `https://${website.slug}.${store.slug}.ecombuildr.com`;
       } else {
         websiteUrl = `https://${website.slug}.demo-store.app`;
       }

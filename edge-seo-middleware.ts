@@ -658,9 +658,7 @@ export default async function handler(request: Request): Promise<Response> {
   // Detect if this is a custom domain (not ecombuildr.com or localhost)
   const isCustomDomain = !domain.includes('ecombuildr.com') && 
                         !domain.includes('localhost') && 
-                        !domain.includes('lovable.dev') &&
-                        !domain.includes('lovable.app') &&
-                        !domain.includes('lovableproject.com');
+                        !domain.includes('ecombuildr.pages.dev');
   
   // Check if this is a social crawler
   const isSocialBot = isSocialCrawler(userAgent);

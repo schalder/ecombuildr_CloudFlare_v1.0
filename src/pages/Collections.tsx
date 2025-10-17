@@ -97,7 +97,7 @@ export default function Collections() {
     
     // Fallback to system URL using store and website slugs
     if (store?.slug) {
-      return `https://${website.slug}.${store.slug}.lovable.app/collections/${collection.slug}`;
+      return `https://${website.slug}.${store.slug}.ecombuildr.com/collections/${collection.slug}`;
     }
     
     // Final fallback to site path

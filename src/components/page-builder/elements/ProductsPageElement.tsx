@@ -266,7 +266,7 @@ export const ProductsPageElement: React.FC<{
           // Skip staging domains
           if (!(currentHost === 'ecombuildr.com' || 
                 currentHost === 'localhost' || 
-                currentHost.includes('lovable.app') ||
+                
                 currentHost.includes('lovableproject.com'))) {
             
             try {
@@ -374,7 +374,7 @@ export const ProductsPageElement: React.FC<{
             // Skip staging domains
             if (!(currentHost === 'ecombuildr.com' || 
                   currentHost === 'localhost' || 
-                  currentHost.includes('lovable.app') ||
+                  
                   currentHost.includes('lovableproject.com'))) {
               
               try {

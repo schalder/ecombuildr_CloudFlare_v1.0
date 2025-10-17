@@ -9,8 +9,7 @@ const isCustomDomain = () => {
     currentHost === 'app.ecombuildr.com' ||  // Main app domain
     currentHost === 'ecombuildr.pages.dev' ||  // Cloudflare Pages system domain
     currentHost === 'localhost' || 
-    currentHost.includes('lovable.app') ||
-    currentHost.includes('lovableproject.com')
+    currentHost === '127.0.0.1'
   );
 };
 

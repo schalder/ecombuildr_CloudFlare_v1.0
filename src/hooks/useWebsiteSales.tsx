@@ -135,7 +135,7 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
       const customDomain = (domainConnection?.custom_domains as any)?.domain;
       const websiteUrl = customDomain 
         ? `https://${customDomain}` 
-        : `https://${website.slug}.${store.slug}.lovable.app`;
+        : `https://${website.slug}.${store.slug}.ecombuildr.com`;
 
       // Get comparison period dates
       const comparisonPeriod = getComparisonPeriod(dateRange);
