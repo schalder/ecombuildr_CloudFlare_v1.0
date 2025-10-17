@@ -251,7 +251,7 @@ async function parseContentFromUrl(pathname, hostname, env) {
         }
       } else if (connection.content_type === 'funnel') {
         // Get funnel info
-        const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?id=eq.${connection.content_id}&select=slug,name,website_id,websites!inner(slug)`, {
+        const funnelResponse = await fetch(`${supabaseUrl}/rest/v1/funnels?id=eq.${connection.content_id}&select=slug,name,website_id`, {
           headers: {
             'Authorization': `Bearer ${supabaseKey}`,
             'apikey': supabaseKey,
@@ -263,15 +263,32 @@ async function parseContentFromUrl(pathname, hostname, env) {
           const funnels = await funnelResponse.json();
           if (funnels && funnels.length > 0) {
             const funnel = funnels[0];
-            contentData = {
-              type: 'funnel_step',
-              storeSlug: funnel.websites.slug,
-              funnelSlug: funnel.slug,
-              stepSlug: cleanPageSlug,
-              funnelId: connection.content_id,
-              funnelName: funnel.name
-            };
-            console.log(`[Middleware] Using funnel: ${funnel.name} (${funnel.slug})`);
+            
+            // Get website info separately
+            const websiteResponse = await fetch(`${supabaseUrl}/rest/v1/websites?id=eq.${funnel.website_id}&select=slug,name`, {
+              headers: {
+                'Authorization': `Bearer ${supabaseKey}`,
+                'apikey': supabaseKey,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (websiteResponse.ok) {
+              const websites = await websiteResponse.json();
+              if (websites && websites.length > 0) {
+                const website = websites[0];
+                contentData = {
+                  type: 'funnel_step',
+                  storeSlug: website.slug,
+                  funnelSlug: funnel.slug,
+                  stepSlug: cleanPageSlug,
+                  funnelId: connection.content_id,
+                  funnelName: funnel.name,
+                  websiteName: website.name
+                };
+                console.log(`[Middleware] Using funnel: ${funnel.name} (${funnel.slug}) from website: ${website.name} (${website.slug})`);
+              }
+            }
           }
         }
       }
@@ -599,8 +616,8 @@ async function fetchContentData(content, env) {
         const step = steps[0];
         
         seoData = {
-          title: step.seo_title || `${funnel.name} - ${funnel.websites?.name || 'EcomBuildr'}`,
-          description: step.seo_description || `Visit ${funnel.name} on ${funnel.websites?.name || 'EcomBuildr'}`,
+          title: step.seo_title || `${funnel.name} - ${content.websiteName || funnel.websites?.name || 'EcomBuildr'}`,
+          description: step.seo_description || `Visit ${funnel.name} on ${content.websiteName || funnel.websites?.name || 'EcomBuildr'}`,
           image: step.social_image_url || step.og_image || 'https://app.ecombuildr.com/og-image.jpg',
           url: content.customDomainUrl || `https://app.ecombuildr.com/funnel/${content.storeSlug}/${content.funnelSlug}/${content.stepSlug}`,
           keywords: step.seo_keywords,
