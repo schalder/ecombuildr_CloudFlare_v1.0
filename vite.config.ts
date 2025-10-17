@@ -1,18 +1,18 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import sitemap from 'vite-plugin-sitemap';
+// import sitemap from 'vite-plugin-sitemap';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
 // Define routes for sitemap generation
-const routes = [
-  { path: '/', name: 'Home' },
-  { path: '/about', name: 'About' },
-  { path: '/pricing', name: 'Pricing' },
-  { path: '/features', name: 'Features' },
-  { path: '/contact', name: 'Contact' },
-  // Add more static routes as needed
-];
+// const routes = [
+//   { path: '/', name: 'Home' },
+//   { path: '/about', name: 'About' },
+//   { path: '/pricing', name: 'Pricing' },
+//   { path: '/features', name: 'Features' },
+//   { path: '/contact', name: 'Contact' },
+//   // Add more static routes as needed
+// ];
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -22,19 +22,19 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    // Sitemap generation for static pages
-    sitemap({
-      hostname: 'https://ecombuildr.com', // Update with your domain
-      routes,
-      generateRobotsTxt: false, // Disable robots.txt generation to fix build error
-      robots: [
-        {
-          userAgent: '*',
-          allow: '/',
-          disallow: ['/admin', '/dashboard', '/api/'],
-        },
-      ],
-    }),
+    // Sitemap generation for static pages - temporarily disabled due to build timing issue
+    // sitemap({
+    //   hostname: 'https://ecombuildr.com', // Update with your domain
+    //   routes,
+    //   generateRobotsTxt: true,
+    //   robots: [
+    //     {
+    //       userAgent: '*',
+    //       allow: '/',
+    //       disallow: ['/admin', '/dashboard', '/api/'],
+    //     },
+    //   ],
+    // }),
     // HTML plugin for meta injection
     createHtmlPlugin({
       minify: true,

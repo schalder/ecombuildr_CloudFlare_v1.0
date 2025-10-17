@@ -152,6 +152,7 @@ export const StorefrontHome: React.FC = () => {
     );
 
     return content;
+  }
 
   // Check if there's a custom homepage
   if (homepage) {
@@ -187,6 +188,7 @@ export const StorefrontHome: React.FC = () => {
     );
 
     return content;
+  }
 
   // Fallback: No homepage found
   const content = <StorefrontFallback />;
