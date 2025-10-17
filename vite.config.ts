@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => ({
     sitemap({
       hostname: 'https://ecombuildr.com', // Update with your domain
       routes,
-      generateRobotsTxt: true,
+      generateRobotsTxt: false, // Disable robots.txt generation to avoid build issues
       robots: [
         {
           userAgent: '*',
