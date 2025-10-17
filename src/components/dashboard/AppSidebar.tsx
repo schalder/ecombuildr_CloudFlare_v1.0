@@ -220,7 +220,7 @@ export function AppSidebar() {
         {!collapsed && <div className="p-4 border-b border-sidebar-border">
             <div className="flex items-center justify-center">
               <img 
-                src="https://res.cloudinary.com/funnelsninja/image/upload/v1760233611/ecombuildr-logo-new-v2_lqelbr.png" 
+                src="https://res.cloudinary.com/funnelsninja/image/upload/v1760696032/ecombuildr-logo-new-v2_ioc4vj.png" 
                 alt="EcomBuildr Logo" 
                 className="h-10 w-auto"
               />

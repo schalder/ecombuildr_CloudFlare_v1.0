@@ -233,7 +233,7 @@ const Auth = () => {
         <div className="text-center mb-8">
           <Link to="/" className="flex items-center justify-center mb-4 hover:opacity-80 transition-opacity">
             <img 
-              src="https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-logo-big_vifrmg.png" 
+              src="https://res.cloudinary.com/funnelsninja/image/upload/v1760696032/ecombuildr-logo-new-v2_ioc4vj.png" 
               alt="EcomBuildr Logo" 
               className="h-12 w-auto"
             />

@@ -8,7 +8,7 @@ import { PlatformNavItem } from '@/types/platformNavigation';
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [logoUrl, setLogoUrl] = useState('https://res.cloudinary.com/funnelsninja/image/upload/v1760233611/ecombuildr-logo-new-v2_lqelbr.png');
+  const [logoUrl, setLogoUrl] = useState('https://res.cloudinary.com/funnelsninja/image/upload/v1760696032/ecombuildr-logo-new-v2_ioc4vj.png');
   const [navItems, setNavItems] = useState<PlatformNavItem[]>([]);
   const { user } = useAuth();
 

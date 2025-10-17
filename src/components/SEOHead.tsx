@@ -18,7 +18,7 @@ interface SEOHeadProps {
 export const SEOHead: React.FC<SEOHeadProps> = ({
   title = 'EcomBuildr - Build Your E-commerce Empire in Minutes',
   description = 'Create professional e-commerce stores with our no-code platform. Build websites, funnels, and conversion systems that turn visitors into customers.',
-  ogImage = 'https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-og-image_default.jpg',
+  ogImage = 'https://res.cloudinary.com/funnelsninja/image/upload/v1755487166/ecombuildr-thumbnail_lntuqq.jpg',
   socialImageUrl,
   keywords = [],
   canonical,

@@ -91,7 +91,7 @@ export const Footer = () => {
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center">
               <img 
-                src="https://res.cloudinary.com/funnelsninja/image/upload/v1760233611/ecombuildr-logo-new-v2-white_y1glnz.png" 
+                src="https://res.cloudinary.com/funnelsninja/image/upload/v1760696032/ecombuildr-logo-white-v2_bjkezt.png" 
                 alt="EcomBuildr Logo" 
                 className="h-12 w-auto"
               />
