@@ -7,9 +7,116 @@ const corsHeaders = {
 }
 
 interface DomainRequest {
-  action: 'verify' | 'pre_verify' | 'add_domain' | 'remove_domain'
+  action: 'verify' | 'pre_verify' | 'add_domain' | 'remove_domain' | 'check_cloudflare_status'
   domain: string
   storeId: string
+}
+
+interface CloudflareDomainResponse {
+  id: string
+  name: string
+  status: 'pending_validation' | 'active' | 'pending_deployment' | 'initializing'
+  verification_errors?: string[]
+  created_on: string
+  validation_data?: {
+    status: string
+    method: string
+  }
+}
+
+// Helper: Add domain to Cloudflare Pages
+async function addDomainToCloudflarePages(domain: string): Promise<CloudflareDomainResponse> {
+  const accountId = Deno.env.get('CLOUDFLARE_ACCOUNT_ID')
+  const projectName = Deno.env.get('CLOUDFLARE_PROJECT_NAME')
+  const apiToken = Deno.env.get('CLOUDFLARE_API_TOKEN')
+  
+  if (!accountId || !projectName || !apiToken) {
+    throw new Error('Missing Cloudflare configuration')
+  }
+  
+  console.log(`[Cloudflare API] Adding domain ${domain} to project ${projectName}`)
+  
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/${projectName}/domains`,
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: domain })
+    }
+  )
+  
+  const result = await response.json()
+  
+  if (!response.ok) {
+    console.error('[Cloudflare API] Error:', result)
+    throw new Error(result.errors?.[0]?.message || 'Failed to add domain to Cloudflare Pages')
+  }
+  
+  console.log(`[Cloudflare API] Domain added successfully:`, result.result)
+  return result.result
+}
+
+// Helper: Get domain status from Cloudflare Pages
+async function getCloudflarePagesDomainStatus(domain: string): Promise<CloudflareDomainResponse | null> {
+  const accountId = Deno.env.get('CLOUDFLARE_ACCOUNT_ID')
+  const projectName = Deno.env.get('CLOUDFLARE_PROJECT_NAME')
+  const apiToken = Deno.env.get('CLOUDFLARE_API_TOKEN')
+  
+  if (!accountId || !projectName || !apiToken) {
+    return null
+  }
+  
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/${projectName}/domains/${domain}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+        'Content-Type': 'application/json'
+      }
+    }
+  )
+  
+  if (!response.ok) {
+    return null
+  }
+  
+  const result = await response.json()
+  return result.result
+}
+
+// Helper: Remove domain from Cloudflare Pages
+async function removeDomainFromCloudflarePages(domain: string): Promise<boolean> {
+  const accountId = Deno.env.get('CLOUDFLARE_ACCOUNT_ID')
+  const projectName = Deno.env.get('CLOUDFLARE_PROJECT_NAME')
+  const apiToken = Deno.env.get('CLOUDFLARE_API_TOKEN')
+  
+  if (!accountId || !projectName || !apiToken) {
+    return false
+  }
+  
+  console.log(`[Cloudflare API] Removing domain ${domain} from project ${projectName}`)
+  
+  const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/pages/projects/${projectName}/domains/${domain}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+        'Content-Type': 'application/json'
+      }
+    }
+  )
+  
+  if (!response.ok) {
+    console.error(`[Cloudflare API] Failed to remove domain: ${response.status}`)
+    return false
+  }
+  
+  console.log(`[Cloudflare API] Domain removed successfully`)
+  return true
 }
 
 Deno.serve(async (req) => {
@@ -65,12 +172,17 @@ Deno.serve(async (req) => {
           .maybeSingle()
         
         if (existingDomain) {
-          console.log(`[Cloudflare] Domain ${domain} already exists`)
+          console.log(`[Cloudflare] Domain ${domain} already exists in database`)
+          
+          // Check Cloudflare Pages status
+          const cfStatus = await getCloudflarePagesDomainStatus(domain)
+          
           result = {
             success: true,
             domain: existingDomain,
             verificationToken: existingDomain.verification_token,
             cloudflareTarget: 'ecombuildr.pages.dev',
+            cloudflareStatus: cfStatus?.status || 'unknown',
             instructions: {
               type: 'CNAME',
               name: 'www',
@@ -82,6 +194,7 @@ Deno.serve(async (req) => {
           break
         }
         
+        // Step 1: Add domain to database
         const { data: newDomain, error: insertError } = await supabase
           .from('custom_domains')
           .insert({
@@ -99,11 +212,38 @@ Deno.serve(async (req) => {
           throw new Error(`Failed to add domain: ${insertError.message}`)
         }
         
+        console.log(`[Cloudflare] Domain added to database: ${newDomain.id}`)
+        
+        // Step 2: Add domain to Cloudflare Pages
+        let cfDomain: CloudflareDomainResponse | null = null
+        let cloudflareError: string | null = null
+        
+        try {
+          cfDomain = await addDomainToCloudflarePages(domain)
+          console.log(`[Cloudflare API] Domain status: ${cfDomain.status}`)
+          
+          // Update database with Cloudflare status
+          await supabase
+            .from('custom_domains')
+            .update({
+              ssl_status: cfDomain.status === 'active' ? 'active' : 'pending'
+            })
+            .eq('id', newDomain.id)
+            
+        } catch (error) {
+          console.error('[Cloudflare API] Failed to add domain:', error)
+          cloudflareError = error.message
+          
+          // Don't fail the entire operation - user can still configure DNS manually
+        }
+        
         result = {
           success: true,
           domain: newDomain,
           verificationToken,
           cloudflareTarget: 'ecombuildr.pages.dev',
+          cloudflareStatus: cfDomain?.status || 'not_added',
+          cloudflareError,
           instructions: {
             type: 'CNAME',
             name: 'www',
@@ -112,7 +252,8 @@ Deno.serve(async (req) => {
             description: 'Add CNAME record pointing to ecombuildr.pages.dev'
           }
         }
-        console.log(`[Cloudflare] Domain added: ${newDomain.id}`)
+        
+        console.log(`[Cloudflare] Domain setup complete: ${newDomain.id}`)
         break
 
       case 'pre_verify':
@@ -171,13 +312,23 @@ Deno.serve(async (req) => {
           errorMessage = 'DNS lookup failed'
         }
         
+        // Additionally check Cloudflare Pages domain status
+        let cfStatus: CloudflareDomainResponse | null = null
+        
+        try {
+          cfStatus = await getCloudflarePagesDomainStatus(domain)
+          console.log(`[Cloudflare API] Domain status: ${cfStatus?.status || 'not_found'}`)
+        } catch (error) {
+          console.error('[Cloudflare API] Failed to get domain status:', error)
+        }
+        
         if (action === 'verify' && dnsConfigured) {
           await supabase
             .from('custom_domains')
             .update({
               dns_configured: true,
-              is_verified: true,
-              ssl_status: 'active',
+              is_verified: cfStatus?.status === 'active',
+              ssl_status: cfStatus?.status || 'pending',
               last_checked_at: new Date().toISOString()
             })
             .eq('domain', domain)
@@ -190,12 +341,24 @@ Deno.serve(async (req) => {
             dnsConfigured,
             cnameTarget,
             errorMessage,
-            isAccessible: dnsConfigured
+            isAccessible: dnsConfigured && cfStatus?.status === 'active',
+            cloudflareStatus: cfStatus?.status || 'unknown',
+            verificationErrors: cfStatus?.verification_errors || []
           }
         }
         break
 
       case 'remove_domain':
+        // Step 1: Remove from Cloudflare Pages
+        let cfRemoved = false
+        
+        try {
+          cfRemoved = await removeDomainFromCloudflarePages(domain)
+        } catch (error) {
+          console.error('[Cloudflare API] Failed to remove domain:', error)
+        }
+        
+        // Step 2: Remove from database
         const { error: deleteError } = await supabase
           .from('custom_domains')
           .delete()
@@ -206,16 +369,45 @@ Deno.serve(async (req) => {
           throw new Error(`Failed to remove: ${deleteError.message}`)
         }
         
-        result = { success: true, message: `Domain ${domain} removed` }
+        result = { 
+          success: true, 
+          message: `Domain ${domain} removed`,
+          cloudflareRemoved: cfRemoved
+        }
+        break
+
+      case 'check_cloudflare_status':
+        const cfDomainStatus = await getCloudflarePagesDomainStatus(domain)
+        
+        if (!cfDomainStatus) {
+          result = {
+            success: false,
+            error: 'Domain not found in Cloudflare Pages'
+          }
+        } else {
+          // Update database with latest status
+          await supabase
+            .from('custom_domains')
+            .update({
+              is_verified: cfDomainStatus.status === 'active',
+              ssl_status: cfDomainStatus.status,
+              last_checked_at: new Date().toISOString()
+            })
+            .eq('domain', domain)
+            .eq('store_id', storeId)
+          
+          result = {
+            success: true,
+            status: cfDomainStatus.status,
+            verificationErrors: cfDomainStatus.verification_errors || [],
+            validationData: cfDomainStatus.validation_data
+          }
+        }
         break
 
       default:
         throw new Error(`Unknown action: ${action}`)
     }
-
-    return new Response(JSON.stringify(result), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    })
 
   } catch (error) {
     console.error('[Cloudflare] Error:', error)

@@ -44,6 +44,46 @@ Option 2: Contact DNS provider for Cloudflare A records
 - Automatic SSL
 - Standard industry practice
 
+## Cloudflare API Token Setup
+
+### Create API Token
+
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com/profile/api-tokens)
+2. Click "Create Token"
+3. Use "Custom token" template
+4. Set permissions:
+   - **Account** → **Cloudflare Pages** → **Edit**
+5. Set Account Resources:
+   - **Include** → **Your Account**
+6. (Optional) Set Zone Resources for DNS management
+7. Click "Continue to summary"
+8. Click "Create Token"
+9. **Copy the token** (you won't see it again)
+
+### Configure Environment Variables
+
+#### Supabase Edge Functions
+
+Add to Supabase Edge Functions secrets:
+```bash
+CLOUDFLARE_ACCOUNT_ID=<your_account_id>
+CLOUDFLARE_PROJECT_NAME=ecombuildr
+CLOUDFLARE_API_TOKEN=<your_api_token>
+```
+
+To find your Account ID:
+1. Go to Cloudflare Dashboard
+2. Select any domain
+3. Look in the right sidebar for "Account ID"
+
+### Test API Token
+
+```bash
+# Test the token
+curl -X GET "https://api.cloudflare.com/client/v4/accounts/YOUR_ACCOUNT_ID/pages/projects" \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
 ## Environment Variables for Cloudflare Pages
 
 ### Required Environment Variables

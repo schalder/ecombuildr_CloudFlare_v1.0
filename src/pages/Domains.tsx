@@ -28,7 +28,8 @@ export default function Domains() {
     setHomepage,
     verifyDomain,
     verifyDomainDNS,
-    checkSSL
+    checkSSL,
+    checkCloudflareStatus
   } = useDomainManagement();
 
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
@@ -75,16 +76,19 @@ export default function Domains() {
   };
 
   const getStatusBadge = (domain: any) => {
-    if (domain.is_verified && domain.ssl_status === 'issued') {
-      return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Active</Badge>;
-    }
-    if (domain.dns_configured && domain.ssl_status === 'provisioning') {
-      return <Badge variant="secondary" className="bg-blue-500 hover:bg-blue-600">SSL Provisioning</Badge>;
-    }
-    if (domain.dns_configured) {
+    if (domain.ssl_status === 'active') {
+      return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Active & Ready</Badge>;
+    } else if (domain.ssl_status === 'pending_validation') {
+      return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-600">Validating DNS</Badge>;
+    } else if (domain.ssl_status === 'pending_deployment') {
+      return <Badge variant="secondary" className="bg-blue-500 hover:bg-blue-600">Deploying</Badge>;
+    } else if (domain.is_verified && domain.dns_configured) {
+      return <Badge variant="default" className="bg-green-500 hover:bg-green-600">DNS Configured</Badge>;
+    } else if (domain.dns_configured) {
       return <Badge variant="secondary" className="bg-yellow-500 hover:bg-yellow-600">DNS Configured</Badge>;
+    } else {
+      return <Badge variant="outline">Pending Setup</Badge>;
     }
-    return <Badge variant="outline">Setup Required</Badge>;
   };
 
   const getContentConnections = (domainId: string) => {
@@ -206,6 +210,15 @@ export default function Domains() {
                             <RefreshCw className="mr-2 h-3 w-3" />
                             Check Status
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => checkCloudflareStatus(domain.domain)}
+                            className="text-xs"
+                          >
+                            <RefreshCw className="mr-2 h-3 w-3" />
+                            Refresh Status
+                          </Button>
                         </div>
                       </div>
 
@@ -214,10 +227,16 @@ export default function Domains() {
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <span className="text-sm font-medium">Domain Status:</span>
-                            <span className={domain.is_verified ? 'text-green-600' : 'text-amber-600'}>
-                              {domain.is_verified ? '✅ Active & Ready' : '⏳ Setting up...'}
+                            <span className={domain.ssl_status === 'active' ? 'text-green-600' : 'text-amber-600'}>
+                              {domain.ssl_status === 'active' ? '✅ Active & Ready' : '⏳ Setting up...'}
                             </span>
                           </div>
+                          
+                          {domain.ssl_status && (
+                            <div className="text-sm text-muted-foreground">
+                              Cloudflare Status: <span className="font-medium">{domain.ssl_status}</span>
+                            </div>
+                          )}
                           
                           {!domain.is_verified && (
                             <div className="text-sm text-muted-foreground">
@@ -227,7 +246,7 @@ export default function Domains() {
                             </div>
                           )}
                           
-                          {domain.is_verified && (
+                          {domain.ssl_status === 'active' && (
                             <div className="text-sm text-green-700">
                               Your domain is live and ready to use! 🎉
                             </div>

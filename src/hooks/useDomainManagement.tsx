@@ -10,13 +10,14 @@ interface CustomDomain {
   store_id: string;
   is_verified: boolean;
   dns_configured: boolean;
-  ssl_status?: string;
+  ssl_status?: 'pending' | 'active' | 'pending_validation' | 'pending_deployment' | 'initializing';
   verification_token?: string;
   created_at: string;
   updated_at: string;
   last_checked_at?: string;
   dns_verified_at?: string;
   verification_attempts: number;
+  cloudflare_domain_id?: string; // Store Cloudflare's domain ID
 }
 
 interface DomainConnection {
@@ -327,6 +328,28 @@ export const useDomainManagement = () => {
     }
   };
 
+  const checkCloudflareStatus = async (domain: string): Promise<any> => {
+    if (!store?.id) throw new Error('No store found');
+
+    try {
+      const { data, error } = await supabase.functions.invoke('dns-domain-manager-cloudflare', {
+        body: { 
+          action: 'check_cloudflare_status',
+          domain: domain,
+          storeId: store.id 
+        }
+      });
+
+      if (error) throw error;
+      
+      refetch();
+      return data;
+    } catch (error) {
+      console.error('Error checking Cloudflare status:', error);
+      throw error;
+    }
+  };
+
   const checkSSL = async (domainId: string): Promise<any> => {
     if (!store?.id) throw new Error('No store found');
 
@@ -475,6 +498,7 @@ export const useDomainManagement = () => {
     removeConnection,
     setHomepage,
     verifyDomain,
+    checkCloudflareStatus,
     checkSSL,
     connectCourseContent,
     checkCourseSlugAvailability,
