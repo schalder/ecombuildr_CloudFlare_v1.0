@@ -320,7 +320,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                       <FormItem>
                         <FormLabel className="text-foreground">Funnel Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="My Awesome Funnel" {...field} />
+                          <Input placeholder="My Awesome Funnel" className="text-foreground" {...field} />
                         </FormControl>
                         <FormDescription>
                           This is the display name for your funnel.
@@ -339,7 +339,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                         <FormControl>
                           <Textarea 
                             placeholder="A brief description of your funnel..."
-                            className="resize-none"
+                            className="resize-none text-foreground"
                             rows={3}
                             {...field}
                           />
@@ -361,6 +361,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                         <FormControl>
                           <Input 
                             placeholder="my-awesome-funnel" 
+                            className="text-foreground"
                             {...field}
                             onChange={(e) => {
                               const slug = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
@@ -614,7 +615,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                         <FormItem>
                           <FormLabel className="text-foreground">Default SEO Title</FormLabel>
                           <FormControl>
-                            <Input placeholder="Amazing Funnel - High Conversions" {...field} />
+                            <Input placeholder="Amazing Funnel - High Conversions" className="text-foreground" {...field} />
                           </FormControl>
                           <FormDescription>
                             Under 60 characters recommended.
@@ -631,7 +632,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                         <FormItem>
                           <FormLabel>Robots</FormLabel>
                           <FormControl>
-                            <Input placeholder="index, follow" {...field} />
+                            <Input placeholder="index, follow" className="text-foreground" {...field} />
                           </FormControl>
                           <FormDescription>
                             e.g., index, follow or noindex, nofollow
@@ -652,6 +653,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                           <Textarea
                             rows={3}
                             placeholder="Compelling funnel that converts visitors into customers."
+                            className="text-foreground"
                             {...field}
                           />
                         </FormControl>
@@ -671,7 +673,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                          <FormItem>
                            <FormLabel>Default OG Image URL</FormLabel>
                            <FormControl>
-                             <Input placeholder="https://example.com/og.jpg" {...field} />
+                             <Input placeholder="https://example.com/og.jpg" className="text-foreground" {...field} />
                            </FormControl>
                            <FormDescription>
                              Social sharing image.
@@ -688,7 +690,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                          <FormItem>
                            <FormLabel>Favicon URL</FormLabel>
                            <FormControl>
-                             <Input placeholder="https://example.com/favicon.png" {...field} />
+                             <Input placeholder="https://example.com/favicon.png" className="text-foreground" {...field} />
                            </FormControl>
                            <FormDescription>
                              Custom favicon for this funnel (PNG/ICO format).
@@ -706,7 +708,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                        <FormItem>
                          <FormLabel className="text-foreground">Canonical Domain</FormLabel>
                          <FormControl>
-                           <Input placeholder="example.com" {...field} />
+                           <Input placeholder="example.com" className="text-foreground" {...field} />
                          </FormControl>
                          <FormDescription>
                            Used to build canonical URLs.
@@ -736,7 +738,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                         <FormItem>
                           <FormLabel>Facebook Pixel ID</FormLabel>
                           <FormControl>
-                            <Input placeholder="123456789012345" {...field} />
+                            <Input placeholder="123456789012345" className="text-foreground" {...field} />
                           </FormControl>
                           <FormDescription>
                             Facebook Pixel ID for tracking.
@@ -753,7 +755,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                         <FormItem>
                           <FormLabel>Google Analytics ID</FormLabel>
                           <FormControl>
-                            <Input placeholder="G-XXXXXXXXXX" {...field} />
+                            <Input placeholder="G-XXXXXXXXXX" className="text-foreground" {...field} />
                           </FormControl>
                           <FormDescription>
                             GA4 Measurement ID.
@@ -770,7 +772,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                         <FormItem>
                           <FormLabel>Google Ads ID</FormLabel>
                           <FormControl>
-                            <Input placeholder="AW-XXXXXXXXXX" {...field} />
+                            <Input placeholder="AW-XXXXXXXXXX" className="text-foreground" {...field} />
                           </FormControl>
                           <FormDescription>
                             Google Ads Conversion ID.
@@ -791,6 +793,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                           <Textarea
                             rows={4}
                             placeholder="<!-- Custom tracking code for header -->"
+                            className="text-foreground"
                             {...field}
                           />
                         </FormControl>
@@ -812,6 +815,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                           <Textarea
                             rows={4}
                             placeholder="<!-- Custom tracking code for footer -->"
+                            className="text-foreground"
                             {...field}
                           />
                         </FormControl>

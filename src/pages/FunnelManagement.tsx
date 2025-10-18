@@ -508,7 +508,7 @@ const FunnelManagement = () => {
                                       <p className="text-sm font-medium">
                                         {getStepTypeLabel(selectedStep.step_type)} - {selectedStep.title}
                                       </p>
-                                      <p className="text-xs opacity-90">
+                                      <p className="text-xs opacity-90 text-foreground">
                                         {selectedStep.is_published ? 'Published' : 'Draft'}
                                       </p>
                                     </div>
@@ -519,10 +519,10 @@ const FunnelManagement = () => {
                                   <div className="w-16 h-16 bg-green-100 rounded-lg mx-auto mb-4 flex items-center justify-center">
                                     <div className="w-8 h-1 bg-green-500 rounded"></div>
                                   </div>
-                                  <p className="text-sm text-muted-foreground">
+                                  <p className="text-sm text-foreground">
                                     {getStepTypeLabel(selectedStep.step_type)} - {selectedStep.title}
                                   </p>
-                                  <p className="text-xs text-muted-foreground mt-2">
+                                  <p className="text-xs text-foreground mt-2">
                                     {selectedStep.is_published ? 'Published' : 'Draft'}
                                   </p>
                                 </div>

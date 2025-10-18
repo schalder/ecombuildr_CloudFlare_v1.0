@@ -428,7 +428,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   <FormItem>
                     <FormLabel className="text-foreground">Website Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="My Awesome Website" {...field} />
+                      <Input placeholder="My Awesome Website" className="text-foreground" {...field} />
                     </FormControl>
                     <FormDescription>
                       This is the display name for your website.
@@ -447,7 +447,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     <FormControl>
                       <Textarea 
                         placeholder="A brief description of your website..."
-                        className="resize-none"
+                        className="resize-none text-foreground"
                         rows={3}
                         {...field}
                       />
@@ -469,6 +469,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     <FormControl>
                       <Input 
                         placeholder="my-awesome-website" 
+                        className="text-foreground"
                         {...field}
                         onChange={(e) => {
                           const slug = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-');
@@ -641,7 +642,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   <FormItem>
                     <FormLabel className="text-foreground">Favicon URL</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://example.com/favicon.ico" {...field} />
+                      <Input placeholder="https://example.com/favicon.ico" className="text-foreground" {...field} />
                     </FormControl>
                     <FormDescription>
                       URL to your website's favicon (16x16 or 32x32 pixels).
@@ -875,7 +876,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                       <FormItem>
                         <FormLabel className="text-foreground">Facebook Pixel ID</FormLabel>
                         <FormControl>
-                          <Input placeholder="123456789012345" {...field} />
+                          <Input placeholder="123456789012345" className="text-foreground" {...field} />
                         </FormControl>
                         <FormDescription>
                           Your Facebook Pixel ID for conversion tracking and advertising.
@@ -892,7 +893,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                       <FormItem>
                         <FormLabel className="text-foreground">Google Analytics ID</FormLabel>
                         <FormControl>
-                          <Input placeholder="G-XXXXXXXXXX or UA-XXXXXXXX-X" {...field} />
+                          <Input placeholder="G-XXXXXXXXXX or UA-XXXXXXXX-X" className="text-foreground" {...field} />
                         </FormControl>
                         <FormDescription>
                           Your Google Analytics measurement ID for website analytics.
@@ -910,7 +911,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     <FormItem>
                       <FormLabel className="text-foreground">Google Ads ID</FormLabel>
                       <FormControl>
-                        <Input placeholder="AW-XXXXXXXXX" {...field} />
+                        <Input placeholder="AW-XXXXXXXXX" className="text-foreground" {...field} />
                       </FormControl>
                       <FormDescription>
                         Your Google Ads conversion ID for tracking ad performance.
@@ -934,7 +935,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                       <FormControl>
                         <Textarea 
                           placeholder="<!-- Additional custom tracking code -->"
-                          className="resize-none font-mono text-sm"
+                          className="resize-none font-mono text-sm text-foreground"
                           rows={4}
                           {...field}
                         />
@@ -956,7 +957,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                       <FormControl>
                         <Textarea 
                           placeholder="<!-- Chat widgets, additional tracking, etc. -->"
-                          className="resize-none font-mono text-sm"
+                          className="resize-none font-mono text-sm text-foreground"
                           rows={4}
                           {...field}
                         />
