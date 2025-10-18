@@ -68,7 +68,7 @@ export default function Training() {
               placeholder="Search courses..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-9 text-foreground"
             />
           </div>
           

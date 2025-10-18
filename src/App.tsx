@@ -213,9 +213,9 @@ const App = () => (
                   <Route path="funnels/create" element={<CreateFunnel />} />
                 </Route>
 
-                {/* Training Routes - Protected */}
-                <Route path="/training" element={<Training />} />
-                <Route path="/training/:courseSlug" element={<TrainingCourse />} />
+                {/* Training Routes - Protected - Within Dashboard */}
+                <Route path="/dashboard/training" element={<Training />} />
+                <Route path="/dashboard/training/:courseSlug" element={<TrainingCourse />} />
                 
                 {/* Store-Specific Course Routes */}
                 <Route path="/course/:storeId/members/login" element={<CourseMemberLoginPage />} />

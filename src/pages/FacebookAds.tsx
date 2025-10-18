@@ -86,7 +86,7 @@ export default function FacebookAds() {
             )}
           </div>
           <div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold text-foreground">
               {showFacebookOnly ? 'Facebook Pixel Analytics' : 'Internal Analytics'}
             </h1>
             {showFacebookOnly ? (
@@ -126,7 +126,7 @@ export default function FacebookAds() {
         <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between bg-muted/30 p-4 rounded-lg">
           {/* Data Source Toggle */}
           <div className="flex items-center space-x-3 px-3 py-2 bg-background border rounded-lg">
-            <span className="text-sm font-medium">Data Source:</span>
+            <span className="text-sm font-medium text-foreground">Data Source:</span>
             <div className="flex items-center space-x-2">
               <span className={`text-xs ${!showFacebookOnly ? 'text-foreground' : 'text-muted-foreground'}`}>
                 Internal

@@ -509,7 +509,7 @@ export default function Products() {
                   setSearchTerm(e.target.value);
                   setCurrentPage(1); // Reset to first page when searching
                 }}
-                className={`pl-10 ${isMobile ? 'w-full' : 'w-80'}`}
+                className={`pl-10 text-foreground ${isMobile ? 'w-full' : 'w-80'}`}
               />
             </div>
             <div className={`flex items-center ${isMobile ? 'w-full justify-between' : 'gap-2'}`}>

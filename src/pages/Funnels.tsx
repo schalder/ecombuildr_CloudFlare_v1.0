@@ -233,7 +233,7 @@ export default function Funnels() {
             placeholder="Search funnels by name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 text-foreground"
           />
         </div>
 

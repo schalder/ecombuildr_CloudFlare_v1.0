@@ -130,7 +130,7 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
                 onChange={handleSearchChange}
                 onFocus={handleSearchFocus}
                 placeholder="Search products, orders, customers..."
-                className="pl-10 bg-muted/50 border-border"
+                className="pl-10 bg-muted/50 border-border text-foreground"
               />
               {query && (
                 <Button
@@ -296,7 +296,7 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
                 value={query}
                 onChange={handleSearchChange}
                 placeholder="Search products, orders, customers..."
-                className="pl-10"
+                className="pl-10 text-foreground"
                 autoFocus
               />
               {query && (

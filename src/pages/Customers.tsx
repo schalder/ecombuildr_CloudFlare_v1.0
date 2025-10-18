@@ -204,7 +204,7 @@ export default function Customers() {
               placeholder="Search customers..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className={`pl-10 ${isMobile ? 'w-full' : 'w-80'}`}
+              className={`pl-10 text-foreground ${isMobile ? 'w-full' : 'w-80'}`}
             />
           </div>
           <Button
