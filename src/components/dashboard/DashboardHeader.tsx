@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSearch } from "@/hooks/useSearch";
 import { useNotifications } from "@/hooks/useNotifications";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { SearchDropdown } from "@/components/dashboard/SearchDropdown";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
