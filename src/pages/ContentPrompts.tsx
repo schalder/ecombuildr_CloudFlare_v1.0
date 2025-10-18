@@ -59,7 +59,7 @@ const ContentPrompts: React.FC = () => {
             placeholder="Search prompts by title, description, or content..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 text-foreground"
           />
         </div>
 

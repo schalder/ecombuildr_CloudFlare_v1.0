@@ -129,7 +129,7 @@ const navigationItems = [{
   }]
 }, {
   title: "Training",
-  url: "/training",
+  url: "/dashboard/training",
   icon: BookOpen
 }, {
   title: "Settings",
