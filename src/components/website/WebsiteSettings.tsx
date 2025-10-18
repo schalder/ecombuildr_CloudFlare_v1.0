@@ -415,7 +415,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="basic" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Basic Information</h3>
+                  <h3 className="text-base font-semibold text-foreground">Basic Information</h3>
                   <p className="text-sm text-muted-foreground">Manage your website's basic details and visibility settings.</p>
                 </div>
               </AccordionTrigger>
@@ -540,7 +540,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="domain" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Domain & Branding</h3>
+                  <h3 className="text-base font-semibold text-foreground">Domain & Branding</h3>
                   <p className="text-sm text-muted-foreground">Configure your website's domain and visual branding.</p>
                 </div>
               </AccordionTrigger>
@@ -657,7 +657,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="buttons" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Product Button Colors</h3>
+                  <h3 className="text-base font-semibold text-foreground">Product Button Colors</h3>
                   <p className="text-sm text-muted-foreground">Customize the appearance of product buttons across your website.</p>
                 </div>
               </AccordionTrigger>
@@ -817,7 +817,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="currency" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Localization & Currency</h3>
+                  <h3 className="text-base font-semibold text-foreground">Localization & Currency</h3>
                   <p className="text-sm text-muted-foreground">Choose the currency used across this website.</p>
                 </div>
               </AccordionTrigger>
@@ -859,7 +859,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="tracking" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Tracking & Analytics</h3>
+                  <h3 className="text-base font-semibold text-foreground">Tracking & Analytics</h3>
                   <p className="text-sm text-muted-foreground">Configure pixel IDs for automated tracking and custom code snippets.</p>
                 </div>
               </AccordionTrigger>
@@ -976,7 +976,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="storefront" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Storefront UI</h3>
+                  <h3 className="text-base font-semibold text-foreground">Storefront UI</h3>
                   <p className="text-sm text-muted-foreground">Configure user interface elements like floating cart button.</p>
                 </div>
               </AccordionTrigger>

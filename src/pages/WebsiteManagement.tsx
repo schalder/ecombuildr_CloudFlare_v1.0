@@ -235,7 +235,7 @@ const WebsiteManagement = () => {
                 <span className="hidden sm:inline">Back</span>
               </Button>
               <div>
-                <h1 className="text-lg sm:text-2xl font-semibold truncate">{website.name}</h1>
+                <h1 className="text-lg sm:text-2xl font-semibold truncate text-foreground">{website.name}</h1>
               </div>
             </div>
             <div className="flex items-center space-x-2">

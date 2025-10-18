@@ -483,7 +483,7 @@ export default function Categories() {
         {selectedWebsiteId !== 'all' && (
           <div className="bg-muted/50 rounded-lg p-4">
             <h3 className="font-medium text-sm text-muted-foreground mb-1">Categories for</h3>
-            <p className="font-semibold">{getCurrentWebsiteName()}</p>
+            <p className="font-semibold text-foreground">{getCurrentWebsiteName()}</p>
           </div>
         )}
 
@@ -504,9 +504,9 @@ export default function Categories() {
                   <>
                     {/* Parent Category Row */}
                     <TableRow key={category.id} className="group">
-                       <TableCell className="font-medium">
+                       <TableCell className="font-medium text-foreground">
                          <div className="flex items-center gap-2">
-                           {category.name}
+                           <span className="text-foreground">{category.name}</span>
                            {category.subcategories.length > 0 && (
                              <Badge variant="secondary" className="text-xs">
                                {category.subcategories.length} sub

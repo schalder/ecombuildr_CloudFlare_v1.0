@@ -261,7 +261,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Funnel Settings</h2>
+          <h2 className="text-xl font-semibold text-foreground">Funnel Settings</h2>
           <p className="text-muted-foreground">Configure your funnel's basic information and settings.</p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -307,7 +307,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
             <AccordionItem value="basic" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Basic Information</h3>
+                  <h3 className="text-base font-semibold text-foreground">Basic Information</h3>
                   <p className="text-sm text-muted-foreground">Manage your funnel's basic details and visibility settings.</p>
                 </div>
               </AccordionTrigger>
@@ -432,7 +432,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
             <AccordionItem value="domain" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Domain & Publishing</h3>
+                  <h3 className="text-base font-semibold text-foreground">Domain & Publishing</h3>
                   <p className="text-sm text-muted-foreground">Connect a custom domain to your funnel and manage publishing settings.</p>
                 </div>
               </AccordionTrigger>
@@ -600,7 +600,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
             <AccordionItem value="seo" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">SEO Defaults</h3>
+                  <h3 className="text-base font-semibold text-foreground">SEO Defaults</h3>
                   <p className="text-sm text-muted-foreground">Set default SEO metadata for your funnel. Steps can override these settings.</p>
                 </div>
               </AccordionTrigger>
@@ -722,7 +722,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
             <AccordionItem value="tracking" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Tracking & Integrations</h3>
+                  <h3 className="text-base font-semibold text-foreground">Tracking & Integrations</h3>
                   <p className="text-sm text-muted-foreground">Configure analytics and tracking codes for your funnel.</p>
                 </div>
               </AccordionTrigger>

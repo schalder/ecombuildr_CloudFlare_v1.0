@@ -294,7 +294,7 @@ const FunnelManagement = () => {
                 <span className="hidden sm:inline">Back</span>
               </Button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-semibold">{funnel.name}</h1>
+                <h1 className="text-xl sm:text-2xl font-semibold text-foreground">{funnel.name}</h1>
                 <p className="text-muted-foreground hidden sm:block">Manage your funnel steps and settings</p>
               </div>
             </div>

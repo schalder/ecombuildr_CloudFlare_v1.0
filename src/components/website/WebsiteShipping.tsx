@@ -104,13 +104,13 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Shipping & Delivery</h2>
+        <h2 className="text-xl font-semibold text-foreground">Shipping & Delivery</h2>
         <p className="text-muted-foreground">Configure location-based delivery charges for this website.</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Shipping Settings</CardTitle>
+          <CardTitle className="text-base font-semibold text-foreground">Shipping Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
