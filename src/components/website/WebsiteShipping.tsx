@@ -104,19 +104,19 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold">Shipping & Delivery</h2>
+        <h2 className="text-xl font-semibold text-foreground">Shipping & Delivery</h2>
         <p className="text-muted-foreground">Configure location-based delivery charges for this website.</p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">Shipping Settings</CardTitle>
+          <CardTitle className="text-base font-semibold text-foreground">Shipping Settings</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-row items-center justify-between rounded-lg border p-4">
               <div className="space-y-0.5">
-                <Label className="text-base">Enable Shipping Rules</Label>
+                <Label className="text-base text-foreground">Enable Shipping Rules</Label>
                 <p className="text-sm text-muted-foreground">Turn on to apply fees by city and for the rest of the country.</p>
               </div>
               <Switch
@@ -125,7 +125,7 @@ export const WebsiteShipping: React.FC<WebsiteShippingProps> = ({ website }) => 
               />
             </div>
             <div>
-              <Label>Country</Label>
+              <Label className="text-foreground">Country</Label>
               <Input
                 placeholder="e.g., Bangladesh"
                 value={shippingSettings.country || ''}

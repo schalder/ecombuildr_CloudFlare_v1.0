@@ -20,7 +20,7 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
     return (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-          <h2 className="text-2xl font-semibold">Funnel Sales</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Funnel Sales</h2>
           <DateRangeFilter value={sales?.dateRange || { from: new Date(), to: new Date(), preset: 'last7days', label: 'Last 7 days' }} onChange={updateDateRange} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -43,7 +43,7 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
     return (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-          <h2 className="text-2xl font-semibold">Funnel Sales</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Funnel Sales</h2>
           <DateRangeFilter value={sales?.dateRange || { from: new Date(), to: new Date(), preset: 'last7days', label: 'Last 7 days' }} onChange={updateDateRange} />
         </div>
         <Card>
@@ -59,7 +59,7 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Funnel Sales</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Funnel Sales</h2>
           <p className="text-muted-foreground">{sales.funnelName}</p>
         </div>
         <DateRangeFilter value={sales.dateRange} onChange={updateDateRange} />

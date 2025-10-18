@@ -369,7 +369,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl font-semibold">Website Settings</h2>
+          <h2 className="text-xl font-semibold text-foreground">Website Settings</h2>
           <p className="text-muted-foreground">Configure your website's basic information and settings.</p>
         </div>
         <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -415,7 +415,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="basic" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Basic Information</h3>
+                  <h3 className="text-base font-semibold text-foreground">Basic Information</h3>
                   <p className="text-sm text-muted-foreground">Manage your website's basic details and visibility settings.</p>
                 </div>
               </AccordionTrigger>
@@ -540,7 +540,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="domain" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Domain & Branding</h3>
+                  <h3 className="text-base font-semibold text-foreground">Domain & Branding</h3>
                   <p className="text-sm text-muted-foreground">Configure your website's domain and visual branding.</p>
                 </div>
               </AccordionTrigger>
@@ -664,7 +664,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
               <AccordionContent forceMount className="px-6 pb-6">
                 <div className={openSections.includes('buttons') ? 'block space-y-6' : 'hidden'}>
               <div>
-                <h3 className="text-sm font-semibold mb-4">Add to Cart & Order Now Buttons</h3>
+                <h3 className="text-sm font-semibold mb-4 text-foreground">Add to Cart & Order Now Buttons</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -739,7 +739,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
               <Separator />
 
               <div>
-                <h3 className="text-sm font-semibold mb-4">Product Variant Buttons</h3>
+                <h3 className="text-sm font-semibold mb-4 text-foreground">Product Variant Buttons</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -817,7 +817,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="currency" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Localization & Currency</h3>
+                  <h3 className="text-base font-semibold text-foreground">Localization & Currency</h3>
                   <p className="text-sm text-muted-foreground">Choose the currency used across this website.</p>
                 </div>
               </AccordionTrigger>
@@ -859,7 +859,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="tracking" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Tracking & Analytics</h3>
+                  <h3 className="text-base font-semibold text-foreground">Tracking & Analytics</h3>
                   <p className="text-sm text-muted-foreground">Configure pixel IDs for automated tracking and custom code snippets.</p>
                 </div>
               </AccordionTrigger>
@@ -976,7 +976,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
             <AccordionItem value="storefront" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">
                 <div className="flex flex-col items-start text-left">
-                  <h3 className="text-base font-semibold">Storefront UI</h3>
+                  <h3 className="text-base font-semibold text-foreground">Storefront UI</h3>
                   <p className="text-sm text-muted-foreground">Configure user interface elements like floating cart button.</p>
                 </div>
               </AccordionTrigger>

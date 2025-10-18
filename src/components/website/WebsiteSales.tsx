@@ -18,7 +18,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Sales Analytics</h2>
+          <h2 className="text-xl font-semibold text-foreground">Sales Analytics</h2>
           <Button variant="outline" size="sm" disabled>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -44,7 +44,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Sales Analytics</h2>
+          <h2 className="text-xl font-semibold text-foreground">Sales Analytics</h2>
           <Button variant="outline" size="sm" onClick={refetch}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Retry
@@ -69,7 +69,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-lg sm:text-xl font-semibold">Sales Analytics</h2>
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Sales Analytics</h2>
           <p className="text-sm text-muted-foreground">
             Sales performance and revenue insights for {websiteName}
           </p>

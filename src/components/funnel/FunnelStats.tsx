@@ -18,7 +18,7 @@ export const FunnelStats: React.FC<FunnelStatsProps> = ({ funnelId }) => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-semibold">Funnel Statistics</h2>
+        <h2 className="text-2xl font-semibold text-foreground">Funnel Statistics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map(i => (
             <Card key={i}>
@@ -38,7 +38,7 @@ export const FunnelStats: React.FC<FunnelStatsProps> = ({ funnelId }) => {
   if (error || !stats) {
     return (
       <div className="space-y-6">
-        <h2 className="text-2xl font-semibold">Funnel Statistics</h2>
+        <h2 className="text-2xl font-semibold text-foreground">Funnel Statistics</h2>
         <Card>
           <CardContent className="p-6 text-center">
             <p className="text-destructive">{error || 'Failed to load statistics'}</p>
@@ -52,7 +52,7 @@ export const FunnelStats: React.FC<FunnelStatsProps> = ({ funnelId }) => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Funnel Statistics</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Funnel Statistics</h2>
           <p className="text-muted-foreground">Overview of your funnel performance</p>
         </div>
       </div>

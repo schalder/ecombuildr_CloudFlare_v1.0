@@ -84,7 +84,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold">FOMO Notifications</h2>
+        <h2 className="text-2xl font-bold text-foreground">FOMO Notifications</h2>
         <p className="text-muted-foreground">
           Boost conversions with social proof notifications showing recent purchases.
         </p>
@@ -92,7 +92,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
 
       <Card>
         <CardHeader>
-          <CardTitle>FOMO Settings</CardTitle>
+          <CardTitle className="text-foreground">FOMO Settings</CardTitle>
           <CardDescription>
             Configure how purchase notifications appear on your website
           </CardDescription>
@@ -101,7 +101,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
           {/* Enable FOMO */}
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label>Enable FOMO Notifications</Label>
+              <Label className="text-foreground">Enable FOMO Notifications</Label>
               <p className="text-sm text-muted-foreground">
                 Show purchase notifications to visitors
               </p>
@@ -116,7 +116,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
 
           {/* Position */}
           <div className="space-y-2">
-            <Label>Position</Label>
+            <Label className="text-foreground">Position</Label>
             <Select 
               value={settings.position} 
               onValueChange={(value) => handleSettingChange('position', value)}
@@ -134,7 +134,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
           {/* Colors */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Text Color</Label>
+              <Label className="text-foreground">Text Color</Label>
               <div className="flex space-x-2">
                 <Input
                   type="color"
@@ -152,7 +152,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
             </div>
 
             <div className="space-y-2">
-              <Label>Background Color</Label>
+              <Label className="text-foreground">Background Color</Label>
               <div className="flex space-x-2">
                 <Input
                   type="color"
@@ -172,7 +172,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
 
           {/* Icon URL */}
           <div className="space-y-2">
-            <Label>Icon URL (Optional)</Label>
+            <Label className="text-foreground">Icon URL (Optional)</Label>
             <Input
               type="url"
               value={settings.iconUrl}
@@ -187,7 +187,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
           {/* Timing Settings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Display Duration (seconds)</Label>
+              <Label className="text-foreground">Display Duration (seconds)</Label>
               <Input
                 type="number"
                 min="1"
@@ -201,7 +201,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
             </div>
 
             <div className="space-y-2">
-              <Label>Delay Between Notifications (seconds)</Label>
+              <Label className="text-foreground">Delay Between Notifications (seconds)</Label>
               <Input
                 type="number"
                 min="1"
@@ -217,7 +217,7 @@ export const WebsiteFOMO: React.FC<WebsiteFOMOProps> = ({ website }) => {
 
           {/* Max Recent Orders */}
           <div className="space-y-2">
-            <Label>Number of Recent Orders to Show</Label>
+            <Label className="text-foreground">Number of Recent Orders to Show</Label>
             <Input
               type="number"
               min="1"

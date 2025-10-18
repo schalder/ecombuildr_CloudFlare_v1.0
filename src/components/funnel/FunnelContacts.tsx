@@ -312,7 +312,7 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Contacts</h2>
+          <h2 className="text-2xl font-bold text-foreground">Contacts</h2>
           <p className="text-muted-foreground">
             {filteredSubmissions.length} contact{filteredSubmissions.length !== 1 ? 's' : ''} found
             {selectedContacts.size > 0 && (
