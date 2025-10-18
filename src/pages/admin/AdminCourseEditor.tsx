@@ -699,7 +699,7 @@ export default function AdminCourseEditor() {
             Back to Training
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">
+            <h1 className="text-2xl font-bold text-foreground">
               {isNew ? "Create New Course" : "Edit Course"}
             </h1>
           </div>

@@ -109,7 +109,7 @@ export default function AdminShipping() {
       <div className="container mx-auto p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Platform Shipping Integration</h1>
+            <h1 className="text-2xl font-bold text-foreground">Platform Shipping Integration</h1>
             <p className="text-muted-foreground">
               Manage platform-wide shipping provider credentials for library products
             </p>

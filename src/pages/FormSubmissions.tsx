@@ -127,11 +127,11 @@ export const FormSubmissions = () => {
 
   const getStatusColor = (status: FormSubmission['status']) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200';
-      case 'read': return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200';
-      case 'replied': return 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200';
-      case 'closed': return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200';
-      default: return 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200';
+      case 'new': return 'bg-blue-100 text-blue-800';
+      case 'read': return 'bg-yellow-100 text-yellow-800';
+      case 'replied': return 'bg-green-100 text-green-800';
+      case 'closed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -140,9 +140,9 @@ export const FormSubmissions = () => {
       <DashboardLayout>
         <div className="p-6">
           <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-muted rounded w-1/4"></div>
-            <div className="h-32 bg-muted rounded"></div>
-            <div className="h-64 bg-muted rounded"></div>
+            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-64 bg-gray-200 rounded"></div>
           </div>
         </div>
       </DashboardLayout>
@@ -153,7 +153,7 @@ export const FormSubmissions = () => {
     <DashboardLayout>
       <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Form Submissions</h1>
+          <h1 className="text-2xl font-bold text-foreground">Form Submissions</h1>
           <p className="text-muted-foreground">Manage contact forms and newsletter subscriptions</p>
         </div>
 
@@ -357,7 +357,7 @@ export const FormSubmissions = () => {
                       <TableRow key={subscriber.id}>
                         <TableCell>{subscriber.email}</TableCell>
                         <TableCell>
-                          <Badge className={subscriber.status === 'active' ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200' : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-200'}>
+                          <Badge className={subscriber.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
                             {subscriber.status}
                           </Badge>
                         </TableCell>

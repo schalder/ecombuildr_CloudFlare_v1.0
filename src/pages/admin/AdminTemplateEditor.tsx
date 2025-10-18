@@ -286,7 +286,7 @@ export default function AdminTemplateEditor() {
               <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-              <h1 className="text-xl font-bold">
+              <h1 className="text-xl font-bold text-foreground">
                 {isEditing ? 'Edit Template' : 'Create Template'}
               </h1>
               <p className="text-sm text-muted-foreground">

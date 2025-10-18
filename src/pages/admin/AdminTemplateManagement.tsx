@@ -112,7 +112,7 @@ export default function AdminTemplateManagement() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Template Management</h1>
+            <h1 className="text-2xl font-bold text-foreground">Template Management</h1>
             <p className="text-muted-foreground">
               Manage page templates for websites and funnels
             </p>

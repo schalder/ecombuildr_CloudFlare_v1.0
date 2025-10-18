@@ -178,7 +178,7 @@ export default function Websites() {
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Websites</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Websites</h1>
             <p className="text-muted-foreground">
               Create and manage complete websites with multiple pages
             </p>
@@ -292,7 +292,7 @@ export default function Websites() {
         ) : (
           <div className="text-center py-12">
             <Globe className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-2 text-sm font-semibold text-foreground">No websites</h3>
+            <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-foreground">No websites</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Get started by creating your first website.
             </p>

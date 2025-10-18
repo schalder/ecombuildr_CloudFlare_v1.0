@@ -97,7 +97,7 @@ export default function AdminLibraryOrders() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">Orders for {productName}</h1>
+            <h1 className="text-2xl font-bold text-foreground">Orders for {productName}</h1>
             <p className="text-muted-foreground">View all orders containing this library product</p>
           </div>
         </div>

@@ -208,7 +208,7 @@ export default function Funnels() {
       <div className="flex flex-col space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Funnels</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Funnels</h1>
             <p className="text-muted-foreground">
               Create high-converting sales funnels with sequential landing pages
             </p>
@@ -220,7 +220,7 @@ export default function Funnels() {
         </div>
 
         {/* Bengali Message */}
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded-md">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-600 p-4 rounded-md">
           <p className="text-sm text-yellow-800 dark:text-yellow-200 leading-relaxed">
             বাংলাদেশে পেমেন্ট গেটওয়ের সীমাবদ্ধতার কারণে ইনস্ট্যান্ট পেমেন্টের সাথে ওয়ান-ক্লিক আপসেল/ডাউনসেল কাজ করে না। তাই, শুধুমাত্র ক্যাশ অন ডেলিভারি (COD) সাপোর্ট করে এমন ফানেলই এখানে কার্যকর। ব্যবহারকারীদের জন্য ক্যাশ অন ডেলিভারি (COD) দিয়েই ই-কমার্স ফানেল তৈরি করবেন।
           </p>
@@ -344,7 +344,7 @@ export default function Funnels() {
         ) : (
           <div className="text-center py-12">
             <TrendingUp className="mx-auto h-12 w-12 text-muted-foreground" />
-            <h3 className="mt-2 text-sm font-semibold text-foreground">No funnels</h3>
+            <h3 className="mt-2 text-sm font-semibold text-gray-900 dark:text-foreground">No funnels</h3>
             <p className="mt-1 text-sm text-muted-foreground">
               Get started by creating your first sales funnel.
             </p>

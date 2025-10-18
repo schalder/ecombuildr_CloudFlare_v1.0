@@ -184,7 +184,7 @@ const CourseSettings = () => {
             Back to Courses
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">Course Settings</h1>
+            <h1 className="text-2xl font-bold text-foreground">Course Settings</h1>
             <p className="text-muted-foreground">
               Configure course library, manage member access, and customize branding
             </p>

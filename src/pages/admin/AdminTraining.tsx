@@ -61,7 +61,7 @@ export default function AdminTraining() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Training Management</h1>
+            <h1 className="text-3xl font-bold text-foreground">Training Management</h1>
             <p className="text-muted-foreground">Manage training courses, modules, and lessons</p>
           </div>
           <Button onClick={() => navigate("/admin/training/new")}>

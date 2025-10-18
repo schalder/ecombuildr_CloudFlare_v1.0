@@ -138,7 +138,7 @@ const CreateCourse = () => {
             Back to Courses
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Create New Course</h1>
+            <h1 className="text-2xl font-bold text-foreground">Create New Course</h1>
             <p className="text-muted-foreground">
               Set up your course details and start building content
             </p>

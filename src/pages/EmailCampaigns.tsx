@@ -165,7 +165,7 @@ const EmailCampaigns: React.FC = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Email Campaigns</h1>
+            <h1 className="text-3xl font-bold text-foreground">Email Campaigns</h1>
             <p className="text-muted-foreground">
               Reach your customers with targeted email marketing campaigns
             </p>

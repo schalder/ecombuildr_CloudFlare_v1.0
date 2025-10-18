@@ -275,11 +275,11 @@ export default function DashboardOverview() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200';
+        return 'bg-yellow-100 text-yellow-800';
       case 'processing':
-        return 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-200';
+        return 'bg-blue-100 text-blue-800';
       case 'shipped':
-        return 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-200';
+        return 'bg-green-100 text-green-800';
       case 'delivered':
         return 'bg-success-light text-success';
       case 'cancelled':
