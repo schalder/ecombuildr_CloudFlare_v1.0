@@ -419,7 +419,7 @@ const FunnelManagement = () => {
                 const selectedStep = selectedStepId ? steps.find(s => s.id === selectedStepId) : steps[0];
                 return selectedStep ? <div className="bg-background border rounded-lg p-6">
                             <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-lg font-semibold">{selectedStep.title}</h3>
+                              <h3 className="text-lg font-semibold text-foreground">{selectedStep.title}</h3>
                               <div className="flex flex-wrap sm:flex-nowrap gap-2">
                                 <Button variant="outline" size="sm" onClick={() => handlePreviewStep(selectedStep.id, selectedStep.slug)}>
                                   <Eye className="h-4 w-4 sm:mr-2" />
@@ -448,7 +448,7 @@ const FunnelManagement = () => {
                                     <div className="mb-2">
                                       <p className="text-foreground mb-1">Live URL:</p>
                                       <div className="flex items-center gap-2">
-                                        <code className="bg-background px-2 py-1 rounded text-sm flex-1">
+                                        <code className="bg-background px-2 py-1 rounded text-sm flex-1 text-foreground">
                                           {funnel.canonical_domain}/{selectedStep.slug}
                                         </code>
                                         <Button
@@ -467,9 +467,9 @@ const FunnelManagement = () => {
                                     </div>
                                   ) : (
                                     <div className="mb-2">
-                                      <p className="text-muted-foreground mb-1">System URL:</p>
+                                      <p className="text-foreground mb-1">System URL:</p>
                                       <div className="flex items-center gap-2">
-                                        <code className="bg-background px-2 py-1 rounded text-sm flex-1">
+                                        <code className="bg-background px-2 py-1 rounded text-sm flex-1 text-foreground">
                                           {window.location.origin}/funnel/{id}/{selectedStep.slug}
                                         </code>
                                         <Button
