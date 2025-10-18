@@ -493,7 +493,7 @@ export const VideoPlaylistProperties: React.FC<MediaPropertiesProps> = ({
                 <Input
                   value={video.url || ''}
                   onChange={(e) => updateVideo(index, 'url', e.target.value)}
-                  placeholder="https://example.com/video.mp4"
+                  placeholder="YouTube, Vimeo, Wistia, or MP4 URL"
                 />
               </div>
 

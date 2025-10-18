@@ -8,6 +8,7 @@ import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
+import { parseVideoUrl, buildEmbedUrl } from '../utils/videoUtils';
 
 // Image Gallery Element
 const ImageGalleryElement: React.FC<{
@@ -257,6 +258,55 @@ const VideoPlaylistElement: React.FC<{
   const validVideos = videos.filter((video: any) => video.url);
   const [currentVideo, setCurrentVideo] = useState(validVideos[0] || videos[0]);
 
+  // Parse video URL to determine type and get embed URL
+  const getVideoInfo = (video: any) => {
+    if (!video.url) return null;
+    return parseVideoUrl(video.url);
+  };
+
+  const renderVideoPlayer = (video: any) => {
+    const videoInfo = getVideoInfo(video);
+    if (!videoInfo) return null;
+
+    const embedUrl = buildEmbedUrl(videoInfo.embedUrl || video.url, videoInfo.type, {
+      autoplay: autoPlay,
+      controls: showControls,
+      muted: muted
+    });
+
+    // Use thumbnail from video info if available, otherwise use provided thumbnail
+    const thumbnailUrl = videoInfo.thumbnailUrl || video.thumbnail;
+
+    if (videoInfo.type === 'hosted') {
+      // Direct video file - use HTML5 video element
+      return (
+        <video
+          key={video.url}
+          controls={showControls}
+          autoPlay={autoPlay}
+          muted={muted}
+          className="w-full h-full"
+          poster={thumbnailUrl}
+        >
+          <source src={video.url} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      );
+    } else {
+      // YouTube, Vimeo, Wistia - use iframe
+      return (
+        <iframe
+          key={video.url}
+          src={embedUrl}
+          className="w-full h-full"
+          allowFullScreen
+          title={video.title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        />
+      );
+    }
+  };
+
   // Extract button styling properties
   const buttonFontSize = element.content.buttonFontSize || 14;
   const buttonFontWeight = element.content.buttonFontWeight || '400';
@@ -331,17 +381,7 @@ const VideoPlaylistElement: React.FC<{
         <div className="grid md:grid-cols-3 gap-4 w-full">
         <div className="md:col-span-2">
           <div className="aspect-video bg-black rounded-lg overflow-hidden">
-            <video
-              key={currentVideo.url}
-              controls={showControls}
-              autoPlay={autoPlay}
-              muted={muted}
-              className="w-full h-full"
-              poster={currentVideo.thumbnail}
-            >
-              <source src={currentVideo.url} type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
+            {renderVideoPlayer(currentVideo)}
           </div>
           <h4 className="text-lg font-semibold mt-2">{currentVideo.title}</h4>
         </div>
