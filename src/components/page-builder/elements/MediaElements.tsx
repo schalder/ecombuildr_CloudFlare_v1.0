@@ -257,6 +257,7 @@ const VideoPlaylistElement: React.FC<{
 
   const validVideos = videos.filter((video: any) => video.url);
   const [currentVideo, setCurrentVideo] = useState(validVideos[0] || videos[0]);
+  const [playingVideo, setPlayingVideo] = useState<string | null>(null);
 
   // Parse video URL to determine type and get embed URL
   const getVideoInfo = (video: any) => {
@@ -276,6 +277,7 @@ const VideoPlaylistElement: React.FC<{
 
     // Use thumbnail from video info if available, otherwise use provided thumbnail
     const thumbnailUrl = videoInfo.thumbnailUrl || video.thumbnail;
+    const isPlaying = playingVideo === video.url;
 
     if (videoInfo.type === 'hosted') {
       // Direct video file - use HTML5 video element
@@ -293,17 +295,54 @@ const VideoPlaylistElement: React.FC<{
         </video>
       );
     } else {
-      // YouTube, Vimeo, Wistia - use iframe
-      return (
-        <iframe
-          key={video.url}
-          src={embedUrl}
-          className="w-full h-full"
-          allowFullScreen
-          title={video.title}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        />
-      );
+      // YouTube, Vimeo, Wistia - show thumbnail preview or iframe
+      if (isPlaying) {
+        // Show iframe when playing
+        return (
+          <iframe
+            key={video.url}
+            src={embedUrl}
+            className="w-full h-full"
+            allowFullScreen
+            title={video.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          />
+        );
+      } else {
+        // Show thumbnail preview when not playing
+        return (
+          <div 
+            className="w-full h-full relative cursor-pointer group"
+            onClick={() => setPlayingVideo(video.url)}
+          >
+            {thumbnailUrl ? (
+              <img
+                src={thumbnailUrl}
+                alt={video.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                <Play className="h-16 w-16 text-white opacity-80" />
+              </div>
+            )}
+            
+            {/* Play button overlay */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 group-hover:bg-opacity-40 transition-all duration-200">
+              <div className="bg-white bg-opacity-90 rounded-full p-4 group-hover:bg-opacity-100 transition-all duration-200">
+                <Play className="h-8 w-8 text-black ml-1" />
+              </div>
+            </div>
+            
+            {/* Video title overlay */}
+            {video.title && (
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+                <h3 className="text-white text-lg font-semibold">{video.title}</h3>
+              </div>
+            )}
+          </div>
+        );
+      }
     }
   };
 
@@ -399,7 +438,10 @@ const VideoPlaylistElement: React.FC<{
                 className={`w-full justify-start playlist-button-${element.id} ${
                   currentVideo.url === video.url ? 'active' : ''
                 }`}
-                onClick={() => setCurrentVideo(video)}
+                onClick={() => {
+                  setCurrentVideo(video);
+                  setPlayingVideo(null); // Reset playing state when switching videos
+                }}
               >
                 <Play className="h-4 w-4 mr-2" />
                 <span className="truncate">{video.title}</span>
