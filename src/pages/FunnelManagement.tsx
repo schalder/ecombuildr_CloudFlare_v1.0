@@ -355,7 +355,7 @@ const FunnelManagement = () => {
                 <div>
                   <div className="flex items-center space-x-2 mb-4">
                     <CheckCircle className="h-5 w-5 text-green-500" />
-                    <h3 className="font-medium">Funnel Steps</h3>
+                    <h3 className="font-medium text-foreground">Funnel Steps</h3>
                   </div>
                   
                   <DragDropContext onDragEnd={handleDragEnd}>
@@ -376,7 +376,7 @@ const FunnelManagement = () => {
                                      
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                          <p className="truncate text-xs font-bold">{step.title}</p>
+                                          <p className="truncate text-xs font-bold text-foreground">{step.title}</p>
                                           {index === 0 && <Badge variant="secondary" className="text-xs px-1 py-0">
                                               <Home className="h-3 w-3" />
                                             </Badge>}

@@ -445,7 +445,7 @@ export default function PageBuilder() {
           </Button>
           
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold">{pageData.title}</h1>
+            <h1 className="text-lg font-semibold text-foreground">{pageData.title}</h1>
             <Button
               variant="outline"
               size="sm"

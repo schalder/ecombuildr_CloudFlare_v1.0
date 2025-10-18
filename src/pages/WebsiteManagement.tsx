@@ -380,7 +380,7 @@ const WebsiteManagement = () => {
               </Card>
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
                 <div>
-                  <h2 className="text-lg sm:text-xl font-semibold">Pages</h2>
+                  <h2 className="text-lg sm:text-xl font-semibold text-foreground">Pages</h2>
                 </div>
                 <Button onClick={handleCreatePage} className="w-full sm:w-auto">
                   <Plus className="h-4 w-4 mr-2" />
@@ -455,7 +455,7 @@ const WebsiteManagement = () => {
                         <div className="p-2 sm:p-4">
                           <div className="flex items-start justify-between mb-2">
                             <div className="flex-1 min-w-0 pr-2">
-                              <h3 className="font-medium truncate text-sm sm:text-base">{page.title}</h3>
+                              <h3 className="font-medium truncate text-sm sm:text-base text-foreground">{page.title}</h3>
                               <p className="text-xs sm:text-sm text-muted-foreground truncate">
                                 {website?.connected_domain || website?.canonical_domain
                                   ? `https://${website.connected_domain || website.canonical_domain}${page.is_homepage ? '' : `/${page.slug}`}`
