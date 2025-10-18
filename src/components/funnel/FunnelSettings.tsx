@@ -318,7 +318,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                     name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Funnel Name</FormLabel>
+                        <FormLabel className="text-foreground">Funnel Name</FormLabel>
                         <FormControl>
                           <Input placeholder="My Awesome Funnel" {...field} />
                         </FormControl>
@@ -335,7 +335,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                     name="description"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Description</FormLabel>
+                        <FormLabel className="text-foreground">Description</FormLabel>
                         <FormControl>
                           <Textarea 
                             placeholder="A brief description of your funnel..."
@@ -357,7 +357,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                     name="slug"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Funnel Slug</FormLabel>
+                        <FormLabel className="text-foreground">Funnel Slug</FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="my-awesome-funnel" 
@@ -389,7 +389,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base">Published</FormLabel>
+                            <FormLabel className="text-base text-foreground">Published</FormLabel>
                             <FormDescription>
                               Make this funnel publicly accessible.
                             </FormDescription>
@@ -410,7 +410,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                           <div className="space-y-0.5">
-                            <FormLabel className="text-base">Active</FormLabel>
+                            <FormLabel className="text-base text-foreground">Active</FormLabel>
                             <FormDescription>
                               Enable or disable this funnel.
                             </FormDescription>
@@ -443,7 +443,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                     name="domain"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Connected Domain</FormLabel>
+                        <FormLabel className="text-foreground">Connected Domain</FormLabel>
                         <Select
                           value={field.value || 'none'}
                           onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
@@ -558,7 +558,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                        <div className="space-y-4 pt-4 border-t">
                          <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                            <div className="space-y-0.5">
-                             <FormLabel className="text-base">Set as Homepage</FormLabel>
+                             <FormLabel className="text-base text-foreground">Set as Homepage</FormLabel>
                              <FormDescription>
                                Make this funnel the homepage for {selectedDomain.domain}
                                {currentHomepage && currentHomepage.content_id !== funnel.id && (
@@ -612,7 +612,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                       name="seo_title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Default SEO Title</FormLabel>
+                          <FormLabel className="text-foreground">Default SEO Title</FormLabel>
                           <FormControl>
                             <Input placeholder="Amazing Funnel - High Conversions" {...field} />
                           </FormControl>
@@ -704,7 +704,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                      name="canonical_domain"
                      render={({ field }) => (
                        <FormItem>
-                         <FormLabel>Canonical Domain</FormLabel>
+                         <FormLabel className="text-foreground">Canonical Domain</FormLabel>
                          <FormControl>
                            <Input placeholder="example.com" {...field} />
                          </FormControl>
@@ -786,7 +786,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                     name="header_tracking_code"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Header Tracking Code</FormLabel>
+                        <FormLabel className="text-foreground">Header Tracking Code</FormLabel>
                         <FormControl>
                           <Textarea
                             rows={4}
@@ -807,7 +807,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                     name="footer_tracking_code"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Footer Tracking Code</FormLabel>
+                        <FormLabel className="text-foreground">Footer Tracking Code</FormLabel>
                         <FormControl>
                           <Textarea
                             rows={4}

@@ -446,7 +446,7 @@ const FunnelManagement = () => {
                                 <div className="text-left flex-1">
                                   {funnel?.canonical_domain ? (
                                     <div className="mb-2">
-                                      <p className="text-muted-foreground mb-1">Live URL:</p>
+                                      <p className="text-foreground mb-1">Live URL:</p>
                                       <div className="flex items-center gap-2">
                                         <code className="bg-background px-2 py-1 rounded text-sm flex-1">
                                           {funnel.canonical_domain}/{selectedStep.slug}

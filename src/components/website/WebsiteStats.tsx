@@ -22,7 +22,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Website Statistics</h2>
+          <h2 className="text-xl font-semibold text-foreground">Website Statistics</h2>
           <Button variant="outline" size="sm" disabled>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
@@ -48,7 +48,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Website Statistics</h2>
+          <h2 className="text-xl font-semibold text-foreground">Website Statistics</h2>
           <Button variant="outline" size="sm" onClick={refetch}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Retry
@@ -76,7 +76,7 @@ export function WebsiteStats({ websiteId, websiteName, websiteSlug }: WebsiteSta
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Website Statistics</h2>
+          <h2 className="text-xl font-semibold text-foreground">Website Statistics</h2>
           <p className="text-sm text-muted-foreground">
             Overview of your website's performance and analytics
           </p>

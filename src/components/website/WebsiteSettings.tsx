@@ -426,7 +426,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website Name</FormLabel>
+                    <FormLabel className="text-foreground">Website Name</FormLabel>
                     <FormControl>
                       <Input placeholder="My Awesome Website" {...field} />
                     </FormControl>
@@ -443,7 +443,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel className="text-foreground">Description</FormLabel>
                     <FormControl>
                       <Textarea 
                         placeholder="A brief description of your website..."
@@ -465,7 +465,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                 name="slug"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website Slug</FormLabel>
+                    <FormLabel className="text-foreground">Website Slug</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="my-awesome-website" 
@@ -497,7 +497,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Published</FormLabel>
+                        <FormLabel className="text-base text-foreground">Published</FormLabel>
                         <FormDescription>
                           Make this website publicly accessible.
                         </FormDescription>
@@ -518,7 +518,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
-                        <FormLabel className="text-base">Active</FormLabel>
+                        <FormLabel className="text-base text-foreground">Active</FormLabel>
                         <FormDescription>
                           Enable or disable this website.
                         </FormDescription>
@@ -555,7 +555,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   
                   return (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2">
+                      <FormLabel className="flex items-center gap-2 text-foreground">
                         Custom Domain
                         {selectedDomain && (
                           <Badge variant="outline" className="flex items-center gap-1">
@@ -639,7 +639,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                 name="favicon_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Favicon URL</FormLabel>
+                    <FormLabel className="text-foreground">Favicon URL</FormLabel>
                     <FormControl>
                       <Input placeholder="https://example.com/favicon.ico" {...field} />
                     </FormControl>
@@ -828,7 +828,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                 name="currency_code"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Currency</FormLabel>
+                    <FormLabel className="text-foreground">Currency</FormLabel>
                     <FormControl>
                       <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger>
@@ -873,7 +873,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     name="facebook_pixel_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Facebook Pixel ID</FormLabel>
+                        <FormLabel className="text-foreground">Facebook Pixel ID</FormLabel>
                         <FormControl>
                           <Input placeholder="123456789012345" {...field} />
                         </FormControl>
@@ -890,7 +890,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                     name="google_analytics_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Google Analytics ID</FormLabel>
+                        <FormLabel className="text-foreground">Google Analytics ID</FormLabel>
                         <FormControl>
                           <Input placeholder="G-XXXXXXXXXX or UA-XXXXXXXX-X" {...field} />
                         </FormControl>
@@ -908,7 +908,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   name="google_ads_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Google Ads ID</FormLabel>
+                      <FormLabel className="text-foreground">Google Ads ID</FormLabel>
                       <FormControl>
                         <Input placeholder="AW-XXXXXXXXX" {...field} />
                       </FormControl>
@@ -930,7 +930,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   name="header_tracking_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Header Tracking Code</FormLabel>
+                      <FormLabel className="text-foreground">Header Tracking Code</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="<!-- Additional custom tracking code -->"
@@ -952,7 +952,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                   name="footer_tracking_code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Footer Tracking Code</FormLabel>
+                      <FormLabel className="text-foreground">Footer Tracking Code</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="<!-- Chat widgets, additional tracking, etc. -->"
