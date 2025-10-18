@@ -209,26 +209,26 @@ export const CourseMembers = () => {
     
     switch (accessStatus) {
       case 'active':
-        return <Badge variant="default" className="bg-green-500 text-white"><CheckCircle className="h-3 w-3 mr-1" />Active</Badge>;
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />Active</Badge>;
       case 'suspended':
-        return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Suspended</Badge>;
+        return <Badge className="bg-red-100 text-red-800"><XCircle className="h-3 w-3 mr-1" />Suspended</Badge>;
       default:
-        return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
     }
   };
 
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="default" className="bg-green-500 text-white">Completed</Badge>;
+        return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
       case 'pending':
-        return <Badge variant="secondary">Pending</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
       case 'failed':
-        return <Badge variant="destructive">Failed</Badge>;
+        return <Badge className="bg-red-100 text-red-800">Failed</Badge>;
       case 'cancelled':
-        return <Badge variant="outline">Cancelled</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">Cancelled</Badge>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge className="bg-gray-100 text-gray-800">{status}</Badge>;
     }
   };
 

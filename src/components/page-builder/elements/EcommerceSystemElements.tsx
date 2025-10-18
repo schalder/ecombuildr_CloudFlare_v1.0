@@ -1547,7 +1547,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
             <CardContent className="p-4 md:p-6 space-y-5 w-full overflow-x-hidden">
               {sections.info && (
                 <section className="space-y-4">
-                  <h3 className={`text-base font-semibold text-foreground element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
+                  <h3 className={`text-base font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.info}</h3>
                   <div className={`grid ${infoGridCols} gap-3`}>
                     {fields.fullName?.enabled && (
                       <div>
@@ -1637,7 +1637,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
               {/* Show shipping section only if there are physical products and shipping fields are enabled */}
               {(isEditing || productTypes.hasPhysical) && (fields.address?.enabled || fields.city?.enabled || fields.area?.enabled || fields.country?.enabled || fields.state?.enabled || fields.postalCode?.enabled || (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout)) && (
                 <section className="space-y-4">
-                  <h3 className={`text-base font-semibold text-foreground element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
+                  <h3 className={`text-base font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.shipping}</h3>
                   {fields.address?.enabled && (
                     <div>
                       <Input 
@@ -1752,7 +1752,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
               {/* Custom fields section - show independently of shipping */}
               {customFields?.length > 0 && customFields.filter((cf:any)=>cf.enabled).length > 0 && (
                 <section className="space-y-6">
-                  <h3 className={`text-lg font-semibold text-foreground element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.customFields}</h3>
+                  <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.customFields}</h3>
                   <div className="space-y-4">
                     {customFields.filter((cf:any)=>cf.enabled).map((cf:any) => (
                       <div key={cf.id}>
@@ -1786,7 +1786,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
               {/* Always show payment section */}
               <section className="space-y-6">
-                <h3 className={`text-lg font-semibold text-foreground element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.payment}</h3>
+                <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.payment}</h3>
                 <Select value={form.payment_method} onValueChange={(v:any)=>setForm(f=>({...f,payment_method:v}))}>
                   <SelectTrigger className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors">
                     <SelectValue placeholder="Select payment method" />
@@ -1828,7 +1828,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
               {/* Always show order summary section */}
               <section className="space-y-6">
-                <h3 className={`text-lg font-semibold text-foreground element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
+                <h3 className={`text-lg font-semibold text-gray-900 element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>{headings.summary}</h3>
                   <div className="rounded-lg p-6 bg-gray-50 border border-gray-100" style={{ backgroundColor: backgrounds.summaryBg || undefined, borderColor: (backgrounds as any).summaryBorderColor || undefined, borderWidth: summaryBorderWidth || 0, borderStyle: summaryBorderWidth ? 'solid' as any : undefined }}>
                     {/* Items */}
                     <div className="space-y-4">
@@ -1838,17 +1838,17 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                             <img src={it.image} alt={it.name} className="w-12 h-12 object-cover rounded-lg border border-gray-200 shrink-0" />
                           )}
                           <div className="min-w-0">
-                            <div className="text-sm font-medium text-foreground break-words">{nameWithVariant(it.name, (it as any).variation)}</div>
+                            <div className="text-sm font-medium text-gray-900 break-words">{nameWithVariant(it.name, (it as any).variation)}</div>
                             <div className="text-xs text-gray-500">Qty: {it.quantity}</div>
                           </div>
-                          <div className="text-sm font-semibold text-foreground shrink-0 whitespace-nowrap text-right">{formatCurrency(it.price * it.quantity)}</div>
+                          <div className="text-sm font-semibold text-gray-900 shrink-0 whitespace-nowrap text-right">{formatCurrency(it.price * it.quantity)}</div>
                         </div>
                       ))}
                     </div>
                     <div className="border-t border-gray-200 my-4 pt-4 space-y-3">
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">Subtotal</span>
-                        <span className="font-medium text-foreground">{formatCurrency(displayTotal)}</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(displayTotal)}</span>
                       </div>
                       
                       {/* Discount Amount */}
@@ -1862,7 +1862,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                       {(productTypes.hasPhysical || shouldShowMockData) && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-600">Shipping</span>
-                          <span className="font-medium text-foreground">{formatCurrency(displayShippingCost)}</span>
+                          <span className="font-medium text-gray-900">{formatCurrency(displayShippingCost)}</span>
                         </div>
                       )}
                       {!productTypes.hasPhysical && !shouldShowMockData && productTypes.hasDigital && (
@@ -1871,7 +1871,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                           <span className="font-medium text-green-600">Free</span>
                         </div>
                       )}
-                      <div className="flex items-center justify-between text-base font-bold text-foreground pt-2 border-t border-gray-200">
+                      <div className="flex items-center justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
                         <span>Total</span>
                         <span>{formatCurrency(displayTotal - discountAmount + (productTypes.hasPhysical || shouldShowMockData ? displayShippingCost : 0))}</span>
                       </div>

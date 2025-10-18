@@ -220,8 +220,8 @@ export default function Funnels() {
         </div>
 
         {/* Bengali Message */}
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-md dark:bg-yellow-900/20 dark:border-yellow-600">
-          <p className="text-sm text-yellow-800 leading-relaxed dark:text-yellow-200">
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded-md">
+          <p className="text-sm text-yellow-800 dark:text-yellow-200 leading-relaxed">
             বাংলাদেশে পেমেন্ট গেটওয়ের সীমাবদ্ধতার কারণে ইনস্ট্যান্ট পেমেন্টের সাথে ওয়ান-ক্লিক আপসেল/ডাউনসেল কাজ করে না। তাই, শুধুমাত্র ক্যাশ অন ডেলিভারি (COD) সাপোর্ট করে এমন ফানেলই এখানে কার্যকর। ব্যবহারকারীদের জন্য ক্যাশ অন ডেলিভারি (COD) দিয়েই ই-কমার্স ফানেল তৈরি করবেন।
           </p>
         </div>
