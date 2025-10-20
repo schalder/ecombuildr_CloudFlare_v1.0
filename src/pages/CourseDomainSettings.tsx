@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { useUserStore } from '@/hooks/useUserStore';
 import { useDomainManagement } from '@/hooks/useDomainManagement';
@@ -183,18 +184,19 @@ const CourseDomainSettings = () => {
               <>
                 <div className="space-y-2">
                   <Label>Select Domain</Label>
-                  <select
-                    value={selectedDomain}
-                    onChange={(e) => setSelectedDomain(e.target.value)}
-                    className="w-full p-2 border rounded-md text-foreground"
-                  >
-                    <option value="">None (Use System Domain)</option>
-                    {verifiedDomains.map((domain) => (
-                      <option key={domain.id} value={domain.id}>
-                        {domain.domain}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={selectedDomain} onValueChange={setSelectedDomain}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="None (Use System Domain)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None (Use System Domain)</SelectItem>
+                      {verifiedDomains.map((domain) => (
+                        <SelectItem key={domain.id} value={domain.id}>
+                          {domain.domain}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <RadioGroup value={setupType} onValueChange={(value) => setSetupType(value as 'integrated' | 'custom')}>
