@@ -186,7 +186,7 @@ const CourseDomainSettings = () => {
                   <select
                     value={selectedDomain}
                     onChange={(e) => setSelectedDomain(e.target.value)}
-                    className="w-full p-2 border rounded-md"
+                    className="w-full p-2 border rounded-md text-foreground"
                   >
                     <option value="">None (Use System Domain)</option>
                     {verifiedDomains.map((domain) => (
@@ -287,6 +287,7 @@ const CourseDomainSettings = () => {
                                 value={customSlug}
                                 onChange={(e) => setCustomSlug(e.target.value)}
                                 placeholder="e.g., learn, academy"
+                                className="text-foreground"
                               />
                               <Button 
                                 variant="outline" 
