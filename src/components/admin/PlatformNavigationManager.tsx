@@ -113,16 +113,27 @@ export const PlatformNavigationManager: React.FC = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // First, get the existing record to get the ID
+      const { data: existingData } = await supabase
+        .from('platform_navigation_settings')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+
+      console.log('Saving navigation settings:', { logoUrl, navItems, existingId: existingData?.id });
+
       const { error } = await supabase
         .from('platform_navigation_settings')
         .upsert({
+          id: existingData?.id, // Include the ID for proper upsert
           logo_url: logoUrl || null,
-          nav_items: navItems as any,
+          nav_items: navItems, // Remove the 'as any' casting
           updated_at: new Date().toISOString()
-        } as any);
+        });
 
       if (error) throw error;
 
+      console.log('Navigation settings saved successfully');
       toast({
         title: "Success",
         description: "Navigation settings saved successfully",

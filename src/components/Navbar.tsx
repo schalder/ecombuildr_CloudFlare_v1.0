@@ -27,8 +27,14 @@ export const Navbar = () => {
         }
 
         if (data) {
+          console.log('Navigation data received:', data);
+          console.log('Nav items:', data.nav_items);
           if (data.logo_url) setLogoUrl(data.logo_url);
-          if (data.nav_items) setNavItems(data.nav_items as unknown as PlatformNavItem[]);
+          if (data.nav_items) {
+            const navItems = data.nav_items as unknown as PlatformNavItem[];
+            console.log('Setting nav items:', navItems);
+            setNavItems(navItems);
+          }
         }
       } catch (error) {
         console.error('Error fetching navigation:', error);
@@ -36,6 +42,9 @@ export const Navbar = () => {
     };
 
     fetchNavigation();
+
+    // Log nav items for debugging
+    console.log('Current nav items:', navItems);
 
     // Real-time subscription for live updates
     const channel = supabase
@@ -55,6 +64,7 @@ export const Navbar = () => {
   }, []);
 
   const renderNavItem = (item: PlatformNavItem) => {
+    console.log('Rendering nav item:', item);
     const hasChildren = item.children && item.children.length > 0;
     
     if (!hasChildren) {
@@ -134,7 +144,7 @@ export const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
-            {navItems.map(item => renderNavItem(item))}
+            {navItems.filter(item => item.enabled).map(item => renderNavItem(item))}
           </div>
 
           {/* Desktop CTA */}
@@ -171,7 +181,7 @@ export const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-lg">
             <div className="px-4 py-4 space-y-4">
-              {navItems.map((item) => {
+              {navItems.filter(item => item.enabled).map((item) => {
                 const renderMobileItem = (navItem: PlatformNavItem, isChild = false) => (
                   navItem.external ? (
                     <a
