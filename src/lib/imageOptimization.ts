@@ -1,5 +1,5 @@
 /**
- * Generates Cloudflare-optimized image URL for Supabase images
+ * Generates optimized image URL using Supabase Edge Function
  * Falls back to original URL for external images
  */
 export const getOptimizedImageUrl = (
@@ -16,19 +16,19 @@ export const getOptimizedImageUrl = (
     return originalUrl;
   }
 
-  const params: string[] = [];
+  const params = new URLSearchParams();
+  params.set('url', originalUrl);
   
-  if (options?.width) params.push(`width=${options.width}`);
-  if (options?.height) params.push(`height=${options.height}`);
-  params.push(`quality=${options?.quality || 85}`);
-  params.push(`format=${options?.format || 'auto'}`);
+  if (options?.width) params.set('w', options.width.toString());
+  if (options?.height) params.set('h', options.height.toString());
+  params.set('q', (options?.quality || 85).toString());
+  params.set('f', options?.format || 'auto');
   
-  const queryString = params.join(',');
-  return `https://ecombuildr.com/cdn-cgi/image/${queryString}/${originalUrl}`;
+  return `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform?${params.toString()}`;
 };
 
 /**
- * Generates responsive srcSet using Cloudflare Image Resizing
+ * Generates responsive srcSet using Supabase Edge Function
  */
 export const generateCloudflareResponsiveSrcSet = (
   originalUrl: string,
