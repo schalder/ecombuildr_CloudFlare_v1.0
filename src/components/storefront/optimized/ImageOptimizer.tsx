@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 interface ImageOptimizerProps {
   src: string;
@@ -60,78 +61,39 @@ export const ImageOptimizer: React.FC<ImageOptimizerProps> = ({
     }
   }, [priority, loading]);
 
-  // Generate WebP/AVIF sources if supported
-  const generateSources = () => {
-    if (!src) return null;
-
-    const baseUrl = src.split('.').slice(0, -1).join('.');
-    const extension = src.split('.').pop()?.toLowerCase();
-
-    // Only generate alternative formats for common image types
-    if (!['jpg', 'jpeg', 'png'].includes(extension || '')) {
-      return null;
-    }
-
-    return (
-      <>
-        <source srcSet={`${baseUrl}.avif`} type="image/avif" sizes={sizes} />
-        <source srcSet={`${baseUrl}.webp`} type="image/webp" sizes={sizes} />
-      </>
-    );
-  };
-
-  // Generate responsive srcSet for different screen sizes
-  const generateSrcSet = () => {
-    if (!src || !sizes) return undefined;
-
-    const baseUrl = src.split('.').slice(0, -1).join('.');
-    const extension = src.split('.').pop();
-
-    return [
-      `${baseUrl}_400w.${extension} 400w`,
-      `${baseUrl}_800w.${extension} 800w`,
-      `${baseUrl}_1200w.${extension} 1200w`,
-      `${baseUrl}_1600w.${extension} 1600w`
-    ].join(', ');
-  };
+  // Generate optimized image URL using Cloudflare Image Resizing
+  const getImageSrc = useCallback(() => {
+    return getOptimizedImageUrl(src, { quality: 85, format: 'auto' });
+  }, [src]);
 
   if (loading === 'lazy' && 'IntersectionObserver' in window) {
     return (
-      <picture>
-        {generateSources()}
-        <img
-          ref={imgRef}
-          data-src={src}
-          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"
-          alt={alt}
-          className={`transition-opacity duration-300 ${className}`}
-          srcSet={generateSrcSet()}
-          sizes={sizes}
-          onLoad={onLoad}
-          onError={onError}
-          style={{
-            backgroundColor: '#f3f4f6', // Placeholder background
-            minHeight: '200px' // Prevent layout shift
-          }}
-        />
-      </picture>
+      <img
+        ref={imgRef}
+        data-src={getImageSrc()}
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E"
+        alt={alt}
+        className={`transition-opacity duration-300 ${className}`}
+        loading={loading}
+        onLoad={onLoad}
+        onError={onError}
+        style={{
+          backgroundColor: '#f3f4f6', // Placeholder background
+          minHeight: '200px' // Prevent layout shift
+        }}
+      />
     );
   }
 
   return (
-    <picture>
-      {generateSources()}
-      <img
-        ref={imgRef}
-        src={src}
-        alt={alt}
-        className={className}
-        loading={loading}
-        srcSet={generateSrcSet()}
-        sizes={sizes}
-        onLoad={onLoad}
-        onError={onError}
-      />
-    </picture>
+    <img
+      ref={imgRef}
+      src={getImageSrc()}
+      alt={alt}
+      className={className}
+      loading={loading}
+      onLoad={onLoad}
+      onError={onError}
+    />
   );
 };

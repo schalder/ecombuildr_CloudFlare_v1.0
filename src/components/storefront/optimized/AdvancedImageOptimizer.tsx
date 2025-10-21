@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { getOptimizedImageUrl, generateCloudflareResponsiveSrcSet } from '@/lib/imageOptimization';
 
 interface AdvancedImageOptimizerProps {
   src: string;
@@ -39,56 +40,31 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Generate responsive srcSet with multiple resolutions using transformation endpoint
+  // Generate responsive srcSet with multiple resolutions using Cloudflare Image Resizing
   const generateResponsiveSrcSet = useCallback((originalSrc: string, format?: string) => {
-    const baseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform';
-    const targetFormat = format || 'webp';
-    
-    // If preserving original, don't generate a srcset (single candidate handled elsewhere)
-    if (preserveOriginal) return '';
-    
-    // Otherwise, use responsive resolutions
-    const resolutions = [400, 600, 800, 1200, 1600, 2000];
-    return resolutions
-      .map(res => `${baseUrl}?url=${encodeURIComponent(originalSrc)}&format=${targetFormat}&w=${res}&q=85 ${res}w`)
-      .join(', ');
-  }, [preserveOriginal]);
+    return generateCloudflareResponsiveSrcSet(originalSrc, format as any);
+  }, []);
 
-  // Generate modern format sources with responsive srcSet using transformation endpoint
+  // Generate modern format sources with responsive srcSet using Cloudflare Image Resizing
   const generateModernSources = useCallback(() => {
-    if (!src) return null;
-
-    const transformBaseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform';
-
+    if (preserveOriginal) return null;
+    
+    // Cloudflare handles format detection automatically
     return (
       <>
-        {/* AVIF - best compression */}
         <source 
-          srcSet={preserveOriginal
-            ? `${transformBaseUrl}?url=${encodeURIComponent(src)}&format=avif&q=85 1x`
-            : generateResponsiveSrcSet(src, 'avif')
-          }
+          srcSet={generateCloudflareResponsiveSrcSet(src, 'avif')} 
           type="image/avif" 
-          sizes={preserveOriginal ? undefined : sizes} 
+          sizes={sizes} 
         />
-        {/* WebP - wide support, good compression */}
         <source 
-          srcSet={preserveOriginal
-            ? `${transformBaseUrl}?url=${encodeURIComponent(src)}&format=webp&q=85 1x`
-            : generateResponsiveSrcSet(src, 'webp')
-          }
+          srcSet={generateCloudflareResponsiveSrcSet(src, 'webp')} 
           type="image/webp" 
-          sizes={preserveOriginal ? undefined : sizes} 
-        />
-        {/* Original format fallback */}
-        <source 
-          srcSet={`${transformBaseUrl}?url=${encodeURIComponent(src)}&format=original&q=85 1x`} 
-          type="image/*"
-          sizes={preserveOriginal ? undefined : sizes} 
+          sizes={sizes} 
         />
       </>
     );
-  }, [src, sizes, generateResponsiveSrcSet, preserveOriginal]);
+  }, [src, sizes, preserveOriginal]);
 
   // Intelligent lazy loading with intersection observer
   useEffect(() => {
@@ -213,8 +189,8 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
           <img
             ref={imgRef}
             src={preserveOriginal 
-              ? `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform?url=${encodeURIComponent(src)}&format=webp&q=85`
-              : `https://fhqwacmokbtbspkxjixf.supabase.co/functions/v1/image-transform?url=${encodeURIComponent(src)}&format=webp&w=800&q=85`
+              ? getOptimizedImageUrl(src, { quality: 85, format: 'auto' })
+              : getOptimizedImageUrl(src, { width: 800, quality: 85, format: 'auto' })
             }
             alt={alt}
             width={width}

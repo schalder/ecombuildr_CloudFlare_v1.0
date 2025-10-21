@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 interface PreloadManagerProps {
   criticalResources?: string[];
@@ -30,20 +31,24 @@ export const PreloadManager: React.FC<PreloadManagerProps> = ({
         // Determine resource type
         if (resource.match(/\.(jpg|jpeg|png|webp|avif)$/i)) {
           link.as = 'image';
+          // Optimize image URLs if they're from Supabase
+          link.href = getOptimizedImageUrl(resource, { width: 1200, quality: 85, format: 'auto' });
         } else if (resource.match(/\.(woff2|woff|ttf)$/i)) {
           link.as = 'font';
           link.crossOrigin = 'anonymous';
+          link.href = resource;
         } else if (resource.match(/\.(css)$/i)) {
           link.as = 'style';
+          link.href = resource;
         } else if (resource.match(/\.(js)$/i)) {
           link.as = 'script';
+          link.href = resource;
+        } else {
+          link.href = resource;
         }
         
-        link.href = resource;
         document.head.appendChild(link);
-        
-        // Track as used
-        trackResourceUsage(resource);
+        trackResourceUsage(link.href);
       }
     });
 
