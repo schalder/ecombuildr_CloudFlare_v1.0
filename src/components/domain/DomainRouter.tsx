@@ -139,7 +139,6 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
               }
             }
             
-            console.debug('DomainRouter: Selected connection type:', selectedConnection?.content_type, 'for path:', currentPath);
             setSelectedConnection(selectedConnection);
             setLoading(false);
             return;
@@ -209,7 +208,6 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
             currentPath.startsWith('/courses') ||
             currentPath.startsWith('/members')
           ) {
-            console.debug('DomainRouter: Course path detected:', currentPath);
             selectedConnection = connectionsArray.find(c => c.content_type === 'course_area') || {
               id: 'synthetic-course',
               content_type: 'course_area',
@@ -226,23 +224,18 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
             
             // Check if this is a website system route - prioritize website connection
             if (isWebsiteSystemRoute(potentialSlug)) {
-              console.debug('DomainRouter: Website system route detected:', potentialSlug);
               
               // Website system routes ALWAYS prioritize website connection
               selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
-              console.debug('DomainRouter: Routing website system route to website:', potentialSlug);
             } else if (systemRoutes.includes(potentialSlug)) {
-              console.debug('DomainRouter: System route detected:', potentialSlug);
               
               // For other system routes, prioritize funnel connection if it exists
               const funnelConnection = connectionsArray.find(c => c.content_type === 'funnel');
               if (funnelConnection) {
                 selectedConnection = funnelConnection;
-                console.debug('DomainRouter: Routing system route to funnel:', potentialSlug);
               } else {
                 // Fallback to website connection for system routes
                 selectedConnection = connectionsArray.find(c => c.content_type === 'website') || null;
-                console.debug('DomainRouter: Routing system route to website:', potentialSlug);
               }
             } else {
               // For non-system paths, check funnel step slugs

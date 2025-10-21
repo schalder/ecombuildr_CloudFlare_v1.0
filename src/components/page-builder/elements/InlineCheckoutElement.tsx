@@ -224,13 +224,13 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       setHasTrackedInitiateCheckout(true);
       sessionStorage.setItem(sessionKey, 'true');
     } else if (!selectedProduct) {
-      console.log('🛒 No product selected for inline checkout, skipping InitiateCheckout tracking');
+      // No product selected, skip tracking
     } else if (!store) {
-      console.log('🛒 Store not loaded yet for inline checkout, skipping InitiateCheckout tracking');
+      // Store not loaded yet, skip tracking
     } else if (!pixels) {
-      console.log('🛒 Pixels not configured for inline checkout, skipping InitiateCheckout tracking');
+      // Pixels not configured, skip tracking
     } else if (alreadyTracked || hasTrackedInitiateCheckout) {
-      console.log('🛒 InitiateCheckout already tracked for inline checkout this session');
+      // Already tracked this session, skip
     }
   }, [selectedProduct, store, pixels, trackingSubtotal, quantity, element.id, hasTrackedInitiateCheckout, trackInitiateCheckout, websiteId, funnelId]);
 
