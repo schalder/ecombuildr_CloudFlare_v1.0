@@ -116,21 +116,23 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
         setIsResetting(true);
         setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
         
-        // Immediately start new timer
-        setTimeout(() => {
-          currentEndTime = now + (duration * 60 * 1000);
-          const newData: StoredTimerData = {
-            endTime: currentEndTime,
-            config: {
-              duration,
-              text,
-              backgroundColor,
-              textColor
-            }
-          };
-          localStorage.setItem(`urgency_timer_${productId}`, JSON.stringify(newData));
-          setIsResetting(false);
-        }, 1500); // Show reset state for 1.5 seconds
+        // Immediately start new timer using requestAnimationFrame for better performance
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            currentEndTime = now + (duration * 60 * 1000);
+            const newData: StoredTimerData = {
+              endTime: currentEndTime,
+              config: {
+                duration,
+                text,
+                backgroundColor,
+                textColor
+              }
+            };
+            localStorage.setItem(`urgency_timer_${productId}`, JSON.stringify(newData));
+            setIsResetting(false);
+          }, 1500); // Show reset state for 1.5 seconds
+        });
         return;
       }
       
@@ -138,8 +140,17 @@ export const UrgencyTimer: React.FC<UrgencyTimerProps> = ({
       const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((difference % (1000 * 60)) / 1000);
       
-      setTimeLeft({ hours, minutes, seconds });
-      setIsResetting(false);
+      // Use requestIdleCallback for non-critical updates when available
+      const updateState = () => {
+        setTimeLeft({ hours, minutes, seconds });
+        setIsResetting(false);
+      };
+
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(updateState);
+      } else {
+        updateState();
+      }
     };
 
     // Update immediately

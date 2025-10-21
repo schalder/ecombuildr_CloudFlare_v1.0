@@ -92,10 +92,22 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   useEffect(() => {
     if (isEditing) return; // Don't run timer in edit mode
 
-    const interval = setInterval(() => {
+    const updateTimer = () => {
       const newTimeLeft = calculateTimeLeft();
-      setTimeLeft(newTimeLeft);
-    }, 1000);
+      
+      // Use requestIdleCallback for non-critical updates when available
+      const updateState = () => {
+        setTimeLeft(newTimeLeft);
+      };
+
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(updateState);
+      } else {
+        updateState();
+      }
+    };
+
+    const interval = setInterval(updateTimer, 1000);
 
     // Initial calculation
     setTimeLeft(calculateTimeLeft());

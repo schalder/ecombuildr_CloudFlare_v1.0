@@ -134,8 +134,15 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       }
     };
 
-    // Execute JS after a short delay to ensure DOM is ready
-    const timeoutId = setTimeout(executeJS, 100);
+    // Execute JS using requestIdleCallback for better performance
+    let timeoutId: NodeJS.Timeout;
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => {
+        timeoutId = setTimeout(executeJS, 100);
+      });
+    } else {
+      timeoutId = setTimeout(executeJS, 100);
+    }
     
     // Cleanup function
     return () => {

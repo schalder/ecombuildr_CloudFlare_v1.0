@@ -12,6 +12,13 @@ export const PreloadManager: React.FC<PreloadManagerProps> = ({
   enablePrefetch = true
 }) => {
   useEffect(() => {
+    const usedResources = new Set<string>();
+    
+    // Track resource usage
+    const trackResourceUsage = (resource: string) => {
+      usedResources.add(resource);
+    };
+
     // Preload critical resources
     criticalResources.forEach((resource, index) => {
       const preloadId = `preload-${index}`;
@@ -34,6 +41,9 @@ export const PreloadManager: React.FC<PreloadManagerProps> = ({
         
         link.href = resource;
         document.head.appendChild(link);
+        
+        // Track as used
+        trackResourceUsage(resource);
       }
     });
 
@@ -67,6 +77,21 @@ export const PreloadManager: React.FC<PreloadManagerProps> = ({
         document.head.appendChild(link);
       }
     });
+
+    // Clean up unused preloads after 5 seconds
+    const cleanupTimer = setTimeout(() => {
+      const preloadLinks = document.querySelectorAll('link[rel="preload"]');
+      preloadLinks.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && !usedResources.has(href) && !criticalResources.includes(href)) {
+          link.remove();
+        }
+      });
+    }, 5000);
+
+    return () => {
+      clearTimeout(cleanupTimer);
+    };
   }, [criticalResources, preloadRoutes, enablePrefetch]);
 
   return null;

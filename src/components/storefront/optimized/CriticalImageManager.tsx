@@ -32,6 +32,10 @@ export const CriticalImageManager: React.FC<CriticalImageManagerProps> = ({
   // Preload critical images
   useEffect(() => {
     criticalImages.forEach(src => {
+      // Check if elements already exist to avoid duplicates
+      const existingPreload = document.querySelector(`link[href="${src}"]`);
+      if (existingPreload) return;
+
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
@@ -50,21 +54,14 @@ export const CriticalImageManager: React.FC<CriticalImageManagerProps> = ({
         webpLink.href = `${baseUrl}.webp`;
         webpLink.setAttribute('fetchpriority', 'high');
         
-        // Check if elements already exist to avoid duplicates
-        const existingPreload = document.querySelector(`link[href="${src}"]`);
         const existingWebpPreload = document.querySelector(`link[href="${baseUrl}.webp"]`);
         
-        if (!existingPreload) {
-          document.head.appendChild(link);
-        }
+        document.head.appendChild(link);
         if (!existingWebpPreload) {
           document.head.appendChild(webpLink);
         }
       } else {
-        const existingPreload = document.querySelector(`link[href="${src}"]`);
-        if (!existingPreload) {
-          document.head.appendChild(link);
-        }
+        document.head.appendChild(link);
       }
     });
   }, [criticalImages]);

@@ -157,8 +157,8 @@ export const useDragAutoscroll = (containerRef: React.RefObject<HTMLElement>) =>
 
     // Add event listeners
     document.addEventListener('dragover', handleDragOver, { passive: false });
-    document.addEventListener('dragend', handleDragEnd);
-    document.addEventListener('drop', handleDragEnd);
+    document.addEventListener('dragend', handleDragEnd, { passive: true });
+    document.addEventListener('drop', handleDragEnd, { passive: true });
     containerRef.current.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => {

@@ -83,14 +83,16 @@ export const FOMOManager: React.FC<FOMOManagerProps> = ({
     const showNextNotification = () => {
       setShowNotification(true);
 
-      // Hide notification after display duration
+      // Hide notification after display duration using requestAnimationFrame for smoother performance
       const hideTimer = setTimeout(() => {
         setShowNotification(false);
         
-        // Move to next order after animation completes
-        setTimeout(() => {
-          setCurrentOrderIndex((prev) => (prev + 1) % orders.length);
-        }, 500); // Animation duration
+        // Move to next order after animation completes using requestAnimationFrame
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            setCurrentOrderIndex((prev) => (prev + 1) % orders.length);
+          }, 500); // Animation duration
+        });
       }, settings.displayDuration);
 
       return hideTimer;
@@ -113,14 +115,16 @@ export const FOMOManager: React.FC<FOMOManagerProps> = ({
     const intervalId = setInterval(() => {
       setShowNotification(true);
 
-      // Hide notification after display duration
+      // Hide notification after display duration using requestAnimationFrame for better performance
       setTimeout(() => {
         setShowNotification(false);
         
-        // Move to next order after animation completes
-        setTimeout(() => {
-          setCurrentOrderIndex((prev) => (prev + 1) % orders.length);
-        }, 500);
+        // Move to next order after animation completes using requestAnimationFrame
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            setCurrentOrderIndex((prev) => (prev + 1) % orders.length);
+          }, 500);
+        });
       }, settings.displayDuration);
     }, totalCycleDuration);
 
