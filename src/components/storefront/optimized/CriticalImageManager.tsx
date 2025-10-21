@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 interface CriticalImageContextType {
   criticalImages: Set<string>;
@@ -33,23 +32,37 @@ export const CriticalImageManager: React.FC<CriticalImageManagerProps> = ({
   // Preload critical images
   useEffect(() => {
     criticalImages.forEach(src => {
-      // Skip if not a Supabase image
-      if (!src.includes('fhqwacmokbtbspkxjixf.supabase.co')) {
-        return;
-      }
-
-      // Use Cloudflare-optimized URL for preload
-      const optimizedSrc = getOptimizedImageUrl(src, { width: 1200, quality: 90, format: 'auto' });
-      const existingPreload = document.querySelector(`link[href="${optimizedSrc}"]`);
+      // Check if elements already exist to avoid duplicates
+      const existingPreload = document.querySelector(`link[href="${src}"]`);
       if (existingPreload) return;
 
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
-      link.href = optimizedSrc;
+      link.href = src;
       link.setAttribute('fetchpriority', 'high');
       
-      document.head.appendChild(link);
+      // Add different format preloads
+      const baseUrl = src.split('.').slice(0, -1).join('.');
+      const extension = src.split('.').pop()?.toLowerCase();
+      
+      if (['jpg', 'jpeg', 'png'].includes(extension || '')) {
+        // Preload WebP version if available
+        const webpLink = document.createElement('link');
+        webpLink.rel = 'preload';
+        webpLink.as = 'image';
+        webpLink.href = `${baseUrl}.webp`;
+        webpLink.setAttribute('fetchpriority', 'high');
+        
+        const existingWebpPreload = document.querySelector(`link[href="${baseUrl}.webp"]`);
+        
+        document.head.appendChild(link);
+        if (!existingWebpPreload) {
+          document.head.appendChild(webpLink);
+        }
+      } else {
+        document.head.appendChild(link);
+      }
     });
   }, [criticalImages]);
 

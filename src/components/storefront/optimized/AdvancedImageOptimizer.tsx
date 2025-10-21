@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { getOptimizedImageUrl, generateCloudflareResponsiveSrcSet } from '@/lib/imageOptimization';
 
 interface AdvancedImageOptimizerProps {
   src: string;
@@ -40,31 +39,74 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
   const imgRef = useRef<HTMLImageElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Generate responsive srcSet with multiple resolutions using Cloudflare Image Resizing
-  const generateResponsiveSrcSet = useCallback((originalSrc: string, format?: string) => {
-    return generateCloudflareResponsiveSrcSet(originalSrc, format as any);
+  // Generate optimized Supabase URL using direct storage optimization
+  const getOptimizedUrl = useCallback((originalSrc: string, w?: number, h?: number, format: string = 'webp') => {
+    if (!originalSrc.includes('supabase.co/storage')) return originalSrc;
+    
+    try {
+      const baseUrl = originalSrc.replace('/object/public/', '/render/image/public/');
+      const params = new URLSearchParams();
+      
+      if (w) params.set('width', w.toString());
+      if (h) params.set('height', h.toString());
+      params.set('resize', 'cover');
+      params.set('format', format);
+      params.set('quality', '80');
+      
+      return `${baseUrl}?${params.toString()}`;
+    } catch (error) {
+      console.warn('Failed to optimize image URL:', error);
+      return originalSrc;
+    }
   }, []);
 
-  // Generate modern format sources with responsive srcSet using Cloudflare Image Resizing
-  const generateModernSources = useCallback(() => {
-    if (preserveOriginal) return null;
+  // Generate responsive srcSet with multiple resolutions using direct Supabase optimization
+  const generateResponsiveSrcSet = useCallback((originalSrc: string, format?: string) => {
+    const targetFormat = format || 'webp';
     
-    // Cloudflare handles format detection automatically
+    // If preserving original, don't generate a srcset (single candidate handled elsewhere)
+    if (preserveOriginal) return '';
+    
+    // Otherwise, use responsive resolutions
+    const resolutions = [400, 600, 800, 1200, 1600, 2000];
+    return resolutions
+      .map(res => `${getOptimizedUrl(originalSrc, res, undefined, targetFormat)} ${res}w`)
+      .join(', ');
+  }, [preserveOriginal, getOptimizedUrl]);
+
+  // Generate modern format sources with responsive srcSet using direct Supabase optimization
+  const generateModernSources = useCallback(() => {
+    if (!src) return null;
+
     return (
       <>
+        {/* AVIF - best compression */}
         <source 
-          srcSet={generateCloudflareResponsiveSrcSet(src, 'avif')} 
+          srcSet={preserveOriginal
+            ? `${getOptimizedUrl(src, undefined, undefined, 'avif')} 1x`
+            : generateResponsiveSrcSet(src, 'avif')
+          }
           type="image/avif" 
-          sizes={sizes} 
+          sizes={preserveOriginal ? undefined : sizes} 
         />
+        {/* WebP - wide support, good compression */}
         <source 
-          srcSet={generateCloudflareResponsiveSrcSet(src, 'webp')} 
+          srcSet={preserveOriginal
+            ? `${getOptimizedUrl(src, undefined, undefined, 'webp')} 1x`
+            : generateResponsiveSrcSet(src, 'webp')
+          }
           type="image/webp" 
-          sizes={sizes} 
+          sizes={preserveOriginal ? undefined : sizes} 
+        />
+        {/* Original format fallback */}
+        <source 
+          srcSet={`${getOptimizedUrl(src, undefined, undefined, 'original')} 1x`} 
+          type="image/*"
+          sizes={preserveOriginal ? undefined : sizes} 
         />
       </>
     );
-  }, [src, sizes, preserveOriginal]);
+  }, [src, sizes, generateResponsiveSrcSet, preserveOriginal, getOptimizedUrl]);
 
   // Intelligent lazy loading with intersection observer
   useEffect(() => {
@@ -189,8 +231,8 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
           <img
             ref={imgRef}
             src={preserveOriginal 
-              ? getOptimizedImageUrl(src, { quality: 85, format: 'auto' })
-              : getOptimizedImageUrl(src, { width: 800, quality: 85, format: 'auto' })
+              ? getOptimizedUrl(src, undefined, undefined, 'webp')
+              : getOptimizedUrl(src, 800, undefined, 'webp')
             }
             alt={alt}
             width={width}

@@ -14,7 +14,6 @@ import { useEcomPaths } from '@/lib/pathResolver';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
-import { getOptimizedImageUrl } from '@/lib/imageOptimization';
 
 // Heading Element
 const HeadingElement: React.FC<{

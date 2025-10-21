@@ -17,7 +17,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/currency';
 import { generateResponsiveCSS, mergeResponsiveStyles, getEffectiveResponsiveValue } from '@/components/page-builder/utils/responsiveStyles';
-import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
+import { OptimizedImage } from '@/components/optimized/OptimizedImage';
 import { computeOrderShipping, getAvailableShippingOptions, applyShippingOptionToForm } from '@/lib/shipping-enhanced';
 import type { CartItem, ShippingOption } from '@/lib/shipping-enhanced';
 import { ShippingOptionsPicker } from '@/components/storefront/ShippingOptionsPicker';
@@ -832,7 +832,14 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     return (
                       <label key={p.id} className="flex items-start gap-3 border rounded p-3 w-full">
                         {Array.isArray(p.images) && p.images[0] && (
-                           <StorefrontImage src={p.images[0]} alt={`${p.name} product`} className="w-12 h-12 object-cover rounded border flex-shrink-0" aspectRatio="1" />
+                           <OptimizedImage 
+                             src={p.images[0]} 
+                             alt={`${p.name} product`} 
+                             className="w-12 h-12 object-cover rounded border flex-shrink-0" 
+                             width={48}
+                             height={48}
+                             aspectRatio="1"
+                           />
                         )}
                         <input type="radio" name={`inline-product-${element.id}`} className="mt-1 flex-shrink-0" checked={selectedId === p.id} disabled={isOut} onChange={() => setSelectedId(p.id)} />
                         <div className="flex-1 min-w-0">
@@ -846,7 +853,14 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
               ) : (
                 <div className="flex items-start gap-3">
                   {selectedProduct && Array.isArray(selectedProduct.images) && selectedProduct.images[0] && (
-                    <StorefrontImage src={selectedProduct.images[0]} alt={`${selectedProduct.name} product`} className="w-12 h-12 object-cover rounded border flex-shrink-0" aspectRatio="1" />
+                    <OptimizedImage 
+                      src={selectedProduct.images[0]} 
+                      alt={`${selectedProduct.name} product`} 
+                      className="w-12 h-12 object-cover rounded border flex-shrink-0" 
+                      width={48}
+                      height={48}
+                      aspectRatio="1"
+                    />
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="font-medium break-words whitespace-normal leading-snug text-sm md:text-base">{selectedProduct?.name}</div>
@@ -1296,15 +1310,17 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   </div>
                   <div className={`p-3 flex gap-3 ${deviceType === 'mobile' ? 'flex-col items-center' : 'flex-row items-start'}`}>
                     {Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
-                      <StorefrontImage 
+                      <OptimizedImage 
                         src={bumpProduct.images[0]} 
                         alt={`${bumpProduct.name} product`} 
-                        className={`object-cover rounded border ${deviceType !== 'mobile' ? 'flex-shrink-0' : ''}`} 
+                        className={`object-cover rounded border ${deviceType !== 'mobile' ? 'flex-shrink-0' : ''}`}
+                        width={deviceType === 'mobile' ? 200 : 100}
+                        height={deviceType === 'mobile' ? 200 : 100}
+                        aspectRatio="1"
                         style={{
                           width: getEffectiveResponsiveValue(element, 'imageWidth', deviceType, '48px', 'orderBump'),
                           height: 'auto'
                         }}
-                        aspectRatio="1"
                       />
                     )}
                     <div className="flex-1 min-w-0">
@@ -1336,7 +1352,14 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     {selectedProduct && (
                       <div className={`grid items-center gap-3 ${showItemImages && (Array.isArray(selectedProduct.images) && selectedProduct.images[0]) ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
                         {showItemImages && Array.isArray(selectedProduct.images) && selectedProduct.images[0] && (
-                          <StorefrontImage src={selectedProduct.images[0]} alt={`${selectedProduct.name} product`} className="w-10 h-10 object-cover rounded border" aspectRatio="1" />
+                          <OptimizedImage 
+                            src={selectedProduct.images[0]} 
+                            alt={`${selectedProduct.name} product`} 
+                            className="w-10 h-10 object-cover rounded border" 
+                            width={40}
+                            height={40}
+                            aspectRatio="1"
+                          />
                         )}
                         <div className="min-w-0">
                           <div className="text-sm font-medium break-words">{selectedProduct.name}</div>
@@ -1348,7 +1371,14 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     {orderBump.enabled && bumpChecked && bumpProduct && (
                       <div className={`grid items-center gap-3 ${showItemImages && (Array.isArray(bumpProduct.images) && bumpProduct.images[0]) ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
                         {showItemImages && Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
-                          <StorefrontImage src={bumpProduct.images[0]} alt={`${bumpProduct.name} product`} className="w-10 h-10 object-cover rounded border" aspectRatio="1" />
+                          <OptimizedImage 
+                            src={bumpProduct.images[0]} 
+                            alt={`${bumpProduct.name} product`} 
+                            className="w-10 h-10 object-cover rounded border" 
+                            width={40}
+                            height={40}
+                            aspectRatio="1"
+                          />
                         )}
                         <div className="min-w-0">
                           <div className="text-sm font-medium break-words">{bumpProduct.name}</div>
@@ -1409,7 +1439,12 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
                   {trust.enabled && trust.imageUrl && (
                     <div className="pt-2">
-                      <StorefrontImage src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
+                      <OptimizedImage 
+                        src={trust.imageUrl} 
+                        alt={trust.alt || 'Secure checkout'} 
+                        className="w-full h-auto object-contain" 
+                        loading="lazy"
+                      />
                     </div>
                   )}
                 </div>

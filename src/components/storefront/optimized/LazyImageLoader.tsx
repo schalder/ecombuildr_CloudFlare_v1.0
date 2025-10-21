@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { getOptimizedImageUrl, generateCloudflareResponsiveSrcSet } from '@/lib/imageOptimization';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface LazyImageLoaderProps {
   src: string;
@@ -24,10 +23,13 @@ export const LazyImageLoader: React.FC<LazyImageLoaderProps> = ({
   const [isInView, setIsInView] = useState(priority);
   const imgRef = useRef<HTMLImageElement>(null);
 
-  // Generate optimized image URL using Cloudflare Image Resizing
-  const getOptimizedSrc = useCallback((originalSrc: string) => {
-    return getOptimizedImageUrl(originalSrc, { width, quality: 85, format: 'auto' });
-  }, [width]);
+  // Convert to WebP if supported
+  const getOptimizedSrc = (originalSrc: string) => {
+    if (originalSrc.includes('.jpg') || originalSrc.includes('.jpeg') || originalSrc.includes('.png')) {
+      return originalSrc.replace(/\.(jpg|jpeg|png)$/i, '.webp');
+    }
+    return originalSrc;
+  };
 
   useEffect(() => {
     if (priority) return;
@@ -65,9 +67,12 @@ export const LazyImageLoader: React.FC<LazyImageLoaderProps> = ({
       
       {isInView && (
         <picture>
-          <source srcSet={generateCloudflareResponsiveSrcSet(src, 'webp')} type="image/webp" sizes={sizes} />
+          {/* WebP version for modern browsers */}
+          <source srcSet={getOptimizedSrc(src)} type="image/webp" sizes={sizes} />
+          
+          {/* Original format fallback */}
           <img
-            src={getOptimizedSrc(src)}
+            src={src}
             alt={alt}
             width={width}
             height={height}
