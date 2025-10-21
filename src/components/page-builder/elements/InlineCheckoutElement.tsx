@@ -846,7 +846,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
               ) : (
                 <div className="flex items-start gap-3">
                   {selectedProduct && Array.isArray(selectedProduct.images) && selectedProduct.images[0] && (
-                    <img src={selectedProduct.images[0]} alt={`${selectedProduct.name} product`} className="w-12 h-12 object-cover rounded border flex-shrink-0" />
+                    <StorefrontImage src={selectedProduct.images[0]} alt={`${selectedProduct.name} product`} className="w-12 h-12 object-cover rounded border flex-shrink-0" aspectRatio="1" />
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="font-medium break-words whitespace-normal leading-snug text-sm md:text-base">{selectedProduct?.name}</div>
@@ -1296,7 +1296,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   </div>
                   <div className={`p-3 flex gap-3 ${deviceType === 'mobile' ? 'flex-col items-center' : 'flex-row items-start'}`}>
                     {Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
-                      <img 
+                      <StorefrontImage 
                         src={bumpProduct.images[0]} 
                         alt={`${bumpProduct.name} product`} 
                         className={`object-cover rounded border ${deviceType !== 'mobile' ? 'flex-shrink-0' : ''}`} 
@@ -1304,6 +1304,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                           width: getEffectiveResponsiveValue(element, 'imageWidth', deviceType, '48px', 'orderBump'),
                           height: 'auto'
                         }}
+                        aspectRatio="1"
                       />
                     )}
                     <div className="flex-1 min-w-0">
@@ -1335,7 +1336,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     {selectedProduct && (
                       <div className={`grid items-center gap-3 ${showItemImages && (Array.isArray(selectedProduct.images) && selectedProduct.images[0]) ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
                         {showItemImages && Array.isArray(selectedProduct.images) && selectedProduct.images[0] && (
-                          <img src={selectedProduct.images[0]} alt={`${selectedProduct.name} product`} className="w-10 h-10 object-cover rounded border" />
+                          <StorefrontImage src={selectedProduct.images[0]} alt={`${selectedProduct.name} product`} className="w-10 h-10 object-cover rounded border" aspectRatio="1" />
                         )}
                         <div className="min-w-0">
                           <div className="text-sm font-medium break-words">{selectedProduct.name}</div>
@@ -1347,7 +1348,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     {orderBump.enabled && bumpChecked && bumpProduct && (
                       <div className={`grid items-center gap-3 ${showItemImages && (Array.isArray(bumpProduct.images) && bumpProduct.images[0]) ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
                         {showItemImages && Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
-                          <img src={bumpProduct.images[0]} alt={`${bumpProduct.name} product`} className="w-10 h-10 object-cover rounded border" />
+                          <StorefrontImage src={bumpProduct.images[0]} alt={`${bumpProduct.name} product`} className="w-10 h-10 object-cover rounded border" aspectRatio="1" />
                         )}
                         <div className="min-w-0">
                           <div className="text-sm font-medium break-words">{bumpProduct.name}</div>
@@ -1408,7 +1409,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
                   {trust.enabled && trust.imageUrl && (
                     <div className="pt-2">
-                      <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
+                      <StorefrontImage src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
                     </div>
                   )}
                 </div>

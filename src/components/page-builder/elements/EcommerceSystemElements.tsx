@@ -63,7 +63,7 @@ const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
             <div key={item.id} className="flex items-center justify-between gap-3 border-b pb-3">
               <div className="flex items-center gap-3 min-w-0">
                 {item.image && (
-                  <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded border" />
+                  <StorefrontImage src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded border" aspectRatio="1" />
                 )}
                 <div className="min-w-0">
                   <div className="font-medium truncate">{nameWithVariant(item.name, (item as any).variation)}</div>
@@ -667,10 +667,11 @@ const CartFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 'des
                         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                           <div className="flex items-start gap-3">
                             {item.image && (
-                              <img 
+                              <StorefrontImage 
                                 src={item.image} 
                                 alt={item.name} 
                                 className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded border shrink-0" 
+                                aspectRatio="1"
                               />
                             )}
                             <div className="min-w-0 flex-1">
@@ -1828,7 +1829,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                       {displayItems.map((it)=> (
                         <div key={it.id} className={`grid items-center gap-4 ${showItemImages && it.image ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
                           {showItemImages && it.image && (
-                            <img src={it.image} alt={it.name} className="w-12 h-12 object-cover rounded-lg border border-gray-200 shrink-0" />
+                            <StorefrontImage src={it.image} alt={it.name} className="w-12 h-12 object-cover rounded-lg border border-gray-200 shrink-0" aspectRatio="1" />
                           )}
                           <div className="min-w-0">
                             <div className="text-sm font-medium text-gray-900 break-words">{nameWithVariant(it.name, (it as any).variation)}</div>
@@ -1914,7 +1915,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
                     {trust.enabled && trust.imageUrl && (
                       <div className="pt-4 border-t border-gray-200 mt-4">
-                        <img src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
+                        <StorefrontImage src={trust.imageUrl} alt={trust.alt || 'Secure checkout'} className="w-full h-auto object-contain" loading="lazy" />
                       </div>
                     )}
                   </div>
