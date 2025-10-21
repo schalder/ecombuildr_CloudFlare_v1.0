@@ -209,14 +209,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     const alreadyTracked = sessionStorage.getItem(sessionKey);
     
     if (!hasTrackedInitiateCheckout && !alreadyTracked && selectedProduct && store && pixels && trackingSubtotal > 0) {
-      console.log('🛒 Tracking InitiateCheckout on inline checkout mount:', {
-        productId: selectedProduct.id,
-        productName: selectedProduct.name,
-        value: trackingSubtotal,
-        store: store.name,
-        websiteId,
-        funnelId
-      });
 
       trackInitiateCheckout({
         value: trackingSubtotal,

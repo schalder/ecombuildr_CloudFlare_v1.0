@@ -566,12 +566,6 @@ useEffect(() => {
   // Track InitiateCheckout event when page loads with items in cart
   useEffect(() => {
     if (!hasTrackedCheckout && items.length > 0 && store && total > 0) {
-      console.log('🛒 Tracking InitiateCheckout on page load:', {
-        itemCount: items.length,
-        value: finalTotal,
-        store: store.name,
-        hasTrackedCheckout
-      });
       
       trackInitiateCheckout({
         value: finalTotal,

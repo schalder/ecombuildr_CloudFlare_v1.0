@@ -190,13 +190,6 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       }],
     };
 
-    // Debug log for AddToCart tracking
-    console.log('[PixelTracking] AddToCart event:', {
-      eventData,
-      websiteId,
-      funnelId,
-      storeId
-    });
 
     // Facebook Pixel
     trackEvent('AddToCart', eventData);

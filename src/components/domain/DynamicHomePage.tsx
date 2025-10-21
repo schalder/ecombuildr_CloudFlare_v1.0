@@ -38,7 +38,6 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
   websiteId, 
   fallback 
 }) => {
-  console.log('🚀 DynamicHomePage: Component initialized with websiteId:', websiteId);
   
   const [homePage, setHomePage] = useState<HomePageData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -71,15 +70,8 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
         }
 
         if (homePageData) {
-          console.log('✅ DynamicHomePage: Found home page:', {
-            slug: (homePageData as any).slug,
-            title: (homePageData as any).title,
-            hasContent: !!(homePageData as any).content?.sections,
-            websiteId
-          });
           setHomePage(homePageData as unknown as HomePageData);
         } else {
-          console.log('❌ DynamicHomePage: No home page found for websiteId:', websiteId, 'using fallback');
           setHomePage(null);
         }
 
@@ -142,16 +134,8 @@ export const DynamicHomePage: React.FC<DynamicHomePageProps> = ({
 
   // If no home page found, use fallback
   if (!homePage) {
-    console.log('🔄 DynamicHomePage: No home page data, using fallback');
     return fallback;
   }
-
-  console.log('🎨 DynamicHomePage: Rendering home page:', {
-    slug: homePage.slug,
-    title: homePage.title,
-    hasContent: !!homePage.content?.sections,
-    contentSections: homePage.content?.sections?.length || 0
-  });
 
   // Render the home page content directly
   return (

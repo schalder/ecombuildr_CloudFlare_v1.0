@@ -272,13 +272,6 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
           }
         }
         
-        console.log('🌐 DomainRouter: Selected connection:', {
-          contentType: selectedConnection?.content_type,
-          contentId: selectedConnection?.content_id,
-          storeId: selectedConnection?.store_id,
-          path: currentPath,
-          domain: customDomain?.domain
-        });
         setSelectedConnection(selectedConnection);
       } catch (error) {
         console.error('Error in domain router:', error);

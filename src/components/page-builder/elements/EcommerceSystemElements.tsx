@@ -1109,13 +1109,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     const alreadyTracked = sessionStorage.getItem(sessionKey);
     
     if (!hasTrackedInitiateCheckout && !alreadyTracked && items.length > 0 && store && pixels && total > 0) {
-      console.log('🛒 Tracking InitiateCheckout on full checkout mount:', {
-        itemCount: items.length,
-        value: total + shippingCost,
-        store: store.name,
-        websiteId,
-        funnelId
-      });
 
       trackInitiateCheckout({
         value: total + shippingCost,
