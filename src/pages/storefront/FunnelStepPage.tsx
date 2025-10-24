@@ -211,7 +211,15 @@ export const FunnelStepPage: React.FC = () => {
 
   return (
     <FunnelStepProvider stepId={step.id} funnelId={funnel.id}>
-      <PixelManager storeId={funnel.store_id}>
+      <PixelManager 
+        websitePixels={{
+          facebook_pixel_id: funnel.settings?.facebook_pixel_id,
+          google_analytics_id: funnel.settings?.google_analytics_id,
+          google_ads_id: funnel.settings?.google_ads_id,
+        }}
+        storeId={funnel.store_id}
+        funnelId={funnel.id}
+      >
         <div className="w-full min-h-screen">
           <FunnelHeader funnel={funnel} />
           {/* Render funnel step content using PageBuilderRenderer */}

@@ -27,7 +27,7 @@ interface PixelAnalytics {
   }>;
 }
 
-export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number, websiteId?: string, funnelSlug?: string, providerFilter: 'facebook' | 'all' = 'facebook') => {
+export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number, websiteId?: string, funnelId?: string, providerFilter: 'facebook' | 'all' = 'facebook') => {
   const [analytics, setAnalytics] = useState<PixelAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,8 +60,8 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
         }
 
         // Apply funnel filter if provided (check if event_data contains funnel info)
-        if (funnelSlug) {
-          query = query.contains('event_data', { funnel_slug: funnelSlug });
+        if (funnelId) {
+          query = query.contains('event_data', { funnel_id: funnelId });
         }
 
         const { data: events, error: fetchError } = await query;

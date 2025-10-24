@@ -49,10 +49,11 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
   }, []);
 
   useEffect(() => {
-    if (!currentPixels || shouldDisableTracking()) return;
+    // Allow internal analytics even when pixel IDs are not configured
+    if (shouldDisableTracking()) return;
 
     // Load Facebook Pixel
-    if (currentPixels.facebook_pixel_id && !window.fbq) {
+    if (currentPixels?.facebook_pixel_id && !window.fbq) {
       const script = document.createElement('script');
       script.innerHTML = `
         !function(f,b,e,v,n,t,s)
@@ -80,7 +81,7 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
     }
 
     // Load Google Analytics/Ads
-    if ((currentPixels.google_analytics_id || currentPixels.google_ads_id) && !window.gtag) {
+    if ((currentPixels?.google_analytics_id || currentPixels?.google_ads_id) && !window.gtag) {
       const gtagId = currentPixels.google_analytics_id || currentPixels.google_ads_id;
       
       const script1 = document.createElement('script');
@@ -111,7 +112,8 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
 
   // Track navigation changes using browser's History API (works everywhere)
   useEffect(() => {
-    if (!currentPixels || shouldDisableTracking()) return;
+    // Track navigation changes even without configured pixels
+    if (shouldDisableTracking()) return;
 
     let lastUrl = window.location.href;
     

@@ -12,6 +12,8 @@ import { useParams } from 'react-router-dom';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 import { useStore } from '@/contexts/StoreContext';
+import { usePixelContext } from '@/components/pixel/PixelManager';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 
 // Newsletter Element - Enhanced Form Builder (now called Optin Form)
@@ -28,6 +30,8 @@ const NewsletterElement: React.FC<{
   const funnelId = contextFunnelId || paramsFunnelId;
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { pixels } = usePixelContext();
+  const { trackEvent } = usePixelTracking(pixels, store?.id, undefined, funnelId);
 
   // Get form configuration with defaults
   const formName = element.content.formName || 'Optin Form';
@@ -198,6 +202,18 @@ const NewsletterElement: React.FC<{
       if (error) throw error;
 
       toast.success(successMessage);
+
+      // Track a Lead event for internal analytics and Facebook Pixel
+      try {
+        trackEvent('Lead', {
+          customer_name,
+          customer_email,
+          customer_phone,
+          form_name: formName,
+        });
+      } catch (e) {
+        console.warn('Lead tracking failed:', e);
+      }
       
       // Clear form
       setFormData({});
