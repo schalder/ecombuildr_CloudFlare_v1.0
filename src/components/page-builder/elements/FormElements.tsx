@@ -13,6 +13,8 @@ import { renderElementStyles } from '../utils/styleRenderer';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 import { useStore } from '@/contexts/StoreContext';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
+import { usePixelContext } from '@/components/pixel/PixelManager';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
 
 // Newsletter Element - Enhanced Form Builder (now called Optin Form)
 const NewsletterElement: React.FC<{
@@ -26,6 +28,8 @@ const NewsletterElement: React.FC<{
   const { funnelId: contextFunnelId } = useFunnelStepContext();
   const { funnelId: paramsFunnelId } = useParams();
   const funnelId = contextFunnelId || paramsFunnelId;
+  const { pixels } = usePixelContext();
+  const { trackEvent } = usePixelTracking(pixels, store?.id, undefined, funnelId);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -196,6 +200,17 @@ const NewsletterElement: React.FC<{
       });
 
       if (error) throw error;
+
+      // Track form submission event
+      trackEvent('Lead', {
+        content_name: formName,
+        content_category: 'form_submission',
+        value: 0,
+        currency: 'BDT',
+        funnel_id: funnelId,
+        form_id: element.id,
+        custom_fields: customFieldsWithLabels
+      });
 
       toast.success(successMessage);
       
