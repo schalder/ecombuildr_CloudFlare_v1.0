@@ -12,6 +12,7 @@ import { useParams } from 'react-router-dom';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 import { useStore } from '@/contexts/StoreContext';
+import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 
 // Newsletter Element - Enhanced Form Builder (now called Optin Form)
 const NewsletterElement: React.FC<{
@@ -22,7 +23,9 @@ const NewsletterElement: React.FC<{
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, onUpdate, deviceType = 'desktop', columnCount = 1 }) => {
   const { store } = useStore();
-  const { funnelId } = useParams();
+  const { funnelId: contextFunnelId } = useFunnelStepContext();
+  const { funnelId: paramsFunnelId } = useParams();
+  const funnelId = contextFunnelId || paramsFunnelId;
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
