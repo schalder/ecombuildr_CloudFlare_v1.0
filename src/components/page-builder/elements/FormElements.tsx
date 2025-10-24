@@ -13,6 +13,7 @@ import { renderElementStyles } from '../utils/styleRenderer';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 import { useStore } from '@/contexts/StoreContext';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
 
 // Newsletter Element - Enhanced Form Builder (now called Optin Form)
 const NewsletterElement: React.FC<{
@@ -28,6 +29,9 @@ const NewsletterElement: React.FC<{
   const funnelId = contextFunnelId || paramsFunnelId;
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Initialize pixel tracking
+  const { trackEvent } = usePixelTracking(undefined, store?.id, undefined, funnelId);
 
   // Get form configuration with defaults
   const formName = element.content.formName || 'Optin Form';
@@ -196,6 +200,19 @@ const NewsletterElement: React.FC<{
       });
 
       if (error) throw error;
+
+      // Track form submission as Lead event for Facebook Pixel and Analytics
+      trackEvent('Lead', {
+        content_name: formName,
+        content_category: 'form_submission',
+        form_id: element.id,
+        form_name: formName,
+        funnel_id: funnelId,
+        customer_email: customer_email || undefined,
+        customer_name: customer_name || undefined,
+        value: 0, // Lead value can be configured later
+        currency: 'BDT',
+      });
 
       toast.success(successMessage);
       
