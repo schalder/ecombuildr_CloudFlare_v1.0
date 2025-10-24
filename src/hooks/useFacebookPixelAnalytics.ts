@@ -61,7 +61,16 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
 
         // Apply funnel filter if provided (check if event_data contains funnel info)
         if (funnelSlug) {
-          query = query.contains('event_data', { funnel_slug: funnelSlug });
+          // First get the funnel ID from the slug
+          const { data: funnelData } = await supabase
+            .from('funnels')
+            .select('id')
+            .eq('slug', funnelSlug)
+            .single();
+          
+          if (funnelData) {
+            query = query.contains('event_data', { funnel_id: funnelData.id });
+          }
         }
 
         const { data: events, error: fetchError } = await query;
