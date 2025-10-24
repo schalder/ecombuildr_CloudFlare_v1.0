@@ -30,7 +30,7 @@ export default function FacebookAds() {
     store?.id || '',
     parseInt(dateRange, 10),
     selectedWebsiteId === 'all' ? undefined : selectedWebsiteId,
-    selectedFunnelId === 'all' ? undefined : funnels.find(f => f.id === selectedFunnelId)?.slug,
+    selectedFunnelId === 'all' ? undefined : selectedFunnelId,
     showFacebookOnly ? 'facebook' : 'all'
   );
 
