@@ -9,6 +9,7 @@ import { PixelManager } from '@/components/pixel/PixelManager';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
 import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
+import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
 interface FunnelStepData {
   id: string;
   title: string;
@@ -211,7 +212,21 @@ export const FunnelStepPage: React.FC = () => {
 
   return (
     <FunnelStepProvider stepId={step.id} funnelId={funnel.id}>
-      <PixelManager storeId={funnel.store_id}>
+      <PixelManager 
+        websitePixels={{
+          facebook_pixel_id: funnel.settings?.facebook_pixel_id,
+          google_analytics_id: funnel.settings?.google_analytics_id,
+          google_ads_id: funnel.settings?.google_ads_id,
+        }}
+        storeId={funnel.store_id}
+        funnelId={funnel.id}
+        stepSlug={step.slug}
+      >
+        <TrackingCodeManager 
+          headerCode={funnel.settings?.header_tracking_code}
+          footerCode={funnel.settings?.footer_tracking_code}
+          priority="funnel"
+        />
         <div className="w-full min-h-screen">
           <FunnelHeader funnel={funnel} />
           {/* Render funnel step content using PageBuilderRenderer */}

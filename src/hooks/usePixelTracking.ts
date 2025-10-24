@@ -35,6 +35,12 @@ interface EcommerceEvent {
   event_id?: string;
 }
 
+interface PageViewData {
+  page_title?: string;
+  page_location?: string;
+  step_slug?: string;
+}
+
 export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, websiteId?: string, funnelId?: string) => {
   const storePixelEvent = useCallback(async (eventType: string, eventData: any, providers?: { facebook?: { configured: boolean; attempted: boolean; success: boolean }; google?: { configured: boolean; attempted: boolean; success: boolean } }) => {
     if (!storeId) return;
@@ -72,10 +78,25 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       // Add funnel context if available
       if (funnelId) {
         eventRecord.event_data = { ...enhancedEventData, funnel_id: funnelId };
+        
+        // Try to extract step slug from URL for funnel pages
+        const path = window.location.pathname;
+        const funnelStepMatch = path.match(/\/funnel\/[^\/]+\/([^\/\?]+)/);
+        const customDomainStepMatch = path.match(/^\/([^\/\?]+)$/);
+        
+        if (funnelStepMatch) {
+          eventRecord.event_data.step_slug = funnelStepMatch[1];
+        } else if (customDomainStepMatch && customDomainStepMatch[1] !== 'home') {
+          eventRecord.event_data.step_slug = customDomainStepMatch[1];
+        }
       }
 
-      await supabase.from('pixel_events').insert(eventRecord);
-      logger.debug('[PixelTracking] Stored event in database:', eventType, enhancedEventData, { websiteId, funnelId });
+      const { error: insertError } = await supabase.from('pixel_events').insert(eventRecord);
+      if (insertError) {
+        logger.warn('[PixelTracking] Failed to insert event:', insertError);
+      } else {
+        logger.debug('[PixelTracking] Stored event in database:', eventType, enhancedEventData, { websiteId, funnelId, stepSlug: eventRecord.event_data?.step_slug });
+      }
     } catch (error) {
       logger.warn('[PixelTracking] Failed to store event:', error);
     }
@@ -269,20 +290,33 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     }
   }, [trackEvent, pixelConfig]);
 
-  const trackPageView = useCallback((data?: {
-    page_title?: string;
-    page_location?: string;
-  }) => {
+  const trackPageView = useCallback((data?: PageViewData) => {
     // Skip tracking entirely in dashboard/builder routes
     if (shouldDisableTracking()) {
       return;
     }
 
-    const eventData = {
+    const eventData: any = {
       page_title: data?.page_title || document.title,
       page_location: data?.page_location || window.location.href,
       referrer: document.referrer || null,
     };
+
+    // Add step slug if available (extract from URL if not provided)
+    if (data?.step_slug) {
+      eventData.step_slug = data.step_slug;
+    } else if (funnelId) {
+      // Try to extract step slug from URL for funnel pages
+      const path = window.location.pathname;
+      const funnelStepMatch = path.match(/\/funnel\/[^\/]+\/([^\/\?]+)/);
+      const customDomainStepMatch = path.match(/^\/([^\/\?]+)$/);
+      
+      if (funnelStepMatch) {
+        eventData.step_slug = funnelStepMatch[1];
+      } else if (customDomainStepMatch && customDomainStepMatch[1] !== 'home') {
+        eventData.step_slug = customDomainStepMatch[1];
+      }
+    }
 
     // Track provider attempts and success
     const providers = {

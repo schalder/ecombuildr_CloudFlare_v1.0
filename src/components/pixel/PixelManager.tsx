@@ -12,6 +12,7 @@ interface PixelManagerProps {
   children: React.ReactNode;
   storeId?: string;
   funnelId?: string;
+  stepSlug?: string;
 }
 
 const PixelContext = React.createContext<{
@@ -29,7 +30,7 @@ const PixelContext = React.createContext<{
 
 export const usePixelContext = () => React.useContext(PixelContext);
 
-export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children, storeId, funnelId: propFunnelId }) => {
+export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initialPixels, children, storeId, funnelId: propFunnelId, stepSlug }) => {
   const [currentPixels, setCurrentPixels] = React.useState(initialPixels);
   const { websiteId } = useWebsiteContext();
   
@@ -77,6 +78,13 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
       document.head.appendChild(noscript);
       
       logger.debug('[PixelManager] Facebook Pixel loaded:', currentPixels.facebook_pixel_id);
+      
+      // Test if fbq is available
+      if (window.fbq) {
+        logger.debug('[PixelManager] Facebook Pixel (fbq) is available and ready');
+      } else {
+        logger.warn('[PixelManager] Facebook Pixel (fbq) not available after loading');
+      }
     }
 
     // Load Google Analytics/Ads
@@ -103,11 +111,12 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
 
     // Track initial page view
     const timer = setTimeout(() => {
-      trackPageView();
+      logger.debug('[PixelManager] Tracking initial page view for step:', stepSlug);
+      trackPageView({ step_slug: stepSlug });
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [currentPixels, trackPageView]);
+  }, [currentPixels, trackPageView, stepSlug]);
 
   // Track navigation changes using browser's History API (works everywhere)
   useEffect(() => {
@@ -119,7 +128,7 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
       const currentUrl = window.location.href;
       if (currentUrl !== lastUrl) {
         lastUrl = currentUrl;
-        trackPageView();
+        trackPageView({ step_slug: stepSlug });
       }
     };
 
@@ -130,22 +139,22 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
     
-    history.pushState = function(...args) {
-      originalPushState.apply(history, args);
-      setTimeout(handleNavigation, 0);
-    };
-    
-    history.replaceState = function(...args) {
-      originalReplaceState.apply(history, args);
-      setTimeout(handleNavigation, 0);
-    };
+      history.pushState = function(...args) {
+        originalPushState.apply(history, args);
+        setTimeout(handleNavigation, 0);
+      };
+      
+      history.replaceState = function(...args) {
+        originalReplaceState.apply(history, args);
+        setTimeout(handleNavigation, 0);
+      };
 
-    return () => {
-      window.removeEventListener('popstate', handleNavigation);
-      history.pushState = originalPushState;
-      history.replaceState = originalReplaceState;
-    };
-  }, [currentPixels, trackPageView]);
+      return () => {
+        window.removeEventListener('popstate', handleNavigation);
+        history.pushState = originalPushState;
+        history.replaceState = originalReplaceState;
+      };
+    }, [currentPixels, trackPageView, stepSlug]);
 
   return (
     <PixelContext.Provider value={{ pixels: currentPixels, updatePixels }}>
