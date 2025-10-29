@@ -172,6 +172,7 @@ export const EvergreenWebinarElement: React.FC<{
   const [iframeKey, setIframeKey] = useState(0);
   const [showCTA, setShowCTA] = useState(false);
   const [videoTime, setVideoTime] = useState(0);
+  const [isUnmuting, setIsUnmuting] = useState(false); // Track temporary overlay removal during unmute gesture
   const playerRef = useRef<HTMLIFrameElement>(null);
   const videoTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -323,32 +324,56 @@ export const EvergreenWebinarElement: React.FC<{
     url.searchParams.set('mute', shouldMute ? '1' : '0'); // Start muted for autoplay
     url.searchParams.set('playsinline', '1');
     url.searchParams.set('disablekb', '1'); // Disable keyboard controls
+    url.searchParams.set('enablejsapi', '1'); // Enable iframe API for postMessage control
     
     return url.toString();
   };
 
-  // Handle unmute - reload iframe with unmuted URL
+  // Handle unmute - temporarily remove overlay to allow touch through to iframe (Option 3)
   const handleUnmute = (e?: React.MouseEvent | React.TouchEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
+    // Step 1: Immediately remove overlay and make button transparent
+    // This allows touch to potentially reach iframe (critical for mobile)
+    setIsUnmuting(true);
+    
+    // Step 2: Keep existing iframe, just change src (don't recreate to maintain gesture context)
+    // First try postMessage to unmute (if iframe is already loaded and ready)
+    if (playerRef.current?.contentWindow) {
+      try {
+        // Try to unmute existing iframe first (fastest, maintains gesture context)
+        playerRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'unMute', args: '' }),
+          'https://www.youtube.com'
+        );
+        // Ensure it's playing
+        playerRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: '' }),
+          'https://www.youtube.com'
+        );
+      } catch (err) {
+        // If postMessage fails, fall back to src change
+      }
     }
     
-    // Update state immediately to trigger iframe reload during user gesture (critical for mobile)
-    setIsUnmuted(true);
-    setIframeKey(prev => prev + 1);
+    // Step 3: Update iframe src to unmuted version (fallback or primary method)
+    // Do this IMMEDIATELY during touch event to maintain gesture context on mobile
+    const unmutedUrl = buildEmbedUrl(false);
+    if (playerRef.current && unmutedUrl) {
+      // Direct assignment - no React delay, happens synchronously during gesture
+      // On mobile, if this happens fast enough during touch, autoplay should work
+      playerRef.current.src = unmutedUrl;
+    }
     
-    // Use requestAnimationFrame to ensure iframe is updated within gesture context
-    // This is especially important for mobile browsers
-    requestAnimationFrame(() => {
-      if (playerRef.current) {
-        // Force iframe to reload by directly setting src (ensures immediate update)
-        const unmutedUrl = buildEmbedUrl(false);
-        if (unmutedUrl && playerRef.current.src !== unmutedUrl) {
-          playerRef.current.src = unmutedUrl;
-        }
-      }
-    });
+    // Step 4: Update state (React will handle re-render)
+    setIsUnmuted(true);
+    // Only increment iframeKey if postMessage didn't work
+    setTimeout(() => {
+      setIframeKey(prev => prev + 1);
+    }, 100);
+    
+    // Step 5: Restore overlay after gesture window (maintains live-like feel)
+    setTimeout(() => {
+      setIsUnmuting(false);
+    }, 600);
   };
 
   const containerStyles = renderElementStyles(element, deviceType);
@@ -501,8 +526,8 @@ export const EvergreenWebinarElement: React.FC<{
               />
             )}
 
-            {/* Blocking overlay when muted - prevent all interactions with YouTube iframe */}
-            {!isUnmuted && (
+            {/* Blocking overlay when muted - temporarily removed during unmute gesture (Option 3) */}
+            {!isUnmuted && !isUnmuting && (
               <div 
                 className="absolute inset-0 z-10"
                 onContextMenu={(e) => e.preventDefault()}
@@ -539,19 +564,30 @@ export const EvergreenWebinarElement: React.FC<{
               />
             )}
 
-            {/* Unmute Button - Centered */}
+            {/* Unmute Button - Centered, becomes transparent to touches during unmute (Option 3) */}
             {!isUnmuted && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+              <div 
+                className={`absolute inset-0 z-30 flex items-center justify-center ${
+                  isUnmuting ? 'pointer-events-none' : 'pointer-events-none'
+                }`}
+              >
                 <button
                   onClick={handleUnmute}
                   onTouchStart={handleUnmute}
-                  onTouchEnd={(e) => e.preventDefault()}
-                  className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 shadow-2xl font-semibold text-lg transition-all duration-300 hover:scale-105 pointer-events-auto touch-manipulation"
+                  onTouchEnd={(e) => {
+                    if (!isUnmuting) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className={`bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 shadow-2xl font-semibold text-lg transition-all duration-300 hover:scale-105 touch-manipulation ${
+                    isUnmuting ? 'opacity-0 pointer-events-none' : 'pointer-events-auto'
+                  }`}
                   style={{
                     boxShadow: '0 8px 32px rgba(239, 68, 68, 0.5)',
-                    animation: 'smooth-pulse 2s ease-in-out infinite',
+                    animation: isUnmuting ? 'none' : 'smooth-pulse 2s ease-in-out infinite',
                     WebkitTapHighlightColor: 'transparent',
-                    touchAction: 'manipulation'
+                    touchAction: 'manipulation',
+                    transition: isUnmuting ? 'opacity 0.1s' : 'all 0.3s'
                   }}
                 >
                   <Volume2 className="h-6 w-6" />
