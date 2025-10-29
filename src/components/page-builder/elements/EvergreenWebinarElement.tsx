@@ -144,6 +144,7 @@ export const EvergreenWebinarElement: React.FC<{
     showLiveBadge = true,
     liveBadgePosition = 'top-right',
     liveBadgeStyle = 'pulse-text',
+    allowUserMessages = true,
     widthByDevice,
     muted = true,
   } = element.content as any;
@@ -155,6 +156,7 @@ export const EvergreenWebinarElement: React.FC<{
   const [currentViewerCount, setCurrentViewerCount] = useState(viewerCount);
   const [isUnmuted, setIsUnmuted] = useState(false);
   const [showUnmuteButton, setShowUnmuteButton] = useState(false);
+  const [userMessage, setUserMessage] = useState('');
   const playerRef = useRef<HTMLIFrameElement>(null);
   const unmuteAttempts = useRef(0);
 
@@ -220,14 +222,14 @@ export const EvergreenWebinarElement: React.FC<{
         });
       };
 
-      // Initial delay then periodic messages
+      // Initial delay then periodic messages - slower for realistic feel
       const interval1 = setTimeout(() => {
         addMessage();
         const interval2 = setInterval(() => {
           addMessage();
-        }, 3000 + Math.random() * 7000); // 3-10 seconds apart
+        }, 8000 + Math.random() * 12000); // 8-20 seconds apart for realistic live chat
         return () => clearInterval(interval2);
-      }, 2000);
+      }, 5000);
 
       return () => {
         clearTimeout(interval1);
@@ -273,6 +275,20 @@ export const EvergreenWebinarElement: React.FC<{
       }
       setIsUnmuted(true);
       setShowUnmuteButton(false);
+    }
+  };
+
+  // Handle sending user chat message
+  const handleSendMessage = () => {
+    if (userMessage.trim()) {
+      const newMessage: ChatMessage = {
+        id: `user-msg-${Date.now()}`,
+        name: 'You',
+        message: userMessage,
+        timestamp: Date.now(),
+      };
+      setChatMessages((prev) => [...prev, newMessage]);
+      setUserMessage('');
     }
   };
 
@@ -350,11 +366,14 @@ export const EvergreenWebinarElement: React.FC<{
 
   return (
     <div style={cleanContainerStyles} className={`${widthClasses[effectiveWidth as keyof typeof widthClasses] || 'w-full'}`}>
-      <div 
-        className="relative w-full bg-black"
-        style={{ aspectRatio: '16/9' }}
-        onContextMenu={(e) => e.preventDefault()}
-      >
+      {/* Video + Chat Container */}
+      <div className={`flex gap-4 ${deviceType === 'mobile' ? 'flex-col' : 'flex-row'}`}>
+        {/* Video Player */}
+        <div 
+          className={`relative bg-black ${deviceType === 'mobile' ? 'w-full' : 'flex-1'}`}
+          style={{ aspectRatio: '16/9' }}
+          onContextMenu={(e) => e.preventDefault()}
+        >
         {/* Live Badge */}
         {showLiveBadge && isPlaying && (
           <div className={getLiveBadgeStyles()}>
@@ -465,25 +484,56 @@ export const EvergreenWebinarElement: React.FC<{
             </button>
           </div>
         )}
-      </div>
-
-      {/* Live Chat Panel */}
-      {enableChat && showChatMessages && isPlaying && (
-        <div className="mt-4 bg-gray-900 rounded-lg p-4" style={{ maxHeight: '300px' }}>
-          <div className="flex items-center gap-2 mb-3 text-white">
-            <MessageCircle className="h-5 w-5" />
-            <h4 className="font-semibold">Live Chat</h4>
-          </div>
-          <div className="overflow-y-auto space-y-2" style={{ maxHeight: '250px' }}>
-            {chatMessages.map((msg) => (
-              <div key={msg.id} className="text-sm text-white animate-in slide-in-from-top duration-300">
-                <span className="font-medium text-blue-400">{msg.name}</span>
-                <span className="text-gray-300 ml-2">{msg.message}</span>
-              </div>
-            ))}
-          </div>
         </div>
-      )}
+
+        {/* Live Chat Panel */}
+        {enableChat && showChatMessages && isPlaying && (
+          <div className={`bg-gray-900 rounded-lg flex flex-col ${deviceType === 'mobile' ? 'w-full mt-4' : 'w-80 flex-shrink-0'}`}>
+            <div className="p-4 border-b border-gray-700">
+              <div className="flex items-center gap-2 text-white">
+                <MessageCircle className="h-5 w-5" />
+                <h4 className="font-semibold">Live Chat</h4>
+              </div>
+            </div>
+            
+            {/* Chat Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ maxHeight: deviceType === 'mobile' ? '200px' : '500px' }}>
+              {chatMessages.map((msg) => (
+                <div key={msg.id} className={`text-sm animate-in slide-in-from-top duration-300 ${
+                  msg.name === 'You' ? 'text-green-400' : 'text-white'
+                }`}>
+                  <span className={`font-medium ${msg.name === 'You' ? 'text-green-300' : 'text-blue-400'}`}>
+                    {msg.name}:
+                  </span>
+                  <span className="text-gray-300 ml-2">{msg.message}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Chat Input */}
+            {allowUserMessages && (
+              <div className="p-4 border-t border-gray-700">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={userMessage}
+                    onChange={(e) => setUserMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder="Type your message..."
+                    className="flex-1 px-3 py-2 bg-gray-800 text-white rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-sm"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                  >
+                    Send
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

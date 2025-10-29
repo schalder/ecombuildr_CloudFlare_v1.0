@@ -166,6 +166,15 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
                 onCheckedChange={(checked) => onUpdate('showChatMessages', checked)}
               />
             </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="allow-user-messages">Allow Users to Send Messages</Label>
+              <Switch
+                id="allow-user-messages"
+                checked={element.content.allowUserMessages !== false}
+                onCheckedChange={(checked) => onUpdate('allowUserMessages', checked)}
+              />
+            </div>
           </>
         )}
       </div>

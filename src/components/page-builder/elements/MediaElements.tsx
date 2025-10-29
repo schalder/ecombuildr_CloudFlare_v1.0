@@ -533,6 +533,7 @@ export const registerMediaElements = () => {
       enableChat: true,
       viewerCount: 237,
       showChatMessages: true,
+      allowUserMessages: true,
       showLiveBadge: true,
       liveBadgePosition: 'top-right',
       liveBadgeStyle: 'pulse-text',
