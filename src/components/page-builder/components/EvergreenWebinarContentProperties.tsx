@@ -315,11 +315,19 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
                           id={`messages-${group.id}`}
                           value={(group.messages || []).join('\n')}
                           onChange={(e) => {
-                            const messages = e.target.value
-                              .split('\n')
+                            // Preserve empty lines temporarily to allow Enter key
+                            // Filter empty lines only when storing
+                            const lines = e.target.value.split('\n');
+                            const messages = lines
                               .map((m) => m.trim())
                               .filter((m) => m.length > 0);
                             handleUpdateScheduledGroup(group.id, { messages });
+                          }}
+                          onKeyDown={(e) => {
+                            // Allow Enter key to work normally in textarea
+                            if (e.key === 'Enter') {
+                              e.stopPropagation();
+                            }
                           }}
                           placeholder="Yes&#10;Clear sound&#10;Perfect&#10;I can hear you"
                           rows={5}
@@ -336,18 +344,14 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
                           id={`count-${group.id}`}
                           type="number"
                           min={1}
-                          max={20}
                           value={group.count || 5}
                           onChange={(e) => {
-                            const count = Math.min(
-                              Math.max(1, parseInt(e.target.value) || 5),
-                              (group.messages || []).length || 20
-                            );
+                            const count = Math.max(1, parseInt(e.target.value) || 5);
                             handleUpdateScheduledGroup(group.id, { count });
                           }}
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Max: {Math.max(1, (group.messages || []).length || 5)} (based on messages above)
+                          Messages will be randomly selected from the list above (duplicates allowed)
                         </p>
                       </div>
 

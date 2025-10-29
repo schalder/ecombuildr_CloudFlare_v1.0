@@ -328,8 +328,8 @@ export const EvergreenWebinarElement: React.FC<{
           return; // Skip if no messages or names
         }
 
-        // Determine how many messages to show (clamp between 1 and messages.length)
-        const count = Math.min(Math.max(1, group.count || 5), messages.length);
+        // Determine how many messages to show (allow any number, messages can repeat)
+        const count = Math.max(1, group.count || 5);
         
         // Random duration window between 15-20 seconds
         const durationWindowSec = 15 + Math.random() * 5; // 15-20 seconds
