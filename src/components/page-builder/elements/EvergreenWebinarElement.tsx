@@ -483,11 +483,19 @@ export const EvergreenWebinarElement: React.FC<{
               />
             )}
 
-            {/* Overlay to block right-click only when muted */}
+            {/* Blocking overlay when muted - prevent all interactions with YouTube iframe */}
             {!isUnmuted && (
               <div 
-                className="absolute inset-0 pointer-events-none"
+                className="absolute inset-0 z-10"
                 onContextMenu={(e) => e.preventDefault()}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => e.preventDefault()}
+                onDoubleClick={(e) => e.preventDefault()}
+                style={{ 
+                  pointerEvents: 'auto',
+                  touchAction: 'none',
+                  cursor: 'default'
+                }}
               />
             )}
 
