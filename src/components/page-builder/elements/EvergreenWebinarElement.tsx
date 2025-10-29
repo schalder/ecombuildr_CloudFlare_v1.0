@@ -328,9 +328,27 @@ export const EvergreenWebinarElement: React.FC<{
   };
 
   // Handle unmute - reload iframe with unmuted URL
-  const handleUnmute = () => {
-    setIframeKey(prev => prev + 1);
+  const handleUnmute = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // Update state immediately to trigger iframe reload during user gesture (critical for mobile)
     setIsUnmuted(true);
+    setIframeKey(prev => prev + 1);
+    
+    // Use requestAnimationFrame to ensure iframe is updated within gesture context
+    // This is especially important for mobile browsers
+    requestAnimationFrame(() => {
+      if (playerRef.current) {
+        // Force iframe to reload by directly setting src (ensures immediate update)
+        const unmutedUrl = buildEmbedUrl(false);
+        if (unmutedUrl && playerRef.current.src !== unmutedUrl) {
+          playerRef.current.src = unmutedUrl;
+        }
+      }
+    });
   };
 
   const containerStyles = renderElementStyles(element, deviceType);
@@ -488,8 +506,30 @@ export const EvergreenWebinarElement: React.FC<{
               <div 
                 className="absolute inset-0 z-10"
                 onContextMenu={(e) => e.preventDefault()}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={(e) => e.preventDefault()}
+                onMouseDown={(e) => {
+                  // Check if click target is the unmute button - if so, allow it
+                  const target = e.target as HTMLElement;
+                  if (target.closest('button')) {
+                    return; // Don't prevent if clicking the button
+                  }
+                  e.preventDefault();
+                }}
+                onClick={(e) => {
+                  // Check if click target is the unmute button - if so, allow it
+                  const target = e.target as HTMLElement;
+                  if (target.closest('button')) {
+                    return; // Don't prevent if clicking the button
+                  }
+                  e.preventDefault();
+                }}
+                onTouchStart={(e) => {
+                  // Check if touch target is the unmute button - if so, allow it
+                  const target = e.target as HTMLElement;
+                  if (target.closest('button')) {
+                    return; // Don't prevent if touching the button
+                  }
+                  e.preventDefault();
+                }}
                 onDoubleClick={(e) => e.preventDefault()}
                 style={{ 
                   pointerEvents: 'auto',
@@ -504,10 +544,14 @@ export const EvergreenWebinarElement: React.FC<{
               <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
                 <button
                   onClick={handleUnmute}
-                  className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 shadow-2xl font-semibold text-lg transition-all duration-300 hover:scale-105 pointer-events-auto"
+                  onTouchStart={handleUnmute}
+                  onTouchEnd={(e) => e.preventDefault()}
+                  className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 shadow-2xl font-semibold text-lg transition-all duration-300 hover:scale-105 pointer-events-auto touch-manipulation"
                   style={{
                     boxShadow: '0 8px 32px rgba(239, 68, 68, 0.5)',
-                    animation: 'smooth-pulse 2s ease-in-out infinite'
+                    animation: 'smooth-pulse 2s ease-in-out infinite',
+                    WebkitTapHighlightColor: 'transparent',
+                    touchAction: 'manipulation'
                   }}
                 >
                   <Volume2 className="h-6 w-6" />
