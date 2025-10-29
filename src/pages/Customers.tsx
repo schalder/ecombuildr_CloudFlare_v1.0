@@ -216,7 +216,6 @@ export default function Customers() {
               ) : (
                 <Eye className="h-4 w-4 text-muted-foreground" />
               )}
-              <label className="text-sm font-medium">Blur sensitive data</label>
               <Switch 
                 checked={blurSensitiveData} 
                 onCheckedChange={setBlurSensitiveData}
@@ -308,7 +307,9 @@ export default function Customers() {
                         {customer.email && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Mail className="h-3 w-3 flex-shrink-0" />
-                            <span className="truncate">{customer.email}</span>
+                            <span className="truncate" style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
+                              {customer.email}
+                            </span>
                           </div>
                         )}
                         {customer.phone && (
@@ -375,7 +376,9 @@ export default function Customers() {
                           {customer.email && (
                             <div className="flex items-center gap-1 text-sm">
                               <Mail className="h-3 w-3" />
-                              {customer.email}
+                              <span style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
+                                {customer.email}
+                              </span>
                             </div>
                           )}
                           {customer.phone && (
