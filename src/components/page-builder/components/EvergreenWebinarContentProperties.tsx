@@ -290,10 +290,10 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
             </div>
 
             <div>
-              <Label htmlFor="cta-headline-color">Headline Color</Label>
               <ColorPicker
-                value={ctaHeadlineColor}
+                color={ctaHeadlineColor}
                 onChange={(color) => onUpdate('ctaHeadlineColor', color)}
+                label="Headline Color"
               />
             </div>
 
@@ -308,10 +308,10 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
             </div>
 
             <div>
-              <Label htmlFor="cta-subheadline-color">Subheadline Color</Label>
               <ColorPicker
-                value={ctaSubheadlineColor}
+                color={ctaSubheadlineColor}
                 onChange={(color) => onUpdate('ctaSubheadlineColor', color)}
+                label="Subheadline Color"
               />
             </div>
 
@@ -337,10 +337,10 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
             </div>
 
             <div>
-              <Label htmlFor="cta-button-color">Button Color</Label>
               <ColorPicker
-                value={ctaButtonColor}
+                color={ctaButtonColor}
                 onChange={(color) => onUpdate('ctaButtonColor', color)}
+                label="Button Color"
               />
             </div>
 
