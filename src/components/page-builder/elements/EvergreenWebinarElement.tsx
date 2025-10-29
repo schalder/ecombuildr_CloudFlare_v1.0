@@ -147,6 +147,17 @@ export const EvergreenWebinarElement: React.FC<{
     allowUserMessages = true,
     widthByDevice,
     muted = true,
+    // CTA settings
+    enableCTA = false,
+    ctaDisplayTime = 60, // seconds
+    ctaHeadline = '',
+    ctaSubheadline = '',
+    ctaButtonText = 'Click Here',
+    ctaButtonUrl = '',
+    ctaOpenNewTab = true,
+    ctaButtonColor = '#3B82F6',
+    ctaHeadlineColor = '#FFFFFF',
+    ctaSubheadlineColor = '#E5E7EB',
   } = element.content as any;
 
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -157,7 +168,10 @@ export const EvergreenWebinarElement: React.FC<{
   const [userMessage, setUserMessage] = useState('');
   const [isUnmuted, setIsUnmuted] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
+  const [showCTA, setShowCTA] = useState(false);
+  const [videoTime, setVideoTime] = useState(0);
   const playerRef = useRef<HTMLIFrameElement>(null);
+  const videoTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Parse video URL
   const videoInfo = videoUrl ? parseVideoUrl(videoUrl) : null;
@@ -245,6 +259,27 @@ export const EvergreenWebinarElement: React.FC<{
       return () => clearInterval(interval);
     }
   }, [enableChat, isPlaying]);
+
+  // Track video time for CTA display
+  useEffect(() => {
+    if (isPlaying && enableCTA) {
+      videoTimeIntervalRef.current = setInterval(() => {
+        setVideoTime((prev) => {
+          const newTime = prev + 1;
+          if (newTime >= ctaDisplayTime && !showCTA) {
+            setShowCTA(true);
+          }
+          return newTime;
+        });
+      }, 1000);
+      
+      return () => {
+        if (videoTimeIntervalRef.current) {
+          clearInterval(videoTimeIntervalRef.current);
+        }
+      };
+    }
+  }, [isPlaying, enableCTA, ctaDisplayTime, showCTA]);
 
   // Note: Video starts with sound (mute=0) by default for proper audio playback
 
@@ -520,6 +555,40 @@ export const EvergreenWebinarElement: React.FC<{
           </div>
         )}
       </div>
+
+      {/* CTA Section */}
+      {enableCTA && showCTA && ctaButtonUrl && (
+        <div className="mt-6 text-center animate-in fade-in slide-in-from-bottom duration-500">
+          {ctaHeadline && (
+            <h3 
+              className="text-3xl font-bold mb-2"
+              style={{ color: ctaHeadlineColor }}
+            >
+              {ctaHeadline}
+            </h3>
+          )}
+          {ctaSubheadline && (
+            <p 
+              className="text-lg mb-4"
+              style={{ color: ctaSubheadlineColor }}
+            >
+              {ctaSubheadline}
+            </p>
+          )}
+          <a
+            href={ctaButtonUrl}
+            target={ctaOpenNewTab ? '_blank' : '_self'}
+            rel={ctaOpenNewTab ? 'noopener noreferrer' : undefined}
+            className="inline-block px-8 py-4 rounded-lg font-semibold text-lg transition-transform hover:scale-105 shadow-lg"
+            style={{ 
+              backgroundColor: ctaButtonColor,
+              color: '#FFFFFF'
+            }}
+          >
+            {ctaButtonText}
+          </a>
+        </div>
+      )}
     </div>
   );
 };

@@ -538,6 +538,17 @@ export const registerMediaElements = () => {
       liveBadgePosition: 'top-right',
       liveBadgeStyle: 'pulse-text',
       muted: true,
+      // CTA settings
+      enableCTA: false,
+      ctaDisplayTime: 60,
+      ctaHeadline: '',
+      ctaSubheadline: '',
+      ctaButtonText: 'Click Here',
+      ctaButtonUrl: '',
+      ctaOpenNewTab: true,
+      ctaButtonColor: '#3B82F6',
+      ctaHeadlineColor: '#FFFFFF',
+      ctaSubheadlineColor: '#E5E7EB',
       widthByDevice: {
         desktop: 'full',
         tablet: 'full',

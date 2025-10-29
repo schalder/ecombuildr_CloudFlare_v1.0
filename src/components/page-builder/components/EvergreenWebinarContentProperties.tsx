@@ -9,6 +9,7 @@ import { PageBuilderElement } from '../types';
 import { useDevicePreview } from '../contexts/DevicePreviewContext';
 import { Button } from '@/components/ui/button';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
+import { ColorPicker } from '@/components/ui/color-picker';
 
 interface EvergreenWebinarContentPropertiesProps {
   element: PageBuilderElement;
@@ -32,6 +33,17 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
     liveBadgeStyle = 'pulse-text',
     widthByDevice,
     muted = true,
+    // CTA settings
+    enableCTA = false,
+    ctaDisplayTime = 60,
+    ctaHeadline = '',
+    ctaSubheadline = '',
+    ctaButtonText = 'Click Here',
+    ctaButtonUrl = '',
+    ctaOpenNewTab = true,
+    ctaButtonColor = '#3B82F6',
+    ctaHeadlineColor = '#FFFFFF',
+    ctaSubheadlineColor = '#E5E7EB',
   } = element.content as any;
 
   const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
@@ -237,6 +249,111 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
         <p className="text-xs text-muted-foreground">
           Video will autoplay muted (recommended for better autoplay support)
         </p>
+      </div>
+
+      {/* CTA Settings */}
+      <div className="space-y-3 border-t pt-4">
+        <div className="flex items-center justify-between">
+          <Label htmlFor="enable-cta">Enable Call-to-Action</Label>
+          <Switch
+            id="enable-cta"
+            checked={enableCTA}
+            onCheckedChange={(checked) => onUpdate('enableCTA', checked)}
+          />
+        </div>
+
+        {enableCTA && (
+          <>
+            <div>
+              <Label htmlFor="cta-display-time">Display CTA After (seconds)</Label>
+              <Input
+                id="cta-display-time"
+                type="number"
+                value={ctaDisplayTime}
+                onChange={(e) => onUpdate('ctaDisplayTime', parseInt(e.target.value) || 0)}
+                min={1}
+                max={3600}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                When to show the CTA during the webinar (e.g., 60 = after 1 minute)
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="cta-headline">Headline (Optional)</Label>
+              <Input
+                id="cta-headline"
+                value={ctaHeadline}
+                onChange={(e) => onUpdate('ctaHeadline', e.target.value)}
+                placeholder="Special Offer Today Only!"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cta-headline-color">Headline Color</Label>
+              <ColorPicker
+                value={ctaHeadlineColor}
+                onChange={(color) => onUpdate('ctaHeadlineColor', color)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cta-subheadline">Subheadline (Optional)</Label>
+              <Input
+                id="cta-subheadline"
+                value={ctaSubheadline}
+                onChange={(e) => onUpdate('ctaSubheadline', e.target.value)}
+                placeholder="Don't miss this exclusive deal"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cta-subheadline-color">Subheadline Color</Label>
+              <ColorPicker
+                value={ctaSubheadlineColor}
+                onChange={(color) => onUpdate('ctaSubheadlineColor', color)}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cta-button-text">Button Text</Label>
+              <Input
+                id="cta-button-text"
+                value={ctaButtonText}
+                onChange={(e) => onUpdate('ctaButtonText', e.target.value)}
+                placeholder="Click Here"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cta-button-url">Button URL</Label>
+              <Input
+                id="cta-button-url"
+                type="url"
+                value={ctaButtonUrl}
+                onChange={(e) => onUpdate('ctaButtonUrl', e.target.value)}
+                placeholder="https://example.com/offer"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="cta-button-color">Button Color</Label>
+              <ColorPicker
+                value={ctaButtonColor}
+                onChange={(color) => onUpdate('ctaButtonColor', color)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="cta-open-new-tab">Open in New Tab</Label>
+              <Switch
+                id="cta-open-new-tab"
+                checked={ctaOpenNewTab}
+                onCheckedChange={(checked) => onUpdate('ctaOpenNewTab', checked)}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Width Settings */}
