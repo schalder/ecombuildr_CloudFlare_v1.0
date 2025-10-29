@@ -176,77 +176,13 @@ export const EvergreenWebinarElement: React.FC<{
   const playerRef = useRef<HTMLIFrameElement>(null);
   const videoTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const sessionKeyRef = useRef<string | null>(null);
 
   // Parse video URL
   const videoInfo = videoUrl ? parseVideoUrl(videoUrl) : null;
   const thumbnailUrl = thumbnail || (videoInfo?.thumbnailUrl || 'https://via.placeholder.com/1280x720?text=Webinar+Starting+Soon');
 
-  // Helper function to store session data
-  const storeSessionData = (hasStarted: boolean, wasUnmuted: boolean = false) => {
-    if (sessionKeyRef.current && typeof window !== 'undefined') {
-      try {
-        sessionStorage.setItem(sessionKeyRef.current, JSON.stringify({
-          hasStarted,
-          wasUnmuted
-        }));
-      } catch (e) {
-        // Ignore sessionStorage errors (private browsing, etc.)
-      }
-    }
-  };
-
-  // Helper function to restore session data
-  const restoreSessionData = () => {
-    if (sessionKeyRef.current && typeof window !== 'undefined') {
-      try {
-        const sessionData = sessionStorage.getItem(sessionKeyRef.current);
-        if (sessionData) {
-          return JSON.parse(sessionData);
-        }
-      } catch (e) {
-        // Ignore parsing errors
-      }
-    }
-    return null;
-  };
-
-  // Start countdown when component mounts - check session first
+  // Start countdown when component mounts
   useEffect(() => {
-    // Create unique session key based on video ID
-    if (videoInfo?.id) {
-      sessionKeyRef.current = `evergreen-webinar-${videoInfo.id}`;
-      
-      // Check if user has already started this webinar in this session
-      const sessionData = restoreSessionData();
-      
-      if (sessionData?.hasStarted) {
-        // Skip countdown and show video immediately
-        setShowVideo(true);
-        setIsPlaying(true);
-        
-        // Restore unmute state if it was unmuted before
-        if (sessionData.wasUnmuted) {
-          setIsUnmuted(true);
-          // Trigger unmute via postMessage after iframe loads
-          setTimeout(() => {
-            if (playerRef.current?.contentWindow) {
-              try {
-                playerRef.current.contentWindow.postMessage(
-                  JSON.stringify({ event: 'command', func: 'unMute', args: '' }),
-                  'https://www.youtube.com'
-                );
-              } catch (e) {
-                // Ignore
-              }
-            }
-          }, 1000);
-        }
-        return; // Skip the countdown logic below
-      }
-    }
-    
-    // Original countdown logic for first visit
     if (enableCountdown && !isPlaying) {
       setCountdown(countdownSeconds);
     } else if (!enableCountdown && !isPlaying) {
@@ -254,8 +190,6 @@ export const EvergreenWebinarElement: React.FC<{
       setTimeout(() => {
         setShowVideo(true);
         setIsPlaying(true);
-        // Store session data when video starts without countdown
-        storeSessionData(true, false);
       }, 500);
     }
   }, []);
@@ -272,8 +206,6 @@ export const EvergreenWebinarElement: React.FC<{
         setShowVideo(true);
         setIsPlaying(true);
         setCountdown(null);
-        // Store session data when countdown completes and video starts
-        storeSessionData(true, false);
       }, 1000);
     }
   }, [countdown]);
@@ -400,9 +332,6 @@ export const EvergreenWebinarElement: React.FC<{
   // Handle unmute - simply unmute the already-playing video
   const handleUnmute = () => {
     setIsUnmuted(true);
-    
-    // Store unmute state in sessionStorage
-    storeSessionData(true, true);
     
     // Simple unmute - video is already playing muted, just unmute audio
     const unmuteVideo = (retries = 3) => {
