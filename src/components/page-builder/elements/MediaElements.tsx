@@ -549,6 +549,7 @@ export const registerMediaElements = () => {
       ctaButtonColor: '#3B82F6',
       ctaHeadlineColor: '#FFFFFF',
       ctaSubheadlineColor: '#E5E7EB',
+      ctaBackgroundColor: 'transparent',
       widthByDevice: {
         desktop: 'full',
         tablet: 'full',

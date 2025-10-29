@@ -132,7 +132,7 @@ export const EvergreenWebinarElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, deviceType = 'desktop' }) => {
+}> = ({ element, deviceType = 'desktop', isEditing = false }) => {
   const {
     videoUrl = '',
     thumbnail = '',
@@ -158,6 +158,7 @@ export const EvergreenWebinarElement: React.FC<{
     ctaButtonColor = '#3B82F6',
     ctaHeadlineColor = '#FFFFFF',
     ctaSubheadlineColor = '#E5E7EB',
+    ctaBackgroundColor = 'transparent',
   } = element.content as any;
 
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -575,8 +576,11 @@ export const EvergreenWebinarElement: React.FC<{
       </div>
 
       {/* CTA Section */}
-      {enableCTA && showCTA && ctaButtonUrl && (
-        <div className="mt-6 text-center animate-in fade-in slide-in-from-bottom duration-500">
+      {enableCTA && (showCTA || isEditing) && (
+        <div 
+          className="mt-6 text-center p-6 rounded-lg animate-in fade-in slide-in-from-bottom duration-500"
+          style={{ backgroundColor: ctaBackgroundColor !== 'transparent' ? ctaBackgroundColor : undefined }}
+        >
           {ctaHeadline && (
             <h3 
               className="text-3xl font-bold mb-2"
@@ -593,18 +597,31 @@ export const EvergreenWebinarElement: React.FC<{
               {ctaSubheadline}
             </p>
           )}
-          <a
-            href={ctaButtonUrl}
-            target={ctaOpenNewTab ? '_blank' : '_self'}
-            rel={ctaOpenNewTab ? 'noopener noreferrer' : undefined}
-            className="inline-block px-8 py-4 rounded-lg font-semibold text-lg transition-transform hover:scale-105 shadow-lg"
-            style={{ 
-              backgroundColor: ctaButtonColor,
-              color: '#FFFFFF'
-            }}
-          >
-            {ctaButtonText}
-          </a>
+          {ctaButtonUrl ? (
+            <a
+              href={ctaButtonUrl}
+              target={ctaOpenNewTab ? '_blank' : '_self'}
+              rel={ctaOpenNewTab ? 'noopener noreferrer' : undefined}
+              className="inline-block px-8 py-4 rounded-lg font-semibold text-lg transition-transform hover:scale-105 shadow-lg"
+              style={{ 
+                backgroundColor: ctaButtonColor,
+                color: '#FFFFFF'
+              }}
+            >
+              {ctaButtonText}
+            </a>
+          ) : (
+            <div
+              className="inline-block px-8 py-4 rounded-lg font-semibold text-lg"
+              style={{ 
+                backgroundColor: ctaButtonColor,
+                color: '#FFFFFF',
+                opacity: 0.5
+              }}
+            >
+              {ctaButtonText || 'Click Here'}
+            </div>
+          )}
         </div>
       )}
     </div>

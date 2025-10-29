@@ -44,6 +44,7 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
     ctaButtonColor = '#3B82F6',
     ctaHeadlineColor = '#FFFFFF',
     ctaSubheadlineColor = '#E5E7EB',
+    ctaBackgroundColor = 'transparent',
   } = element.content as any;
 
   const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
@@ -313,6 +314,17 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
                 onChange={(color) => onUpdate('ctaSubheadlineColor', color)}
                 label="Subheadline Color"
               />
+            </div>
+
+            <div>
+              <ColorPicker
+                color={ctaBackgroundColor}
+                onChange={(color) => onUpdate('ctaBackgroundColor', color)}
+                label="Background Color"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Background color for the CTA section
+              </p>
             </div>
 
             <div>
