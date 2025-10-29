@@ -59,6 +59,7 @@ import {
   ImageCarouselProperties,
   VideoPlaylistProperties
 } from './MediaProperties';
+import { EvergreenWebinarContentProperties } from './EvergreenWebinarContentProperties';
 import {
   TextElementStyles,
   MediaElementStyles, 
@@ -81,6 +82,7 @@ import { CheckoutElementStyles } from './ElementStyles/CheckoutElementStyles';
 import { AccordionElementStyles } from './ElementStyles/AccordionElementStyles';
 import { FAQElementStyles } from './ElementStyles/FAQElementStyles';
 import { FormElementStyles } from './ElementStyles/FormElementStyles';
+import { EvergreenWebinarElementStyles } from './ElementStyles/EvergreenWebinarElementStyles';
 
 import { PageBuilderElement } from '../types';
 import { useDevicePreview } from '../contexts/DevicePreviewContext';
@@ -177,6 +179,11 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       return <TextElementStyles key={`text-${selectedElement.id}`} element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
     
+    // Evergreen Webinar has its own specialized styles
+    if (selectedElement.type === 'evergreen-webinar') {
+      return <EvergreenWebinarElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
+    }
+
     // Media elements (image, video, image-carousel, image-gallery, video-playlist)
     if (['image', 'video', 'image-carousel', 'image-gallery', 'video-playlist'].includes(selectedElement.type)) {
       return <MediaElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} onContentUpdate={handleContentUpdate} />;
@@ -457,6 +464,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
                 {selectedElement.type === 'video-playlist' && (
                   <VideoPlaylistProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {selectedElement.type === 'evergreen-webinar' && (
+                  <EvergreenWebinarContentProperties 
                     element={selectedElement} 
                     onUpdate={handleContentUpdate} 
                   />

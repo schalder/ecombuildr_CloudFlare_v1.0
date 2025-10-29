@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Image, Video, ChevronLeft, ChevronRight, Play } from 'lucide-react';
+import { Image, Video, ChevronLeft, ChevronRight, Play, Radio } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/components/ui/carousel';
@@ -9,6 +9,7 @@ import { InlineEditor } from '../components/InlineEditor';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 import { parseVideoUrl, buildEmbedUrl } from '../utils/videoUtils';
+import { EvergreenWebinarElement } from './EvergreenWebinarElement';
 
 // Image Gallery Element
 const ImageGalleryElement: React.FC<{
@@ -516,5 +517,32 @@ export const registerMediaElements = () => {
       ]
     },
     description: 'Multiple videos with playlist'
+  });
+
+  elementRegistry.register({
+    id: 'evergreen-webinar',
+    name: 'Evergreen Webinar',
+    category: 'media',
+    icon: Radio,
+    component: EvergreenWebinarElement,
+    defaultContent: {
+      videoUrl: '',
+      thumbnail: '',
+      enableCountdown: true,
+      countdownSeconds: 5,
+      enableChat: true,
+      viewerCount: 237,
+      showChatMessages: true,
+      showLiveBadge: true,
+      liveBadgePosition: 'top-right',
+      liveBadgeStyle: 'pulse-text',
+      muted: true,
+      widthByDevice: {
+        desktop: 'full',
+        tablet: 'full',
+        mobile: 'full'
+      }
+    },
+    description: 'Live-like webinar experience with countdown, chat, and live indicators'
   });
 };
