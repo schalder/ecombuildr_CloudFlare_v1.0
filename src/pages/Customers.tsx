@@ -23,9 +23,10 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, Users, Mail, Phone, MapPin, RefreshCw, Calendar } from "lucide-react";
+import { Search, Users, Mail, Phone, MapPin, RefreshCw, Calendar, Eye, EyeOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Customer {
@@ -50,6 +51,7 @@ export default function Customers() {
   const [currentPage, setCurrentPage] = useState(1);
   const customersPerPage = 15;
   const isMobile = useIsMobile();
+  const [blurSensitiveData, setBlurSensitiveData] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -207,16 +209,30 @@ export default function Customers() {
               className={`pl-10 text-foreground ${isMobile ? 'w-full' : 'w-80'}`}
             />
           </div>
-          <Button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            variant="outline"
-            size="sm"
-            className={isMobile ? 'w-full justify-center' : ''}
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              {blurSensitiveData ? (
+                <EyeOff className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Eye className="h-4 w-4 text-muted-foreground" />
+              )}
+              <label className="text-sm font-medium">Blur sensitive data</label>
+              <Switch 
+                checked={blurSensitiveData} 
+                onCheckedChange={setBlurSensitiveData}
+              />
+            </div>
+            <Button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              variant="outline"
+              size="sm"
+              className={isMobile ? 'w-full justify-center' : ''}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Customers Table */}
@@ -273,7 +289,9 @@ export default function Customers() {
                             </span>
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-sm truncate">{customer.full_name}</div>
+                            <div className="font-semibold text-sm truncate" style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
+                              {customer.full_name}
+                            </div>
                             <div className="text-xs text-muted-foreground">
                               {customer.total_orders} order{customer.total_orders !== 1 ? 's' : ''}
                             </div>
@@ -296,7 +314,9 @@ export default function Customers() {
                         {customer.phone && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Phone className="h-3 w-3 flex-shrink-0" />
-                            <span>{customer.phone}</span>
+                            <span style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
+                              {customer.phone}
+                            </span>
                           </div>
                         )}
                         {(customer.city || customer.area) && (
@@ -344,7 +364,9 @@ export default function Customers() {
                             </span>
                           </div>
                           <div>
-                            <div className="font-medium">{customer.full_name}</div>
+                            <div className="font-medium" style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
+                              {customer.full_name}
+                            </div>
                           </div>
                         </div>
                       </TableCell>
@@ -359,7 +381,9 @@ export default function Customers() {
                           {customer.phone && (
                             <div className="flex items-center gap-1 text-sm">
                               <Phone className="h-3 w-3" />
-                              {customer.phone}
+                              <span style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
+                                {customer.phone}
+                              </span>
                             </div>
                           )}
                         </div>

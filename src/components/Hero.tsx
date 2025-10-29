@@ -86,7 +86,7 @@ export const Hero = () => {
               
               <p className="text-xl md:text-2xl text-primary-light/90 max-w-xl mx-auto lg:mx-0">
                 Create conversion-driven online stores without coding. 
-                From landing pages to full e-commerce - everything you need to turn traffic into sales.
+                From landing pages to sales funnels - everything you need to turn traffic into sales.
               </p>
             </div>
 
