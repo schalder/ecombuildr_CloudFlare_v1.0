@@ -153,6 +153,7 @@ export const EvergreenWebinarElement: React.FC<{
     ctaHeadline = '',
     ctaSubheadline = '',
     ctaButtonText = 'Click Here',
+    ctaButtonSubtext = '',
     ctaButtonUrl = '',
     ctaOpenNewTab = true,
     ctaButtonColor = '#3B82F6',
@@ -604,31 +605,40 @@ export const EvergreenWebinarElement: React.FC<{
               {ctaSubheadline}
             </p>
           )}
-          {ctaButtonUrl ? (
-            <a
-              href={ctaButtonUrl}
-              target={ctaOpenNewTab ? '_blank' : '_self'}
-              rel={ctaOpenNewTab ? 'noopener noreferrer' : undefined}
-              className="inline-block px-8 py-4 rounded-lg font-semibold text-lg transition-transform hover:scale-105 shadow-lg"
-              style={{ 
-                backgroundColor: ctaButtonColor,
-                color: '#FFFFFF'
-              }}
-            >
-              {ctaButtonText}
-            </a>
-          ) : (
-            <div
-              className="inline-block px-8 py-4 rounded-lg font-semibold text-lg"
-              style={{ 
-                backgroundColor: ctaButtonColor,
-                color: '#FFFFFF',
-                opacity: 0.5
-              }}
-            >
-              {ctaButtonText || 'Click Here'}
-            </div>
-          )}
+          <div>
+            {ctaButtonUrl ? (
+              <a
+                href={ctaButtonUrl}
+                target={ctaOpenNewTab ? '_blank' : '_self'}
+                rel={ctaOpenNewTab ? 'noopener noreferrer' : undefined}
+                className="inline-block px-8 py-4 rounded-lg font-semibold text-lg transition-transform hover:scale-105 shadow-lg"
+                style={{ 
+                  backgroundColor: ctaButtonColor,
+                  color: '#FFFFFF'
+                }}
+              >
+                {ctaButtonText}
+              </a>
+            ) : (
+              <div
+                className="inline-block px-8 py-4 rounded-lg font-semibold text-lg"
+                style={{ 
+                  backgroundColor: ctaButtonColor,
+                  color: '#FFFFFF',
+                  opacity: 0.5
+                }}
+              >
+                {ctaButtonText || 'Click Here'}
+              </div>
+            )}
+            
+            {/* Button Sub Text */}
+            {ctaButtonSubtext && (
+              <p className="mt-3 text-sm text-gray-500">
+                {ctaButtonSubtext}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>

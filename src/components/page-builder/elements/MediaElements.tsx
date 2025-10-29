@@ -544,6 +544,7 @@ export const registerMediaElements = () => {
       ctaHeadline: '',
       ctaSubheadline: '',
       ctaButtonText: 'Click Here',
+      ctaButtonSubtext: '',
       ctaButtonUrl: '',
       ctaOpenNewTab: true,
       ctaButtonColor: '#3B82F6',

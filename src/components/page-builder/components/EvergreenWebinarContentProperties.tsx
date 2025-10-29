@@ -10,6 +10,7 @@ import { useDevicePreview } from '../contexts/DevicePreviewContext';
 import { Button } from '@/components/ui/button';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface EvergreenWebinarContentPropertiesProps {
   element: PageBuilderElement;
@@ -39,6 +40,7 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
     ctaHeadline = '',
     ctaSubheadline = '',
     ctaButtonText = 'Click Here',
+    ctaButtonSubtext = '',
     ctaButtonUrl = '',
     ctaOpenNewTab = true,
     ctaButtonColor = '#3B82F6',
@@ -63,197 +65,217 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
   const currentDeviceWidth = currentWidthByDevice[responsiveTab] || 'full';
 
   return (
-    <div className="space-y-4">
-      {/* Video URL */}
-      <div>
-        <Label htmlFor="video-url">YouTube Video URL *</Label>
-        <Input
-          id="video-url"
-          type="url"
-          value={videoUrl}
-          onChange={(e) => onUpdate('videoUrl', e.target.value)}
-          placeholder="https://www.youtube.com/watch?v=..."
-          required
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Enter the YouTube video URL for your webinar
-        </p>
-      </div>
-
-      {/* Thumbnail Upload */}
-      <div>
-        <Label htmlFor="thumbnail">Custom Thumbnail (Optional)</Label>
-        <ImageUpload
-          value={thumbnail}
-          onChange={(url) => onUpdate('thumbnail', url)}
-          accept="image/*"
-        />
-        <p className="text-xs text-muted-foreground mt-1">
-          Upload a custom thumbnail or leave empty to use YouTube thumbnail
-        </p>
-      </div>
-
-      {/* Countdown Settings */}
-      <div className="space-y-3 border-t pt-4">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="enable-countdown">Enable Countdown Timer</Label>
-          <Switch
-            id="enable-countdown"
-            checked={enableCountdown}
-            onCheckedChange={(checked) => onUpdate('enableCountdown', checked)}
-          />
-        </div>
-
-        {enableCountdown && (
+    <Accordion type="multiple" className="space-y-2">
+      {/* Video Settings */}
+      <AccordionItem value="video" className="border rounded-lg px-4">
+        <AccordionTrigger className="font-semibold">Video Settings</AccordionTrigger>
+        <AccordionContent className="space-y-4 pt-4">
+          {/* Video URL */}
           <div>
-            <Label htmlFor="countdown-seconds">Countdown Duration (seconds)</Label>
-            <div className="flex gap-2 mt-2">
-              <Slider
-                min={0}
-                max={300}
-                step={1}
-                value={[countdownSeconds]}
-                onValueChange={([value]) => onUpdate('countdownSeconds', value)}
-                className="flex-1"
-              />
-              <Input
-                id="countdown-seconds"
-                type="number"
-                min={0}
-                max={1800}
-                value={countdownSeconds}
-                onChange={(e) => onUpdate('countdownSeconds', parseInt(e.target.value) || 0)}
-                className="w-24"
-                placeholder="Seconds"
-              />
-            </div>
-            <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>0s (instant)</span>
-              <span>5min (300s)</span>
-            </div>
-            {countdownSeconds > 60 && (
-              <p className="text-xs text-green-600 mt-1">
-                {Math.floor(countdownSeconds / 60)}m {countdownSeconds % 60}s countdown
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground mt-2">
-              Enter any value from 0 (instant) to 1800 (30 minutes). Supports mm:ss format for long countdowns.
+            <Label htmlFor="video-url">YouTube Video URL *</Label>
+            <Input
+              id="video-url"
+              type="url"
+              value={videoUrl}
+              onChange={(e) => onUpdate('videoUrl', e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=..."
+              required
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Enter the YouTube video URL for your webinar
             </p>
           </div>
-        )}
-      </div>
 
-      {/* Live Chat Settings */}
-      <div className="space-y-3 border-t pt-4">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="enable-chat">Enable Live Chat</Label>
-          <Switch
-            id="enable-chat"
-            checked={enableChat}
-            onCheckedChange={(checked) => onUpdate('enableChat', checked)}
-          />
-        </div>
+          {/* Thumbnail Upload */}
+          <div>
+            <Label htmlFor="thumbnail">Custom Thumbnail (Optional)</Label>
+            <ImageUpload
+              value={thumbnail}
+              onChange={(url) => onUpdate('thumbnail', url)}
+              accept="image/*"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Upload a custom thumbnail or leave empty to use YouTube thumbnail
+            </p>
+          </div>
+        </AccordionContent>
+      </AccordionItem>
 
-        {enableChat && (
-          <>
+      {/* Countdown Timer */}
+      <AccordionItem value="countdown" className="border rounded-lg px-4">
+        <AccordionTrigger className="font-semibold">Countdown Timer</AccordionTrigger>
+        <AccordionContent className="space-y-3 pt-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="enable-countdown">Enable Countdown Timer</Label>
+            <Switch
+              id="enable-countdown"
+              checked={enableCountdown}
+              onCheckedChange={(checked) => onUpdate('enableCountdown', checked)}
+            />
+          </div>
+
+          {enableCountdown && (
             <div>
-              <Label htmlFor="viewer-count">Fake Viewer Count</Label>
-              <Input
-                id="viewer-count"
-                type="number"
-                value={viewerCount}
-                onChange={(e) => onUpdate('viewerCount', parseInt(e.target.value) || 0)}
-                min={1}
-                max={9999}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Number of fake viewers to display
+              <Label htmlFor="countdown-seconds">Countdown Duration (seconds)</Label>
+              <div className="flex gap-2 mt-2">
+                <Slider
+                  min={0}
+                  max={300}
+                  step={1}
+                  value={[countdownSeconds]}
+                  onValueChange={([value]) => onUpdate('countdownSeconds', value)}
+                  className="flex-1"
+                />
+                <Input
+                  id="countdown-seconds"
+                  type="number"
+                  min={0}
+                  max={1800}
+                  value={countdownSeconds}
+                  onChange={(e) => onUpdate('countdownSeconds', parseInt(e.target.value) || 0)}
+                  className="w-24"
+                  placeholder="Seconds"
+                />
+              </div>
+              <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                <span>0s (instant)</span>
+                <span>5min (300s)</span>
+              </div>
+              {countdownSeconds > 60 && (
+                <p className="text-xs text-green-600 mt-1">
+                  {Math.floor(countdownSeconds / 60)}m {countdownSeconds % 60}s countdown
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground mt-2">
+                Enter any value from 0 (instant) to 1800 (30 minutes). Supports mm:ss format for long countdowns.
               </p>
             </div>
+          )}
+        </AccordionContent>
+      </AccordionItem>
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="show-chat-messages">Show Chat Messages</Label>
-              <Switch
-                id="show-chat-messages"
-                checked={showChatMessages}
-                onCheckedChange={(checked) => onUpdate('showChatMessages', checked)}
-              />
-            </div>
+      {/* Live Chat & Engagement */}
+      <AccordionItem value="chat" className="border rounded-lg px-4">
+        <AccordionTrigger className="font-semibold">Live Chat & Engagement</AccordionTrigger>
+        <AccordionContent className="space-y-3 pt-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="enable-chat">Enable Live Chat</Label>
+            <Switch
+              id="enable-chat"
+              checked={enableChat}
+              onCheckedChange={(checked) => onUpdate('enableChat', checked)}
+            />
+          </div>
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="allow-user-messages">Allow Users to Send Messages</Label>
-              <Switch
-                id="allow-user-messages"
-                checked={element.content.allowUserMessages !== false}
-                onCheckedChange={(checked) => onUpdate('allowUserMessages', checked)}
-              />
-            </div>
-          </>
-        )}
-      </div>
+          {enableChat && (
+            <>
+              <div>
+                <Label htmlFor="viewer-count">Fake Viewer Count</Label>
+                <Input
+                  id="viewer-count"
+                  type="number"
+                  value={viewerCount}
+                  onChange={(e) => onUpdate('viewerCount', parseInt(e.target.value) || 0)}
+                  min={1}
+                  max={9999}
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Number of fake viewers to display
+                </p>
+              </div>
 
-      {/* Live Badge Settings */}
-      <div className="space-y-3 border-t pt-4">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="show-live-badge">Show LIVE Badge</Label>
-          <Switch
-            id="show-live-badge"
-            checked={showLiveBadge}
-            onCheckedChange={(checked) => onUpdate('showLiveBadge', checked)}
-          />
-        </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="show-chat-messages">Show Chat Messages</Label>
+                <Switch
+                  id="show-chat-messages"
+                  checked={showChatMessages}
+                  onCheckedChange={(checked) => onUpdate('showChatMessages', checked)}
+                />
+              </div>
 
-        {showLiveBadge && (
-          <>
-            <div>
-              <Label htmlFor="live-badge-position">Badge Position</Label>
-              <Select value={liveBadgePosition} onValueChange={(value) => onUpdate('liveBadgePosition', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="top-left">Top Left</SelectItem>
-                  <SelectItem value="top-right">Top Right</SelectItem>
-                  <SelectItem value="bottom-left">Bottom Left</SelectItem>
-                  <SelectItem value="bottom-right">Bottom Right</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="allow-user-messages">Allow Users to Send Messages</Label>
+                <Switch
+                  id="allow-user-messages"
+                  checked={element.content.allowUserMessages !== false}
+                  onCheckedChange={(checked) => onUpdate('allowUserMessages', checked)}
+                />
+              </div>
+            </>
+          )}
+        </AccordionContent>
+      </AccordionItem>
 
-            <div>
-              <Label htmlFor="live-badge-style">Badge Style</Label>
-              <Select value={liveBadgeStyle} onValueChange={(value) => onUpdate('liveBadgeStyle', value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pulse-text">Pulse Text (LIVE with pulse)</SelectItem>
-                  <SelectItem value="red-dot">Red Dot</SelectItem>
-                  <SelectItem value="pulse-bg">Pulsing Background</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </>
-        )}
-      </div>
+      {/* Live Badge */}
+      <AccordionItem value="badge" className="border rounded-lg px-4">
+        <AccordionTrigger className="font-semibold">Live Badge</AccordionTrigger>
+        <AccordionContent className="space-y-3 pt-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="show-live-badge">Show LIVE Badge</Label>
+            <Switch
+              id="show-live-badge"
+              checked={showLiveBadge}
+              onCheckedChange={(checked) => onUpdate('showLiveBadge', checked)}
+            />
+          </div>
 
-      {/* Audio Settings */}
-      <div className="space-y-3 border-t pt-4">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="muted">Start Muted</Label>
-          <Switch
-            id="muted"
-            checked={muted}
-            onCheckedChange={(checked) => onUpdate('muted', checked)}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Video will autoplay muted (recommended for better autoplay support)
-        </p>
-      </div>
+          {showLiveBadge && (
+            <>
+              <div>
+                <Label htmlFor="live-badge-position">Badge Position</Label>
+                <Select value={liveBadgePosition} onValueChange={(value) => onUpdate('liveBadgePosition', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="top-left">Top Left</SelectItem>
+                    <SelectItem value="top-right">Top Right</SelectItem>
+                    <SelectItem value="bottom-left">Bottom Left</SelectItem>
+                    <SelectItem value="bottom-right">Bottom Right</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-      {/* CTA Settings */}
-      <div className="space-y-3 border-t pt-4">
+              <div>
+                <Label htmlFor="live-badge-style">Badge Style</Label>
+                <Select value={liveBadgeStyle} onValueChange={(value) => onUpdate('liveBadgeStyle', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pulse-text">Pulse Text (LIVE with pulse)</SelectItem>
+                    <SelectItem value="red-dot">Red Dot</SelectItem>
+                    <SelectItem value="pulse-bg">Pulsing Background</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* Audio */}
+      <AccordionItem value="audio" className="border rounded-lg px-4">
+        <AccordionTrigger className="font-semibold">Audio</AccordionTrigger>
+        <AccordionContent className="space-y-3 pt-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="muted">Start Muted</Label>
+            <Switch
+              id="muted"
+              checked={muted}
+              onCheckedChange={(checked) => onUpdate('muted', checked)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Video will autoplay muted (recommended for better autoplay support)
+          </p>
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* Call to Action */}
+      <AccordionItem value="cta" className="border rounded-lg px-4">
+        <AccordionTrigger className="font-semibold">Call to Action</AccordionTrigger>
+        <AccordionContent className="space-y-3 pt-4">
         <div className="flex items-center justify-between">
           <Label htmlFor="enable-cta">Enable Call-to-Action</Label>
           <Switch
@@ -349,6 +371,19 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
             </div>
 
             <div>
+              <Label htmlFor="cta-button-subtext">Button Sub Text (Optional)</Label>
+              <Input
+                id="cta-button-subtext"
+                value={ctaButtonSubtext}
+                onChange={(e) => onUpdate('ctaButtonSubtext', e.target.value)}
+                placeholder="Limited time offer"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Small text that appears below the button
+              </p>
+            </div>
+
+            <div>
               <ColorPicker
                 color={ctaButtonColor}
                 onChange={(color) => onUpdate('ctaButtonColor', color)}
@@ -366,10 +401,13 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
             </div>
           </>
         )}
-      </div>
+        </AccordionContent>
+      </AccordionItem>
 
-      {/* Width Settings */}
-      <div className="border-t pt-4">
+      {/* Layout & Width */}
+      <AccordionItem value="layout" className="border rounded-lg px-4">
+        <AccordionTrigger className="font-semibold">Layout & Width</AccordionTrigger>
+        <AccordionContent className="space-y-3 pt-4">
         <div className="flex items-center justify-between mb-2">
           <Label htmlFor="webinar-width">Video Width</Label>
           <div className="flex space-x-1">
@@ -394,8 +432,9 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
             <SelectItem value="half">Half Width (50%)</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-    </div>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 };
 
