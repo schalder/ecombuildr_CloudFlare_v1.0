@@ -442,8 +442,8 @@ export const EvergreenWebinarElement: React.FC<{
 
         {/* Live Chat Panel */}
         {enableChat && showChatMessages && isPlaying && (
-          <div className={`bg-gray-900 rounded-lg flex flex-col ${deviceType === 'mobile' ? 'w-full mt-4' : 'w-80 flex-shrink-0'}`}>
-            <div className="p-4 border-b border-gray-700">
+          <div className={`bg-gray-900 rounded-lg flex flex-col ${deviceType === 'mobile' ? 'w-full mt-4' : 'w-80 flex-shrink-0'}`} style={{ height: deviceType === 'mobile' ? '350px' : '600px' }}>
+            <div className="p-4 border-b border-gray-700 flex-shrink-0">
               <div className="flex items-center gap-2 text-white">
                 <MessageCircle className="h-5 w-5" />
                 <h4 className="font-semibold">Live Chat</h4>
@@ -451,7 +451,7 @@ export const EvergreenWebinarElement: React.FC<{
             </div>
             
             {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ maxHeight: deviceType === 'mobile' ? '200px' : '500px' }}>
+            <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ minHeight: 0, maxHeight: '100%' }}>
               {chatMessages.map((msg) => (
                 <div key={msg.id} className={`text-sm animate-in slide-in-from-top duration-300 ${
                   msg.name === 'You' ? 'text-green-400' : 'text-white'
@@ -466,7 +466,7 @@ export const EvergreenWebinarElement: React.FC<{
 
             {/* Chat Input */}
             {allowUserMessages && (
-              <div className="p-4 border-t border-gray-700">
+              <div className="p-4 border-t border-gray-700 flex-shrink-0">
                 <div className="flex gap-2">
                   <input
                     type="text"
