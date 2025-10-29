@@ -484,13 +484,25 @@ export const EvergreenWebinarElement: React.FC<{
 
             {/* Unmute Button */}
             {!isUnmuted && (
-              <div className="absolute bottom-4 right-4 z-30">
+              <div className="absolute bottom-4 right-4 z-30 animate-bounce">
                 <button
                   onClick={handleUnmute}
-                  className="bg-white text-black px-4 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-100 shadow-lg font-medium"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-4 rounded-xl flex items-center gap-3 shadow-2xl font-semibold text-lg transform hover:scale-105 transition-all duration-300 animate-pulse hover:animate-none relative overflow-hidden group"
+                  style={{
+                    boxShadow: '0 10px 40px rgba(59, 130, 246, 0.5), 0 0 20px rgba(147, 51, 234, 0.5)'
+                  }}
                 >
-                  <Volume2 className="h-5 w-5" />
-                  <span>Unmute Sound</span>
+                  {/* Animated background glow */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 opacity-50 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
+                  
+                  {/* Button content */}
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="bg-white/30 rounded-full p-2 backdrop-blur-sm">
+                      <Volume2 className="h-6 w-6 animate-pulse" />
+                    </div>
+                    <span className="font-bold">Unmute Sound</span>
+                    <span className="text-2xl animate-pulse">🔊</span>
+                  </div>
                 </button>
               </div>
             )}
