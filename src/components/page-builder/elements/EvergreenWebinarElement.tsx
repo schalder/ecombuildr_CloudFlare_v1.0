@@ -323,42 +323,41 @@ export const EvergreenWebinarElement: React.FC<{
     url.searchParams.set('mute', shouldMute ? '1' : '0'); // Start muted for autoplay
     url.searchParams.set('playsinline', '1');
     url.searchParams.set('disablekb', '1'); // Disable keyboard controls
-    url.searchParams.set('enablejsapi', '1'); // Enable JavaScript API for postMessage (needed for mobile unmute)
+    url.searchParams.set('enablejsapi', '1'); // Enable JavaScript API for control
     
     return url.toString();
   };
 
-  // Handle unmute - reload iframe with unmuted URL
+  // Handle unmute - use postMessage to unmute without reloading (preserves playing state)
   const handleUnmute = () => {
-    // Detect mobile devices
-    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
-    // Set unmuted state immediately
+    // Mark as unmuted immediately to hide button
     setIsUnmuted(true);
     
-    if (isMobileDevice && playerRef.current) {
-      // For mobile: Update iframe src directly to preserve user interaction context
-      // This is better than reloading which breaks autoplay on mobile
-      const unmutedUrl = buildEmbedUrl(false);
-      if (playerRef.current.src !== unmutedUrl) {
-        playerRef.current.src = unmutedUrl;
-      }
+    // Unmute using postMessage without reloading
+    // This preserves the playing state on mobile (critical fix)
+    if (playerRef.current && playerRef.current.contentWindow) {
+      // Multiple attempts with different formats for better compatibility
+      const messages = [
+        JSON.stringify({ event: 'command', func: 'unMute', args: '' }),
+        JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }),
+        '{"event":"command","func":"unMute","args":""}',
+        '{"event":"command","func":"mute","args":[0]}'
+      ];
       
-      // Also try postMessage to ensure video plays
-      setTimeout(() => {
-        try {
-          const iframeWindow = playerRef.current?.contentWindow;
-          if (iframeWindow) {
-            // Send play command to ensure video plays after unmuting
-            iframeWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+      messages.forEach((message, index) => {
+        setTimeout(() => {
+          try {
+            if (playerRef.current?.contentWindow) {
+              playerRef.current.contentWindow.postMessage(
+                message,
+                'https://www.youtube.com'
+              );
+            }
+          } catch (e) {
+            // Silently fail - one of the messages should work
           }
-        } catch (e) {
-          // Ignore errors
-        }
-      }, 100);
-    } else {
-      // For desktop: Use key change to reload iframe (works fine on desktop)
-      setIframeKey(prev => prev + 1);
+        }, index * 50); // Stagger the messages for better success rate
+      });
     }
   };
 
@@ -490,7 +489,7 @@ export const EvergreenWebinarElement: React.FC<{
             <iframe
               key={iframeKey}
               ref={playerRef}
-              src={buildEmbedUrl(!isUnmuted)}
+              src={buildEmbedUrl(true)}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
