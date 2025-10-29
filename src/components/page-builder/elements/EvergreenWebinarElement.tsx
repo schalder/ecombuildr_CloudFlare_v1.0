@@ -533,9 +533,11 @@ export const EvergreenWebinarElement: React.FC<{
             className={`bg-gray-900 rounded-lg flex flex-col ${
               deviceType === 'mobile' 
                 ? 'w-full mt-4 h-[350px]' 
-                : 'w-80 flex-shrink-0 h-full'
+                : 'w-80 flex-shrink-0'
             }`}
-            style={deviceType === 'mobile' ? { minHeight: '250px' } : {}}
+            style={deviceType === 'mobile' 
+              ? { minHeight: '250px' } 
+              : { height: '4080px' }}
           >
             <div className="p-4 border-b border-gray-700 flex-shrink-0">
               <div className="flex items-center gap-2 text-white">
