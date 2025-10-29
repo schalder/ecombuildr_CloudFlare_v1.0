@@ -423,11 +423,29 @@ export const EvergreenWebinarElement: React.FC<{
               allowFullScreen
             />
             
-            {/* Overlay to block right-click only */}
-            <div 
-              className="absolute inset-0 pointer-events-none"
-              onContextMenu={(e) => e.preventDefault()}
-            />
+            {/* Blocking overlay to prevent all interactions - shown after unmuting for live-like feel */}
+            {isUnmuted && (
+              <div 
+                className="absolute inset-0 z-10"
+                onContextMenu={(e) => e.preventDefault()}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => e.preventDefault()}
+                onDoubleClick={(e) => e.preventDefault()}
+                style={{ 
+                  pointerEvents: 'auto',
+                  touchAction: 'none',
+                  cursor: 'default'
+                }}
+              />
+            )}
+
+            {/* Overlay to block right-click only when muted */}
+            {!isUnmuted && (
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                onContextMenu={(e) => e.preventDefault()}
+              />
+            )}
 
             {/* Unmute Button */}
             {!isUnmuted && (
@@ -456,7 +474,7 @@ export const EvergreenWebinarElement: React.FC<{
 
         {/* Live Chat Panel */}
         {enableChat && showChatMessages && isPlaying && (
-          <div className={`bg-gray-900 rounded-lg flex flex-col ${deviceType === 'mobile' ? 'w-full mt-4' : 'w-80 flex-shrink-0'}`} style={{ height: deviceType === 'mobile' ? '350px' : '600px' }}>
+          <div className={`bg-gray-900 rounded-lg flex flex-col ${deviceType === 'mobile' ? 'w-full mt-4' : 'w-80 flex-shrink-0'}`} style={{ height: deviceType === 'mobile' ? '350px' : '500px' }}>
             <div className="p-4 border-b border-gray-700 flex-shrink-0">
               <div className="flex items-center gap-2 text-white">
                 <MessageCircle className="h-5 w-5" />
