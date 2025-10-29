@@ -44,6 +44,18 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [expired, setExpired] = useState(false);
+  const [fixedTargetTime, setFixedTargetTime] = useState<number | null>(null);
+
+  // Calculate and store fixed target time once when mode or duration changes
+  useEffect(() => {
+    if (mode === 'fixed' && !isEditing) {
+      const totalMs = (duration.days * 24 * 60 * 60 + duration.hours * 60 * 60 + duration.minutes * 60 + duration.seconds) * 1000;
+      setFixedTargetTime(Date.now() + totalMs);
+      setExpired(false); // Reset expired state when duration changes
+    } else if (mode !== 'fixed') {
+      setFixedTargetTime(null); // Clear stored time for other modes
+    }
+  }, [mode, duration, isEditing]);
 
   const calculateTimeLeft = useCallback(() => {
     let targetTime: number;
@@ -60,8 +72,14 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
       const totalMs = (duration.days * 24 * 60 * 60 + duration.hours * 60 * 60 + duration.minutes * 60 + duration.seconds) * 1000;
       targetTime = parseInt(startTime) + totalMs;
     } else if (mode === 'fixed') {
-      const totalMs = (duration.days * 24 * 60 * 60 + duration.hours * 60 * 60 + duration.minutes * 60 + duration.seconds) * 1000;
-      targetTime = Date.now() + totalMs;
+      // Use stored target time (calculated once on mount)
+      if (fixedTargetTime === null) {
+        // Fallback if not set yet (shouldn't happen, but safety check)
+        const totalMs = (duration.days * 24 * 60 * 60 + duration.hours * 60 * 60 + duration.minutes * 60 + duration.seconds) * 1000;
+        targetTime = Date.now() + totalMs;
+      } else {
+        targetTime = fixedTargetTime;
+      }
     } else if (mode === 'date' && targetDate) {
       targetTime = new Date(targetDate).getTime();
     } else {
@@ -87,7 +105,7 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
       minutes: Math.floor((difference / 1000 / 60) % 60),
       seconds: Math.floor((difference / 1000) % 60)
     };
-  }, [mode, duration, targetDate, element.id]);
+  }, [mode, duration, targetDate, element.id, fixedTargetTime]);
 
   useEffect(() => {
     if (isEditing) return; // Don't run timer in edit mode
