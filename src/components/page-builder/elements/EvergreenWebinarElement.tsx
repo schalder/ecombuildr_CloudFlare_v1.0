@@ -593,7 +593,7 @@ export const EvergreenWebinarElement: React.FC<{
         >
           {ctaHeadline && (
             <h3 
-              className="text-3xl font-bold mb-2"
+              className="text-3xl font-bold mb-2 whitespace-pre-line"
               style={{ color: ctaHeadlineColor }}
             >
               {ctaHeadline}
@@ -601,7 +601,7 @@ export const EvergreenWebinarElement: React.FC<{
           )}
           {ctaSubheadline && (
             <p 
-              className="text-lg mb-4"
+              className="text-lg mb-4 whitespace-pre-line"
               style={{ color: ctaSubheadlineColor }}
             >
               {ctaSubheadline}

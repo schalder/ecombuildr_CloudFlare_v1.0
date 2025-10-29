@@ -1,5 +1,6 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -304,11 +305,13 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
 
             <div>
               <Label htmlFor="cta-headline">Headline (Optional)</Label>
-              <Input
+              <Textarea
                 id="cta-headline"
                 value={ctaHeadline}
                 onChange={(e) => onUpdate('ctaHeadline', e.target.value)}
                 placeholder="Special Offer Today Only!"
+                rows={3}
+                className="resize-none"
               />
             </div>
 
@@ -322,11 +325,13 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
 
             <div>
               <Label htmlFor="cta-subheadline">Subheadline (Optional)</Label>
-              <Input
+              <Textarea
                 id="cta-subheadline"
                 value={ctaSubheadline}
                 onChange={(e) => onUpdate('ctaSubheadline', e.target.value)}
                 placeholder="Don't miss this exclusive deal"
+                rows={3}
+                className="resize-none"
               />
             </div>
 
