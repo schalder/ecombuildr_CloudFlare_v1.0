@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Users, MessageCircle, Radio } from 'lucide-react';
+import { Play, Users, MessageCircle, Radio, Volume2 } from 'lucide-react';
 import { PageBuilderElement } from '../types';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { parseVideoUrl } from '../utils/videoUtils';
@@ -155,6 +155,8 @@ export const EvergreenWebinarElement: React.FC<{
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentViewerCount, setCurrentViewerCount] = useState(viewerCount);
   const [userMessage, setUserMessage] = useState('');
+  const [isUnmuted, setIsUnmuted] = useState(false);
+  const [iframeKey, setIframeKey] = useState(0);
   const playerRef = useRef<HTMLIFrameElement>(null);
 
   // Parse video URL
@@ -261,7 +263,7 @@ export const EvergreenWebinarElement: React.FC<{
   };
 
   // Build YouTube embed URL with all customization
-  const buildEmbedUrl = (shouldMute: boolean = false) => {
+  const buildEmbedUrl = (shouldMute: boolean = true) => {
     if (!videoInfo || videoInfo.type !== 'youtube') return '';
     
     const url = new URL(`https://www.youtube.com/embed/${videoInfo.id}`);
@@ -274,11 +276,17 @@ export const EvergreenWebinarElement: React.FC<{
     url.searchParams.set('fs', '0'); // Disable fullscreen
     url.searchParams.set('iv_load_policy', '3'); // Hide annotations
     url.searchParams.set('loop', '1'); // Loop video
-    url.searchParams.set('mute', shouldMute ? '1' : '0'); // Start unmuted for sound
+    url.searchParams.set('mute', shouldMute ? '1' : '0'); // Start muted for autoplay
     url.searchParams.set('playsinline', '1');
     url.searchParams.set('disablekb', '1'); // Disable keyboard controls
     
     return url.toString();
+  };
+
+  // Handle unmute - reload iframe with unmuted URL
+  const handleUnmute = () => {
+    setIframeKey(prev => prev + 1);
+    setIsUnmuted(true);
   };
 
   const containerStyles = renderElementStyles(element, deviceType);
@@ -407,26 +415,32 @@ export const EvergreenWebinarElement: React.FC<{
         {showVideo && videoInfo && (
           <>
             <iframe
+              key={iframeKey}
               ref={playerRef}
-              src={buildEmbedUrl(false)}
+              src={buildEmbedUrl(!isUnmuted)}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              style={{ pointerEvents: 'none' }} // Disable all iframe interactions
             />
             
-            {/* Invisible overlay to block ALL interactions with iframe */}
+            {/* Overlay to block right-click only */}
             <div 
-              className="absolute inset-0 bg-transparent z-10 cursor-default"
+              className="absolute inset-0 pointer-events-none"
               onContextMenu={(e) => e.preventDefault()}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={(e) => e.preventDefault()}
-              onDoubleClick={(e) => e.preventDefault()}
-              style={{ 
-                pointerEvents: 'auto',
-                touchAction: 'none'
-              }}
             />
+
+            {/* Unmute Button */}
+            {!isUnmuted && (
+              <div className="absolute bottom-4 right-4 z-30">
+                <button
+                  onClick={handleUnmute}
+                  className="bg-white text-black px-4 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-100 shadow-lg font-medium"
+                >
+                  <Volume2 className="h-5 w-5" />
+                  <span>Unmute Sound</span>
+                </button>
+              </div>
+            )}
           </>
         )}
 
