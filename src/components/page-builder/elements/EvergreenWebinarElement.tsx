@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Users, MessageCircle, Radio, RadioIcon, Volume2, VolumeX } from 'lucide-react';
+import { Play, Users, MessageCircle, Radio } from 'lucide-react';
 import { PageBuilderElement } from '../types';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { parseVideoUrl } from '../utils/videoUtils';
@@ -154,11 +154,8 @@ export const EvergreenWebinarElement: React.FC<{
   const [showVideo, setShowVideo] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentViewerCount, setCurrentViewerCount] = useState(viewerCount);
-  const [isUnmuted, setIsUnmuted] = useState(false);
-  const [showUnmuteButton, setShowUnmuteButton] = useState(false);
   const [userMessage, setUserMessage] = useState('');
   const playerRef = useRef<HTMLIFrameElement>(null);
-  const unmuteAttempts = useRef(0);
 
   // Parse video URL
   const videoInfo = videoUrl ? parseVideoUrl(videoUrl) : null;
@@ -247,36 +244,7 @@ export const EvergreenWebinarElement: React.FC<{
     }
   }, [enableChat, isPlaying]);
 
-  // Show unmute button when video starts playing
-  useEffect(() => {
-    if (showVideo && videoInfo && !isUnmuted) {
-      // Show the unmute button after 1 second of video playing
-      const timer = setTimeout(() => {
-        setShowUnmuteButton(true);
-      }, 1000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [showVideo, videoInfo, isUnmuted]);
-
-  // Handle unmute button click
-  const handleUnmute = () => {
-    if (playerRef.current?.contentWindow) {
-      // Try to unmute multiple times
-      for (let i = 0; i < 5; i++) {
-        setTimeout(() => {
-          if (playerRef.current?.contentWindow) {
-            playerRef.current.contentWindow.postMessage(
-              '{"event":"command","func":"unMute","args":""}',
-              '*'
-            );
-          }
-        }, i * 200); // Try every 200ms for 1 second
-      }
-      setIsUnmuted(true);
-      setShowUnmuteButton(false);
-    }
-  };
+  // Note: Video starts with sound (mute=0) by default for proper audio playback
 
   // Handle sending user chat message
   const handleSendMessage = () => {
@@ -293,7 +261,7 @@ export const EvergreenWebinarElement: React.FC<{
   };
 
   // Build YouTube embed URL with all customization
-  const buildEmbedUrl = () => {
+  const buildEmbedUrl = (shouldMute: boolean = false) => {
     if (!videoInfo || videoInfo.type !== 'youtube') return '';
     
     const url = new URL(`https://www.youtube.com/embed/${videoInfo.id}`);
@@ -306,7 +274,7 @@ export const EvergreenWebinarElement: React.FC<{
     url.searchParams.set('fs', '0'); // Disable fullscreen
     url.searchParams.set('iv_load_policy', '3'); // Hide annotations
     url.searchParams.set('loop', '1'); // Loop video
-    url.searchParams.set('mute', '1'); // Start muted (will unmute via JS)
+    url.searchParams.set('mute', shouldMute ? '1' : '0'); // Start unmuted for sound
     url.searchParams.set('playsinline', '1');
     url.searchParams.set('disablekb', '1'); // Disable keyboard controls
     
@@ -440,7 +408,7 @@ export const EvergreenWebinarElement: React.FC<{
           <>
             <iframe
               ref={playerRef}
-              src={buildEmbedUrl()}
+              src={buildEmbedUrl(false)}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
@@ -470,20 +438,6 @@ export const EvergreenWebinarElement: React.FC<{
           </div>
         )}
 
-        {/* Unmute Button */}
-        {showUnmuteButton && isPlaying && (
-          <div className="absolute bottom-4 right-4 z-30">
-            <button
-              onClick={handleUnmute}
-              onContextMenu={(e) => e.preventDefault()}
-              className="bg-white text-black px-4 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition-colors shadow-lg font-medium"
-              style={{ pointerEvents: 'auto' }}
-            >
-              <Volume2 className="h-5 w-5" />
-              <span>Unmute Sound</span>
-            </button>
-          </div>
-        )}
         </div>
 
         {/* Live Chat Panel */}
