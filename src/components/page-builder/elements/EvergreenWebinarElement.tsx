@@ -537,7 +537,7 @@ export const EvergreenWebinarElement: React.FC<{
             }`}
             style={deviceType === 'mobile' 
               ? { minHeight: '250px' } 
-              : { height: '4080px' }}
+              : { height: '480px' }}
           >
             <div className="p-4 border-b border-gray-700 flex-shrink-0">
               <div className="flex items-center gap-2 text-white">
