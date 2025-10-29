@@ -328,37 +328,32 @@ export const EvergreenWebinarElement: React.FC<{
     return url.toString();
   };
 
-  // Handle unmute - use postMessage to unmute without reloading (preserves playing state)
+  // Handle unmute - simply unmute the already-playing video
   const handleUnmute = () => {
-    // Mark as unmuted immediately to hide button
     setIsUnmuted(true);
     
-    // Unmute using postMessage without reloading
-    // This preserves the playing state on mobile (critical fix)
-    if (playerRef.current && playerRef.current.contentWindow) {
-      // Multiple attempts with different formats for better compatibility
-      const messages = [
-        JSON.stringify({ event: 'command', func: 'unMute', args: '' }),
-        JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }),
-        '{"event":"command","func":"unMute","args":""}',
-        '{"event":"command","func":"mute","args":[0]}'
-      ];
-      
-      messages.forEach((message, index) => {
-        setTimeout(() => {
-          try {
-            if (playerRef.current?.contentWindow) {
-              playerRef.current.contentWindow.postMessage(
-                message,
-                'https://www.youtube.com'
-              );
-            }
-          } catch (e) {
-            // Silently fail - one of the messages should work
+    // Simple unmute - video is already playing muted, just unmute audio
+    const unmuteVideo = (retries = 3) => {
+      if (playerRef.current?.contentWindow) {
+        try {
+          playerRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'unMute', args: '' }),
+            'https://www.youtube.com'
+          );
+        } catch (e) {
+          if (retries > 0) {
+            // Retry if iframe not ready yet
+            setTimeout(() => unmuteVideo(retries - 1), 200);
           }
-        }, index * 50); // Stagger the messages for better success rate
-      });
-    }
+        }
+      } else if (retries > 0) {
+        // Iframe not ready, retry
+        setTimeout(() => unmuteVideo(retries - 1), 200);
+      }
+    };
+    
+    // Try immediately, retry if needed
+    unmuteVideo();
   };
 
   const containerStyles = renderElementStyles(element, deviceType);
