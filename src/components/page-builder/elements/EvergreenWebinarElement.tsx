@@ -482,19 +482,34 @@ export const EvergreenWebinarElement: React.FC<{
               />
             )}
 
-            {/* Unmute Button */}
+            {/* Unmute Button - Centered */}
             {!isUnmuted && (
-              <div className="absolute bottom-4 right-4 z-30">
+              <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
                 <button
                   onClick={handleUnmute}
-                  className="bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-lg flex items-center gap-2 shadow-lg font-medium transition-all duration-200 hover:shadow-xl"
+                  className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 shadow-2xl font-semibold text-lg transition-all duration-300 hover:scale-105 pointer-events-auto"
                   style={{
-                    boxShadow: '0 4px 12px rgba(239, 68, 68, 0.4)'
+                    boxShadow: '0 8px 32px rgba(239, 68, 68, 0.5)',
+                    animation: 'smooth-pulse 2s ease-in-out infinite'
                   }}
                 >
-                  <Volume2 className="h-5 w-5 animate-pulse" />
+                  <Volume2 className="h-6 w-6" />
                   <span>Unmute Sound</span>
                 </button>
+                
+                {/* CSS for smooth pulse animation */}
+                <style>{`
+                  @keyframes smooth-pulse {
+                    0%, 100% {
+                      opacity: 1;
+                      transform: scale(1);
+                    }
+                    50% {
+                      opacity: 0.85;
+                      transform: scale(1.05);
+                    }
+                  }
+                `}</style>
               </div>
             )}
           </>
