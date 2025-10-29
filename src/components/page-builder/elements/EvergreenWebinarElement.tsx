@@ -174,6 +174,7 @@ export const EvergreenWebinarElement: React.FC<{
   const [videoTime, setVideoTime] = useState(0);
   const playerRef = useRef<HTMLIFrameElement>(null);
   const videoTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const chatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Parse video URL
   const videoInfo = videoUrl ? parseVideoUrl(videoUrl) : null;
@@ -223,31 +224,37 @@ export const EvergreenWebinarElement: React.FC<{
       }
       setChatMessages(initialMessages);
 
-      // Add new messages periodically
-      const addMessage = () => {
-        setChatMessages((prev) => {
-          const newMessage: ChatMessage = {
-            id: `msg-${Date.now()}`,
-            name: fakeNames[Math.floor(Math.random() * fakeNames.length)],
-            message: chatMessagePool[Math.floor(Math.random() * chatMessagePool.length)],
-            timestamp: Date.now(),
-          };
-          // Keep only last 15 messages
-          return [...prev.slice(-14), newMessage];
-        });
+      // Add new messages periodically with random timing
+      const scheduleNextMessage = () => {
+        // Random delay between 12-30 seconds for more realistic, slower chat
+        const delay = 12000 + Math.random() * 18000;
+        
+        chatTimeoutRef.current = setTimeout(() => {
+          setChatMessages((prev) => {
+            const newMessage: ChatMessage = {
+              id: `msg-${Date.now()}`,
+              name: fakeNames[Math.floor(Math.random() * fakeNames.length)],
+              message: chatMessagePool[Math.floor(Math.random() * chatMessagePool.length)],
+              timestamp: Date.now(),
+            };
+            // Keep only last 15 messages
+            return [...prev.slice(-14), newMessage];
+          });
+          
+          // Schedule next message recursively
+          scheduleNextMessage();
+        }, delay);
       };
 
-      // Initial delay then periodic messages - slower for realistic feel
-      const interval1 = setTimeout(() => {
-        addMessage();
-        const interval2 = setInterval(() => {
-          addMessage();
-        }, 8000 + Math.random() * 12000); // 8-20 seconds apart for realistic live chat
-        return () => clearInterval(interval2);
-      }, 5000);
+      // Start message scheduling with initial delay
+      chatTimeoutRef.current = setTimeout(() => {
+        scheduleNextMessage();
+      }, 10000); // Wait 10 seconds before first fake message
 
       return () => {
-        clearTimeout(interval1);
+        if (chatTimeoutRef.current) {
+          clearTimeout(chatTimeoutRef.current);
+        }
       };
     }
   }, [enableChat, isPlaying, showChatMessages]);
@@ -549,7 +556,7 @@ export const EvergreenWebinarElement: React.FC<{
             {/* Chat Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2" style={{ minHeight: 0, maxHeight: '100%' }}>
               {chatMessages.map((msg) => (
-                <div key={msg.id} className={`text-sm animate-in slide-in-from-top duration-300 ${
+                <div key={msg.id} className={`text-sm animate-in slide-in-from-bottom duration-300 ${
                   msg.name === 'You' ? 'text-green-400' : 'text-white'
                 }`}>
                   <span className={`font-medium ${msg.name === 'You' ? 'text-green-300' : 'text-blue-400'}`}>
