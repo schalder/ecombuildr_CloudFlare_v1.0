@@ -91,6 +91,7 @@ export const EvergreenWebinarElement: React.FC<{
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentViewerCount, setCurrentViewerCount] = useState(viewerCount);
   const playerRef = useRef<HTMLIFrameElement>(null);
+  const unmuteAttempts = useRef(0);
 
   // Parse video URL
   const videoInfo = videoUrl ? parseVideoUrl(videoUrl) : null;
@@ -179,23 +180,47 @@ export const EvergreenWebinarElement: React.FC<{
     }
   }, [enableChat, isPlaying]);
 
-  // Unmute video after it starts playing (for live-like experience)
+  // Unmute video after it starts playing (try multiple times)
   useEffect(() => {
-    if (showVideo && videoInfo && muted) {
-      // Wait 2 seconds after video starts, then unmute
-      const unmuteTimer = setTimeout(() => {
-        if (playerRef.current) {
-          // Post message to YouTube iframe to unmute
-          playerRef.current.contentWindow?.postMessage(
+    if (showVideo && videoInfo) {
+      // Try to unmute multiple times at different intervals
+      const unmuteTimers: NodeJS.Timeout[] = [];
+      
+      // Try immediately
+      unmuteTimers.push(setTimeout(() => {
+        if (playerRef.current?.contentWindow) {
+          playerRef.current.contentWindow.postMessage(
             '{"event":"command","func":"unMute","args":""}',
             '*'
           );
         }
-      }, 2000);
+      }, 500));
       
-      return () => clearTimeout(unmuteTimer);
+      // Try after 1 second
+      unmuteTimers.push(setTimeout(() => {
+        if (playerRef.current?.contentWindow) {
+          playerRef.current.contentWindow.postMessage(
+            '{"event":"command","func":"unMute","args":""}',
+            '*'
+          );
+        }
+      }, 1500));
+      
+      // Try after 3 seconds
+      unmuteTimers.push(setTimeout(() => {
+        if (playerRef.current?.contentWindow) {
+          playerRef.current.contentWindow.postMessage(
+            '{"event":"command","func":"unMute","args":""}',
+            '*'
+          );
+        }
+      }, 3000));
+      
+      return () => {
+        unmuteTimers.forEach(timer => clearTimeout(timer));
+      };
     }
-  }, [showVideo, videoInfo, muted]);
+  }, [showVideo, videoInfo]);
 
   // Build YouTube embed URL with all customization
   const buildEmbedUrl = () => {
@@ -259,6 +284,16 @@ export const EvergreenWebinarElement: React.FC<{
     return `${baseStyles} ${positionStyles[liveBadgePosition as keyof typeof positionStyles]}`;
   };
 
+  // Format countdown display based on seconds
+  const formatCountdown = (seconds: number) => {
+    if (seconds < 60) {
+      return seconds.toString();
+    }
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div style={cleanContainerStyles} className={`${widthClasses[effectiveWidth as keyof typeof widthClasses] || 'w-full'}`}>
       <div 
@@ -304,8 +339,10 @@ export const EvergreenWebinarElement: React.FC<{
                 <div className="text-center">
                   {countdown > 0 ? (
                     <div className="text-white">
-                      <div className="text-9xl font-bold animate-pulse">{countdown}</div>
-                      <div className="text-2xl mt-4">Starting in...</div>
+                      <div className="text-9xl font-bold animate-pulse">{formatCountdown(countdown)}</div>
+                      <div className="text-2xl mt-4">
+                        {countdown > 60 ? 'শুরু হবে...' : 'Starting in...'}
+                      </div>
                     </div>
                   ) : (
                     <div className="text-white text-6xl font-bold animate-pulse">LIVE!</div>

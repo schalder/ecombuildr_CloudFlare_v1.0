@@ -93,22 +93,38 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
 
         {enableCountdown && (
           <div>
-            <Label htmlFor="countdown-seconds">Countdown Duration: {countdownSeconds} seconds</Label>
-            <Slider
-              id="countdown-seconds"
-              min={0}
-              max={30}
-              step={1}
-              value={[countdownSeconds]}
-              onValueChange={([value]) => onUpdate('countdownSeconds', value)}
-              className="mt-2"
-            />
+            <Label htmlFor="countdown-seconds">Countdown Duration (seconds)</Label>
+            <div className="flex gap-2 mt-2">
+              <Slider
+                min={0}
+                max={300}
+                step={1}
+                value={[countdownSeconds]}
+                onValueChange={([value]) => onUpdate('countdownSeconds', value)}
+                className="flex-1"
+              />
+              <Input
+                id="countdown-seconds"
+                type="number"
+                min={0}
+                max={1800}
+                value={countdownSeconds}
+                onChange={(e) => onUpdate('countdownSeconds', parseInt(e.target.value) || 0)}
+                className="w-24"
+                placeholder="Seconds"
+              />
+            </div>
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
               <span>0s (instant)</span>
-              <span>30s</span>
+              <span>5min (300s)</span>
             </div>
+            {countdownSeconds > 60 && (
+              <p className="text-xs text-green-600 mt-1">
+                {Math.floor(countdownSeconds / 60)}m {countdownSeconds % 60}s countdown
+              </p>
+            )}
             <p className="text-xs text-muted-foreground mt-2">
-              Set to 0 for instant start, or up to 30 seconds for a live countdown effect
+              Enter any value from 0 (instant) to 1800 (30 minutes). Supports mm:ss format for long countdowns.
             </p>
           </div>
         )}
