@@ -99,15 +99,15 @@ export const EvergreenWebinarElementStyles: React.FC<EvergreenWebinarElementStyl
       {/* Device Toggle */}
       <div className="flex items-center justify-between">
         <Label className="text-xs">Device</Label>
-        <div className="flex space-x-2">
-          <Button size="sm" variant={responsiveTab === 'desktop' ? 'default' : 'outline'} onClick={() => setResponsiveTab('desktop')}>
-            <Monitor className="h-4 w-4 mr-1" /> Desktop
+        <div className="flex space-x-1">
+          <Button size="sm" variant={responsiveTab === 'desktop' ? 'default' : 'outline'} onClick={() => setResponsiveTab('desktop')} title="Desktop">
+            <Monitor className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant={responsiveTab === 'tablet' ? 'default' : 'outline'} onClick={() => setResponsiveTab('tablet')}>
-            <Tablet className="h-4 w-4 mr-1" /> Tablet
+          <Button size="sm" variant={responsiveTab === 'tablet' ? 'default' : 'outline'} onClick={() => setResponsiveTab('tablet')} title="Tablet">
+            <Tablet className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant={responsiveTab === 'mobile' ? 'default' : 'outline'} onClick={() => setResponsiveTab('mobile')}>
-            <Smartphone className="h-4 w-4 mr-1" /> Mobile
+          <Button size="sm" variant={responsiveTab === 'mobile' ? 'default' : 'outline'} onClick={() => setResponsiveTab('mobile')} title="Mobile">
+            <Smartphone className="h-4 w-4" />
           </Button>
         </div>
       </div>

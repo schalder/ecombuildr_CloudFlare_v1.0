@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Users, MessageCircle, Radio, RadioIcon } from 'lucide-react';
+import { Play, Users, MessageCircle, Radio, RadioIcon, Volume2, VolumeX } from 'lucide-react';
 import { PageBuilderElement } from '../types';
 import { renderElementStyles } from '../utils/styleRenderer';
 import { parseVideoUrl } from '../utils/videoUtils';
@@ -51,7 +51,70 @@ const chatMessagePool = [
   "আমার কনফিউশন এখন ক্লিয়ার",
   "আজকে যা শিখলাম, লাইফ চেঞ্জিং",
   "এটা তো একদম আমার সমস্যার সলিউশন",
-  "আমি থাকছি শেষ পর্যন্ত"
+  "আমি থাকছি শেষ পর্যন্ত",
+  "অসাধারণ প্রেজেন্টেশন",
+  "আপনার ভয়েস এবং টিচিং স্টাইল খুব ভালো লেগেছে",
+  "একদম বুঝতে পারছি এখন",
+  "আমি নোটস নিয়ে ফেলেছি",
+  "এটা আগে জানলে অনেক লাভ হতো",
+  "প্র্যাকটিক্যাল উদাহরণগুলো দারুণ",
+  "এই গাইডলাইনটা আমার ব্যবসাকে এগিয়ে নেবে",
+  "আগে কোথাও এত ক্লিয়ার পাইনি",
+  "এখন থেকে নতুনভাবে কাজ করবো",
+  "আজকের সেশন সত্যিই ভ্যালু-প্যাকড",
+  "লাইভে এমন কোয়ালিটি পাওয়া ভাগ্যের ব্যাপার",
+  "কনসেপ্টগুলো পরিষ্কার হয়ে গেল",
+  "আমি আমার টিমকে এটা শেখাবো",
+  "এই কৌশলটা একদম জিনিয়াস",
+  "আপনি খুব সুন্দরভাবে ব্রেকডাউন করে বলছেন",
+  "চমৎকার লেগেছে",
+  "অনেক দিন পর এমন কিছু শিখলাম",
+  "এই সিস্টেমটা ট্রাই করে দেখবো",
+  "সবকিছু লিখে নিচ্ছি",
+  "একদম ফ্রি মাস্টারক্লাস মনে হচ্ছে",
+  "ভাই, স্যালুট আপনার নলেজকে",
+  "এক কথায় অসাধারণ!",
+  "এটা আগে কোন ট্রেনিং-এ পাইনি",
+  "আমার চোখ খুলে গেল বলতে পারেন",
+  "ইতিমধ্যে ফ্রেন্ডদের বলেছি এই সেশন দেখতে",
+  "এই মেথডটা কাজে দেবে ইনশাআল্লাহ",
+  "বিজনেস গ্রোথের জন্য পারফেক্ট",
+  "আপনি একদম সহজ ভাষায় বোঝাচ্ছেন",
+  "একদম রিয়েল লাইফ এক্সপেরিয়েন্স শেয়ার করছেন",
+  "আমি স্ক্রিনশট নিয়ে রাখলাম",
+  "এত ধৈর্য ধরে এভাবে শেখানোর জন্য ধন্যবাদ",
+  "এই স্ট্রাটেজি যদি আগে জানতাম!",
+  "নতুন আইডিয়া পেলাম",
+  "নেক্সট স্লাইড প্লিজ",
+  "মজা পাচ্ছি শিখতে শিখতে",
+  "ভাই, আপনার ডেলিভারি স্টাইল চমৎকার",
+  "এটা আমার ক্লায়েন্টদের কাজে লাগবে",
+  "আপনার উদাহরণগুলো relatable.",
+  "প্রথমবার বুঝলাম ব্যাপারটা আসলে কী",
+  "আবার রিপ্লে দেখতে চাই",
+  "আপনি কি এই প্রেজেন্টেশনের পিডিএফ দিবেন?",
+  "খুব মনোযোগ দিয়ে শুনছি",
+  "মাথায় ঢুকে যাচ্ছে একদম",
+  "আমি আরও সেশন চাই আপনার থেকে",
+  "এই স্লাইডটা অনেক ভালো",
+  "প্লিজ একটু ধীরে বলবেন?",
+  "ওকে, নোট করে রাখলাম",
+  "আপনি কি রেকর্ডিং দিবেন?",
+  "আমি এই টেকনিকটা আজই ফলো করবো",
+  "আপনার ভাষা খুবই সহজ ও পরিষ্কার",
+  "এই আইডিয়াটা আগে মাথায় আসেনি",
+  "আমি বিস্মিত!",
+  "নতুন দৃষ্টিভঙ্গি পেলাম",
+  "গোপন রহস্য ফাঁস করে দিলেন আজ!",
+  "আগে এত সুন্দর শেখাতে কেউ দেখিনি",
+  "সব মিলিয়ে সেশনটা অসাধারণ",
+  "এটা প্র্যাকটিস করলে রেজাল্ট নিশ্চিত",
+  "আজকের সেশনে সময় দারুণ ইনভেস্ট হল",
+  "আশা করি ভবিষ্যতে আরও সেশন করবেন",
+  "আমি একদম একটুও বিরক্ত হইনি",
+  "এটা সত্যি গেম চেঞ্জার!",
+  "মনে হচ্ছে সঠিক জায়গায় ইনভেস্ট করেছি",
+  "শেষ পর্যন্ত থাকবো, খুব ভালো লাগছে"
 ];
 
 const fakeNames = [
@@ -90,6 +153,8 @@ export const EvergreenWebinarElement: React.FC<{
   const [showVideo, setShowVideo] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [currentViewerCount, setCurrentViewerCount] = useState(viewerCount);
+  const [isUnmuted, setIsUnmuted] = useState(false);
+  const [showUnmuteButton, setShowUnmuteButton] = useState(false);
   const playerRef = useRef<HTMLIFrameElement>(null);
   const unmuteAttempts = useRef(0);
 
@@ -180,47 +245,36 @@ export const EvergreenWebinarElement: React.FC<{
     }
   }, [enableChat, isPlaying]);
 
-  // Unmute video after it starts playing (try multiple times)
+  // Show unmute button when video starts playing
   useEffect(() => {
-    if (showVideo && videoInfo) {
-      // Try to unmute multiple times at different intervals
-      const unmuteTimers: NodeJS.Timeout[] = [];
+    if (showVideo && videoInfo && !isUnmuted) {
+      // Show the unmute button after 1 second of video playing
+      const timer = setTimeout(() => {
+        setShowUnmuteButton(true);
+      }, 1000);
       
-      // Try immediately
-      unmuteTimers.push(setTimeout(() => {
-        if (playerRef.current?.contentWindow) {
-          playerRef.current.contentWindow.postMessage(
-            '{"event":"command","func":"unMute","args":""}',
-            '*'
-          );
-        }
-      }, 500));
-      
-      // Try after 1 second
-      unmuteTimers.push(setTimeout(() => {
-        if (playerRef.current?.contentWindow) {
-          playerRef.current.contentWindow.postMessage(
-            '{"event":"command","func":"unMute","args":""}',
-            '*'
-          );
-        }
-      }, 1500));
-      
-      // Try after 3 seconds
-      unmuteTimers.push(setTimeout(() => {
-        if (playerRef.current?.contentWindow) {
-          playerRef.current.contentWindow.postMessage(
-            '{"event":"command","func":"unMute","args":""}',
-            '*'
-          );
-        }
-      }, 3000));
-      
-      return () => {
-        unmuteTimers.forEach(timer => clearTimeout(timer));
-      };
+      return () => clearTimeout(timer);
     }
-  }, [showVideo, videoInfo]);
+  }, [showVideo, videoInfo, isUnmuted]);
+
+  // Handle unmute button click
+  const handleUnmute = () => {
+    if (playerRef.current?.contentWindow) {
+      // Try to unmute multiple times
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => {
+          if (playerRef.current?.contentWindow) {
+            playerRef.current.contentWindow.postMessage(
+              '{"event":"command","func":"unMute","args":""}',
+              '*'
+            );
+          }
+        }, i * 200); // Try every 200ms for 1 second
+      }
+      setIsUnmuted(true);
+      setShowUnmuteButton(false);
+    }
+  };
 
   // Build YouTube embed URL with all customization
   const buildEmbedUrl = () => {
@@ -394,6 +448,21 @@ export const EvergreenWebinarElement: React.FC<{
           <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-3 py-2 rounded-lg flex items-center gap-2 z-20">
             <Users className="h-4 w-4" />
             <span className="text-sm font-medium">{currentViewerCount} watching</span>
+          </div>
+        )}
+
+        {/* Unmute Button */}
+        {showUnmuteButton && isPlaying && (
+          <div className="absolute bottom-4 right-4 z-30">
+            <button
+              onClick={handleUnmute}
+              onContextMenu={(e) => e.preventDefault()}
+              className="bg-white text-black px-4 py-3 rounded-lg flex items-center gap-2 hover:bg-gray-100 transition-colors shadow-lg font-medium"
+              style={{ pointerEvents: 'auto' }}
+            >
+              <Volume2 className="h-5 w-5" />
+              <span>Unmute Sound</span>
+            </button>
           </div>
         )}
       </div>
