@@ -528,7 +528,14 @@ export const EvergreenWebinarElement: React.FC<{
 
         {/* Live Chat Panel */}
         {enableChat && showChatMessages && isPlaying && (
-          <div className={`bg-gray-900 rounded-lg flex flex-col ${deviceType === 'mobile' ? 'w-full mt-4' : 'w-80 flex-shrink-0'}`} style={{ height: deviceType === 'mobile' ? '350px' : '500px' }}>
+          <div 
+            className={`bg-gray-900 rounded-lg flex flex-col ${
+              deviceType === 'mobile' 
+                ? 'w-full mt-4 h-[350px]' 
+                : 'w-80 flex-shrink-0 h-full'
+            }`}
+            style={deviceType === 'mobile' ? { minHeight: '250px' } : {}}
+          >
             <div className="p-4 border-b border-gray-700 flex-shrink-0">
               <div className="flex items-center gap-2 text-white">
                 <MessageCircle className="h-5 w-5" />
