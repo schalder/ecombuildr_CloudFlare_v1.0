@@ -9,7 +9,7 @@ import { ImageUpload } from '@/components/ui/image-upload';
 import { PageBuilderElement } from '../types';
 import { useDevicePreview } from '../contexts/DevicePreviewContext';
 import { Button } from '@/components/ui/button';
-import { Monitor, Smartphone, Tablet } from 'lucide-react';
+import { Monitor, Smartphone, Tablet, Plus, Trash2 } from 'lucide-react';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -48,6 +48,9 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
     ctaHeadlineColor = '#FFFFFF',
     ctaSubheadlineColor = '#E5E7EB',
     ctaBackgroundColor = 'transparent',
+    // Scheduled Messages settings
+    enableScheduledMessages = false,
+    scheduledMessageGroups = [],
   } = element.content as any;
 
   const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
@@ -64,6 +67,32 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
   };
 
   const currentDeviceWidth = currentWidthByDevice[responsiveTab] || 'full';
+
+  const handleAddScheduledGroup = () => {
+    const newGroup = {
+      id: `group-${Date.now()}`,
+      enabled: true,
+      triggerTime: 120, // 2 minutes default
+      messages: ['Yes', 'Clear sound', 'Perfect', 'I can hear you', 'Sounds good'],
+      useCustomNames: false,
+      names: [],
+      durationWindowSec: 20,
+      count: 5,
+    };
+    onUpdate('scheduledMessageGroups', [...scheduledMessageGroups, newGroup]);
+  };
+
+  const handleUpdateScheduledGroup = (groupId: string, updates: Partial<any>) => {
+    const updated = scheduledMessageGroups.map((group: any) =>
+      group.id === groupId ? { ...group, ...updates } : group
+    );
+    onUpdate('scheduledMessageGroups', updated);
+  };
+
+  const handleDeleteScheduledGroup = (groupId: string) => {
+    const updated = scheduledMessageGroups.filter((group: any) => group.id !== groupId);
+    onUpdate('scheduledMessageGroups', updated);
+  };
 
   return (
     <Accordion type="multiple" className="space-y-2">
@@ -202,6 +231,171 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
                   onCheckedChange={(checked) => onUpdate('allowUserMessages', checked)}
                 />
               </div>
+            </>
+          )}
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* Scheduled Messages */}
+      <AccordionItem value="scheduled-messages" className="border rounded-lg px-4">
+        <AccordionTrigger className="font-semibold">Scheduled Messages</AccordionTrigger>
+        <AccordionContent className="space-y-3 pt-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="enable-scheduled-messages">Enable Scheduled Messages</Label>
+            <Switch
+              id="enable-scheduled-messages"
+              checked={enableScheduledMessages}
+              onCheckedChange={(checked) => onUpdate('enableScheduledMessages', checked)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Schedule chat messages to appear at specific times (e.g., responses to host questions)
+          </p>
+
+          {enableScheduledMessages && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAddScheduledGroup}
+                className="w-full"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Scheduled Message Group
+              </Button>
+
+              {scheduledMessageGroups.length > 0 && (
+                <div className="space-y-4 mt-4">
+                  {scheduledMessageGroups.map((group: any, index: number) => (
+                    <div key={group.id || index} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Label className="font-semibold">
+                            Group {index + 1} - At {Math.floor((group.triggerTime || 120) / 60)} min: {group.count || 5} messages
+                          </Label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={group.enabled !== false}
+                            onCheckedChange={(checked) =>
+                              handleUpdateScheduledGroup(group.id, { enabled: checked })
+                            }
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteScheduledGroup(group.id)}
+                            className="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor={`trigger-time-${group.id}`}>Trigger After (minutes)</Label>
+                        <Input
+                          id={`trigger-time-${group.id}`}
+                          type="number"
+                          min={0}
+                          max={120}
+                          value={Math.floor((group.triggerTime || 120) / 60)}
+                          onChange={(e) => {
+                            const minutes = parseInt(e.target.value) || 0;
+                            handleUpdateScheduledGroup(group.id, { triggerTime: minutes * 60 });
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor={`messages-${group.id}`}>Response Messages (one per line)</Label>
+                        <Textarea
+                          id={`messages-${group.id}`}
+                          value={(group.messages || []).join('\n')}
+                          onChange={(e) => {
+                            const messages = e.target.value
+                              .split('\n')
+                              .map((m) => m.trim())
+                              .filter((m) => m.length > 0);
+                            handleUpdateScheduledGroup(group.id, { messages });
+                          }}
+                          placeholder="Yes&#10;Clear sound&#10;Perfect&#10;I can hear you"
+                          rows={5}
+                          className="resize-none"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Enter one message per line. These will appear randomly when triggered.
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor={`count-${group.id}`}>Number of Messages to Show</Label>
+                        <Input
+                          id={`count-${group.id}`}
+                          type="number"
+                          min={1}
+                          max={20}
+                          value={group.count || 5}
+                          onChange={(e) => {
+                            const count = Math.min(
+                              Math.max(1, parseInt(e.target.value) || 5),
+                              (group.messages || []).length || 20
+                            );
+                            handleUpdateScheduledGroup(group.id, { count });
+                          }}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Max: {Math.max(1, (group.messages || []).length || 5)} (based on messages above)
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor={`use-custom-names-${group.id}`}>Use Custom Names</Label>
+                        <Switch
+                          id={`use-custom-names-${group.id}`}
+                          checked={group.useCustomNames || false}
+                          onCheckedChange={(checked) =>
+                            handleUpdateScheduledGroup(group.id, { useCustomNames: checked })
+                          }
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground -mt-2">
+                        If disabled, uses default fake names pool
+                      </p>
+
+                      {group.useCustomNames && (
+                        <div>
+                          <Label htmlFor={`names-${group.id}`}>Custom Names (one per line, optional)</Label>
+                          <Textarea
+                            id={`names-${group.id}`}
+                            value={(group.names || []).join('\n')}
+                            onChange={(e) => {
+                              const names = e.target.value
+                                .split('\n')
+                                .map((n) => n.trim())
+                                .filter((n) => n.length > 0);
+                              handleUpdateScheduledGroup(group.id, { names });
+                            }}
+                            placeholder="John Doe&#10;Jane Smith&#10;Mike Johnson"
+                            rows={3}
+                            className="resize-none"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Enter one name per line. Leave empty to use default names.
+                          </p>
+                        </div>
+                      )}
+
+                      <p className="text-xs text-muted-foreground pt-2 border-t">
+                        Messages will start appearing at {Math.floor((group.triggerTime || 120) / 60)} minutes and
+                        will be spread randomly over 15-20 seconds for a realistic feel.
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           )}
         </AccordionContent>

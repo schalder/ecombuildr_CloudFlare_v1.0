@@ -551,6 +551,9 @@ export const registerMediaElements = () => {
       ctaHeadlineColor: '#FFFFFF',
       ctaSubheadlineColor: '#E5E7EB',
       ctaBackgroundColor: 'transparent',
+      // Scheduled Messages settings
+      enableScheduledMessages: false,
+      scheduledMessageGroups: [],
       widthByDevice: {
         desktop: 'full',
         tablet: 'full',

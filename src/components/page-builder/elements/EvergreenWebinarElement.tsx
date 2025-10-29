@@ -161,6 +161,9 @@ export const EvergreenWebinarElement: React.FC<{
     ctaHeadlineColor = '#FFFFFF',
     ctaSubheadlineColor = '#E5E7EB',
     ctaBackgroundColor = 'transparent',
+    // Scheduled Messages settings
+    enableScheduledMessages = false,
+    scheduledMessageGroups = [],
   } = element.content as any;
 
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -176,6 +179,8 @@ export const EvergreenWebinarElement: React.FC<{
   const playerRef = useRef<HTMLIFrameElement>(null);
   const videoTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sentScheduledGroupsRef = useRef<Set<string>>(new Set());
+  const scheduledMessageTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   // Parse video URL
   const videoInfo = videoUrl ? parseVideoUrl(videoUrl) : null;
@@ -190,6 +195,8 @@ export const EvergreenWebinarElement: React.FC<{
       setTimeout(() => {
         setShowVideo(true);
         setIsPlaying(true);
+        // Reset scheduled groups when video starts
+        sentScheduledGroupsRef.current.clear();
       }, 500);
     }
   }, []);
@@ -206,6 +213,8 @@ export const EvergreenWebinarElement: React.FC<{
         setShowVideo(true);
         setIsPlaying(true);
         setCountdown(null);
+        // Reset scheduled groups when video starts
+        sentScheduledGroupsRef.current.clear();
       }, 1000);
     }
   }, [countdown]);
@@ -270,13 +279,13 @@ export const EvergreenWebinarElement: React.FC<{
     }
   }, [enableChat, isPlaying]);
 
-  // Track video time for CTA display
+  // Track video time for CTA display and scheduled messages
   useEffect(() => {
-    if (isPlaying && enableCTA) {
+    if (isPlaying && (enableCTA || enableScheduledMessages)) {
       videoTimeIntervalRef.current = setInterval(() => {
         setVideoTime((prev) => {
           const newTime = prev + 1;
-          if (newTime >= ctaDisplayTime && !showCTA) {
+          if (enableCTA && newTime >= ctaDisplayTime && !showCTA) {
             setShowCTA(true);
           }
           return newTime;
@@ -289,7 +298,94 @@ export const EvergreenWebinarElement: React.FC<{
         }
       };
     }
-  }, [isPlaying, enableCTA, ctaDisplayTime, showCTA]);
+  }, [isPlaying, enableCTA, enableScheduledMessages, ctaDisplayTime, showCTA]);
+
+  // Handle scheduled message groups
+  useEffect(() => {
+    if (!isPlaying || isEditing || !enableScheduledMessages || !enableChat || !showChatMessages) {
+      return;
+    }
+
+    // Check for scheduled groups that need to be triggered
+    const enabledGroups = (scheduledMessageGroups as any[]).filter(
+      (group: any) => group.enabled && !sentScheduledGroupsRef.current.has(group.id)
+    );
+
+    enabledGroups.forEach((group: any) => {
+      if (videoTime >= group.triggerTime) {
+        // Mark group as sent
+        sentScheduledGroupsRef.current.add(group.id);
+
+        // Get messages and names arrays
+        const messages = Array.isArray(group.messages) && group.messages.length > 0 
+          ? group.messages 
+          : [];
+        const names = group.useCustomNames && Array.isArray(group.names) && group.names.length > 0
+          ? group.names
+          : fakeNames;
+
+        if (messages.length === 0 || names.length === 0) {
+          return; // Skip if no messages or names
+        }
+
+        // Determine how many messages to show (clamp between 1 and messages.length)
+        const count = Math.min(Math.max(1, group.count || 5), messages.length);
+        
+        // Random duration window between 15-20 seconds
+        const durationWindowSec = 15 + Math.random() * 5; // 15-20 seconds
+
+        // Generate random offsets for each message within the window
+        const offsets: number[] = [];
+        for (let i = 0; i < count; i++) {
+          // Create unique offsets with minimum gaps to avoid collisions
+          let offset;
+          let attempts = 0;
+          do {
+            offset = Math.random() * durationWindowSec;
+            attempts++;
+          } while (
+            attempts < 100 && 
+            offsets.some(o => Math.abs(o - offset) < 0.5) // Minimum 0.5s gap
+          );
+          offsets.push(offset);
+        }
+
+        // Sort offsets to ensure chronological order
+        offsets.sort((a, b) => a - b);
+
+        // Schedule each message
+        offsets.forEach((offset, index) => {
+          const timeoutId = setTimeout(() => {
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            const randomName = names[Math.floor(Math.random() * names.length)];
+
+            setChatMessages((prev) => {
+              const newMessage: ChatMessage = {
+                id: `scheduled-msg-${group.id}-${Date.now()}-${index}`,
+                name: randomName,
+                message: randomMessage,
+                timestamp: Date.now(),
+              };
+              // Keep only last 15 messages
+              return [...prev.slice(-14), newMessage];
+            });
+          }, offset * 1000); // Convert to milliseconds
+
+          scheduledMessageTimeoutsRef.current.push(timeoutId);
+        });
+      }
+    });
+  }, [videoTime, isPlaying, isEditing, enableScheduledMessages, enableChat, showChatMessages, scheduledMessageGroups]);
+
+  // Cleanup scheduled message timeouts
+  useEffect(() => {
+    return () => {
+      scheduledMessageTimeoutsRef.current.forEach(timeoutId => {
+        clearTimeout(timeoutId);
+      });
+      scheduledMessageTimeoutsRef.current = [];
+    };
+  }, []);
 
   // Note: Video starts with sound (mute=0) by default for proper audio playback
 
