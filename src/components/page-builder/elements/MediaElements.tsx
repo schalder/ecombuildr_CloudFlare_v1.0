@@ -529,7 +529,7 @@ export const registerMediaElements = () => {
       videoUrl: '',
       thumbnail: '',
       enableCountdown: true,
-      countdownSeconds: 5,
+      countdownSeconds: 10,
       enableChat: true,
       viewerCount: 237,
       showChatMessages: true,

@@ -12,35 +12,56 @@ interface ChatMessage {
 }
 
 const chatMessagePool = [
-  "This is so helpful, thank you!",
-  "I've been waiting for this webinar",
-  "Great explanation",
-  "Can you explain more about this?",
-  "Best webinar I've attended today",
-  "Thanks for the tips",
-  "Very clear presentation",
-  "I'm taking notes",
-  "This is gold!",
-  "Great insights",
-  "Exactly what I needed",
-  "Amazing information",
-  "So informative",
-  "Really appreciate this",
-  "This is exactly the solution I was looking for",
-  "Thanks for sharing your knowledge",
-  "Great job explaining this",
-  "I'm learning so much",
-  "This webinar is incredible",
-  "Can't wait to implement this",
+  "ধন্যবাদ, খুব কাজে লাগবে!",
+  "এই ওয়েবিনারটার জন্য অনেকদিন ধরে অপেক্ষায় ছিলাম",
+  "মাশাল্লাহ দারুণ বুঝিয়ে বলছেন",
+  "আরো একটু ডিটেইলে বলবেন?",
+  "আজকের দেখা সেরা সেশন এটা",
+  "নোট নিচ্ছি",
+  "গোল্ডেন ইনফরমেশন 🔥",
+  "একদম প্র্যাকটিক্যাল কথা বলছেন",
+  "এটা জানতাম না, অনেক কিছু শিখলাম",
+  "সত্যি অসাধারণ লাগছে",
+  "ঠিক এই জিনিসটাই দরকার ছিল",
+  "এত সহজভাবে বুঝিয়ে দেওয়ার জন্য ধন্যবাদ",
+  "আপনার উদাহরণগুলো খুব ক্লিয়ার",
+  "ধীরে ধীরে বুঝতে পারছি",
+  "আমি আগে ভুল করতাম, এখন বুঝতে পারছি",
+  "ওয়াও, একদম মাইন্ড ব্লোয়িং",
+  "এই টিপসটা সেভ করে রাখলাম",
+  "ফাইনালি কেউ এত পরিষ্কারভাবে বুঝালো",
+  "আপনার স্টেপগুলো খুব হেল্পফুল",
+  "লিখে রাখলাম, পরে ফলো করবো",
+  "স্যার, সত্যি আপনি অসাধারণ!",
+  "প্র্যাকটিক্যাল গাইডলাইন দেয়ায় থ্যাঙ্কস",
+  "আমি এটা সঙ্গে সঙ্গে ইমপ্লিমেন্ট করবো",
+  "এমন সেশন বার বার দেখতে চাই",
+  "আমি এখনো লাইভ আছি",
+  "ওহহ এখন বুঝতে পারলাম!",
+  "আপনাদের কাছ থেকে এটাই আশা করি",
+  "এই জিনিসটা কেউ ফ্রি শেখায় না সাধারণত",
+  "আরো টিপস দিলে ভালো লাগবে",
+  "আলহামদুলিল্লাহ, আজ অনেক কিছু শিখলাম",
+  "এই পার্টটা রিপিট করে বলবেন?",
+  "সুপার এক্সপ্লেইনেশন",
+  "বাহ, একদম রিয়েল লাইফ উদাহরণ",
+  "লাস্ট পয়েন্টটা খুব ভালো লাগলো",
+  "এই জিনিসটা আমি আমার ব্যবসায় লাগাবো",
+  "মনে হচ্ছে আজকের দিনটা সফল",
+  "আমার কনফিউশন এখন ক্লিয়ার",
+  "আজকে যা শিখলাম, লাইফ চেঞ্জিং",
+  "এটা তো একদম আমার সমস্যার সলিউশন",
+  "আমি থাকছি শেষ পর্যন্ত"
 ];
 
 const fakeNames = [
-  "John S.", "Sarah M.", "Mike T.", "Emily R.", "David L.", "Jessica K.",
-  "James W.", "Lisa P.", "Robert B.", "Amanda H.", "Michael C.", "Jennifer A.",
-  "William N.", "Elizabeth F.", "Christopher D.", "Michelle G.", "Daniel J.",
-  "Ashley O.", "Matthew R.", "Nicole Q.", "Andrew L.", "Stephanie M.",
-  "Joshua K.", "Rebecca T.", "Ryan B.", "Amanda V.", "Kevin S.", "Melissa P.",
-  "Brandon W.", "Rachel G.", "Justin H.", "Samantha D.",
+  "রফিকুল ইসলাম", "সাবরিনা সুলতানা", "মাহমুদুল হাসান", "তানজিলা আক্তার", "ইমরান হোসেন",
+  "মেহজাবিন রহমান", "জসিম উদ্দিন", "ফারহানা আক্তার", "সাদিকুর রহমান", "মাহমুদা খাতুন",
+  "রিজওয়ান করিম", "শারমিন সুলতানা", "তানভীর আহমেদ", "মাহী আক্তার", "নাসিম উদ্দিন",
+  "রুবাইয়া খান", "মোশাররফ হোসেন", "সুবর্ণা ইসলাম", "শফিকুল ইসলাম", "মিম আক্তার",
+  "রাশেদুল ইসলাম", "সামিয়া হোসেন", "আরিফুল ইসলাম", "সাদিয়া সুলতানা", "রুবেল মিয়া",
+  "ফারজানা ইয়াসমিন", "সৈকত আহমেদ", "নুসরাত জাহান", "মাসুম বিল্লাহ", "অর্পিতা সেন",
+  "শাকিল আহমেদ", "মাহীর ইসলাম"
 ];
 
 export const EvergreenWebinarElement: React.FC<{
@@ -158,22 +179,41 @@ export const EvergreenWebinarElement: React.FC<{
     }
   }, [enableChat, isPlaying]);
 
+  // Unmute video after it starts playing (for live-like experience)
+  useEffect(() => {
+    if (showVideo && videoInfo && muted) {
+      // Wait 2 seconds after video starts, then unmute
+      const unmuteTimer = setTimeout(() => {
+        if (playerRef.current) {
+          // Post message to YouTube iframe to unmute
+          playerRef.current.contentWindow?.postMessage(
+            '{"event":"command","func":"unMute","args":""}',
+            '*'
+          );
+        }
+      }, 2000);
+      
+      return () => clearTimeout(unmuteTimer);
+    }
+  }, [showVideo, videoInfo, muted]);
+
   // Build YouTube embed URL with all customization
   const buildEmbedUrl = () => {
     if (!videoInfo || videoInfo.type !== 'youtube') return '';
     
     const url = new URL(`https://www.youtube.com/embed/${videoInfo.id}`);
     url.searchParams.set('autoplay', '1');
-    url.searchParams.set('controls', '0');
-    url.searchParams.set('modestbranding', '1');
-    url.searchParams.set('rel', '0');
-    url.searchParams.set('showinfo', '0');
-    url.searchParams.set('branding', '0');
+    url.searchParams.set('controls', '0'); // No player controls
+    url.searchParams.set('modestbranding', '1'); // Hide YouTube logo
+    url.searchParams.set('rel', '0'); // Don't show related videos
+    url.searchParams.set('showinfo', '0'); // Hide title/info
+    url.searchParams.set('branding', '0'); // No branding
     url.searchParams.set('fs', '0'); // Disable fullscreen
     url.searchParams.set('iv_load_policy', '3'); // Hide annotations
     url.searchParams.set('loop', '1'); // Loop video
-    url.searchParams.set('mute', muted ? '1' : '0');
+    url.searchParams.set('mute', '1'); // Start muted (will unmute via JS)
     url.searchParams.set('playsinline', '1');
+    url.searchParams.set('disablekb', '1'); // Disable keyboard controls
     
     return url.toString();
   };
@@ -294,14 +334,20 @@ export const EvergreenWebinarElement: React.FC<{
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
-              style={{ pointerEvents: isPlaying ? 'auto' : 'none' }}
+              style={{ pointerEvents: 'none' }} // Disable all iframe interactions
             />
             
-            {/* Overlay to prevent interactions */}
+            {/* Invisible overlay to block ALL interactions with iframe */}
             <div 
-              className="absolute inset-0 pointer-events-none"
+              className="absolute inset-0 bg-transparent z-10 cursor-default"
               onContextMenu={(e) => e.preventDefault()}
-              style={{ pointerEvents: 'none' }}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => e.preventDefault()}
+              onDoubleClick={(e) => e.preventDefault()}
+              style={{ 
+                pointerEvents: 'auto',
+                touchAction: 'none'
+              }}
             />
           </>
         )}

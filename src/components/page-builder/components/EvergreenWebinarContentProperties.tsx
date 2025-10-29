@@ -96,17 +96,20 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
             <Label htmlFor="countdown-seconds">Countdown Duration: {countdownSeconds} seconds</Label>
             <Slider
               id="countdown-seconds"
-              min={3}
-              max={10}
+              min={0}
+              max={30}
               step={1}
               value={[countdownSeconds]}
               onValueChange={([value]) => onUpdate('countdownSeconds', value)}
               className="mt-2"
             />
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>3s</span>
-              <span>10s</span>
+              <span>0s (instant)</span>
+              <span>30s</span>
             </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Set to 0 for instant start, or up to 30 seconds for a live countdown effect
+            </p>
           </div>
         )}
       </div>
