@@ -172,7 +172,6 @@ export const EvergreenWebinarElement: React.FC<{
   const [iframeKey, setIframeKey] = useState(0);
   const [showCTA, setShowCTA] = useState(false);
   const [videoTime, setVideoTime] = useState(0);
-  const [isUnmuting, setIsUnmuting] = useState(false); // Track temporary overlay removal during unmute gesture
   const playerRef = useRef<HTMLIFrameElement>(null);
   const videoTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const chatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -324,56 +323,43 @@ export const EvergreenWebinarElement: React.FC<{
     url.searchParams.set('mute', shouldMute ? '1' : '0'); // Start muted for autoplay
     url.searchParams.set('playsinline', '1');
     url.searchParams.set('disablekb', '1'); // Disable keyboard controls
-    url.searchParams.set('enablejsapi', '1'); // Enable iframe API for postMessage control
+    url.searchParams.set('enablejsapi', '1'); // Enable JavaScript API for postMessage (needed for mobile unmute)
     
     return url.toString();
   };
 
-  // Handle unmute - temporarily remove overlay to allow touch through to iframe (Option 3)
-  const handleUnmute = (e?: React.MouseEvent | React.TouchEvent) => {
-    // Step 1: Immediately remove overlay and make button transparent
-    // This allows touch to potentially reach iframe (critical for mobile)
-    setIsUnmuting(true);
+  // Handle unmute - reload iframe with unmuted URL
+  const handleUnmute = () => {
+    // Detect mobile devices
+    const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     
-    // Step 2: Keep existing iframe, just change src (don't recreate to maintain gesture context)
-    // First try postMessage to unmute (if iframe is already loaded and ready)
-    if (playerRef.current?.contentWindow) {
-      try {
-        // Try to unmute existing iframe first (fastest, maintains gesture context)
-        playerRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'unMute', args: '' }),
-          'https://www.youtube.com'
-        );
-        // Ensure it's playing
-        playerRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'playVideo', args: '' }),
-          'https://www.youtube.com'
-        );
-      } catch (err) {
-        // If postMessage fails, fall back to src change
-      }
-    }
-    
-    // Step 3: Update iframe src to unmuted version (fallback or primary method)
-    // Do this IMMEDIATELY during touch event to maintain gesture context on mobile
-    const unmutedUrl = buildEmbedUrl(false);
-    if (playerRef.current && unmutedUrl) {
-      // Direct assignment - no React delay, happens synchronously during gesture
-      // On mobile, if this happens fast enough during touch, autoplay should work
-      playerRef.current.src = unmutedUrl;
-    }
-    
-    // Step 4: Update state (React will handle re-render)
+    // Set unmuted state immediately
     setIsUnmuted(true);
-    // Only increment iframeKey if postMessage didn't work
-    setTimeout(() => {
-      setIframeKey(prev => prev + 1);
-    }, 100);
     
-    // Step 5: Restore overlay after gesture window (maintains live-like feel)
-    setTimeout(() => {
-      setIsUnmuting(false);
-    }, 600);
+    if (isMobileDevice && playerRef.current) {
+      // For mobile: Update iframe src directly to preserve user interaction context
+      // This is better than reloading which breaks autoplay on mobile
+      const unmutedUrl = buildEmbedUrl(false);
+      if (playerRef.current.src !== unmutedUrl) {
+        playerRef.current.src = unmutedUrl;
+      }
+      
+      // Also try postMessage to ensure video plays
+      setTimeout(() => {
+        try {
+          const iframeWindow = playerRef.current?.contentWindow;
+          if (iframeWindow) {
+            // Send play command to ensure video plays after unmuting
+            iframeWindow.postMessage('{"event":"command","func":"playVideo","args":""}', '*');
+          }
+        } catch (e) {
+          // Ignore errors
+        }
+      }, 100);
+    } else {
+      // For desktop: Use key change to reload iframe (works fine on desktop)
+      setIframeKey(prev => prev + 1);
+    }
   };
 
   const containerStyles = renderElementStyles(element, deviceType);
@@ -526,35 +512,13 @@ export const EvergreenWebinarElement: React.FC<{
               />
             )}
 
-            {/* Blocking overlay when muted - temporarily removed during unmute gesture (Option 3) */}
-            {!isUnmuted && !isUnmuting && (
+            {/* Blocking overlay when muted - prevent all interactions with YouTube iframe */}
+            {!isUnmuted && (
               <div 
                 className="absolute inset-0 z-10"
                 onContextMenu={(e) => e.preventDefault()}
-                onMouseDown={(e) => {
-                  // Check if click target is the unmute button - if so, allow it
-                  const target = e.target as HTMLElement;
-                  if (target.closest('button')) {
-                    return; // Don't prevent if clicking the button
-                  }
-                  e.preventDefault();
-                }}
-                onClick={(e) => {
-                  // Check if click target is the unmute button - if so, allow it
-                  const target = e.target as HTMLElement;
-                  if (target.closest('button')) {
-                    return; // Don't prevent if clicking the button
-                  }
-                  e.preventDefault();
-                }}
-                onTouchStart={(e) => {
-                  // Check if touch target is the unmute button - if so, allow it
-                  const target = e.target as HTMLElement;
-                  if (target.closest('button')) {
-                    return; // Don't prevent if touching the button
-                  }
-                  e.preventDefault();
-                }}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => e.preventDefault()}
                 onDoubleClick={(e) => e.preventDefault()}
                 style={{ 
                   pointerEvents: 'auto',
@@ -564,30 +528,15 @@ export const EvergreenWebinarElement: React.FC<{
               />
             )}
 
-            {/* Unmute Button - Centered, becomes transparent to touches during unmute (Option 3) */}
+            {/* Unmute Button - Centered */}
             {!isUnmuted && (
-              <div 
-                className={`absolute inset-0 z-30 flex items-center justify-center ${
-                  isUnmuting ? 'pointer-events-none' : 'pointer-events-none'
-                }`}
-              >
+              <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
                 <button
                   onClick={handleUnmute}
-                  onTouchStart={handleUnmute}
-                  onTouchEnd={(e) => {
-                    if (!isUnmuting) {
-                      e.preventDefault();
-                    }
-                  }}
-                  className={`bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 shadow-2xl font-semibold text-lg transition-all duration-300 hover:scale-105 touch-manipulation ${
-                    isUnmuting ? 'opacity-0 pointer-events-none' : 'pointer-events-auto'
-                  }`}
+                  className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-xl flex items-center gap-3 shadow-2xl font-semibold text-lg transition-all duration-300 hover:scale-105 pointer-events-auto"
                   style={{
                     boxShadow: '0 8px 32px rgba(239, 68, 68, 0.5)',
-                    animation: isUnmuting ? 'none' : 'smooth-pulse 2s ease-in-out infinite',
-                    WebkitTapHighlightColor: 'transparent',
-                    touchAction: 'manipulation',
-                    transition: isUnmuting ? 'opacity 0.1s' : 'all 0.3s'
+                    animation: 'smooth-pulse 2s ease-in-out infinite'
                   }}
                 >
                   <Volume2 className="h-6 w-6" />
