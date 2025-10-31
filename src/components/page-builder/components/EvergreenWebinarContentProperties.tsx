@@ -55,6 +55,22 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
 
   const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
 
+  // Store raw textarea values to allow Enter key to work properly
+  const [messageTextValues, setMessageTextValues] = React.useState<Record<string, string>>({});
+
+  // Initialize textarea values from messages when groups change
+  React.useEffect(() => {
+    const newValues: Record<string, string> = {};
+    scheduledMessageGroups.forEach((group: any) => {
+      if (!messageTextValues[group.id]) {
+        newValues[group.id] = (group.messages || []).join('\n');
+      }
+    });
+    if (Object.keys(newValues).length > 0) {
+      setMessageTextValues((prev) => ({ ...prev, ...newValues }));
+    }
+  }, [scheduledMessageGroups.length]); // Only run when number of groups changes
+
   const currentWidthByDevice = {
     desktop: widthByDevice?.desktop || 'full',
     tablet: widthByDevice?.tablet || 'full',
@@ -346,21 +362,35 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
                         <Label htmlFor={`messages-${group.id}`}>Response Messages (one per line)</Label>
                         <Textarea
                           id={`messages-${group.id}`}
-                          value={(group.messages || []).join('\n')}
+                          value={messageTextValues[group.id] !== undefined 
+                            ? messageTextValues[group.id] 
+                            : (group.messages || []).join('\n')}
                           onChange={(e) => {
-                            // Preserve empty lines temporarily to allow Enter key
-                            // Filter empty lines only when storing
-                            const lines = e.target.value.split('\n');
-                            const messages = lines
+                            const rawValue = e.target.value;
+                            // Update local state immediately to allow Enter key to work
+                            setMessageTextValues((prev) => ({
+                              ...prev,
+                              [group.id]: rawValue,
+                            }));
+                            // Extract non-empty messages and update the group
+                            const messages = rawValue
+                              .split('\n')
                               .map((m) => m.trim())
                               .filter((m) => m.length > 0);
                             handleUpdateScheduledGroup(group.id, { messages });
                           }}
-                          onKeyDown={(e) => {
-                            // Allow Enter key to work normally in textarea
-                            if (e.key === 'Enter') {
-                              e.stopPropagation();
-                            }
+                          onBlur={() => {
+                            // Sync the stored value when user leaves the field
+                            const currentValue = messageTextValues[group.id] || '';
+                            const messages = currentValue
+                              .split('\n')
+                              .map((m) => m.trim())
+                              .filter((m) => m.length > 0);
+                            // Ensure local state matches the final messages
+                            setMessageTextValues((prev) => ({
+                              ...prev,
+                              [group.id]: messages.join('\n'),
+                            }));
                           }}
                           placeholder="Yes&#10;Clear sound&#10;Perfect&#10;I can hear you"
                           rows={5}
