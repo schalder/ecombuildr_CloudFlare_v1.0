@@ -298,32 +298,35 @@ export const EvergreenWebinarElement: React.FC<{
 
   // Track video time for CTA display, scheduled messages, and redirect
   useEffect(() => {
-    if (isPlaying && (enableCTA || enableScheduledMessages || enableRedirect)) {
-      videoTimeIntervalRef.current = setInterval(() => {
-        setVideoTime((prev) => {
-          const newTime = prev + 1;
-          if (enableCTA && newTime >= ctaDisplayTime && !showCTA) {
-            setShowCTA(true);
-          }
-          // Handle redirect - only once, not in editor mode, and only if URL is provided
-          if (enableRedirect && newTime >= redirectTime && redirectUrl && !hasRedirectedRef.current && !isEditing) {
-            hasRedirectedRef.current = true;
-            if (redirectOpenNewTab) {
-              window.open(redirectUrl, '_blank');
-            } else {
-              window.location.replace(redirectUrl);
-            }
-          }
-          return newTime;
-        });
-      }, 1000);
-      
-      return () => {
-        if (videoTimeIntervalRef.current) {
-          clearInterval(videoTimeIntervalRef.current);
-        }
-      };
+    // Don't track time in edit mode (prevents redirects and other time-based features)
+    if (!isPlaying || isEditing || (!enableCTA && !enableScheduledMessages && !enableRedirect)) {
+      return;
     }
+    
+    videoTimeIntervalRef.current = setInterval(() => {
+      setVideoTime((prev) => {
+        const newTime = prev + 1;
+        if (enableCTA && newTime >= ctaDisplayTime && !showCTA) {
+          setShowCTA(true);
+        }
+        // Handle redirect - only once, and only if URL is provided (isEditing already checked above)
+        if (enableRedirect && newTime >= redirectTime && redirectUrl && !hasRedirectedRef.current) {
+          hasRedirectedRef.current = true;
+          if (redirectOpenNewTab) {
+            window.open(redirectUrl, '_blank');
+          } else {
+            window.location.replace(redirectUrl);
+          }
+        }
+        return newTime;
+      });
+    }, 1000);
+    
+    return () => {
+      if (videoTimeIntervalRef.current) {
+        clearInterval(videoTimeIntervalRef.current);
+      }
+    };
   }, [isPlaying, enableCTA, enableScheduledMessages, enableRedirect, ctaDisplayTime, showCTA, redirectTime, redirectUrl, redirectOpenNewTab, isEditing]);
 
   // Handle scheduled message groups
