@@ -554,6 +554,11 @@ export const registerMediaElements = () => {
       // Scheduled Messages settings
       enableScheduledMessages: false,
       scheduledMessageGroups: [],
+      // Redirect settings
+      enableRedirect: false,
+      redirectTime: 600, // 10 minutes default (in seconds)
+      redirectUrl: '',
+      redirectOpenNewTab: false,
       widthByDevice: {
         desktop: 'full',
         tablet: 'full',

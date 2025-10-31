@@ -51,6 +51,11 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
     // Scheduled Messages settings
     enableScheduledMessages = false,
     scheduledMessageGroups = [],
+    // Redirect settings
+    enableRedirect = false,
+    redirectTime = 600, // 10 minutes default (in seconds)
+    redirectUrl = '',
+    redirectOpenNewTab = false,
   } = element.content as any;
 
   const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
@@ -674,6 +679,94 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
             </div>
           </>
         )}
+        </AccordionContent>
+      </AccordionItem>
+
+      {/* Redirect */}
+      <AccordionItem value="redirect" className="border rounded-lg px-4">
+        <AccordionTrigger className="font-semibold">Redirect</AccordionTrigger>
+        <AccordionContent className="space-y-3 pt-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="enable-redirect">Enable Redirect</Label>
+            <Switch
+              id="enable-redirect"
+              checked={enableRedirect}
+              onCheckedChange={(checked) => onUpdate('enableRedirect', checked)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Automatically redirect users to a URL after the specified video playback time
+          </p>
+
+          {enableRedirect && (
+            <>
+              <div>
+                <Label htmlFor="redirect-time">Trigger After</Label>
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <Label htmlFor="redirect-minutes" className="text-xs text-muted-foreground">
+                      Minutes
+                    </Label>
+                    <Input
+                      id="redirect-minutes"
+                      type="number"
+                      min={0}
+                      max={999}
+                      value={Math.floor((redirectTime || 600) / 60)}
+                      onChange={(e) => {
+                        const minutes = Math.max(0, parseInt(e.target.value) || 0);
+                        const currentSeconds = (redirectTime || 600) % 60;
+                        onUpdate('redirectTime', (minutes * 60) + currentSeconds);
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Label htmlFor="redirect-seconds" className="text-xs text-muted-foreground">
+                      Seconds
+                    </Label>
+                    <Input
+                      id="redirect-seconds"
+                      type="number"
+                      min={0}
+                      max={59}
+                      value={(redirectTime || 600) % 60}
+                      onChange={(e) => {
+                        const seconds = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                        const currentMinutes = Math.floor((redirectTime || 600) / 60);
+                        onUpdate('redirectTime', (currentMinutes * 60) + seconds);
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="redirect-url">Target URL</Label>
+                <Input
+                  id="redirect-url"
+                  type="url"
+                  value={redirectUrl}
+                  onChange={(e) => onUpdate('redirectUrl', e.target.value)}
+                  placeholder="https://example.com/landing-page"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  URL to redirect users to after the time expires
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="redirect-open-new-tab">Open in New Tab</Label>
+                <Switch
+                  id="redirect-open-new-tab"
+                  checked={redirectOpenNewTab}
+                  onCheckedChange={(checked) => onUpdate('redirectOpenNewTab', checked)}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground -mt-2">
+                If disabled, redirects in the same tab (recommended for full page redirect)
+              </p>
+            </>
+          )}
         </AccordionContent>
       </AccordionItem>
 
