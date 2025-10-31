@@ -272,7 +272,15 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Label className="font-semibold">
-                            Group {index + 1} - At {Math.floor((group.triggerTime || 120) / 60)} min: {group.count || 5} messages
+                            Group {index + 1} - At {(() => {
+                              const totalSeconds = group.triggerTime || 120;
+                              const minutes = Math.floor(totalSeconds / 60);
+                              const seconds = totalSeconds % 60;
+                              if (seconds > 0) {
+                                return `${minutes} min ${seconds} sec: ${group.count || 5} messages`;
+                              }
+                              return `${minutes} min: ${group.count || 5} messages`;
+                            })()}
                           </Label>
                         </div>
                         <div className="flex items-center gap-2">
@@ -295,18 +303,43 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
                       </div>
 
                       <div>
-                        <Label htmlFor={`trigger-time-${group.id}`}>Trigger After (minutes)</Label>
-                        <Input
-                          id={`trigger-time-${group.id}`}
-                          type="number"
-                          min={0}
-                          max={120}
-                          value={Math.floor((group.triggerTime || 120) / 60)}
-                          onChange={(e) => {
-                            const minutes = parseInt(e.target.value) || 0;
-                            handleUpdateScheduledGroup(group.id, { triggerTime: minutes * 60 });
-                          }}
-                        />
+                        <Label htmlFor={`trigger-time-${group.id}`}>Trigger After</Label>
+                        <div className="flex gap-2 items-end">
+                          <div className="flex-1">
+                            <Label htmlFor={`trigger-minutes-${group.id}`} className="text-xs text-muted-foreground">
+                              Minutes
+                            </Label>
+                            <Input
+                              id={`trigger-minutes-${group.id}`}
+                              type="number"
+                              min={0}
+                              max={999}
+                              value={Math.floor((group.triggerTime || 120) / 60)}
+                              onChange={(e) => {
+                                const minutes = Math.max(0, parseInt(e.target.value) || 0);
+                                const currentSeconds = (group.triggerTime || 120) % 60;
+                                handleUpdateScheduledGroup(group.id, { triggerTime: (minutes * 60) + currentSeconds });
+                              }}
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <Label htmlFor={`trigger-seconds-${group.id}`} className="text-xs text-muted-foreground">
+                              Seconds
+                            </Label>
+                            <Input
+                              id={`trigger-seconds-${group.id}`}
+                              type="number"
+                              min={0}
+                              max={59}
+                              value={(group.triggerTime || 120) % 60}
+                              onChange={(e) => {
+                                const seconds = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                                const currentMinutes = Math.floor((group.triggerTime || 120) / 60);
+                                handleUpdateScheduledGroup(group.id, { triggerTime: (currentMinutes * 60) + seconds });
+                              }}
+                            />
+                          </div>
+                        </div>
                       </div>
 
                       <div>
@@ -393,8 +426,15 @@ export const EvergreenWebinarContentProperties: React.FC<EvergreenWebinarContent
                       )}
 
                       <p className="text-xs text-muted-foreground pt-2 border-t">
-                        Messages will start appearing at {Math.floor((group.triggerTime || 120) / 60)} minutes and
-                        will be spread randomly over 15-20 seconds for a realistic feel.
+                        {(() => {
+                          const totalSeconds = group.triggerTime || 120;
+                          const minutes = Math.floor(totalSeconds / 60);
+                          const seconds = totalSeconds % 60;
+                          const timeDisplay = seconds > 0 
+                            ? `${minutes}m ${seconds}s` 
+                            : `${minutes} minutes`;
+                          return `Messages will start appearing at ${timeDisplay} and will be spread randomly over 15-20 seconds for a realistic feel.`;
+                        })()}
                       </p>
                     </div>
                   ))}
