@@ -297,7 +297,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
   };
 
   return (
-    <div className="h-full overflow-y-auto overflow-x-hidden">
+    <div className="h-full overflow-y-auto">
       <div className="p-4 space-y-6">
         {/* Element Info */}
         <div>
