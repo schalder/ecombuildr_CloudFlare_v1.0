@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { PageBuilderElement } from '@/components/page-builder/types';
 import { MediaSelector } from './MediaSelector';
+import { CollapsibleGroup } from './ElementStyles/_shared/CollapsibleGroup';
 
 interface CheckoutContentPropertiesProps {
   element: PageBuilderElement;
@@ -27,6 +28,7 @@ const defaultFields = {
 };
 
 export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps> = ({ element, onUpdate }) => {
+  const [checkoutButtonOpen, setCheckoutButtonOpen] = useState(true);
   const fields = element.content?.fields || defaultFields;
   const customFields = element.content?.customFields || [];
   const terms = element.content?.terms || { enabled: false, required: true, label: 'I agree to the Terms & Conditions', url: '/terms' };
@@ -56,37 +58,41 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
 
   return (
     <div className="space-y-6">
-      <div>
-        <Label className="text-sm">Place Order Button Text</Label>
-        <Input value={buttonLabel} onChange={(e) => onUpdate('placeOrderLabel', e.target.value)} placeholder="Place Order" />
-      </div>
+      <CollapsibleGroup title="Checkout Button" isOpen={checkoutButtonOpen} onToggle={setCheckoutButtonOpen}>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-sm">Place Order Button Text</Label>
+            <Input value={buttonLabel} onChange={(e) => onUpdate('placeOrderLabel', e.target.value)} placeholder="Place Order" />
+          </div>
 
-      <div>
-        <Label className="text-sm">Button Subtext (Optional)</Label>
-        <Input 
-          value={element.content?.placeOrderSubtext || ''} 
-          onChange={(e) => onUpdate('placeOrderSubtext', e.target.value)} 
-          placeholder="Add subtext below button..." 
-        />
-      </div>
+          <div>
+            <Label className="text-sm">Button Subtext (Optional)</Label>
+            <Input 
+              value={element.content?.placeOrderSubtext || ''} 
+              onChange={(e) => onUpdate('placeOrderSubtext', e.target.value)} 
+              placeholder="Add subtext below button..." 
+            />
+          </div>
 
-      {element.content?.placeOrderSubtext && (
-        <div>
-          <Label className="text-sm">Subtext Position</Label>
-          <Select
-            value={element.content?.placeOrderSubtextPosition || 'below'}
-            onValueChange={(value) => onUpdate('placeOrderSubtextPosition', value)}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="below">Below Main Text</SelectItem>
-              <SelectItem value="above">Above Main Text</SelectItem>
-            </SelectContent>
-          </Select>
+          {element.content?.placeOrderSubtext && (
+            <div>
+              <Label className="text-sm">Subtext Position</Label>
+              <Select
+                value={element.content?.placeOrderSubtextPosition || 'below'}
+                onValueChange={(value) => onUpdate('placeOrderSubtextPosition', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="below">Below Main Text</SelectItem>
+                  <SelectItem value="above">Above Main Text</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
-      )}
+      </CollapsibleGroup>
 
       <Separator />
 
