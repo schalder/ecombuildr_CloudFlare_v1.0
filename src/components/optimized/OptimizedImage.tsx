@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 
 interface OptimizedImageProps {
   src: string;
@@ -27,6 +27,7 @@ export const OptimizedImage = ({
 }: OptimizedImageProps) => {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
+  const [hasTriedFallback, setHasTriedFallback] = useState(false);
 
   // Generate optimized Supabase URL
   const getOptimizedUrl = (originalUrl: string, w?: number, h?: number) => {
@@ -49,8 +50,37 @@ export const OptimizedImage = ({
     }
   };
 
-  const optimizedSrc = getOptimizedUrl(src, width, height);
+  // Memoize optimized URL
+  const optimizedSrc = useMemo(() => getOptimizedUrl(src, width, height), [src, width, height]);
+  
+  // Determine which URL to use
+  const currentSrc = hasTriedFallback ? src : optimizedSrc;
+  
+  // Reset state when src changes
+  useEffect(() => {
+    setLoaded(false);
+    setError(false);
+    setHasTriedFallback(false);
+  }, [src]);
+
   const loadingStrategy = priority ? 'eager' : loading;
+
+  const handleError = () => {
+    // If optimized URL failed and we haven't tried original yet, fall back
+    if (!hasTriedFallback && optimizedSrc !== src) {
+      setHasTriedFallback(true);
+      setError(false); // Reset error to retry with original
+      setLoaded(false); // Reset loaded state
+    } else {
+      // Both optimized and original failed, or no fallback available
+      setError(true);
+    }
+  };
+
+  const handleLoad = () => {
+    setLoaded(true);
+    setError(false);
+  };
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
@@ -62,14 +92,14 @@ export const OptimizedImage = ({
       )}
       
       <img
-        src={optimizedSrc}
+        src={currentSrc}
         alt={alt}
         width={width}
         height={height}
         loading={loadingStrategy}
         decoding={decoding}
-        onLoad={() => setLoaded(true)}
-        onError={() => setError(true)}
+        onLoad={handleLoad}
+        onError={handleError}
         className={`transition-opacity duration-300 ${
           loaded ? 'opacity-100' : 'opacity-0'
         } ${className}`}
