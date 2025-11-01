@@ -298,7 +298,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-6 min-w-0 w-full">
         {/* Element Info */}
         <div>
           <h3 className="font-medium text-sm mb-2">Element Properties</h3>
@@ -310,14 +310,14 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
         <Separator />
 
-        <Tabs defaultValue="content" className="w-full">
+        <Tabs defaultValue="content" className="w-full min-w-0">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="content">Content</TabsTrigger>
             <TabsTrigger value="style">Style</TabsTrigger>
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="content" className="space-y-4 mt-4">
+          <TabsContent value="content" className="space-y-4 mt-4 min-w-0 w-full">
             {['heading', 'text', 'image', 'button', 'video', 'spacer', 'divider', 'list', 'navigation-menu'].includes(selectedElement.type) ? (
               <ContentProperties 
                 element={selectedElement}
@@ -527,7 +527,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
                 )}
           </TabsContent>
 
-          <TabsContent value="style" className="space-y-4 mt-4">
+          <TabsContent value="style" className="space-y-4 mt-4 min-w-0 w-full">
             {/* Render element-specific styles based on element type */}
             {renderElementStyles()}
             
@@ -540,7 +540,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             )}
           </TabsContent>
 
-          <TabsContent value="advanced" className="space-y-4 mt-4">
+          <TabsContent value="advanced" className="space-y-4 mt-4 min-w-0 w-full">
             <div className="space-y-3">
               <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Advanced</h4>
 
