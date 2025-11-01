@@ -54,7 +54,7 @@ export const VisibilityControl: React.FC<VisibilityControlProps> = ({
           Control which devices this element is visible on
         </p>
         
-        <div className="grid grid-cols-3 gap-2">
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
           {devices.map((device) => {
             const Icon = device.icon;
             const isVisible = visibility[device.key];
@@ -64,39 +64,24 @@ export const VisibilityControl: React.FC<VisibilityControlProps> = ({
                 key={device.key}
                 onClick={() => handleDeviceToggle(device.key)}
                 className={`
-                  relative flex flex-col items-center justify-center p-3 rounded-lg border-2 transition-all duration-200
+                  relative flex items-center justify-center h-8 px-2 rounded transition-all duration-200
                   ${isVisible 
-                    ? 'border-blue-500 bg-blue-50 hover:bg-blue-100' 
-                    : 'border-gray-200 bg-white hover:bg-gray-50'
+                    ? 'bg-primary text-primary-foreground' 
+                    : 'bg-transparent hover:bg-muted'
                   }
                 `}
                 title={device.description}
               >
-                {/* Check indicator */}
+                {/* Check indicator - smaller, positioned inside */}
                 {isVisible && (
-                  <div className="absolute top-1 right-1 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                    <Check className="w-2.5 h-2.5 text-white" />
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center border border-background">
+                    <Check className="w-1.5 h-1.5 text-white" />
                   </div>
                 )}
                 
-                {/* Device icon */}
-                <div className={`
-                  w-8 h-8 rounded-full flex items-center justify-center mb-1 transition-colors
-                  ${isVisible 
-                    ? 'bg-blue-100 text-blue-600' 
-                    : 'bg-gray-100 text-gray-500'
-                  }
-                `}>
-                  <Icon className="w-4 h-4" />
-                </div>
-                
-                {/* Device label */}
-                <span className={`
-                  text-xs font-medium transition-colors
-                  ${isVisible ? 'text-blue-700' : 'text-gray-600'}
-                `}>
-                  {device.label}
-                </span>
+                {/* Device icon - compact size */}
+                <Icon className="h-3 w-3" />
+                <span className="sr-only">{device.label}</span>
               </button>
             );
           })}

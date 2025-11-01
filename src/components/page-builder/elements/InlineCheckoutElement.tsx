@@ -140,6 +140,15 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
   const isSelectedOut = !!(selectedProduct?.track_inventory && typeof selectedProduct?.inventory_quantity === 'number' && selectedProduct?.inventory_quantity <= 0);
 
+  // Helper function to get valid image URL from product images array
+  const getValidImageUrl = (images: any): string | null => {
+    if (!Array.isArray(images)) return null;
+    const validImage = images.find((img): img is string => 
+      typeof img === 'string' && img.trim().length > 0
+    );
+    return validImage || null;
+  };
+
   // Tracking state
   const [hasTrackedInitiateCheckout, setHasTrackedInitiateCheckout] = useState<boolean>(false);
 
@@ -600,7 +609,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           product_sku: bumpProduct.sku,
           price: Number(bumpProduct.price),
           quantity: 1,
-          image: Array.isArray(bumpProduct.images) ? bumpProduct.images[0] : (bumpProduct.images || null),
+          image: getValidImageUrl(bumpProduct.images),
           variation: null,
         });
       }
@@ -1309,20 +1318,23 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     </label>
                   </div>
                   <div className={`p-3 flex gap-3 ${deviceType === 'mobile' ? 'flex-col items-center' : 'flex-row items-start'}`}>
-                    {Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
-                      <OptimizedImage 
-                        src={bumpProduct.images[0]} 
-                        alt={`${bumpProduct.name} product`} 
-                        className={`object-cover rounded border ${deviceType !== 'mobile' ? 'flex-shrink-0' : ''}`}
-                        width={deviceType === 'mobile' ? 200 : 100}
-                        height={deviceType === 'mobile' ? 200 : 100}
-                        aspectRatio="1"
-                        style={{
-                          width: getEffectiveResponsiveValue(element, 'imageWidth', deviceType, '48px', 'orderBump'),
-                          height: 'auto'
-                        }}
-                      />
-                    )}
+                    {(() => {
+                      const imageUrl = getValidImageUrl(bumpProduct.images);
+                      return imageUrl ? (
+                        <OptimizedImage 
+                          src={imageUrl} 
+                          alt={`${bumpProduct.name} product`} 
+                          className={`object-cover rounded border ${deviceType !== 'mobile' ? 'flex-shrink-0' : ''}`}
+                          width={deviceType === 'mobile' ? 200 : 100}
+                          height={deviceType === 'mobile' ? 200 : 100}
+                          aspectRatio="1"
+                          style={{
+                            width: getEffectiveResponsiveValue(element, 'imageWidth', deviceType, '48px', 'orderBump'),
+                            height: 'auto'
+                          }}
+                        />
+                      ) : null;
+                    })()}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium break-words">{bumpProduct.name} · {formatCurrency(Number(bumpProduct.price))}</div>
                       {orderBump.description && (
@@ -1369,17 +1381,20 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                       </div>
                     )}
                     {orderBump.enabled && bumpChecked && bumpProduct && (
-                      <div className={`grid items-center gap-3 ${showItemImages && (Array.isArray(bumpProduct.images) && bumpProduct.images[0]) ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
-                        {showItemImages && Array.isArray(bumpProduct.images) && bumpProduct.images[0] && (
-                          <OptimizedImage 
-                            src={bumpProduct.images[0]} 
-                            alt={`${bumpProduct.name} product`} 
-                            className="w-10 h-10 object-cover rounded border" 
-                            width={40}
-                            height={40}
-                            aspectRatio="1"
-                          />
-                        )}
+                      <div className={`grid items-center gap-3 ${showItemImages && getValidImageUrl(bumpProduct.images) ? 'grid-cols-[auto_1fr_auto]' : 'grid-cols-[1fr_auto]'}`}>
+                        {showItemImages && (() => {
+                          const imageUrl = getValidImageUrl(bumpProduct.images);
+                          return imageUrl ? (
+                            <OptimizedImage 
+                              src={imageUrl} 
+                              alt={`${bumpProduct.name} product`} 
+                              className="w-10 h-10 object-cover rounded border" 
+                              width={40}
+                              height={40}
+                              aspectRatio="1"
+                            />
+                          ) : null;
+                        })()}
                         <div className="min-w-0">
                           <div className="text-sm font-medium break-words">{bumpProduct.name}</div>
                           <div className="text-xs text-muted-foreground">× 1</div>
