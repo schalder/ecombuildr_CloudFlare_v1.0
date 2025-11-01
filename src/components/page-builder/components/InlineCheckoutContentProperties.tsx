@@ -76,12 +76,12 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
   };
 
   return (
-    <div className="space-y-6 w-full min-w-0 max-w-full">
+    <div className="space-y-6">
       <VisibilityControl
         visibility={currentVisibility}
         onVisibilityChange={handleVisibilityChange}
       />
-      <CollapsibleGroup title="Inline Checkout Products" isOpen={productsOpen} onToggle={setProductsOpen}>
+      <CollapsibleGroup title="Checkout Products" isOpen={productsOpen} onToggle={setProductsOpen}>
         <p className="text-xs text-muted-foreground mb-3 break-words">Select products to show on this checkout form and choose the default one.</p>
         
         <div className="space-y-3">
