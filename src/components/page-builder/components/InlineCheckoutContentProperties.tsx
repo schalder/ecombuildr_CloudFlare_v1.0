@@ -82,7 +82,7 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
         onVisibilityChange={handleVisibilityChange}
       />
       <CollapsibleGroup title="Inline Checkout Products" isOpen={productsOpen} onToggle={setProductsOpen}>
-        <p className="text-xs text-muted-foreground mb-3">Select products to show on this checkout form and choose the default one.</p>
+        <p className="text-xs text-muted-foreground mb-3 break-words">Select products to show on this checkout form and choose the default one.</p>
         
         <div className="space-y-3">
         <Label className="text-sm">Available Products</Label>
@@ -99,9 +99,9 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
           {hasStoreContext && !loading && products.map((p) => {
             const checked = (selectedIds || []).includes(p.id);
             return (
-              <label key={p.id} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={checked} onChange={(e) => toggleProduct(p.id, e.target.checked)} />
-                <span className="truncate">{p.name}</span>
+              <label key={p.id} className="flex items-center gap-2 text-sm min-w-0">
+                <input type="checkbox" checked={checked} onChange={(e) => toggleProduct(p.id, e.target.checked)} className="flex-shrink-0" />
+                <span className="truncate min-w-0">{p.name}</span>
               </label>
             );
           })}
