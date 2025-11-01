@@ -317,7 +317,7 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
             <TabsTrigger value="advanced">Advanced</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="content" className="space-y-4 mt-4">
+          <TabsContent value="content" className="space-y-4 mt-4 min-w-0 overflow-x-hidden">
             {['heading', 'text', 'image', 'button', 'video', 'spacer', 'divider', 'list', 'navigation-menu'].includes(selectedElement.type) ? (
               <ContentProperties 
                 element={selectedElement}

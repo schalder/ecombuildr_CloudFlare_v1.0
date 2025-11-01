@@ -132,22 +132,22 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
         </Select>
       </div>
 
-      <div className="flex items-center gap-2">
-        <input type="checkbox" checked={!!allowSwitching} onChange={(e) => onUpdate('allowSwitching', e.target.checked)} />
-        <Label className="text-sm">Allow switching between products</Label>
+      <div className="flex items-center gap-2 min-w-0">
+        <input type="checkbox" checked={!!allowSwitching} onChange={(e) => onUpdate('allowSwitching', e.target.checked)} className="flex-shrink-0" />
+        <Label className="text-sm break-words min-w-0">Allow switching between products</Label>
       </div>
 
-        <div className="flex items-center gap-2">
-          <input type="checkbox" checked={!!showQuantity} onChange={(e) => onUpdate('showQuantity', e.target.checked)} />
-          <Label className="text-sm">Show quantity selector</Label>
+        <div className="flex items-center gap-2 min-w-0">
+          <input type="checkbox" checked={!!showQuantity} onChange={(e) => onUpdate('showQuantity', e.target.checked)} className="flex-shrink-0" />
+          <Label className="text-sm break-words min-w-0">Show quantity selector</Label>
         </div>
       </CollapsibleGroup>
 
       <CollapsibleGroup title="Order Bump (Optional)" isOpen={orderBumpOpen} onToggle={setOrderBumpOpen}>
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={!!orderBump.enabled} onChange={(e) => onUpdate('orderBump', { ...orderBump, enabled: e.target.checked })} />
-            <Label className="text-sm">Enable order bump</Label>
+          <div className="flex items-center gap-2 min-w-0">
+            <input type="checkbox" checked={!!orderBump.enabled} onChange={(e) => onUpdate('orderBump', { ...orderBump, enabled: e.target.checked })} className="flex-shrink-0" />
+            <Label className="text-sm break-words min-w-0">Enable order bump</Label>
           </div>
           {orderBump.enabled && (
             <div className="space-y-3">
@@ -180,22 +180,23 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
               <Label className="text-sm">Bump Description</Label>
               <Textarea value={orderBump.description || ''} onChange={(e) => onUpdate('orderBump', { ...orderBump, description: e.target.value })} placeholder="Brief description shown under the label" rows={3} />
             </div>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" checked={!!orderBump.prechecked} onChange={(e) => onUpdate('orderBump', { ...orderBump, prechecked: e.target.checked })} />
-              <Label className="text-sm">Pre-check by default</Label>
+            <div className="flex items-center gap-2 min-w-0">
+              <input type="checkbox" checked={!!orderBump.prechecked} onChange={(e) => onUpdate('orderBump', { ...orderBump, prechecked: e.target.checked })} className="flex-shrink-0" />
+              <Label className="text-sm break-words min-w-0">Pre-check by default</Label>
             </div>
             
             <Separator />
             
             <div className="space-y-3">
               <h5 className="text-sm font-medium">Order Bump Shipping</h5>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <input 
                   type="checkbox" 
                   checked={!!chargeShippingForBump} 
                   onChange={(e) => onUpdate('chargeShippingForBump', e.target.checked)} 
+                  className="flex-shrink-0"
                 />
-                <Label className="text-sm">Charge shipping for order bump</Label>
+                <Label className="text-sm break-words min-w-0">Charge shipping for order bump</Label>
               </div>
               {chargeShippingForBump && (
                 <div>
