@@ -75,6 +75,11 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
     }
   };
 
+  const truncateProductName = (name: string, maxLength: number = 35): string => {
+    if (name.length <= maxLength) return name;
+    return `${name.substring(0, maxLength)}...`;
+  };
+
   return (
     <div className="space-y-6">
       <VisibilityControl
@@ -102,7 +107,9 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
                 return (
                   <label key={p.id} className="flex items-center gap-2 text-sm min-w-0">
                     <input type="checkbox" checked={checked} onChange={(e) => toggleProduct(p.id, e.target.checked)} className="flex-shrink-0" />
-                    <span className="truncate min-w-0">{p.name}</span>
+                    <span className="truncate min-w-0" title={p.name}>
+                      {truncateProductName(p.name)}
+                    </span>
                   </label>
                 );
               })}
