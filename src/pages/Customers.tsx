@@ -23,12 +23,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, Users, Mail, Phone, MapPin, RefreshCw, Calendar, Eye, EyeOff, TrendingUp, DollarSign, AlertCircle } from "lucide-react";
+import { Search, Users, Mail, Phone, MapPin, RefreshCw, Calendar, Eye, EyeOff, TrendingUp, DollarSign, AlertCircle, MessageCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { openWhatsApp } from "@/lib/utils";
+import { normalizePhoneNumber } from "@/utils/authValidation";
 
 interface Customer {
   id: string;
@@ -431,6 +433,17 @@ export default function Customers() {
                             <span style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
                               {customer.phone}
                             </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const normalizedPhone = normalizePhoneNumber(customer.phone);
+                                openWhatsApp(normalizedPhone);
+                              }}
+                              className="text-green-600 hover:text-green-700 transition-colors ml-1"
+                              title="Open WhatsApp chat"
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         )}
                         {(customer.city || customer.area) && (
@@ -500,6 +513,17 @@ export default function Customers() {
                               <span style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
                                 {customer.phone}
                               </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const normalizedPhone = normalizePhoneNumber(customer.phone);
+                                  openWhatsApp(normalizedPhone);
+                                }}
+                                className="text-green-600 hover:text-green-700 transition-colors ml-1"
+                                title="Open WhatsApp chat"
+                              >
+                                <MessageCircle className="h-3.5 w-3.5" />
+                              </button>
                             </div>
                           )}
                         </div>
