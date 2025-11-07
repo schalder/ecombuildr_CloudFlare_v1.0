@@ -22,10 +22,13 @@ import {
   Clock,
   XCircle,
   Trash2,
-  CheckSquare
+  CheckSquare,
+  MessageCircle
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { openWhatsApp } from '@/lib/utils';
+import { normalizePhoneNumber } from '@/utils/authValidation';
 
 interface FormSubmission {
   id: string;
@@ -470,6 +473,17 @@ export const FunnelContacts: React.FC<FunnelContactsProps> = ({ funnelId }) => {
                         <div className="flex items-center gap-2 text-sm">
                           <Phone className="h-3 w-3 text-muted-foreground" />
                           {submission.customer_phone}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const normalizedPhone = normalizePhoneNumber(submission.customer_phone);
+                              openWhatsApp(normalizedPhone);
+                            }}
+                            className="text-green-600 hover:text-green-700 transition-colors ml-1"
+                            title="Open WhatsApp chat"
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       )}
                       {!submission.customer_name && !submission.customer_email && !submission.customer_phone && (
