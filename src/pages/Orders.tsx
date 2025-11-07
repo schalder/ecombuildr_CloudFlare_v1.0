@@ -40,11 +40,13 @@ import {
   Calendar,
   MapPin,
   Phone,
-  Mail
+  Mail,
+  MessageCircle
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { nameWithVariant } from '@/lib/utils';
+import { nameWithVariant, openWhatsApp } from '@/lib/utils';
 import { useIsMobile } from "@/hooks/use-mobile";
+import { normalizePhoneNumber } from "@/utils/authValidation";
 
 interface Order {
   id: string;
@@ -847,7 +849,22 @@ export default function Orders() {
                       <TableCell>
                         <div>
                           <div className="font-medium">{order.customer_name}</div>
-                          <div className="text-sm text-muted-foreground">{order.customer_phone}</div>
+                          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                            <span>{order.customer_phone}</span>
+                            {order.customer_phone && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const normalizedPhone = normalizePhoneNumber(order.customer_phone);
+                                  openWhatsApp(normalizedPhone);
+                                }}
+                                className="text-green-600 hover:text-green-700 transition-colors"
+                                title="Open WhatsApp chat"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
                           {(order.shipping_city || order.shipping_area || order.shipping_address) && (
                             <div className="text-xs text-muted-foreground">
                               Ship: {order.shipping_city || ''}{order.shipping_area ? `, ${order.shipping_area}` : ''}
