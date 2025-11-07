@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run install:native && npx --yes vite@5.4.1 build",
+    "build": "npm run install:native && vite build",
     "install:native": "npm run install:optional && npm run verify:native",
     "install:optional": "npm install --include=optional --no-audit --no-fund",
     "verify:native": "npm run install:rollup-binaries && npm run install:swc-binaries",
