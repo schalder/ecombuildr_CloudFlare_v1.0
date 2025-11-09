@@ -81,6 +81,23 @@ const statusColors = {
   cancelled: "destructive",
 } as const;
 
+// Normalize IP address (remove port, trim whitespace)
+function normalizeIP(ip: string | null | undefined): string | null {
+  if (!ip) return null;
+  const trimmed = ip.trim();
+  // Remove port if present (e.g., "192.168.1.1:8080" -> "192.168.1.1")
+  if (trimmed.includes(':')) {
+    const parts = trimmed.split(':');
+    // Check if it's IPv4 with port (2 parts, second is numeric)
+    if (parts.length === 2 && /^\d+$/.test(parts[1])) {
+      return parts[0];
+    }
+    // For IPv6, return as-is for now
+    return trimmed;
+  }
+  return trimmed;
+}
+
 export default function Orders() {
   const { user } = useAuth();
   const { orderId } = useParams<{ orderId?: string }>();
@@ -136,12 +153,20 @@ export default function Orders() {
         return;
       }
 
+      // Normalize IP address before checking
+      const normalizedIP = normalizeIP(selectedOrder.ip_address);
+      if (!normalizedIP) {
+        setIsIPBlocked(false);
+        setBlockedIPInfo(null);
+        return;
+      }
+
       try {
         const { data, error } = await supabase
           .from('blocked_ips')
           .select('*')
           .eq('store_id', selectedOrder.store_id)
-          .eq('ip_address', selectedOrder.ip_address)
+          .eq('ip_address', normalizedIP)
           .eq('is_active', true)
           .maybeSingle();
 
@@ -679,13 +704,24 @@ export default function Orders() {
       return;
     }
     
+    // Normalize IP address before storing
+    const normalizedIP = normalizeIP(ipAddress);
+    if (!normalizedIP) {
+      toast({
+        title: "Error",
+        description: "Invalid IP address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       // Check if record exists (even if is_active: false)
       const { data: existingBlock } = await supabase
         .from('blocked_ips')
         .select('id')
         .eq('store_id', order.store_id)
-        .eq('ip_address', ipAddress)
+        .eq('ip_address', normalizedIP)
         .maybeSingle();
       
       if (existingBlock) {
@@ -708,7 +744,7 @@ export default function Orders() {
           .from('blocked_ips')
           .insert({
             store_id: order.store_id,
-            ip_address: ipAddress,
+            ip_address: normalizedIP,
             blocked_by: user.id,
             reason: orderId ? `Blocked from order ${order.order_number}` : 'Manual block',
             is_active: true,
@@ -721,18 +757,20 @@ export default function Orders() {
       
       toast({
         title: "Success",
-        description: `IP address ${ipAddress} has been blocked`,
+        description: `IP address ${normalizedIP} has been blocked`,
       });
 
       // Refresh blocked IP status in order details
-      if (isOrderDetailsOpen && selectedOrder && (selectedOrder as any).ip_address === ipAddress) {
+      // Check if the order's IP matches (normalized)
+      const orderIP = normalizeIP((selectedOrder as any)?.ip_address);
+      if (isOrderDetailsOpen && selectedOrder && orderIP === normalizedIP) {
         setIsIPBlocked(true);
         // Refresh blocked IP info
         const { data } = await supabase
           .from('blocked_ips')
           .select('*')
           .eq('store_id', order.store_id)
-          .eq('ip_address', ipAddress)
+          .eq('ip_address', normalizedIP)
           .eq('is_active', true)
           .maybeSingle();
         if (data) setBlockedIPInfo(data);
@@ -766,6 +804,17 @@ export default function Orders() {
       return;
     }
     
+    // Normalize IP address before unblocking
+    const normalizedIP = normalizeIP(ipAddress);
+    if (!normalizedIP) {
+      toast({
+        title: "Error",
+        description: "Invalid IP address",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       const { error } = await supabase
         .from('blocked_ips')
@@ -774,18 +823,20 @@ export default function Orders() {
           updated_at: new Date().toISOString()
         })
         .eq('store_id', order.store_id)
-        .eq('ip_address', ipAddress)
+        .eq('ip_address', normalizedIP)
         .eq('is_active', true);
       
       if (error) throw error;
       
       toast({
         title: "Success",
-        description: `IP address ${ipAddress} has been unblocked`,
+        description: `IP address ${normalizedIP} has been unblocked`,
       });
 
       // Refresh blocked IP status in order details
-      if (isOrderDetailsOpen && selectedOrder && (selectedOrder as any).ip_address === ipAddress) {
+      // Check if the order's IP matches (normalized)
+      const orderIP = normalizeIP((selectedOrder as any)?.ip_address);
+      if (isOrderDetailsOpen && selectedOrder && orderIP === normalizedIP) {
         setIsIPBlocked(false);
         setBlockedIPInfo(null);
       }

@@ -52,6 +52,27 @@ function generateAccessToken() {
   return crypto.randomUUID().replace(/-/g, '');
 }
 
+// Normalize IP address (remove port, trim whitespace)
+function normalizeIP(ip: string | null | undefined): string | null {
+  if (!ip) return null;
+  // Remove port if present (e.g., "192.168.1.1:8080" -> "192.168.1.1")
+  // Also handle IPv6 addresses with ports
+  const trimmed = ip.trim();
+  // For IPv4, split by colon and take first part
+  // For IPv6, we need to be more careful, but for now just take before last colon if it looks like a port
+  if (trimmed.includes(':')) {
+    // Check if it's IPv6 (contains multiple colons) or IPv4 with port
+    const parts = trimmed.split(':');
+    if (parts.length === 2 && /^\d+$/.test(parts[1])) {
+      // Likely IPv4 with port
+      return parts[0];
+    }
+    // For IPv6, return as-is for now (could enhance later)
+    return trimmed;
+  }
+  return trimmed;
+}
+
 // Extract IP address from request headers
 function getClientIP(req: Request): string | null {
   // Log all available headers for debugging
@@ -169,33 +190,60 @@ serve(async (req) => {
     const clientIP = getClientIP(req);
     console.log('Extracted client IP for order:', clientIP);
     
+    // Normalize IPs for comparison
+    const normalizedClientIP = normalizeIP(clientIP);
+    const normalizedOrderIP = normalizeIP(order.ip_address);
+    
     // Track if order should be marked as potential fake
     let isPotentialFake = false;
     
     // Check if IP is blocked before creating order
-    if (clientIP) {
-      const { data: blockedIP, error: blockedError } = await supabase
-        .from('blocked_ips')
-        .select('id')
-        .eq('store_id', storeId)
-        .eq('ip_address', clientIP)
-        .eq('is_active', true)
-        .maybeSingle();
-      
-      if (blockedError) {
-        console.error('Error checking blocked IPs:', blockedError);
-      } else if (blockedIP) {
-        console.log(`Order blocked: IP ${clientIP} is blocked for store ${storeId}`);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Order cannot be placed from this location. Please contact support if this is a mistake.' 
-          }), 
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
+    // Check both clientIP (from headers) and order.ip_address (from request body)
+    const ipsToCheck: string[] = [];
+    if (normalizedClientIP) {
+      ipsToCheck.push(normalizedClientIP);
+    }
+    if (normalizedOrderIP && normalizedOrderIP !== normalizedClientIP) {
+      ipsToCheck.push(normalizedOrderIP);
+    }
+    
+    if (ipsToCheck.length > 0) {
+      // Check each IP against blocked list
+      for (const ipToCheck of ipsToCheck) {
+        const { data: blockedIP, error: blockedError } = await supabase
+          .from('blocked_ips')
+          .select('id')
+          .eq('store_id', storeId)
+          .eq('ip_address', ipToCheck)
+          .eq('is_active', true)
+          .maybeSingle();
+        
+        if (blockedError) {
+          // Fail-safe: if database check fails, block the order to be safe
+          console.error('Error checking blocked IPs:', blockedError);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Unable to verify order location. Please contact support if this is a mistake.' 
+            }), 
+            { 
+              status: 400, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        } else if (blockedIP) {
+          console.log(`Order blocked: IP ${ipToCheck} is blocked for store ${storeId}`);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Order cannot be placed from this location. Please contact support if this is a mistake.' 
+            }), 
+            { 
+              status: 400, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        }
       }
     }
     
@@ -219,17 +267,18 @@ serve(async (req) => {
       }
       
       // Check for frequent orders from same IP (mark as potential fake instead of blocking)
-      if (clientIP) {
-        const ipCheck = await checkIPOrderFrequency(supabase, clientIP, storeId, 24, 3);
+      const ipToCheckForFrequency = normalizedClientIP || normalizedOrderIP;
+      if (ipToCheckForFrequency) {
+        const ipCheck = await checkIPOrderFrequency(supabase, ipToCheckForFrequency, storeId, 24, 3);
         
         if (ipCheck.isFrequent) {
-          console.log(`Potential fake order detected: Frequent orders from IP ${clientIP} (${ipCheck.orderCount} orders in last 24 hours)`);
+          console.log(`Potential fake order detected: Frequent orders from IP ${ipToCheckForFrequency} (${ipCheck.orderCount} orders in last 24 hours)`);
           isPotentialFake = true;
         }
       }
       
       // Log warning if valid phone but no IP captured
-      if (!clientIP) {
+      if (!ipToCheckForFrequency) {
         console.log('Warning: Valid phone format but no IP address captured');
       }
     }
@@ -272,7 +321,7 @@ serve(async (req) => {
       total: order.total ?? ((order.subtotal ?? 0) + (order.shipping_cost ?? 0) - (order.discount_amount ?? 0)),
       payment_transaction_number: order.payment_transaction_number ?? null,
       idempotency_key: order.idempotency_key ?? null,
-      ip_address: clientIP || order.ip_address || null,
+      ip_address: normalizedClientIP || normalizedOrderIP || null,
       is_potential_fake: isPotentialFake,
       marked_not_fake: false,
       custom_fields: {
