@@ -68,6 +68,9 @@ interface Order {
   tracking_number?: string | null;
   website_id?: string;
   funnel_id?: string;
+  ip_address?: string | null;
+  is_potential_fake?: boolean;
+  marked_not_fake?: boolean;
 }
 
 const statusColors = {
@@ -87,6 +90,8 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "");
+  const [activeTab, setActiveTab] = useState<'all' | 'fake'>('all');
+  const [fakeOrderFilter, setFakeOrderFilter] = useState<'all' | 'blocked'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
   const [invoiceOpen, setInvoiceOpen] = useState(false);
@@ -99,6 +104,8 @@ export default function Orders() {
   const [pushing, setPushing] = useState(false);
   const [websiteMap, setWebsiteMap] = useState<Record<string, string>>({});
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
+  const [isIPBlocked, setIsIPBlocked] = useState<boolean>(false);
+  const [blockedIPInfo, setBlockedIPInfo] = useState<any>(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -108,9 +115,61 @@ export default function Orders() {
   const isMobile = useIsMobile();
   useEffect(() => {
     if (user) {
-      fetchOrders();
+      if (activeTab === 'fake') {
+        if (fakeOrderFilter === 'blocked') {
+          fetchBlockedIPOrders();
+        } else {
+          fetchFakeOrders();
+        }
+      } else {
+        fetchOrders();
+      }
     }
-  }, [user, currentPage, searchTerm, statusFilter]);
+  }, [user, currentPage, searchTerm, statusFilter, activeTab, fakeOrderFilter]);
+
+  // Check if IP is blocked when order details open
+  useEffect(() => {
+    const checkIPBlocked = async () => {
+      if (!selectedOrder?.ip_address || !selectedOrder?.store_id) {
+        setIsIPBlocked(false);
+        setBlockedIPInfo(null);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('blocked_ips')
+          .select('*')
+          .eq('store_id', selectedOrder.store_id)
+          .eq('ip_address', selectedOrder.ip_address)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error checking blocked IP:', error);
+          setIsIPBlocked(false);
+          setBlockedIPInfo(null);
+          return;
+        }
+
+        if (data) {
+          setIsIPBlocked(true);
+          setBlockedIPInfo(data);
+        } else {
+          setIsIPBlocked(false);
+          setBlockedIPInfo(null);
+        }
+      } catch (error) {
+        console.error('Error checking blocked IP:', error);
+        setIsIPBlocked(false);
+        setBlockedIPInfo(null);
+      }
+    };
+
+    if (isOrderDetailsOpen && selectedOrder) {
+      checkIPBlocked();
+    }
+  }, [isOrderDetailsOpen, selectedOrder]);
 
   useEffect(() => {
     const status = searchParams.get("status");
@@ -194,13 +253,21 @@ export default function Orders() {
             tracking_number,
             notes,
             website_id,
-            funnel_id
+            funnel_id,
+            ip_address,
+            is_potential_fake,
+            marked_not_fake
           `)
           .in('store_id', storeIds);
 
         // Apply search filter if searchTerm exists
         if (searchTerm.trim()) {
-          ordersQuery = ordersQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%`);
+          ordersQuery = ordersQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%,ip_address.ilike.%${searchTerm}%`);
+        }
+
+        // Exclude fake orders from "All Orders" tab (show orders that are not potential fake, or marked as not fake)
+        if (activeTab === 'all') {
+          ordersQuery = ordersQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
         }
 
         // Apply status filter if statusFilter exists
@@ -214,8 +281,13 @@ export default function Orders() {
           .select('*', { count: 'exact', head: true })
           .in('store_id', storeIds);
 
+        // Exclude fake orders from "All Orders" tab count (show orders that are not potential fake, or marked as not fake)
+        if (activeTab === 'all') {
+          countQuery = countQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
+        }
+
         if (searchTerm.trim()) {
-          countQuery = countQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%`);
+          countQuery = countQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%,ip_address.ilike.%${searchTerm}%`);
         }
 
         if (statusFilter) {
@@ -295,6 +367,402 @@ export default function Orders() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFakeOrders = async () => {
+    try {
+      setLoading(true);
+      
+      // First get user's stores
+      const { data: stores, error: storesError } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('owner_id', user?.id);
+
+      if (storesError) throw storesError;
+
+      if (stores && stores.length > 0) {
+        const storeIds = stores.map(store => store.id);
+        
+        // Build query for fake orders
+        let ordersQuery = supabase
+          .from('orders')
+          .select(`
+            id,
+            store_id,
+            order_number,
+            customer_name,
+            customer_email,
+            customer_phone,
+            status,
+            total,
+            created_at,
+            payment_method,
+            payment_transaction_number,
+            shipping_city,
+            shipping_area,
+            shipping_address,
+            courier_name,
+            tracking_number,
+            notes,
+            website_id,
+            funnel_id,
+            ip_address,
+            is_potential_fake,
+            marked_not_fake
+          `)
+          .in('store_id', storeIds)
+          .eq('is_potential_fake', true)
+          .eq('marked_not_fake', false);
+
+        // Apply search filter if searchTerm exists
+        if (searchTerm.trim()) {
+          ordersQuery = ordersQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%,ip_address.ilike.%${searchTerm}%`);
+        }
+
+        // Apply status filter if statusFilter exists
+        if (statusFilter) {
+          ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+        }
+
+        // Apply pagination
+        const offset = (currentPage - 1) * ordersPerPage;
+        const { data: orders, error: ordersError } = await ordersQuery
+          .order('created_at', { ascending: false })
+          .range(offset, offset + ordersPerPage - 1);
+
+        if (ordersError) throw ordersError;
+        setOrders(orders || []);
+
+        // Get total count for pagination with same filters
+        let countQuery = supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: true })
+          .in('store_id', storeIds)
+          .eq('is_potential_fake', true)
+          .eq('marked_not_fake', false);
+
+        if (searchTerm.trim()) {
+          countQuery = countQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%,ip_address.ilike.%${searchTerm}%`);
+        }
+
+        if (statusFilter) {
+          countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+        }
+
+        const { count } = await countQuery;
+        setTotalCount(count || 0);
+
+        // Fetch order items for all orders
+        if (orders && orders.length > 0) {
+          const orderIds = orders.map(o => o.id);
+          const { data: items, error: itemsError } = await supabase
+            .from('order_items')
+            .select('*')
+            .in('order_id', orderIds);
+
+          if (!itemsError && items) {
+            const map: Record<string, any[]> = {};
+            items.forEach(item => {
+              if (!map[item.order_id]) map[item.order_id] = [];
+              map[item.order_id].push(item);
+            });
+            setOrderItemsMap(map);
+          } else {
+            setOrderItemsMap({});
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching fake orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load fake orders",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchBlockedIPOrders = async () => {
+    try {
+      setLoading(true);
+      
+      if (!user) return;
+
+      // First get user's stores
+      const { data: stores, error: storesError } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('owner_id', user.id);
+
+      if (storesError) throw storesError;
+
+      if (!stores || stores.length === 0) {
+        setOrders([]);
+        setTotalCount(0);
+        return;
+      }
+
+      const storeIds = stores.map(store => store.id);
+
+      // Get all blocked IPs for these stores
+      const { data: blockedIPs, error: blockedError } = await supabase
+        .from('blocked_ips')
+        .select('ip_address')
+        .in('store_id', storeIds)
+        .eq('is_active', true);
+
+      if (blockedError) {
+        console.error('Error fetching blocked IPs:', blockedError);
+        setOrders([]);
+        setTotalCount(0);
+        return;
+      }
+
+      const blockedIPAddresses = (blockedIPs || []).map(b => b.ip_address);
+
+      if (blockedIPAddresses.length === 0) {
+        setOrders([]);
+        setTotalCount(0);
+        return;
+      }
+
+      // Fetch orders from blocked IPs
+      let ordersQuery = supabase
+        .from('orders')
+        .select(`
+          id,
+          store_id,
+          order_number,
+          customer_name,
+          customer_email,
+          customer_phone,
+          status,
+          total,
+          created_at,
+          payment_method,
+          payment_transaction_number,
+          shipping_city,
+          shipping_area,
+          shipping_address,
+          courier_name,
+          tracking_number,
+          notes,
+          website_id,
+          funnel_id,
+          ip_address,
+          is_potential_fake,
+          marked_not_fake
+        `)
+        .in('store_id', storeIds)
+        .in('ip_address', blockedIPAddresses);
+
+      // Apply search filter if searchTerm exists
+      if (searchTerm.trim()) {
+        ordersQuery = ordersQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%,ip_address.ilike.%${searchTerm}%`);
+      }
+
+      // Apply status filter if statusFilter exists
+      if (statusFilter) {
+        ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+      }
+
+      // Apply pagination
+      const offset = (currentPage - 1) * ordersPerPage;
+      const { data: orders, error: ordersError } = await ordersQuery
+        .order('created_at', { ascending: false })
+        .range(offset, offset + ordersPerPage - 1);
+
+      if (ordersError) throw ordersError;
+      setOrders(orders || []);
+
+      // Get count
+      let countQuery = supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .in('store_id', storeIds)
+        .in('ip_address', blockedIPAddresses);
+
+      if (searchTerm.trim()) {
+        countQuery = countQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%,ip_address.ilike.%${searchTerm}%`);
+      }
+
+      if (statusFilter) {
+        countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+      }
+
+      const { count } = await countQuery;
+      setTotalCount(count || 0);
+
+      // Fetch order items for all orders
+      if (orders && orders.length > 0) {
+        const orderIds = orders.map(o => o.id);
+        const { data: items, error: itemsError } = await supabase
+          .from('order_items')
+          .select('*')
+          .in('order_id', orderIds);
+
+        if (!itemsError && items) {
+          const map: Record<string, any[]> = {};
+          items.forEach(item => {
+            if (!map[item.order_id]) map[item.order_id] = [];
+            map[item.order_id].push(item);
+          });
+          setOrderItemsMap(map);
+        } else {
+          setOrderItemsMap({});
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching blocked IP orders:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load blocked IP orders",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markOrderAsNotFake = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          marked_not_fake: true, 
+          is_potential_fake: false 
+        })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Order marked as not fake and moved to regular list",
+      });
+      
+      // Refresh orders
+      if (activeTab === 'fake') {
+        if (fakeOrderFilter === 'blocked') {
+          fetchBlockedIPOrders();
+        } else {
+          fetchFakeOrders();
+        }
+      } else {
+        fetchOrders();
+      }
+    } catch (error) {
+      console.error('Error marking order as not fake:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update order",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const blockIPAddress = async (ipAddress: string, orderId?: string) => {
+    if (!user?.id) return;
+    
+    // Get store_id from the order
+    const order = orders.find(o => o.id === orderId) || selectedOrder;
+    if (!order?.store_id) {
+      toast({
+        title: "Error",
+        description: "Cannot determine store for this order",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('blocked_ips')
+        .insert({
+          store_id: order.store_id,
+          ip_address: ipAddress,
+          blocked_by: user.id,
+          reason: orderId ? `Blocked from order ${order.order_number}` : 'Manual block',
+          is_active: true
+        });
+      
+      if (error) {
+        // If IP is already blocked, that's okay
+        if (error.code === '23505') {
+          toast({
+            title: "Info",
+            description: `IP address ${ipAddress} is already blocked`,
+          });
+          return;
+        }
+        throw error;
+      }
+      
+      toast({
+        title: "Success",
+        description: `IP address ${ipAddress} has been blocked`,
+      });
+
+      // Refresh orders if on blocked IPs filter
+      if (activeTab === 'fake' && fakeOrderFilter === 'blocked') {
+        fetchBlockedIPOrders();
+      }
+    } catch (error) {
+      console.error('Error blocking IP:', error);
+      toast({
+        title: "Error",
+        description: "Failed to block IP address",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const unblockIPAddress = async (ipAddress: string) => {
+    if (!user?.id) return;
+    
+    // Get store_id from the order
+    const order = orders.find(o => o.ip_address === ipAddress) || selectedOrder;
+    if (!order?.store_id) {
+      toast({
+        title: "Error",
+        description: "Cannot determine store for this IP",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('blocked_ips')
+        .update({ is_active: false })
+        .eq('store_id', order.store_id)
+        .eq('ip_address', ipAddress)
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: `IP address ${ipAddress} has been unblocked`,
+      });
+
+      // Refresh orders if on blocked IPs filter
+      if (activeTab === 'fake' && fakeOrderFilter === 'blocked') {
+        fetchBlockedIPOrders();
+      } else if (activeTab === 'fake') {
+        fetchFakeOrders();
+      }
+    } catch (error) {
+      console.error('Error unblocking IP:', error);
+      toast({
+        title: "Error",
+        description: "Failed to unblock IP address",
+        variant: "destructive",
+      });
     }
   };
 
@@ -584,6 +1052,53 @@ export default function Orders() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Tabs */}
+            <div className="flex gap-2 mb-4">
+              <Button
+                variant={activeTab === 'all' ? 'default' : 'outline'}
+                onClick={() => {
+                  setActiveTab('all');
+                  setCurrentPage(1);
+                }}
+              >
+                All Orders
+              </Button>
+              <Button
+                variant={activeTab === 'fake' ? 'default' : 'outline'}
+                onClick={() => {
+                  setActiveTab('fake');
+                  setCurrentPage(1);
+                }}
+              >
+                Fake Orders
+              </Button>
+            </div>
+
+            {/* Fake Orders Filter */}
+            {activeTab === 'fake' && (
+              <div className="flex gap-2 mb-4">
+                <Button
+                  variant={fakeOrderFilter === 'all' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setFakeOrderFilter('all');
+                    setCurrentPage(1);
+                  }}
+                >
+                  All Fake Orders
+                </Button>
+                <Button
+                  variant={fakeOrderFilter === 'blocked' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => {
+                    setFakeOrderFilter('blocked');
+                    setCurrentPage(1);
+                  }}
+                >
+                  Blocked IPs
+                </Button>
+              </div>
+            )}
             {loading ? (
               <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
@@ -608,9 +1123,16 @@ export default function Orders() {
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
                           <div className="font-semibold text-sm"># {order.order_number}</div>
-                          <Badge variant={statusColors[order.status as keyof typeof statusColors] || "secondary"} className="text-xs">
-                            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                          </Badge>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge variant={statusColors[order.status as keyof typeof statusColors] || "secondary"} className="text-xs">
+                              {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                            </Badge>
+                            {order.is_potential_fake && !order.marked_not_fake && (
+                              <Badge variant="destructive" className="text-xs">
+                                Potential Fake
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="text-right">
@@ -828,7 +1350,14 @@ export default function Orders() {
                     <TableRow key={order.id}>
                       <TableCell className="font-medium">
                         <div>
-                          <div className="font-medium">{order.order_number}</div>
+                          <div className="flex items-center gap-2">
+                            <div className="font-medium">{order.order_number}</div>
+                            {order.is_potential_fake && !order.marked_not_fake && (
+                              <Badge variant="destructive" className="text-xs">
+                                Potential Fake
+                              </Badge>
+                            )}
+                          </div>
                           {order.shipping_city && (
                             <div className="text-sm text-muted-foreground">
                               to {order.shipping_city}
@@ -1156,9 +1685,56 @@ export default function Orders() {
                     </p>
                     <p>Date: {new Date(selectedOrder.created_at).toLocaleString()}</p>
                     {(selectedOrder as any).ip_address && (
-                      <p className="text-sm text-muted-foreground">
-                        IP Address: {(selectedOrder as any).ip_address}
-                      </p>
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">
+                          IP Address: {(selectedOrder as any).ip_address}
+                        </p>
+                        {selectedOrder.is_potential_fake && !selectedOrder.marked_not_fake && (
+                          <div className="flex items-center gap-2">
+                            <Badge variant="destructive" className="text-xs">
+                              Potential Fake Order
+                            </Badge>
+                          </div>
+                        )}
+                        <div className="flex gap-2 flex-wrap">
+                          {selectedOrder.is_potential_fake && !selectedOrder.marked_not_fake && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => markOrderAsNotFake(selectedOrder.id)}
+                            >
+                              Mark as Not Fake
+                            </Button>
+                          )}
+                          {(selectedOrder as any).ip_address && (
+                            <>
+                              {isIPBlocked ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => unblockIPAddress((selectedOrder as any).ip_address)}
+                                >
+                                  Unblock IP
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => blockIPAddress((selectedOrder as any).ip_address, selectedOrder.id)}
+                                >
+                                  Block IP
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        {blockedIPInfo && (
+                          <p className="text-xs text-muted-foreground">
+                            Blocked on: {new Date(blockedIPInfo.blocked_at).toLocaleString()}
+                            {blockedIPInfo.reason && ` - ${blockedIPInfo.reason}`}
+                          </p>
+                        )}
+                      </div>
                     )}
                     {selectedOrder.courier_name && (
                       <p>

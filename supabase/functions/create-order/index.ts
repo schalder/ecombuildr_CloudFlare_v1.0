@@ -169,6 +169,36 @@ serve(async (req) => {
     const clientIP = getClientIP(req);
     console.log('Extracted client IP for order:', clientIP);
     
+    // Track if order should be marked as potential fake
+    let isPotentialFake = false;
+    
+    // Check if IP is blocked before creating order
+    if (clientIP) {
+      const { data: blockedIP, error: blockedError } = await supabase
+        .from('blocked_ips')
+        .select('id')
+        .eq('store_id', storeId)
+        .eq('ip_address', clientIP)
+        .eq('is_active', true)
+        .maybeSingle();
+      
+      if (blockedError) {
+        console.error('Error checking blocked IPs:', blockedError);
+      } else if (blockedIP) {
+        console.log(`Order blocked: IP ${clientIP} is blocked for store ${storeId}`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Order cannot be placed from this location. Please contact support if this is a mistake.' 
+          }), 
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+    }
+    
     // Fake order detection for COD orders only
     if (order.payment_method === 'cod') {
       const isValidPhone = isValidBangladeshiPhone(order.customer_phone);
@@ -188,22 +218,13 @@ serve(async (req) => {
         );
       }
       
-      // Check for frequent orders from same IP (only if phone is valid)
+      // Check for frequent orders from same IP (mark as potential fake instead of blocking)
       if (clientIP) {
         const ipCheck = await checkIPOrderFrequency(supabase, clientIP, storeId, 24, 3);
         
         if (ipCheck.isFrequent) {
-          console.log(`Fake order detected: Valid phone format but frequent orders from IP ${clientIP} (${ipCheck.orderCount} orders in last 24 hours)`);
-          return new Response(
-            JSON.stringify({ 
-              success: false, 
-              error: 'Order cannot be placed. Multiple orders detected from the same location. Please contact support if this is a mistake.' 
-            }), 
-            { 
-              status: 400, 
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-            }
-          );
+          console.log(`Potential fake order detected: Frequent orders from IP ${clientIP} (${ipCheck.orderCount} orders in last 24 hours)`);
+          isPotentialFake = true;
         }
       }
       
@@ -252,6 +273,8 @@ serve(async (req) => {
       payment_transaction_number: order.payment_transaction_number ?? null,
       idempotency_key: order.idempotency_key ?? null,
       ip_address: clientIP || order.ip_address || null,
+      is_potential_fake: isPotentialFake,
+      marked_not_fake: false,
       custom_fields: {
         ...(order.custom_fields || {}),
         order_access_token: accessToken,
