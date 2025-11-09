@@ -43,25 +43,26 @@ export const ShippingOptionsPicker: React.FC<ShippingOptionsPickerProps> = ({
       <RadioGroup
         value={selectedOptionId}
         onValueChange={handleOptionSelect}
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+        className="grid grid-cols-1 md:grid-cols-2 gap-6"
       >
         {options.map((option) => (
-          <div key={option.id} className="flex items-center space-x-2">
-            <RadioGroupItem value={option.id} id={option.id} />
-            <Label 
-              htmlFor={option.id} 
-              className="flex-1 text-sm cursor-pointer"
-            >
+          <label 
+            key={option.id} 
+            htmlFor={option.id}
+            className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+          >
+            <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
+            <div className="flex-1 min-w-0">
               <div className="flex justify-between items-center">
-                <span className="font-medium">
+                <span className="font-medium text-sm">
                   {option.label.replace(/\(₹\d+\)/, '').trim()}
                 </span>
-                <span className="font-medium text-primary">
+                <span className="font-semibold text-sm text-primary">
                   {option.fee === 0 ? 'Free' : formatCurrency(option.fee)}
                 </span>
               </div>
-            </Label>
-          </div>
+            </div>
+          </label>
         ))}
       </RadioGroup>
     </div>
