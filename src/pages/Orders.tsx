@@ -690,6 +690,52 @@ export default function Orders() {
     }
   };
 
+  const markOrderAsPotentialFake = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          is_potential_fake: true, 
+          marked_not_fake: false 
+        })
+        .eq('id', orderId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Success",
+        description: "Order marked as potential fake",
+      });
+      
+      // Refresh orders and update selected order
+      if (activeTab === 'fake') {
+        if (fakeOrderFilter === 'blocked') {
+          fetchBlockedIPOrders();
+        } else {
+          fetchFakeOrders();
+        }
+      } else {
+        fetchOrders();
+      }
+      
+      // Update selected order in dialog
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder({
+          ...selectedOrder,
+          is_potential_fake: true,
+          marked_not_fake: false
+        });
+      }
+    } catch (error) {
+      console.error('Error marking order as potential fake:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update order",
+        variant: "destructive",
+      });
+    }
+  };
+
   const blockIPAddress = async (ipAddress: string, orderId?: string) => {
     if (!user?.id) return;
     
@@ -1795,6 +1841,15 @@ export default function Orders() {
                               onClick={() => markOrderAsNotFake(selectedOrder.id)}
                             >
                               Mark as Not Fake
+                            </Button>
+                          )}
+                          {(!selectedOrder.is_potential_fake || selectedOrder.marked_not_fake) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => markOrderAsPotentialFake(selectedOrder.id)}
+                            >
+                              Mark as Potential Fake
                             </Button>
                           )}
                           {(selectedOrder as any).ip_address && (
