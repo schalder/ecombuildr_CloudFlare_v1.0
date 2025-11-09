@@ -39,6 +39,7 @@ type OrderInput = {
   status?: string;
   custom_fields?: Record<string, any>;
   idempotency_key?: string | null;
+  ip_address?: string | null;
 };
 
 function generateOrderNumber() {
@@ -49,6 +50,76 @@ function generateOrderNumber() {
 // Generate access token for order
 function generateAccessToken() {
   return crypto.randomUUID().replace(/-/g, '');
+}
+
+// Extract IP address from request headers
+function getClientIP(req: Request): string | null {
+  // Check various headers for IP address (in order of preference)
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) {
+    // x-forwarded-for can contain multiple IPs, take the first one
+    return forwarded.split(',')[0].trim();
+  }
+  
+  const realIP = req.headers.get('x-real-ip');
+  if (realIP) {
+    return realIP.trim();
+  }
+  
+  const cfConnectingIP = req.headers.get('cf-connecting-ip');
+  if (cfConnectingIP) {
+    return cfConnectingIP.trim();
+  }
+  
+  return null;
+}
+
+// Validate Bangladeshi phone number format (11 digits, starts with 01)
+function isValidBangladeshiPhone(phone: string): boolean {
+  if (!phone) return false;
+  
+  // Remove any spaces, dashes, or plus signs
+  const cleaned = phone.replace(/[\s\-+]/g, '');
+  
+  // Check if it's exactly 11 digits and starts with 01
+  const phoneRegex = /^01[0-9]{9}$/;
+  return phoneRegex.test(cleaned);
+}
+
+// Check if IP address has placed frequent orders recently
+async function checkIPOrderFrequency(
+  supabase: any,
+  ipAddress: string,
+  storeId: string,
+  timeWindowHours: number = 24,
+  maxOrdersThreshold: number = 3
+): Promise<{ isFrequent: boolean; orderCount: number }> {
+  if (!ipAddress) {
+    return { isFrequent: false, orderCount: 0 };
+  }
+  
+  const timeWindow = new Date();
+  timeWindow.setHours(timeWindow.getHours() - timeWindowHours);
+  
+  const { data: recentOrders, error, count } = await supabase
+    .from('orders')
+    .select('id', { count: 'exact', head: false })
+    .eq('store_id', storeId)
+    .eq('ip_address', ipAddress)
+    .eq('payment_method', 'cod')
+    .gte('created_at', timeWindow.toISOString())
+    .neq('status', 'cancelled');
+  
+  if (error) {
+    console.error('Error checking IP order frequency:', error);
+    // Don't block on error, allow order to proceed
+    return { isFrequent: false, orderCount: 0 };
+  }
+  
+  const orderCount = count || recentOrders?.length || 0;
+  const isFrequent = orderCount >= maxOrdersThreshold;
+  
+  return { isFrequent, orderCount };
 }
 
 serve(async (req) => {
@@ -73,6 +144,38 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+
+    // Extract IP address from request
+    const clientIP = getClientIP(req);
+    
+    // Fake order detection for COD orders only
+    if (order.payment_method === 'cod') {
+      const isValidPhone = isValidBangladeshiPhone(order.customer_phone);
+      
+      if (isValidPhone && clientIP) {
+        // Check for frequent orders from same IP
+        const ipCheck = await checkIPOrderFrequency(supabase, clientIP, storeId, 24, 3);
+        
+        if (ipCheck.isFrequent) {
+          console.log(`Fake order detected: Valid phone format but frequent orders from IP ${clientIP} (${ipCheck.orderCount} orders in last 24 hours)`);
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Order cannot be placed. Multiple orders detected from the same location. Please contact support if this is a mistake.' 
+            }), 
+            { 
+              status: 400, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          );
+        }
+      }
+      
+      // Optional: Log suspicious patterns (valid phone but no IP or invalid phone)
+      if (isValidPhone && !clientIP) {
+        console.log('Warning: Valid phone format but no IP address captured');
+      }
+    }
 
     // Check for existing order if idempotency key is provided
     if (order.idempotency_key) {
@@ -112,6 +215,7 @@ serve(async (req) => {
       total: order.total ?? ((order.subtotal ?? 0) + (order.shipping_cost ?? 0) - (order.discount_amount ?? 0)),
       payment_transaction_number: order.payment_transaction_number ?? null,
       idempotency_key: order.idempotency_key ?? null,
+      ip_address: clientIP || order.ip_address || null,
       custom_fields: {
         ...(order.custom_fields || {}),
         order_access_token: accessToken,
