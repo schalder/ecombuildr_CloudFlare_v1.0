@@ -83,6 +83,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const allowSwitching: boolean = cfg.allowSwitching !== false; // default true
   const successRedirectUrl: string = cfg.successRedirectUrl || '';
   const showQuantity: boolean = cfg.showQuantity !== false; // default true
+  const useTwoColumnGrid: boolean = cfg.useTwoColumnGrid === true; // default false
   const headings = cfg.headings || { info: 'Customer Information', shipping: 'Shipping', payment: 'Payment', summary: 'Order Summary' };
   const sections = cfg.sections || { info: true, shipping: true, payment: true, summary: true };
   const fields = cfg.fields || {
@@ -826,7 +827,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
             <section className="space-y-4">
               <h3 className={`mb-3 font-semibold text-xl element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>Select Product</h3>
               {allowSwitching && products.length > 1 ? (
-                <div className="space-y-2">
+                <div className={useTwoColumnGrid ? "grid grid-cols-1 md:grid-cols-2 gap-2" : "space-y-2"}>
                   {products.filter((p)=>productIds.includes(p.id)).map((p) => {
                     const isOut = p.track_inventory && typeof p.inventory_quantity === 'number' && p.inventory_quantity <= 0;
                     return (
@@ -1468,6 +1469,7 @@ export const registerInlineCheckoutElements = () => {
       defaultProductId: '',
       allowSwitching: true,
       showQuantity: true,
+      useTwoColumnGrid: false,
       orderBump: { enabled: false, productId: '', label: 'Add this to my order', description: '', prechecked: false },
       sections: { info: true, shipping: true, payment: true, summary: true },
       headings: { info: 'Customer Information', shipping: 'Shipping', payment: 'Payment', summary: 'Order Summary' },

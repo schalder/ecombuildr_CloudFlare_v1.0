@@ -41,6 +41,7 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
   const defaultProductId: string = cfg.defaultProductId || '';
   const allowSwitching: boolean = cfg.allowSwitching !== false; // default true
   const showQuantity: boolean = cfg.showQuantity !== false; // default true
+  const useTwoColumnGrid: boolean = cfg.useTwoColumnGrid === true; // default false
   const orderBump = cfg.orderBump || { enabled: false, productId: '', label: 'Add this to my order', description: '', prechecked: false };
   const chargeShippingForBump: boolean = cfg.chargeShippingForBump !== false; // default true
   const bumpShippingFee: number = cfg.bumpShippingFee || 0;
@@ -148,6 +149,11 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={!!showQuantity} onChange={(e) => onUpdate('showQuantity', e.target.checked)} />
             <Label className="text-sm">Show quantity selector</Label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input type="checkbox" checked={!!useTwoColumnGrid} onChange={(e) => onUpdate('useTwoColumnGrid', e.target.checked)} />
+            <Label className="text-sm">Use 2-column grid for product selection</Label>
           </div>
         </div>
       </CollapsibleGroup>
