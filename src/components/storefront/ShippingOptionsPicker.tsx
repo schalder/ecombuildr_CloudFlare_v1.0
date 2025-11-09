@@ -43,7 +43,7 @@ export const ShippingOptionsPicker: React.FC<ShippingOptionsPickerProps> = ({
       <RadioGroup
         value={selectedOptionId}
         onValueChange={handleOptionSelect}
-        className="grid grid-cols-1 md:grid-cols-2 gap-2"
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
       >
         {options.map((option) => (
           <div key={option.id} className="flex items-center space-x-2">
