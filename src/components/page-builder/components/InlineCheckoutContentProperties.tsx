@@ -153,7 +153,7 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
 
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={!!useTwoColumnGrid} onChange={(e) => onUpdate('useTwoColumnGrid', e.target.checked)} />
-            <Label className="text-sm">Use 2-column grid for product selection</Label>
+            <Label className="text-sm">Use 2X grid for product selection</Label>
           </div>
         </div>
       </CollapsibleGroup>
