@@ -1173,7 +1173,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     return (
                       <div className="space-y-3">
                         <label className="text-sm font-medium">Shipping Options</label>
-                        <div className="space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {customOptions.map((option: any) => (
                             <label key={option.id} className="flex items-start gap-3 border rounded p-3 cursor-pointer hover:bg-muted/50">
                               <input
