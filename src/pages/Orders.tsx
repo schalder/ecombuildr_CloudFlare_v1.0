@@ -680,32 +680,63 @@ export default function Orders() {
     }
     
     try {
-      const { error } = await supabase
+      // Check if record exists (even if is_active: false)
+      const { data: existingBlock } = await supabase
         .from('blocked_ips')
-        .insert({
-          store_id: order.store_id,
-          ip_address: ipAddress,
-          blocked_by: user.id,
-          reason: orderId ? `Blocked from order ${order.order_number}` : 'Manual block',
-          is_active: true
-        });
+        .select('id')
+        .eq('store_id', order.store_id)
+        .eq('ip_address', ipAddress)
+        .maybeSingle();
       
-      if (error) {
-        // If IP is already blocked, that's okay
-        if (error.code === '23505') {
-          toast({
-            title: "Info",
-            description: `IP address ${ipAddress} is already blocked`,
+      if (existingBlock) {
+        // Update existing record to re-block
+        const { error } = await supabase
+          .from('blocked_ips')
+          .update({
+            blocked_by: user.id,
+            reason: orderId ? `Blocked from order ${order.order_number}` : 'Manual block',
+            is_active: true,
+            blocked_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingBlock.id);
+        
+        if (error) throw error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('blocked_ips')
+          .insert({
+            store_id: order.store_id,
+            ip_address: ipAddress,
+            blocked_by: user.id,
+            reason: orderId ? `Blocked from order ${order.order_number}` : 'Manual block',
+            is_active: true,
+            blocked_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
-          return;
-        }
-        throw error;
+        
+        if (error) throw error;
       }
       
       toast({
         title: "Success",
         description: `IP address ${ipAddress} has been blocked`,
       });
+
+      // Refresh blocked IP status in order details
+      if (isOrderDetailsOpen && selectedOrder && (selectedOrder as any).ip_address === ipAddress) {
+        setIsIPBlocked(true);
+        // Refresh blocked IP info
+        const { data } = await supabase
+          .from('blocked_ips')
+          .select('*')
+          .eq('store_id', order.store_id)
+          .eq('ip_address', ipAddress)
+          .eq('is_active', true)
+          .maybeSingle();
+        if (data) setBlockedIPInfo(data);
+      }
 
       // Refresh orders if on blocked IPs filter
       if (activeTab === 'fake' && fakeOrderFilter === 'blocked') {
@@ -738,7 +769,10 @@ export default function Orders() {
     try {
       const { error } = await supabase
         .from('blocked_ips')
-        .update({ is_active: false })
+        .update({ 
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
         .eq('store_id', order.store_id)
         .eq('ip_address', ipAddress)
         .eq('is_active', true);
@@ -749,6 +783,12 @@ export default function Orders() {
         title: "Success",
         description: `IP address ${ipAddress} has been unblocked`,
       });
+
+      // Refresh blocked IP status in order details
+      if (isOrderDetailsOpen && selectedOrder && (selectedOrder as any).ip_address === ipAddress) {
+        setIsIPBlocked(false);
+        setBlockedIPInfo(null);
+      }
 
       // Refresh orders if on blocked IPs filter
       if (activeTab === 'fake' && fakeOrderFilter === 'blocked') {
