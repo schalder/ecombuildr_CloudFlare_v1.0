@@ -26,6 +26,7 @@ import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
+import { getPhoneValidationError } from '@/utils/phoneValidation';
 
 const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const navigate = useNavigate();
@@ -464,20 +465,17 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       errors.customer_name = 'Full name is required';
     }
     
-    // Phone validation with normalization
+    // Phone validation with format check for COD orders
     if (fields.phone?.enabled && (fields.phone?.required ?? true)) {
       if (isEmpty(form.customer_phone)) {
         errors.customer_phone = 'Phone number is required';
-      } else {
-        const normalizedPhone = normalizeBdPhone(form.customer_phone);
-        if (!normalizedPhone || normalizedPhone.length < 11) {
-          setPhoneError('Please enter a valid phone number');
+      } else if (form.payment_method === 'cod') {
+        // Validate phone format for COD orders (must be 11 digits starting with 01)
+        const phoneError = getPhoneValidationError(form.customer_phone);
+        if (phoneError) {
+          setPhoneError(phoneError);
           setIsSubmitting(false); // Reset submitting state on validation error
           return; // Stop form submission
-        } else {
-          // Update form with normalized phone and clear error
-          setForm(prev => ({ ...prev, customer_phone: normalizedPhone }));
-          setPhoneError('');
         }
       }
     }
@@ -939,10 +937,13 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                           clearFieldError('customer_phone'); // Clear validation error on input
                         }}
                         onBlur={(e) => {
-                          if (fields.phone?.required && e.target.value.trim()) {
-                            const normalized = normalizeBdPhone(e.target.value);
-                            if (!normalized || normalized.length < 11) {
-                              setPhoneError('Please enter a valid phone number');
+                          // Only validate for COD payment method
+                          if (form.payment_method === 'cod' && e.target.value.trim()) {
+                            const error = getPhoneValidationError(e.target.value);
+                            if (error) {
+                              setPhoneError(error);
+                            } else {
+                              setPhoneError('');
                             }
                           }
                         }}

@@ -33,6 +33,7 @@ import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useChannelContext } from '@/hooks/useChannelContext';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { DigitalDownloadSection } from '../components/DigitalDownloadSection';
+import { getPhoneValidationError } from '@/utils/phoneValidation';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -1246,8 +1247,16 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     if (fields.fullName?.enabled && (fields.fullName?.required ?? true) && isEmpty(form.customer_name)) {
       errors.customer_name = 'Full name is required';
     }
-    if (fields.phone?.enabled && (fields.phone?.required ?? true) && isEmpty(form.customer_phone)) {
-      errors.customer_phone = 'Phone number is required';
+    if (fields.phone?.enabled && (fields.phone?.required ?? true)) {
+      if (isEmpty(form.customer_phone)) {
+        errors.customer_phone = 'Phone number is required';
+      } else if (form.payment_method === 'cod') {
+        // Validate phone format for COD orders (must be 11 digits starting with 01)
+        const phoneError = getPhoneValidationError(form.customer_phone);
+        if (phoneError) {
+          errors.customer_phone = phoneError;
+        }
+      }
     }
     if (fields.email?.enabled && (fields.email?.required ?? false)) {
       const email = form.customer_email || '';
@@ -1577,6 +1586,21 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                             setForm(f => ({ ...f, customer_phone: e.target.value }));
                             clearFieldError('customer_phone');
                           }} 
+                          onBlur={(e) => {
+                            // Only validate for COD payment method
+                            if (form.payment_method === 'cod' && e.target.value.trim()) {
+                              const error = getPhoneValidationError(e.target.value);
+                              if (error) {
+                                setValidationErrors(prev => ({ ...prev, customer_phone: error }));
+                              } else {
+                                setValidationErrors(prev => {
+                                  const newErrors = { ...prev };
+                                  delete newErrors.customer_phone;
+                                  return newErrors;
+                                });
+                              }
+                            }
+                          }}
                           required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} 
                           aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))}
                           aria-invalid={!!validationErrors.customer_phone}
@@ -1588,7 +1612,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                           }`}
                         />
                         {validationErrors.customer_phone && (
-                          <p id={`customer_phone-error-${element.id}`} className="text-sm text-red-600 mt-1" role="alert">
+                          <p id={`customer_phone-error-${element.id}`} className="text-sm text-red-600 mt-1 font-medium" role="alert">
                             {validationErrors.customer_phone}
                           </p>
                         )}
