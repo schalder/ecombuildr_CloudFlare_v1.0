@@ -757,7 +757,47 @@ export default function Customers() {
                             </div>
                           </div>
 
-                          <div className="space-y-2 text-sm">
+                          {/* Contact Info */}
+                          <div className="space-y-2">
+                            {customer.email && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Mail className="h-3 w-3 flex-shrink-0" />
+                                <span className="truncate" style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
+                                  {customer.email}
+                                </span>
+                              </div>
+                            )}
+                            {customer.phone && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Phone className="h-3 w-3 flex-shrink-0" />
+                                <span style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
+                                  {customer.phone}
+                                </span>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const normalizedPhone = normalizePhoneNumber(customer.phone);
+                                    openWhatsApp(normalizedPhone);
+                                  }}
+                                  className="text-green-600 hover:text-green-700 transition-colors ml-1"
+                                  title="Open WhatsApp chat"
+                                >
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            )}
+                            {(customer.city || customer.area) && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <MapPin className="h-3 w-3 flex-shrink-0" />
+                                <span className="truncate">
+                                  {[customer.area, customer.city].filter(Boolean).join(', ')}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Footer Info */}
+                          <div className="space-y-2 text-sm pt-2 border-t">
                             <div className="flex items-center justify-between text-xs text-muted-foreground">
                               <span>First Order:</span>
                               <span>{new Date(customer.created_at).toLocaleDateString()}</span>
@@ -779,6 +819,8 @@ export default function Customers() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Customer</TableHead>
+                        <TableHead className="hidden md:table-cell">Contact</TableHead>
+                        <TableHead className="hidden lg:table-cell">Location</TableHead>
                         <TableHead>First Order</TableHead>
                         <TableHead>Last Order</TableHead>
                         <TableHead>Total Orders</TableHead>
@@ -799,6 +841,47 @@ export default function Customers() {
                                 {customer.full_name}
                               </div>
                             </div>
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            <div className="space-y-1">
+                              {customer.email && (
+                                <div className="flex items-center gap-1 text-sm">
+                                  <Mail className="h-3 w-3" />
+                                  <span style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
+                                    {customer.email}
+                                  </span>
+                                </div>
+                              )}
+                              {customer.phone && (
+                                <div className="flex items-center gap-1 text-sm">
+                                  <Phone className="h-3 w-3" />
+                                  <span style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
+                                    {customer.phone}
+                                  </span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const normalizedPhone = normalizePhoneNumber(customer.phone);
+                                      openWhatsApp(normalizedPhone);
+                                    }}
+                                    className="text-green-600 hover:text-green-700 transition-colors ml-1"
+                                    title="Open WhatsApp chat"
+                                  >
+                                    <MessageCircle className="h-3.5 w-3.5" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="hidden lg:table-cell">
+                            {customer.city || customer.area ? (
+                              <div className="flex items-center gap-1 text-sm">
+                                <MapPin className="h-3 w-3" />
+                                {[customer.area, customer.city].filter(Boolean).join(', ')}
+                              </div>
+                            ) : (
+                              '-'
+                            )}
                           </TableCell>
                           <TableCell>
                             {new Date(customer.created_at).toLocaleDateString()}
