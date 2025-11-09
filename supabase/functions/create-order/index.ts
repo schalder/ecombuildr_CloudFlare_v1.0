@@ -54,23 +54,43 @@ function generateAccessToken() {
 
 // Extract IP address from request headers
 function getClientIP(req: Request): string | null {
+  // Log all available headers for debugging
+  const allHeaders: Record<string, string> = {};
+  req.headers.forEach((value, key) => {
+    allHeaders[key] = value;
+  });
+  console.log('Available headers for IP extraction:', Object.keys(allHeaders));
+  
   // Check various headers for IP address (in order of preference)
   const forwarded = req.headers.get('x-forwarded-for');
   if (forwarded) {
-    // x-forwarded-for can contain multiple IPs, take the first one
-    return forwarded.split(',')[0].trim();
+    const ip = forwarded.split(',')[0].trim();
+    console.log('Extracted IP from x-forwarded-for:', ip);
+    return ip;
   }
   
   const realIP = req.headers.get('x-real-ip');
   if (realIP) {
-    return realIP.trim();
+    const ip = realIP.trim();
+    console.log('Extracted IP from x-real-ip:', ip);
+    return ip;
   }
   
   const cfConnectingIP = req.headers.get('cf-connecting-ip');
   if (cfConnectingIP) {
-    return cfConnectingIP.trim();
+    const ip = cfConnectingIP.trim();
+    console.log('Extracted IP from cf-connecting-ip:', ip);
+    return ip;
   }
   
+  // Try additional headers
+  const clientIP = req.headers.get('x-client-ip');
+  if (clientIP) {
+    console.log('Extracted IP from x-client-ip:', clientIP);
+    return clientIP.trim();
+  }
+  
+  console.log('Warning: No IP address found in request headers');
   return null;
 }
 
@@ -147,13 +167,29 @@ serve(async (req) => {
 
     // Extract IP address from request
     const clientIP = getClientIP(req);
+    console.log('Extracted client IP for order:', clientIP);
     
     // Fake order detection for COD orders only
     if (order.payment_method === 'cod') {
       const isValidPhone = isValidBangladeshiPhone(order.customer_phone);
       
-      if (isValidPhone && clientIP) {
-        // Check for frequent orders from same IP
+      // Block invalid phone numbers
+      if (!isValidPhone) {
+        console.log(`Fake order detected: Invalid phone number format - ${order.customer_phone}`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Invalid phone number format. Please enter a valid 11-digit Bangladeshi mobile number starting with 01.' 
+          }), 
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      // Check for frequent orders from same IP (only if phone is valid)
+      if (clientIP) {
         const ipCheck = await checkIPOrderFrequency(supabase, clientIP, storeId, 24, 3);
         
         if (ipCheck.isFrequent) {
@@ -171,8 +207,8 @@ serve(async (req) => {
         }
       }
       
-      // Optional: Log suspicious patterns (valid phone but no IP or invalid phone)
-      if (isValidPhone && !clientIP) {
+      // Log warning if valid phone but no IP captured
+      if (!clientIP) {
         console.log('Warning: Valid phone format but no IP address captured');
       }
     }

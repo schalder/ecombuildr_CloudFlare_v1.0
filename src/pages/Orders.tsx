@@ -1155,6 +1155,11 @@ export default function Orders() {
                       {selectedOrder.payment_transaction_number && ` (TXN: ${selectedOrder.payment_transaction_number})`}
                     </p>
                     <p>Date: {new Date(selectedOrder.created_at).toLocaleString()}</p>
+                    {(selectedOrder as any).ip_address && (
+                      <p className="text-sm text-muted-foreground">
+                        IP Address: {(selectedOrder as any).ip_address}
+                      </p>
+                    )}
                     {selectedOrder.courier_name && (
                       <p>
                         Shipping: {selectedOrder.courier_name === 'steadfast' ? 'Steadfast' : selectedOrder.courier_name}
