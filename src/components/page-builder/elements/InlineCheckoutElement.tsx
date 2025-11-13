@@ -62,7 +62,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       try {
         const { data: step, error } = await supabase
           .from('funnel_steps')
-          .select('on_success_step_id, funnel_id')
+          .select('on_success_step_id, on_success_custom_url, funnel_id')
           .eq('id', stepId)
           .single();
         
@@ -637,7 +637,22 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         
         // Handle funnel step success redirect
-        if (funnelStepData?.on_success_step_id) {
+        // Priority: Custom URL first, then step ID
+        if (funnelStepData?.on_success_custom_url && funnelStepData.on_success_custom_url.trim()) {
+          // Custom URL takes priority
+          try {
+            const customUrl = new URL(funnelStepData.on_success_custom_url, window.location.origin);
+            customUrl.searchParams.set('orderId', orderId);
+            customUrl.searchParams.set('ot', accessToken || '');
+            console.log(`Redirecting to custom success URL: ${customUrl.toString()}`);
+            window.location.href = customUrl.toString();
+            return;
+          } catch (error) {
+            console.error('Error parsing custom URL:', error);
+            // Fall through to step ID check if URL parsing fails
+          }
+        } else if (funnelStepData?.on_success_step_id) {
+          // Fallback to step ID if no custom URL
           try {
             // Fetch the next step details
             const { data: nextStep, error } = await supabase
