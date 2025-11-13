@@ -17,6 +17,8 @@ import { Badge } from '@/components/ui/badge';
 import { ExternalLink, CheckCircle2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
+import { useAutoStore } from '@/hooks/useAutoStore';
 
 const funnelSettingsSchema = z.object({
   name: z.string().min(1, 'Funnel name is required'),
@@ -25,6 +27,7 @@ const funnelSettingsSchema = z.object({
   domain: z.string().optional(),
   is_published: z.boolean(),
   is_active: z.boolean(),
+  website_id: z.string().optional(),
   header_tracking_code: z.string().optional(),
   footer_tracking_code: z.string().optional(),
   facebook_pixel_id: z.string().optional(),
@@ -55,6 +58,7 @@ interface Funnel {
   og_image?: string;
   meta_robots?: string;
   canonical_domain?: string;
+  website_id?: string | null;
 }
 
 interface FunnelSettingsProps {
@@ -65,6 +69,8 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+  const { store } = useAutoStore();
+  const { websites: storeWebsites } = useStoreWebsitesForSelection(store?.id || '');
   const { 
     domains, 
     connections, 
@@ -105,6 +111,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
       domain: connectedDomain?.domain || '',
       is_published: funnel.is_published,
       is_active: funnel.is_active,
+      website_id: funnel.website_id || '',
       header_tracking_code: funnel.settings?.header_tracking_code || '',
       footer_tracking_code: funnel.settings?.footer_tracking_code || '',
       facebook_pixel_id: funnel.settings?.facebook_pixel_id || '',
@@ -167,6 +174,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         google_ads_id, 
         favicon_url,
         domain,
+        website_id,
         seo_title,
         seo_description,
         og_image,
@@ -196,6 +204,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         .from('funnels')
         .update({
           ...basicFields,
+          website_id: website_id || null,
           settings,
           seo_title: seo_title || null,
           seo_description: seo_description || null,
@@ -378,6 +387,38 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                         {slugError && (
                           <p className="text-sm text-destructive">{slugError}</p>
                         )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="website_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground">Website *</FormLabel>
+                        <Select 
+                          value={field.value || ''} 
+                          onValueChange={(value) => field.onChange(value || '')}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a website for this funnel" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">No website</SelectItem>
+                            {storeWebsites.map((website) => (
+                              <SelectItem key={website.id} value={website.id}>
+                                {website.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          Choose which website this funnel belongs to for consistent branding
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
