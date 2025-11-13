@@ -229,45 +229,64 @@ useEffect(() => {
             // Find the current funnel step
             const { data: currentStep, error: stepError } = await supabase
               .from('funnel_steps')
-              .select('id, on_success_step_id, funnel_id')
+              .select('id, on_success_step_id, on_success_custom_url, funnel_id')
               .eq('id', currentStepId)
               .single();
             
-            if (!stepError && currentStep?.on_success_step_id) {
-              // Get the next step details
-              const { data: nextStep, error: nextStepError } = await supabase
-                .from('funnel_steps')
-                .select('slug, funnel_id')
-                .eq('id', currentStep.on_success_step_id)
-                .single();
+            if (!stepError && currentStep) {
+              const newOrderToken = data.order.access_token;
               
-              if (!nextStepError && nextStep?.slug) {
-                // Environment-aware redirect to next step
-                const isAppEnvironment = (
-                  window.location.hostname === 'localhost' || 
-                  window.location.hostname === 'ecombuildr.com' ||
-                  window.location.hostname === 'ecombuildr.com' ||
-                  window.location.hostname === 'ecombuildr.com' ||
-                  window.location.hostname === 'ecombuildr.com'
-                );
-                
-                const newOrderToken = data.order.access_token;
-                
-                if (isAppEnvironment) {
-                  // App/sandbox: use funnel-aware paths
-                  const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
-                  console.log(`Funnel redirect (app): ${nextUrl}`);
-                  window.location.href = nextUrl;
+              // Priority: Custom URL first, then step ID
+              if (currentStep.on_success_custom_url && currentStep.on_success_custom_url.trim()) {
+                // Custom URL takes priority
+                try {
+                  const customUrl = new URL(currentStep.on_success_custom_url, window.location.origin);
+                  customUrl.searchParams.set('orderId', data.order.id);
+                  customUrl.searchParams.set('ot', newOrderToken);
+                  console.log(`PaymentProcessing: Redirecting to custom success URL: ${customUrl.toString()}`);
+                  window.location.href = customUrl.toString();
                   return;
+                } catch (error) {
+                  console.error('PaymentProcessing: Error parsing custom URL:', error);
+                  // Fall through to step ID check if URL parsing fails
+                }
+              } else if (currentStep.on_success_step_id) {
+                // Fallback to step ID if no custom URL
+                // Get the next step details
+                const { data: nextStep, error: nextStepError } = await supabase
+                  .from('funnel_steps')
+                  .select('slug, funnel_id')
+                  .eq('id', currentStep.on_success_step_id)
+                  .single();
+                
+                if (!nextStepError && nextStep?.slug) {
+                  // Environment-aware redirect to next step
+                  const isAppEnvironment = (
+                    window.location.hostname === 'localhost' || 
+                    window.location.hostname === 'ecombuildr.com' ||
+                    window.location.hostname === 'ecombuildr.com' ||
+                    window.location.hostname === 'ecombuildr.com' ||
+                    window.location.hostname === 'ecombuildr.com'
+                  );
+                  
+                  if (isAppEnvironment) {
+                    // App/sandbox: use funnel-aware paths
+                    const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                    console.log(`PaymentProcessing: Funnel redirect (app): ${nextUrl}`);
+                    window.location.href = nextUrl;
+                    return;
+                  } else {
+                    // Custom domain: use clean paths
+                    const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                    console.log(`PaymentProcessing: Funnel redirect (custom domain): ${nextUrl}`);
+                    window.location.href = nextUrl;
+                    return;
+                  }
                 } else {
-                  // Custom domain: use clean paths
-                  const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
-                  console.log(`Funnel redirect (custom domain): ${nextUrl}`);
-                  window.location.href = nextUrl;
-                  return;
+                  console.log('PaymentProcessing: Next step not found for funnel checkout');
                 }
               } else {
-                console.log('PaymentProcessing: Next step not found for funnel checkout');
+                console.log('PaymentProcessing: Current step not found or no next step configured');
               }
             } else {
               console.log('PaymentProcessing: Current step not found or no next step configured');

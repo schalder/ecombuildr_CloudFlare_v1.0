@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useSearchParams, Routes, Route } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
@@ -167,21 +167,21 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
   // ✅ Handle system routes (payment-processing, order-confirmation, etc.)
   const systemRoutes = ['payment-processing', 'order-confirmation', 'cart', 'checkout'];
   if (systemRoutes.includes(stepSlug)) {
+    // Direct component rendering for system routes to avoid routing conflicts
+    if (stepSlug === 'payment-processing') {
+      return <PaymentProcessing />;
+    }
+    if (stepSlug === 'order-confirmation') {
+      return <OrderConfirmation />;
+    }
+    // For other system routes (cart, checkout), show not found for now
     return (
-      <Routes>
-        <Route path="/payment-processing" element={<PaymentProcessing />} />
-        <Route path="/payment-processing/:orderId" element={<PaymentProcessing />} />
-        <Route path="/order-confirmation" element={<OrderConfirmation />} />
-        <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
-        <Route path="*" element={
-          <div className="min-h-screen flex items-center justify-center">
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
-              <p className="text-muted-foreground">The requested system route could not be found.</p>
-            </div>
-          </div>
-        } />
-      </Routes>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
+          <p className="text-muted-foreground">The requested system route could not be found.</p>
+        </div>
+      </div>
     );
   }
 
