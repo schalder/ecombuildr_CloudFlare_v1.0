@@ -128,6 +128,10 @@ serve(async (req: Request) => {
     for (const p of products || []) {
       const files: any[] = Array.isArray(p.digital_files) ? p.digital_files : [];
       for (const f of files) {
+        // Skip URL-based files - they should NOT be in order_download_links
+        // They will be fetched directly from products and shown in Access Links section
+        if (f?.type === 'url') continue;
+        
         const path = f?.url || f?.path || f?.file || f?.file_path;
         if (!path) continue;
         if (existingPaths.has(path)) continue;

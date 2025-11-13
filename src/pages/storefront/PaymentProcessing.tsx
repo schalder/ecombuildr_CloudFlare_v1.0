@@ -290,7 +290,7 @@ useEffect(() => {
                 // Fallback: redirect to order confirmation if no funnel redirect configured
                 const newOrderToken = data.order.access_token;
                 toast.success('Order created successfully!');
-                navigate(paths.orderConfirmation(data.order.id, newOrderToken));
+                window.location.href = paths.orderConfirmation(data.order.id, newOrderToken);
                 return;
               }
             } else {
@@ -298,7 +298,7 @@ useEffect(() => {
               // Fallback: redirect to order confirmation if current step not found
               const newOrderToken = data.order.access_token;
               toast.success('Order created successfully!');
-              navigate(paths.orderConfirmation(data.order.id, newOrderToken));
+              window.location.href = paths.orderConfirmation(data.order.id, newOrderToken);
               return;
             }
           } catch (error) {
@@ -310,7 +310,7 @@ useEffect(() => {
         // ✅ WEBSITE CHECKOUT: Navigate to order confirmation (existing behavior)
         const newOrderToken = data.order.access_token;
         toast.success('Order created successfully!');
-        navigate(paths.orderConfirmation(data.order.id, newOrderToken));
+        window.location.href = paths.orderConfirmation(data.order.id, newOrderToken);
       } else {
         throw new Error('Failed to create order');
       }
