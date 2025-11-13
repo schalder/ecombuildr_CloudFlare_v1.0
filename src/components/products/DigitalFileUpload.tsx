@@ -16,6 +16,7 @@ interface DigitalFile {
   url: string;
   type: 'upload' | 'url';
   size?: number;
+  buttonText?: string;
 }
 
 interface DigitalFileUploadProps {
@@ -53,6 +54,7 @@ export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
   const [dragActive, setDragActive] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [urlName, setUrlName] = useState('');
+  const [urlButtonText, setUrlButtonText] = useState('Download');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
@@ -187,12 +189,14 @@ export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
       id: Date.now().toString(),
       name: urlName.trim(),
       url: urlInput.trim(),
-      type: 'url'
+      type: 'url',
+      buttonText: urlButtonText.trim() || 'Download'
     };
 
     onChange([...files, newFile]);
     setUrlInput('');
     setUrlName('');
+    setUrlButtonText('Download');
     
     toast({
       title: "URL added",
@@ -328,6 +332,18 @@ export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
                 onChange={(e) => setUrlInput(e.target.value)}
               />
             </div>
+            <div>
+              <Label htmlFor="buttonText">Button Text</Label>
+              <Input
+                id="buttonText"
+                placeholder="e.g., Download Now, Access Link"
+                value={urlButtonText}
+                onChange={(e) => setUrlButtonText(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Text to display on the button in order confirmation page
+              </p>
+            </div>
             <Button
               type="button"
               onClick={addUrlFile}
@@ -355,7 +371,7 @@ export const DigitalFileUpload: React.FC<DigitalFileUploadProps> = ({
                         {file.type === 'upload' ? (
                           file.size ? `Uploaded • ${formatFileSize(file.size)}` : 'Uploaded'
                         ) : (
-                          'External URL'
+                          `External URL${file.buttonText ? ` • Button: "${file.buttonText}"` : ''}`
                         )}
                       </p>
                     </div>

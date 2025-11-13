@@ -1958,6 +1958,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   const [order, setOrder] = useState<any | null>(null);
   const [items, setItems] = useState<any[]>([]);
   const [downloadLinks, setDownloadLinks] = useState<any[]>([]);
+  const [urlFiles, setUrlFiles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const orderContentRef = useRef<HTMLDivElement>(null);
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
@@ -2072,6 +2073,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         setOrder(data?.order || null);
         setItems(data?.items || []);
         setDownloadLinks(data?.downloadLinks || []);
+        setUrlFiles(data?.urlFiles || []);
 
         // Fallback: if no download links yet, try to generate them (service-side)
         if ((!data?.downloadLinks || data.downloadLinks.length === 0) && id) {
@@ -2208,6 +2210,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
       {/* Digital Downloads Section */}
       <DigitalDownloadSection
         downloadLinks={downloadLinks}
+        urlFiles={urlFiles}
         orderId={order.id}
         orderToken={orderToken}
       />

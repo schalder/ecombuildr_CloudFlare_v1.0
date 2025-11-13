@@ -1,17 +1,19 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileText, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
 interface DigitalDownloadSectionProps {
   downloadLinks: any[];
+  urlFiles?: any[];
   orderId: string;
   orderToken: string;
 }
 
 export const DigitalDownloadSection: React.FC<DigitalDownloadSectionProps> = ({
   downloadLinks,
+  urlFiles = [],
   orderId,
   orderToken
 }) => {
@@ -50,54 +52,116 @@ export const DigitalDownloadSection: React.FC<DigitalDownloadSectionProps> = ({
     }
   };
 
-  if (!downloadLinks || downloadLinks.length === 0) {
+  const handleOpenUrl = (url: string, fileName: string) => {
+    try {
+      window.open(url, '_blank', 'noopener,noreferrer');
+      toast.success(`Opening ${fileName}`);
+    } catch (error: any) {
+      console.error('Error opening URL:', error);
+      toast.error('Failed to open URL');
+    }
+  };
+
+  const hasDownloads = downloadLinks && downloadLinks.length > 0;
+  const hasUrlFiles = urlFiles && urlFiles.length > 0;
+
+  if (!hasDownloads && !hasUrlFiles) {
     return null;
   }
 
   return (
-    <div className="rounded-lg border">
-      <div className="p-4 border-b">
-        <h3 className="font-semibold flex items-center gap-2">
-          <Download className="h-5 w-5" />
-          Digital Downloads
-        </h3>
-      </div>
-      <div className="p-4 space-y-3">
-        {downloadLinks.map((link: any) => {
-          const fileName = link.digital_file_path.split('/').pop() || 'download';
-          const isExpired = new Date(link.expires_at) < new Date();
-          const isLimitReached = link.download_count >= link.max_downloads;
-          const canDownload = !isExpired && !isLimitReached;
-          
-          return (
-            <div key={link.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="font-medium">{fileName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Downloads: {link.download_count}/{link.max_downloads} | 
-                    Expires: {new Date(link.expires_at).toLocaleDateString()}
-                  </p>
+    <div className="space-y-4">
+      {/* Download Section for uploaded/library files */}
+      {hasDownloads && (
+        <div className="rounded-lg border">
+          <div className="p-4 border-b">
+            <h3 className="font-semibold flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Digital Downloads
+            </h3>
+          </div>
+          <div className="p-4 space-y-3">
+            {downloadLinks.map((link: any) => {
+              const fileName = link.digital_file_path.split('/').pop() || 'download';
+              const isExpired = new Date(link.expires_at) < new Date();
+              const isLimitReached = link.download_count >= link.max_downloads;
+              const canDownload = !isExpired && !isLimitReached;
+              
+              return (
+                <div key={link.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    <div>
+                      <p className="font-medium">{fileName}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Downloads: {link.download_count}/{link.max_downloads} | 
+                        Expires: {new Date(link.expires_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleDownloadFile(link.digital_file_path, fileName)}
+                    disabled={!canDownload}
+                    variant={canDownload ? "default" : "secondary"}
+                  >
+                    {isExpired ? 'Expired' : isLimitReached ? 'Limit Reached' : 'Download'}
+                  </Button>
                 </div>
-              </div>
-              <Button
-                size="sm"
-                onClick={() => handleDownloadFile(link.digital_file_path, fileName)}
-                disabled={!canDownload}
-                variant={canDownload ? "default" : "secondary"}
-              >
-                {isExpired ? 'Expired' : isLimitReached ? 'Limit Reached' : 'Download'}
-              </Button>
+              );
+            })}
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <p className="text-sm text-blue-700">
+                💡 Save these files to your device. Download links expire after the specified time period.
+              </p>
             </div>
-          );
-        })}
-        <div className="bg-blue-50 p-3 rounded-lg">
-          <p className="text-sm text-blue-700">
-            💡 Save these files to your device. Download links expire after the specified time period.
-          </p>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* URL Section for URL-based files */}
+      {hasUrlFiles && (
+        <div className="rounded-lg border">
+          <div className="p-4 border-b">
+            <h3 className="font-semibold flex items-center gap-2">
+              <ExternalLink className="h-5 w-5" />
+              Access Links
+            </h3>
+          </div>
+          <div className="p-4 space-y-3">
+            {urlFiles.map((urlFile: any) => {
+              const buttonText = urlFile.buttonText || 'Download';
+              
+              return (
+                <div key={urlFile.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <ExternalLink className="h-5 w-5 text-green-600" />
+                    <div>
+                      <p className="font-medium">{urlFile.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        External link
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => handleOpenUrl(urlFile.url, urlFile.name)}
+                    variant="default"
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    {buttonText}
+                  </Button>
+                </div>
+              );
+            })}
+            <div className="bg-green-50 p-3 rounded-lg">
+              <p className="text-sm text-green-700">
+                💡 Click the button to access your content. Links will open in a new tab.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

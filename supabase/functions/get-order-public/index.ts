@@ -68,10 +68,10 @@ serve(async (req: Request) => {
       });
     }
 
-    // Fetch items
+    // Fetch items with product_id
     const { data: items, error: itemsError } = await supabase
       .from("order_items")
-      .select("id, product_name, product_sku, price, quantity, total, variation")
+      .select("id, product_id, product_name, product_sku, price, quantity, total, variation")
       .eq("order_id", orderId);
 
     if (itemsError) {
@@ -80,6 +80,42 @@ serve(async (req: Request) => {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
+    }
+
+    // Fetch URL-based digital files from products
+    const urlFiles: any[] = [];
+    if (items && items.length > 0) {
+      const productIds = items
+        .map((item: any) => item.product_id)
+        .filter((id: any) => id !== null && id !== undefined);
+      
+      if (productIds.length > 0) {
+        const { data: products, error: productsError } = await supabase
+          .from("products")
+          .select("id, digital_files")
+          .in("id", productIds)
+          .eq("product_type", "digital");
+
+        if (!productsError && products) {
+          // Extract URL-based files from each product's digital_files
+          for (const product of products) {
+            if (product.digital_files && Array.isArray(product.digital_files)) {
+              for (const file of product.digital_files) {
+                // Check if file is URL-based (type === 'url')
+                if (file && file.type === 'url' && file.url) {
+                  urlFiles.push({
+                    id: file.id || `${product.id}-${file.name}`,
+                    name: file.name || 'Download',
+                    url: file.url,
+                    buttonText: file.buttonText || 'Download',
+                    productId: product.id
+                  });
+                }
+              }
+            }
+          }
+        }
+      }
     }
 
     // Return safe subset of order data (no PII exposed in logs)
@@ -109,10 +145,17 @@ serve(async (req: Request) => {
       .select('*')
       .eq('order_id', orderId);
 
+    // Remove product_id from items for response (keep it internal)
+    const safeItems = (items || []).map((item: any) => {
+      const { product_id, ...safeItem } = item;
+      return safeItem;
+    });
+
     return new Response(JSON.stringify({ 
       order: safeOrder, 
-      items: items || [],
-      downloadLinks: downloadLinks || []
+      items: safeItems,
+      downloadLinks: downloadLinks || [],
+      urlFiles: urlFiles || []
     }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },

@@ -287,9 +287,19 @@ useEffect(() => {
                 }
               } else {
                 console.log('PaymentProcessing: Current step not found or no next step configured');
+                // Fallback: redirect to order confirmation if no funnel redirect configured
+                const newOrderToken = data.order.access_token;
+                toast.success('Order created successfully!');
+                navigate(paths.orderConfirmation(data.order.id, newOrderToken));
+                return;
               }
             } else {
               console.log('PaymentProcessing: Current step not found or no next step configured');
+              // Fallback: redirect to order confirmation if current step not found
+              const newOrderToken = data.order.access_token;
+              toast.success('Order created successfully!');
+              navigate(paths.orderConfirmation(data.order.id, newOrderToken));
+              return;
             }
           } catch (error) {
             console.error('PaymentProcessing: Error in funnel redirect:', error);
