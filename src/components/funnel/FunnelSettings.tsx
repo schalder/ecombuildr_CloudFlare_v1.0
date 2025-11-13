@@ -399,8 +399,8 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                       <FormItem>
                         <FormLabel className="text-foreground">Website *</FormLabel>
                         <Select 
-                          value={field.value || ''} 
-                          onValueChange={(value) => field.onChange(value || '')}
+                          value={field.value || 'none'} 
+                          onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
                         >
                           <FormControl>
                             <SelectTrigger>
@@ -408,7 +408,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">No website</SelectItem>
+                            <SelectItem value="none">No website</SelectItem>
                             {storeWebsites.map((website) => (
                               <SelectItem key={website.id} value={website.id}>
                                 {website.name}
