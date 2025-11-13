@@ -121,6 +121,14 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
                 <Label className="text-sm">Custom Fields</Label>
                 <Input value={(element.content?.headings?.customFields ?? 'Additional Information')} onChange={(e) => onUpdate('headings', { ...(element.content?.headings || {}), customFields: e.target.value })} />
               </div>
+              <div className="flex items-center gap-2 pt-2">
+                <input 
+                  type="checkbox" 
+                  checked={element.content?.headings?.showProduct !== false} 
+                  onChange={(e) => onUpdate('headings', { ...(element.content?.headings || {}), showProduct: e.target.checked })} 
+                />
+                <Label className="text-sm">Show 'Select Product' heading</Label>
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>

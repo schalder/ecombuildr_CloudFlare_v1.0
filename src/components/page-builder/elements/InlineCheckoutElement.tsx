@@ -86,6 +86,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const showQuantity: boolean = cfg.showQuantity !== false; // default true
   const useTwoColumnGrid: boolean = cfg.useTwoColumnGrid === true; // default false
   const headings = cfg.headings || { info: 'Customer Information', shipping: 'Shipping', payment: 'Payment', summary: 'Order Summary' };
+  const showProductHeading = headings.showProduct !== false; // default true for backward compatibility
   const sections = cfg.sections || { info: true, shipping: true, payment: true, summary: true };
   const fields = cfg.fields || {
     fullName: { enabled: true, required: true, placeholder: 'Full Name' },
@@ -823,7 +824,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           <CardContent className="p-4 md:p-6 space-y-6 w-full overflow-x-hidden" dir="auto">
             {/* Product chooser */}
             <section className="space-y-4">
-              <h3 className={`mb-3 font-semibold text-xl element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>Select Product</h3>
+              {showProductHeading && (
+                <h3 className={`mb-3 font-semibold text-xl element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>Select Product</h3>
+              )}
               {allowSwitching && products.length > 1 ? (
                 <div className={useTwoColumnGrid ? "grid grid-cols-1 md:grid-cols-2 gap-2" : "space-y-2"}>
                   {products.filter((p)=>productIds.includes(p.id)).map((p) => {
@@ -876,18 +879,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     <span className="px-3 py-1 border rounded min-w-[50px] text-center">{quantity}</span>
                     <Button variant="outline" size="sm" onClick={() => setQuantity((q)=>Math.max(1, (q||1)+1))} disabled={isSelectedOut}>+</Button>
                   </div>
-              </div>
-            )}
-
-            {/* Digital Product Info */}
-            {sections.shipping && isDigitalOnlyCart && (
-              <div className="space-y-4">
-                <h3 className="font-semibold" style={headerInline}>Digital Delivery</h3>
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <p className="text-sm text-blue-700">
-                    📧 Your digital products will be delivered instantly via email after payment confirmation.
-                  </p>
-                </div>
               </div>
             )}
 
