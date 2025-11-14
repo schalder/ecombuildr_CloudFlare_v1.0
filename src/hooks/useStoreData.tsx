@@ -83,9 +83,11 @@ export const useStoreProducts = (options?: {
           .eq('store_id', store.id)
           .eq('is_active', true);
         
-        // Only filter by show_on_website if skipShowOnWebsiteFilter is NOT true
-        // (for funnel checkout product selection, we want to show all active products)
-        if (!options?.skipShowOnWebsiteFilter) {
+        // Only filter by show_on_website if:
+        // 1. skipShowOnWebsiteFilter is NOT true, AND
+        // 2. specificProductIds is NOT provided (when specificProductIds is provided, user has explicitly selected products for funnel, so don't filter)
+        // (for funnel checkout product selection and display, we want to show all active products)
+        if (!options?.skipShowOnWebsiteFilter && (!options?.specificProductIds || options.specificProductIds.length === 0)) {
           query = (query as any).eq('show_on_website', true);
         }
         
