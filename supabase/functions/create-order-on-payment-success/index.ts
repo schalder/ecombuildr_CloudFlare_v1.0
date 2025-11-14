@@ -81,6 +81,63 @@ serve(async (req) => {
 
       if (!existingError && existingOrder) {
         console.log('create-order-on-payment-success: returning existing order for idempotency key', orderData.idempotency_key);
+        
+        // ✅ Check if order status should be updated based on product types
+        const productIds = itemsData.map(item => item.product_id).filter(Boolean);
+        let shouldBeDelivered = false;
+        
+        if (productIds.length > 0) {
+          const { data: products, error: productsError } = await supabase
+            .from('products')
+            .select('id, product_type')
+            .in('id', productIds);
+
+          console.log('create-order-on-payment-success: Checking product types for existing order', {
+            productIds,
+            productsFound: products?.length || 0,
+            products: products?.map(p => ({ id: p.id, product_type: p.product_type })),
+            error: productsError?.message
+          });
+
+          if (!productsError && products && products.length > 0) {
+            let hasDigitalProducts = false;
+            let hasPhysicalProducts = false;
+            
+            for (const product of products) {
+              if (product.product_type === 'digital') {
+                hasDigitalProducts = true;
+              } else if (product.product_type !== null && product.product_type !== undefined) {
+                hasPhysicalProducts = true;
+              }
+            }
+            
+            // If all products are digital, status should be 'delivered'
+            if (hasDigitalProducts && !hasPhysicalProducts) {
+              shouldBeDelivered = true;
+              console.log('create-order-on-payment-success: All products are digital, order should be delivered');
+            }
+          }
+        }
+        
+        // ✅ Update order status if it's wrong (e.g., if it's 'processing' but should be 'delivered')
+        if (shouldBeDelivered && existingOrder.status !== 'delivered') {
+          console.log('create-order-on-payment-success: Updating existing order status from', existingOrder.status, 'to delivered (digital products)');
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({ 
+              status: 'delivered',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingOrder.id);
+          
+          if (!updateError) {
+            existingOrder.status = 'delivered';
+            console.log('create-order-on-payment-success: ✅ Order status updated to delivered');
+          } else {
+            console.error('create-order-on-payment-success: Failed to update order status:', updateError);
+          }
+        }
+        
         const accessToken = existingOrder.custom_fields?.order_access_token || crypto.randomUUID();
         return new Response(
           JSON.stringify({ 
@@ -118,6 +175,12 @@ serve(async (req) => {
     // - Digital products: 'delivered' (instant delivery)
     // - Physical products: 'processing' (skip pending, start processing)
     const productIds = itemsData.map(item => item.product_id).filter(Boolean);
+    console.log('create-order-on-payment-success: Checking product types', {
+      productIds,
+      itemsCount: itemsData.length,
+      sampleItem: itemsData[0]
+    });
+    
     let hasDigitalProducts = false;
     let hasPhysicalProducts = false;
 
@@ -127,16 +190,46 @@ serve(async (req) => {
         .select('id, product_type')
         .in('id', productIds);
 
-      if (!productsError && products && products.length > 0) {
+      console.log('create-order-on-payment-success: Products query result', {
+        productIds,
+        productsFound: products?.length || 0,
+        products: products?.map(p => ({ id: p.id, product_type: p.product_type })),
+        error: productsError?.message
+      });
+
+      if (productsError) {
+        console.error('create-order-on-payment-success: Error fetching products:', productsError);
+        // Don't fail the order, but log the error
+      }
+
+      if (products && products.length > 0) {
         for (const product of products) {
+          console.log('create-order-on-payment-success: Checking product', {
+            productId: product.id,
+            product_type: product.product_type,
+            isDigital: product.product_type === 'digital',
+            isPhysical: product.product_type !== 'digital' && product.product_type !== null
+          });
+          
           if (product.product_type === 'digital') {
             hasDigitalProducts = true;
-          } else {
+          } else if (product.product_type !== null && product.product_type !== undefined) {
+            // Only mark as physical if product_type is explicitly set (not null/undefined)
             hasPhysicalProducts = true;
           }
         }
+      } else {
+        console.warn('create-order-on-payment-success: No products found for productIds:', productIds);
       }
+    } else {
+      console.warn('create-order-on-payment-success: No product IDs found in itemsData');
     }
+
+    console.log('create-order-on-payment-success: Product type analysis', {
+      hasDigitalProducts,
+      hasPhysicalProducts,
+      willSetToDelivered: hasDigitalProducts && !hasPhysicalProducts
+    });
 
     // Set status based on product types
     // If all products are digital, set to 'delivered' (instant delivery)
@@ -144,11 +237,15 @@ serve(async (req) => {
     if (hasDigitalProducts && !hasPhysicalProducts) {
       // All digital products - instant delivery
       orderData.status = 'delivered';
-      console.log('Order status set to delivered (digital products only)');
+      console.log('create-order-on-payment-success: ✅ Order status set to DELIVERED (digital products only)');
     } else {
       // Has physical products - start processing (payment already collected)
       orderData.status = 'processing';
-      console.log('Order status set to processing (physical products, payment collected)');
+      console.log('create-order-on-payment-success: ⚠️ Order status set to PROCESSING', {
+        reason: hasPhysicalProducts ? 'has physical products' : 'no digital products found or query failed',
+        hasDigitalProducts,
+        hasPhysicalProducts
+      });
     }
 
     // Insert order
