@@ -261,6 +261,13 @@ useEffect(() => {
         // Fetch funnel pixel configuration if this is a funnel checkout
         if (isFunnelCheckout && funnelId) {
           try {
+            // Update funnelContext state FIRST so the hook has the correct funnelId
+            setFunnelContext({
+              isFunnelCheckout: true,
+              funnelId: funnelId,
+              currentStepId: currentStepId
+            });
+            
             const { data: funnelData } = await supabase
               .from('funnels')
               .select('settings')
@@ -275,6 +282,9 @@ useEffect(() => {
                 google_ads_id: settings?.google_ads_id || undefined,
               };
               
+              // Update pixel config state
+              setPixelConfig(funnelPixels);
+              
               // Fetch order items for tracking
               const { data: orderItems, error: itemsError } = await supabase
                 .from('order_items')
@@ -282,10 +292,6 @@ useEffect(() => {
                 .eq('order_id', data.order.id);
               
               if (!itemsError && orderItems && orderItems.length > 0) {
-                // Update pixel config and track purchase event
-                setPixelConfig(funnelPixels);
-                
-                // Use a direct tracking approach that doesn't depend on state update
                 // Create tracking items
                 const trackingItems = orderItems.map(item => ({
                   item_id: item.product_id,
@@ -334,13 +340,65 @@ useEffect(() => {
                   }
                 }
                 
-                // Also use the hook-based tracking for database storage
-                // Call trackPurchase directly for immediate tracking
-                trackPurchase({
-                  transaction_id: data.order.id,
-                  value: data.order.total,
-                  items: trackingItems,
-                });
+                // Store purchase event directly in database with funnel_id
+                // This ensures funnel_id is stored correctly for funnel checkout purchases
+                try {
+                  let sessionId = sessionStorage.getItem('session_id');
+                  if (!sessionId) {
+                    sessionId = crypto.randomUUID();
+                    sessionStorage.setItem('session_id', sessionId);
+                  }
+                  
+                  const eventData = {
+                    content_ids: trackingItems.map(item => item.item_id),
+                    content_type: 'product',
+                    value: data.order.total,
+                    currency: 'BDT',
+                    contents: trackingItems.map(item => ({
+                      id: item.item_id,
+                      quantity: item.quantity,
+                    })),
+                    _providers: {
+                      facebook: {
+                        configured: !!funnelPixels.facebook_pixel_id,
+                        attempted: !!window.fbq && !!funnelPixels.facebook_pixel_id,
+                        success: !!window.fbq && !!funnelPixels.facebook_pixel_id
+                      },
+                      google: {
+                        configured: !!(funnelPixels.google_analytics_id || funnelPixels.google_ads_id),
+                        attempted: !!(window.gtag && (funnelPixels.google_analytics_id || funnelPixels.google_ads_id)),
+                        success: !!(window.gtag && (funnelPixels.google_analytics_id || funnelPixels.google_ads_id))
+                      }
+                    },
+                    funnel_id: funnelId // ✅ Explicitly include funnel_id in event_data
+                  };
+                  
+                  await supabase.from('pixel_events').insert({
+                    store_id: store.id,
+                    website_id: websiteId || null,
+                    event_type: 'Purchase',
+                    event_data: eventData,
+                    session_id: sessionId,
+                    page_url: window.location.href,
+                    referrer: document.referrer || null,
+                    utm_source: new URLSearchParams(window.location.search).get('utm_source'),
+                    utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
+                    utm_medium: new URLSearchParams(window.location.search).get('utm_medium'),
+                    utm_term: new URLSearchParams(window.location.search).get('utm_term'),
+                    utm_content: new URLSearchParams(window.location.search).get('utm_content'),
+                    user_agent: navigator.userAgent,
+                  });
+                  
+                  console.log('PaymentProcessing: Purchase event stored in database with funnel_id:', funnelId);
+                } catch (dbError) {
+                  console.error('PaymentProcessing: Error storing purchase event in database:', dbError);
+                  // Fallback: use hook-based tracking if direct insert fails
+                  trackPurchase({
+                    transaction_id: data.order.id,
+                    value: data.order.total,
+                    items: trackingItems,
+                  });
+                }
                 
                 // Store tracking flag to prevent duplicate tracking on redirect
                 sessionStorage.setItem('purchase_tracked_' + data.order.id, 'true');

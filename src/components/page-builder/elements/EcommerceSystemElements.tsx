@@ -2157,18 +2157,76 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                     console.error('OrderConfirmationElement: Error tracking Google Purchase:', error);
                   }
                 }
+                
+                // Store purchase event directly in database with funnel_id
+                try {
+                  let sessionId = sessionStorage.getItem('session_id');
+                  if (!sessionId) {
+                    sessionId = crypto.randomUUID();
+                    sessionStorage.setItem('session_id', sessionId);
+                  }
+                  
+                  const dbEventData = {
+                    ...eventData,
+                    _providers: {
+                      facebook: {
+                        configured: !!funnelPixels.facebook_pixel_id,
+                        attempted: !!window.fbq && !!funnelPixels.facebook_pixel_id,
+                        success: !!window.fbq && !!funnelPixels.facebook_pixel_id
+                      },
+                      google: {
+                        configured: !!(funnelPixels.google_analytics_id || funnelPixels.google_ads_id),
+                        attempted: !!(window.gtag && (funnelPixels.google_analytics_id || funnelPixels.google_ads_id)),
+                        success: !!(window.gtag && (funnelPixels.google_analytics_id || funnelPixels.google_ads_id))
+                      }
+                    },
+                    funnel_id: funnelId // ✅ Explicitly include funnel_id in event_data
+                  };
+                  
+                  await supabase.from('pixel_events').insert({
+                    store_id: store?.id || '',
+                    website_id: websiteId || null,
+                    event_type: 'Purchase',
+                    event_data: dbEventData,
+                    session_id: sessionId,
+                    page_url: window.location.href,
+                    referrer: document.referrer || null,
+                    utm_source: new URLSearchParams(window.location.search).get('utm_source'),
+                    utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
+                    utm_medium: new URLSearchParams(window.location.search).get('utm_medium'),
+                    utm_term: new URLSearchParams(window.location.search).get('utm_term'),
+                    utm_content: new URLSearchParams(window.location.search).get('utm_content'),
+                    user_agent: navigator.userAgent,
+                  });
+                  
+                  console.log('OrderConfirmationElement: Purchase event stored in database with funnel_id:', funnelId);
+                } catch (dbError) {
+                  console.error('OrderConfirmationElement: Error storing purchase event in database:', dbError);
+                  // Fallback: use hook-based tracking if direct insert fails
+                  trackPurchase({
+                    transaction_id: data.order.id,
+                    value: data.order.total,
+                    items: trackingItems
+                  });
+                }
               }
             } catch (error) {
               console.error('OrderConfirmationElement: Error fetching funnel pixel config:', error);
+              // Fallback: use hook-based tracking if funnel config fetch fails
+              trackPurchase({
+                transaction_id: data.order.id,
+                value: data.order.total,
+                items: trackingItems
+              });
             }
+          } else {
+            // No funnelId, use hook-based tracking (for website checkouts)
+            trackPurchase({
+              transaction_id: data.order.id,
+              value: data.order.total,
+              items: trackingItems
+            });
           }
-          
-          // Also use the hook-based tracking for database storage (uses context pixels)
-          trackPurchase({
-            transaction_id: data.order.id,
-            value: data.order.total,
-            items: trackingItems
-          });
           
           // Store tracking flag to prevent future duplicates
           sessionStorage.setItem('purchase_tracked_' + id, 'true');

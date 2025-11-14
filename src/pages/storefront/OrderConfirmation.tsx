@@ -49,7 +49,7 @@ interface OrderItem {
 }
 
 export const OrderConfirmation: React.FC = () => {
-  const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
+  const { slug, websiteId, websiteSlug, orderId: orderIdParam, funnelId: urlFunnelId } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string; funnelId?: string }>();
   const [searchParams] = useSearchParams();
   const { store, loadStore, loadStoreById } = useStore();
   const { clearCart } = useCart();
@@ -57,12 +57,13 @@ export const OrderConfirmation: React.FC = () => {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCourseOrder, setIsCourseOrder] = useState(false);
+  const [funnelId, setFunnelId] = useState<string | undefined>(urlFunnelId);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const orderToken = searchParams.get('ot') || '';
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
   const { pixels } = usePixelContext();
-  const { trackPurchase } = usePixelTracking(pixels, store?.id);
+  const { trackPurchase } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
 useEffect(() => {
   if (slug) {
     loadStore(slug);
@@ -140,6 +141,14 @@ useEffect(() => {
         setOrder(orderData);
         setOrderItems(itemsData);
         
+        // Extract funnelId from order's custom_fields if not already set from URL
+        if (!funnelId && orderData.custom_fields) {
+          const customFields = orderData.custom_fields as any;
+          if (customFields.funnelId) {
+            setFunnelId(customFields.funnelId);
+          }
+        }
+        
         // Clear cart when order confirmation is successfully loaded
         clearCart();
         
@@ -156,11 +165,77 @@ useEffect(() => {
             item_category: undefined
           }));
           
-          trackPurchase({
-            transaction_id: orderData.id,
-            value: orderData.total,
-            items: trackingItems
-          });
+          // Get the final funnelId (from URL, order custom_fields, or state)
+          const finalFunnelId = urlFunnelId || (orderData.custom_fields as any)?.funnelId || funnelId;
+          
+          // If we have a funnelId, ensure it's stored in the event
+          if (finalFunnelId) {
+            // Store purchase event directly with funnel_id to ensure it's captured
+            try {
+              let sessionId = sessionStorage.getItem('session_id');
+              if (!sessionId) {
+                sessionId = crypto.randomUUID();
+                sessionStorage.setItem('session_id', sessionId);
+              }
+              
+              const eventData = {
+                content_ids: trackingItems.map(item => item.item_id),
+                content_type: 'product',
+                value: orderData.total,
+                currency: 'BDT',
+                contents: trackingItems.map(item => ({
+                  id: item.item_id,
+                  quantity: item.quantity,
+                })),
+                _providers: {
+                  facebook: {
+                    configured: !!pixels?.facebook_pixel_id,
+                    attempted: !!window.fbq && !!pixels?.facebook_pixel_id,
+                    success: !!window.fbq && !!pixels?.facebook_pixel_id
+                  },
+                  google: {
+                    configured: !!(pixels?.google_analytics_id || pixels?.google_ads_id),
+                    attempted: !!(window.gtag && (pixels?.google_analytics_id || pixels?.google_ads_id)),
+                    success: !!(window.gtag && (pixels?.google_analytics_id || pixels?.google_ads_id))
+                  }
+                },
+                funnel_id: finalFunnelId // ✅ Explicitly include funnel_id in event_data
+              };
+              
+              await supabase.from('pixel_events').insert({
+                store_id: store?.id || '',
+                website_id: websiteId || null,
+                event_type: 'Purchase',
+                event_data: eventData,
+                session_id: sessionId,
+                page_url: window.location.href,
+                referrer: document.referrer || null,
+                utm_source: new URLSearchParams(window.location.search).get('utm_source'),
+                utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
+                utm_medium: new URLSearchParams(window.location.search).get('utm_medium'),
+                utm_term: new URLSearchParams(window.location.search).get('utm_term'),
+                utm_content: new URLSearchParams(window.location.search).get('utm_content'),
+                user_agent: navigator.userAgent,
+              });
+              
+              console.log('OrderConfirmation: Purchase event stored in database with funnel_id:', finalFunnelId);
+            } catch (dbError) {
+              console.error('OrderConfirmation: Error storing purchase event in database:', dbError);
+              // Fallback: use hook-based tracking if direct insert fails
+              trackPurchase({
+                transaction_id: orderData.id,
+                value: orderData.total,
+                items: trackingItems
+              });
+            }
+          } else {
+            // No funnelId, use hook-based tracking (for website checkouts)
+            trackPurchase({
+              transaction_id: orderData.id,
+              value: orderData.total,
+              items: trackingItems
+            });
+          }
           
           // Store tracking flag to prevent future duplicates
           sessionStorage.setItem('purchase_tracked_' + orderData.id, 'true');
