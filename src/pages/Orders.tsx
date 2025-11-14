@@ -46,7 +46,9 @@ import {
   Package,
   Trash2,
   Ban,
-  CheckCircle
+  CheckCircle,
+  XCircle,
+  ChevronDown
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
@@ -106,13 +108,22 @@ function normalizeIP(ip: string | null | undefined): string | null {
 
 // Helper function to determine if payment is confirmed
 const isPaymentConfirmed = (order: Order): boolean => {
-  // For EPS/EB Pay: payment is already collected immediately, so always show checkmark
+  // For EPS/EB Pay: only show checkmark if payment succeeded (not failed/cancelled)
   if (order.payment_method === 'eps' || order.payment_method === 'ebpay') {
-    return true;
+    return order.status !== 'payment_failed' && order.status !== 'cancelled';
   }
   // For COD: payment is collected only when order is delivered
   if (order.payment_method === 'cod' && order.status === 'delivered') {
     return true;
+  }
+  return false;
+};
+
+// Helper function to determine if payment failed or was cancelled
+const isPaymentFailed = (order: Order): boolean => {
+  // Only for EPS/EB Pay (COD doesn't have payment_failed status)
+  if (order.payment_method === 'eps' || order.payment_method === 'ebpay') {
+    return order.status === 'payment_failed' || order.status === 'cancelled';
   }
   return false;
 };
@@ -126,6 +137,7 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>(searchParams.get("paymentStatus") || "");
   const [activeTab, setActiveTab] = useState<'all' | 'fake'>('all');
   const [fakeOrderFilter, setFakeOrderFilter] = useState<'all' | 'blocked'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -166,7 +178,7 @@ export default function Orders() {
         fetchOrders();
       }
     }
-  }, [user, currentPage, searchTerm, statusFilter, activeTab, fakeOrderFilter]);
+  }, [user, currentPage, searchTerm, statusFilter, paymentStatusFilter, activeTab, fakeOrderFilter]);
 
   // Check if IP is blocked when order details open
   useEffect(() => {
@@ -223,18 +235,22 @@ export default function Orders() {
   useEffect(() => {
     const status = searchParams.get("status");
     const search = searchParams.get("search");
+    const paymentStatus = searchParams.get("paymentStatus");
     if (status) {
       setStatusFilter(status);
     }
     if (search) {
       setSearchTerm(search);
     }
+    if (paymentStatus) {
+      setPaymentStatusFilter(paymentStatus);
+    }
   }, [searchParams]);
 
   // Reset to first page when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+  }, [searchTerm, statusFilter, paymentStatusFilter]);
 
   // Handle orderId parameter from notifications
   useEffect(() => {
@@ -324,6 +340,22 @@ export default function Orders() {
           ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
         }
 
+        // Apply payment status filter if paymentStatusFilter exists
+        if (paymentStatusFilter) {
+          if (paymentStatusFilter === 'success') {
+            // Exclude payment_failed and cancelled orders
+            ordersQuery = ordersQuery.neq('status', 'cancelled');
+            // Filter out payment_failed using a filter that checks status is not payment_failed
+            // Since payment_failed might not be in the type, we'll use a workaround
+            ordersQuery = ordersQuery.or('status.neq.payment_failed');
+          } else if (paymentStatusFilter === 'failed') {
+            // Use a filter that matches payment_failed status
+            ordersQuery = ordersQuery.eq('status', 'payment_failed' as any);
+          } else if (paymentStatusFilter === 'cancelled') {
+            ordersQuery = ordersQuery.eq('status', 'cancelled');
+          }
+        }
+
         // Get total count for pagination with same filters
         let countQuery = supabase
           .from('orders')
@@ -341,6 +373,18 @@ export default function Orders() {
 
         if (statusFilter) {
           countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+        }
+
+        // Apply payment status filter to count query
+        if (paymentStatusFilter) {
+          if (paymentStatusFilter === 'success') {
+            countQuery = countQuery.neq('status', 'cancelled');
+            countQuery = countQuery.or('status.neq.payment_failed');
+          } else if (paymentStatusFilter === 'failed') {
+            countQuery = countQuery.eq('status', 'payment_failed' as any);
+          } else if (paymentStatusFilter === 'cancelled') {
+            countQuery = countQuery.eq('status', 'cancelled');
+          }
         }
 
         const { count, error: countError } = await countQuery;
@@ -475,6 +519,18 @@ export default function Orders() {
           ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
         }
 
+        // Apply payment status filter if paymentStatusFilter exists
+        if (paymentStatusFilter) {
+          if (paymentStatusFilter === 'success') {
+            ordersQuery = ordersQuery.neq('status', 'cancelled');
+            ordersQuery = ordersQuery.or('status.neq.payment_failed');
+          } else if (paymentStatusFilter === 'failed') {
+            ordersQuery = ordersQuery.eq('status', 'payment_failed' as any);
+          } else if (paymentStatusFilter === 'cancelled') {
+            ordersQuery = ordersQuery.eq('status', 'cancelled');
+          }
+        }
+
         // Apply pagination
         const offset = (currentPage - 1) * ordersPerPage;
         const { data: orders, error: ordersError } = await ordersQuery
@@ -498,6 +554,18 @@ export default function Orders() {
 
         if (statusFilter) {
           countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+        }
+
+        // Apply payment status filter to count query
+        if (paymentStatusFilter) {
+          if (paymentStatusFilter === 'success') {
+            countQuery = countQuery.neq('status', 'cancelled');
+            countQuery = countQuery.or('status.neq.payment_failed');
+          } else if (paymentStatusFilter === 'failed') {
+            countQuery = countQuery.eq('status', 'payment_failed' as any);
+          } else if (paymentStatusFilter === 'cancelled') {
+            countQuery = countQuery.eq('status', 'cancelled');
+          }
         }
 
         const { count } = await countQuery;
@@ -619,6 +687,18 @@ export default function Orders() {
         ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
       }
 
+      // Apply payment status filter if paymentStatusFilter exists
+      if (paymentStatusFilter) {
+        if (paymentStatusFilter === 'success') {
+          ordersQuery = ordersQuery.neq('status', 'cancelled');
+          ordersQuery = ordersQuery.or('status.neq.payment_failed');
+        } else if (paymentStatusFilter === 'failed') {
+          ordersQuery = ordersQuery.eq('status', 'payment_failed' as any);
+        } else if (paymentStatusFilter === 'cancelled') {
+          ordersQuery = ordersQuery.eq('status', 'cancelled');
+        }
+      }
+
       // Apply pagination
       const offset = (currentPage - 1) * ordersPerPage;
       const { data: orders, error: ordersError } = await ordersQuery
@@ -641,6 +721,18 @@ export default function Orders() {
 
       if (statusFilter) {
         countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+      }
+
+      // Apply payment status filter to count query
+      if (paymentStatusFilter) {
+        if (paymentStatusFilter === 'success') {
+          countQuery = countQuery.neq('status', 'cancelled');
+          countQuery = countQuery.or('status.neq.payment_failed');
+        } else if (paymentStatusFilter === 'failed') {
+          countQuery = countQuery.eq('status', 'payment_failed' as any);
+        } else if (paymentStatusFilter === 'cancelled') {
+          countQuery = countQuery.eq('status', 'cancelled');
+        }
       }
 
       const { count } = await countQuery;
@@ -1484,26 +1576,120 @@ export default function Orders() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className={isMobile ? 'w-full justify-start' : ''}>
                   <Filter className="h-4 w-4 mr-2" />
-                  Status
+                  Status {statusFilter && `(${statusFilter})`}
+                  <ChevronDown className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="z-50 bg-background border shadow-md">
-                <DropdownMenuItem onClick={() => setStatusFilter("")}>
+                <DropdownMenuItem onClick={() => {
+                  setStatusFilter("");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.delete("status");
+                    return newParams;
+                  });
+                }}>
                   All Status
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("pending")}>
+                <DropdownMenuItem onClick={() => {
+                  setStatusFilter("pending");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.set("status", "pending");
+                    return newParams;
+                  });
+                }}>
                   Pending
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("processing")}>
+                <DropdownMenuItem onClick={() => {
+                  setStatusFilter("processing");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.set("status", "processing");
+                    return newParams;
+                  });
+                }}>
                   Processing
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("shipped")}>
+                <DropdownMenuItem onClick={() => {
+                  setStatusFilter("shipped");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.set("status", "shipped");
+                    return newParams;
+                  });
+                }}>
                   Shipped
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("delivered")}>
+                <DropdownMenuItem onClick={() => {
+                  setStatusFilter("delivered");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.set("status", "delivered");
+                    return newParams;
+                  });
+                }}>
                   Delivered
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("cancelled")}>
+                <DropdownMenuItem onClick={() => {
+                  setStatusFilter("cancelled");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.set("status", "cancelled");
+                    return newParams;
+                  });
+                }}>
+                  Cancelled
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className={isMobile ? 'w-full justify-start' : ''}>
+                  <Filter className="h-4 w-4 mr-2" />
+                  Payment Status {paymentStatusFilter && `(${paymentStatusFilter})`}
+                  <ChevronDown className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="z-50 bg-background border shadow-md">
+                <DropdownMenuItem onClick={() => {
+                  setPaymentStatusFilter("");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.delete("paymentStatus");
+                    return newParams;
+                  });
+                }}>
+                  All
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  setPaymentStatusFilter("success");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.set("paymentStatus", "success");
+                    return newParams;
+                  });
+                }}>
+                  Success
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  setPaymentStatusFilter("failed");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.set("paymentStatus", "failed");
+                    return newParams;
+                  });
+                }}>
+                  Failed
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  setPaymentStatusFilter("cancelled");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.set("paymentStatus", "cancelled");
+                    return newParams;
+                  });
+                }}>
                   Cancelled
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -1744,6 +1930,9 @@ export default function Orders() {
                                 <span>{order.payment_method.toUpperCase()}</span>
                                 {isPaymentConfirmed(order) && (
                                   <CheckCircle className="h-3 w-3 text-green-600" />
+                                )}
+                                {isPaymentFailed(order) && (
+                                  <XCircle className="h-3 w-3 text-red-600" />
                                 )}
                               </div>
                               {order.payment_transaction_number && ` - ${order.payment_transaction_number}`}
@@ -2046,6 +2235,9 @@ export default function Orders() {
                           <span>{order.payment_method.toUpperCase()}</span>
                           {isPaymentConfirmed(order) && (
                             <CheckCircle className="h-4 w-4 text-green-600" />
+                          )}
+                          {isPaymentFailed(order) && (
+                            <XCircle className="h-4 w-4 text-red-600" />
                           )}
                         </div>
                         {order.payment_transaction_number && (
