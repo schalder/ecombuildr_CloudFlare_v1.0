@@ -9,6 +9,7 @@ import { CheckCircle, Clock, XCircle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { CoursePaymentProcessing } from '@/components/course/CoursePaymentProcessing';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
 
 export const PaymentProcessing: React.FC = () => {
   const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
@@ -26,13 +27,21 @@ export const PaymentProcessing: React.FC = () => {
     funnelId?: string;
     currentStepId?: string;
   } | null>(null);
+  const [pixelConfig, setPixelConfig] = useState<{
+    facebook_pixel_id?: string;
+    google_analytics_id?: string;
+    google_ads_id?: string;
+  } | undefined>(undefined);
   const paths = useEcomPaths();
+  
+  // Initialize pixel tracking hook (must be called unconditionally)
+  const { trackPurchase } = usePixelTracking(pixelConfig, store?.id, websiteId, funnelContext?.funnelId);
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const tempId = searchParams.get('tempId') || '';
   const paymentMethod = searchParams.get('pm') || '';
   
   // Improved website context detection - check URL params or if we're on a custom domain route
-  const isWebsiteContext = Boolean(websiteId || websiteSlug || window.location.hostname !== 'localhost' && !window.location.hostname === 'ecombuildr.com');
+  const isWebsiteContext = Boolean(websiteId || websiteSlug || (window.location.hostname !== 'localhost' && window.location.hostname !== 'ecombuildr.com'));
   
   // Get status from URL - this takes priority over database status
   const urlStatus = searchParams.get('status');
@@ -247,6 +256,100 @@ useEffect(() => {
         
         // Clear cart after successful order creation
         clearCart();
+        
+        // ✅ TRACK PURCHASE EVENT FOR DEFERRED PAYMENTS
+        // Fetch funnel pixel configuration if this is a funnel checkout
+        if (isFunnelCheckout && funnelId) {
+          try {
+            const { data: funnelData } = await supabase
+              .from('funnels')
+              .select('settings')
+              .eq('id', funnelId)
+              .single();
+            
+            if (funnelData?.settings) {
+              const settings = funnelData.settings as any;
+              const funnelPixels = {
+                facebook_pixel_id: settings?.facebook_pixel_id || undefined,
+                google_analytics_id: settings?.google_analytics_id || undefined,
+                google_ads_id: settings?.google_ads_id || undefined,
+              };
+              
+              // Fetch order items for tracking
+              const { data: orderItems, error: itemsError } = await supabase
+                .from('order_items')
+                .select('product_id, product_name, price, quantity')
+                .eq('order_id', data.order.id);
+              
+              if (!itemsError && orderItems && orderItems.length > 0) {
+                // Update pixel config and track purchase event
+                setPixelConfig(funnelPixels);
+                
+                // Use a direct tracking approach that doesn't depend on state update
+                // Create tracking items
+                const trackingItems = orderItems.map(item => ({
+                  item_id: item.product_id,
+                  item_name: item.product_name,
+                  price: item.price,
+                  quantity: item.quantity,
+                }));
+                
+                // Track purchase event directly using window.fbq if available
+                if (window.fbq && funnelPixels.facebook_pixel_id) {
+                  try {
+                    const eventData = {
+                      content_ids: trackingItems.map(item => item.item_id),
+                      content_type: 'product',
+                      value: data.order.total,
+                      currency: 'BDT',
+                      contents: trackingItems.map(item => ({
+                        id: item.item_id,
+                        quantity: item.quantity,
+                      })),
+                    };
+                    window.fbq('track', 'Purchase', eventData);
+                    console.log('PaymentProcessing: Facebook Purchase event tracked:', {
+                      orderId: data.order.id,
+                      total: data.order.total,
+                      itemsCount: orderItems.length,
+                      funnelId
+                    });
+                  } catch (error) {
+                    console.error('PaymentProcessing: Error tracking Facebook Purchase:', error);
+                  }
+                }
+                
+                // Track with Google Analytics if configured
+                if ((funnelPixels.google_analytics_id || funnelPixels.google_ads_id) && window.gtag) {
+                  try {
+                    window.gtag('event', 'purchase', {
+                      transaction_id: data.order.id,
+                      currency: 'BDT',
+                      value: data.order.total,
+                      items: trackingItems,
+                    });
+                    console.log('PaymentProcessing: Google Analytics Purchase event tracked');
+                  } catch (error) {
+                    console.error('PaymentProcessing: Error tracking Google Purchase:', error);
+                  }
+                }
+                
+                // Also use the hook-based tracking for database storage
+                // Use setTimeout to ensure pixelConfig state is updated
+                setTimeout(() => {
+                  trackPurchase({
+                    transaction_id: data.order.id,
+                    value: data.order.total,
+                    items: trackingItems,
+                  });
+                }, 50);
+              }
+            }
+          } catch (error) {
+            console.error('PaymentProcessing: Error tracking purchase event:', error);
+            // Don't block order creation if tracking fails
+          }
+        }
         
         // ✅ CONDITIONAL REDIRECT LOGIC
         if (isFunnelCheckout && funnelId && currentStepId) {
