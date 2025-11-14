@@ -12,13 +12,15 @@ interface CompactMediaSelectorProps {
   onChange: (url: string) => void;
   label?: string;
   maxSize?: number; // in MB
+  showLabelOnly?: boolean; // If true, show only label text instead of filename and URL
 }
 
 export const CompactMediaSelector: React.FC<CompactMediaSelectorProps> = ({
   value = '',
   onChange,
   label = 'Select Image',
-  maxSize = 5
+  maxSize = 5,
+  showLabelOnly = false
 }) => {
   const [isMediaLibraryOpen, setIsMediaLibraryOpen] = useState(false);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -58,20 +60,28 @@ export const CompactMediaSelector: React.FC<CompactMediaSelectorProps> = ({
             />
           </div>
           <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="text-sm font-medium truncate" title={value.split('/').pop() || 'Selected image'}>
-              {(() => {
-                const filename = value.split('/').pop() || 'Selected image';
-                return filename.length > 25 ? `${filename.substring(0, 25)}...` : filename;
-              })()}
-            </p>
-            <p className="text-xs text-muted-foreground truncate" title={value}>
-              {(() => {
-                if (value.length <= 35) return value;
-                const start = value.substring(0, 20);
-                const end = value.substring(value.length - 12);
-                return `${start}...${end}`;
-              })()}
-            </p>
+            {showLabelOnly ? (
+              <p className="text-sm font-medium truncate" title={label}>
+                {label}
+              </p>
+            ) : (
+              <>
+                <p className="text-sm font-medium truncate" title={value.split('/').pop() || 'Selected image'}>
+                  {(() => {
+                    const filename = value.split('/').pop() || 'Selected image';
+                    return filename.length > 25 ? `${filename.substring(0, 25)}...` : filename;
+                  })()}
+                </p>
+                <p className="text-xs text-muted-foreground truncate" title={value}>
+                  {(() => {
+                    if (value.length <= 35) return value;
+                    const start = value.substring(0, 20);
+                    const end = value.substring(value.length - 12);
+                    return `${start}...${end}`;
+                  })()}
+                </p>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <DropdownMenu>
