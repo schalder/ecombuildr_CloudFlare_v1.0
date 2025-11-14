@@ -203,7 +203,8 @@ useEffect(() => {
         discount_amount: checkoutData.orderData.discount_amount || 0,
         total: checkoutData.orderData.total,
         payment_method: checkoutData.orderData.payment_method,
-        status: checkoutData.orderData.status || 'pending',
+        // ✅ Status will be set to 'confirmed' by create-order-on-payment-success edge function
+        // Do not set status here to ensure edge function is single source of truth
         notes: checkoutData.orderData.notes || '',
         payment_transaction_number: checkoutData.orderData.payment_transaction_number || '',
         website_id: checkoutData.orderData.website_id,
