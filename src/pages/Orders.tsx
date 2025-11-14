@@ -1435,8 +1435,10 @@ export default function Orders() {
                           {new Date(order.created_at).toLocaleDateString()}
                         </div>
                         <div className="flex items-center gap-2">
-                          {order.website_id || order.funnel_id ? (
-                            <span>{order.website_id ? websiteMap[order.website_id] || 'Website' : funnelMap[order.funnel_id!] || 'Funnel'}</span>
+                          {order.funnel_id ? (
+                            <span>{funnelMap[order.funnel_id] || 'Funnel'}</span>
+                          ) : order.website_id ? (
+                            <span>{websiteMap[order.website_id] || 'Website'}</span>
                           ) : (
                             <span>Storefront</span>
                           )}
@@ -1539,9 +1541,13 @@ export default function Orders() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        {order.website_id || order.funnel_id ? (
+                        {order.funnel_id ? (
                           <div className="text-sm">
-                            {order.website_id ? websiteMap[order.website_id] || 'Website' : funnelMap[order.funnel_id!] || 'Funnel'}
+                            {funnelMap[order.funnel_id] || 'Funnel'}
+                          </div>
+                        ) : order.website_id ? (
+                          <div className="text-sm">
+                            {websiteMap[order.website_id] || 'Website'}
                           </div>
                         ) : (
                           <span className="text-sm text-muted-foreground">Storefront</span>

@@ -623,11 +623,149 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           item_category: undefined
         }));
         
-        trackPurchase({
-          transaction_id: orderId,
-          value: total,
-          items: trackingItems
-        });
+        // ✅ TRACK PURCHASE EVENT FOR COD ORDERS
+        // Check if we're in a funnel context
+        if (orderFunnelId) {
+          // Funnel checkout: Store purchase event directly with funnel_id
+          try {
+            // Fetch funnel pixel configuration
+            const { data: funnelData } = await supabase
+              .from('funnels')
+              .select('settings')
+              .eq('id', orderFunnelId)
+              .single();
+            
+            if (funnelData?.settings) {
+              const settings = funnelData.settings as any;
+              const funnelPixels = {
+                facebook_pixel_id: settings?.facebook_pixel_id || pixels?.facebook_pixel_id,
+                google_analytics_id: settings?.google_analytics_id || pixels?.google_analytics_id,
+                google_ads_id: settings?.google_ads_id || pixels?.google_ads_id,
+              };
+              
+              // Track purchase event directly using window.fbq if available
+              if (window.fbq && funnelPixels.facebook_pixel_id) {
+                try {
+                  const eventData = {
+                    content_ids: trackingItems.map(item => item.item_id),
+                    content_type: 'product',
+                    value: total,
+                    currency: 'BDT',
+                    contents: trackingItems.map(item => ({
+                      id: item.item_id,
+                      quantity: item.quantity,
+                    })),
+                  };
+                  window.fbq('track', 'Purchase', eventData);
+                  console.log('InlineCheckoutElement: Facebook Purchase event tracked (COD):', {
+                    orderId,
+                    total,
+                    itemsCount: trackingItems.length,
+                    funnelId: orderFunnelId
+                  });
+                } catch (error) {
+                  console.error('InlineCheckoutElement: Error tracking Facebook Purchase:', error);
+                }
+              }
+              
+              // Track with Google Analytics if configured
+              if ((funnelPixels.google_analytics_id || funnelPixels.google_ads_id) && window.gtag) {
+                try {
+                  window.gtag('event', 'purchase', {
+                    transaction_id: orderId,
+                    currency: 'BDT',
+                    value: total,
+                    items: trackingItems,
+                  });
+                  console.log('InlineCheckoutElement: Google Analytics Purchase event tracked (COD)');
+                } catch (error) {
+                  console.error('InlineCheckoutElement: Error tracking Google Purchase:', error);
+                }
+              }
+              
+              // Store purchase event directly in database with funnel_id
+              try {
+                let sessionId = sessionStorage.getItem('session_id');
+                if (!sessionId) {
+                  sessionId = crypto.randomUUID();
+                  sessionStorage.setItem('session_id', sessionId);
+                }
+                
+                const eventData = {
+                  content_ids: trackingItems.map(item => item.item_id),
+                  content_type: 'product',
+                  value: total,
+                  currency: 'BDT',
+                  contents: trackingItems.map(item => ({
+                    id: item.item_id,
+                    quantity: item.quantity,
+                  })),
+                  _providers: {
+                    facebook: {
+                      configured: !!funnelPixels.facebook_pixel_id,
+                      attempted: !!window.fbq && !!funnelPixels.facebook_pixel_id,
+                      success: !!window.fbq && !!funnelPixels.facebook_pixel_id
+                    },
+                    google: {
+                      configured: !!(funnelPixels.google_analytics_id || funnelPixels.google_ads_id),
+                      attempted: !!(window.gtag && (funnelPixels.google_analytics_id || funnelPixels.google_ads_id)),
+                      success: !!(window.gtag && (funnelPixels.google_analytics_id || funnelPixels.google_ads_id))
+                    }
+                  },
+                  funnel_id: orderFunnelId // ✅ Explicitly include funnel_id in event_data
+                };
+                
+                await supabase.from('pixel_events').insert({
+                  store_id: store.id,
+                  website_id: resolvedWebsiteId || null,
+                  event_type: 'Purchase',
+                  event_data: eventData,
+                  session_id: sessionId,
+                  page_url: window.location.href,
+                  referrer: document.referrer || null,
+                  utm_source: new URLSearchParams(window.location.search).get('utm_source'),
+                  utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
+                  utm_medium: new URLSearchParams(window.location.search).get('utm_medium'),
+                  utm_term: new URLSearchParams(window.location.search).get('utm_term'),
+                  utm_content: new URLSearchParams(window.location.search).get('utm_content'),
+                  user_agent: navigator.userAgent,
+                });
+                
+                console.log('InlineCheckoutElement: Purchase event stored in database with funnel_id (COD):', orderFunnelId);
+              } catch (dbError) {
+                console.error('InlineCheckoutElement: Error storing purchase event in database:', dbError);
+                // Fallback: use hook-based tracking if direct insert fails
+                trackPurchase({
+                  transaction_id: orderId,
+                  value: total,
+                  items: trackingItems
+                });
+              }
+            } else {
+              // Funnel data not found, fallback to hook-based tracking
+              trackPurchase({
+                transaction_id: orderId,
+                value: total,
+                items: trackingItems
+              });
+            }
+          } catch (error) {
+            console.error('InlineCheckoutElement: Error tracking purchase event (COD):', error);
+            // Fallback: use hook-based tracking if funnel config fetch fails
+            trackPurchase({
+              transaction_id: orderId,
+              value: total,
+              items: trackingItems
+            });
+          }
+        } else {
+          // Website checkout: Use hook-based tracking (no funnel_id)
+          trackPurchase({
+            transaction_id: orderId,
+            value: total,
+            items: trackingItems
+          });
+        }
         
         // Clear InitiateCheckout tracking on successful order
         const sessionKey = `initiate_checkout_tracked_${element.id}`;
@@ -840,7 +978,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
             {/* Product chooser */}
             <section className="space-y-4">
               {showProductHeading && (
-                <h3 className={`mb-3 font-semibold text-xl element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>Select Product</h3>
+              <h3 className={`mb-3 font-semibold text-xl element-${element.id}-section-header`} style={headerInline as React.CSSProperties}>Select Product</h3>
               )}
               {allowSwitching && products.length > 1 ? (
                 <div className={useTwoColumnGrid ? "grid grid-cols-1 md:grid-cols-2 gap-2" : "space-y-2"}>
@@ -893,7 +1031,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     <Button variant="outline" size="sm" onClick={() => setQuantity((q)=>Math.max(1, (q||1)-1))} disabled={quantity<=1}>-</Button>
                     <span className="px-3 py-1 border rounded min-w-[50px] text-center">{quantity}</span>
                     <Button variant="outline" size="sm" onClick={() => setQuantity((q)=>Math.max(1, (q||1)+1))} disabled={isSelectedOut}>+</Button>
-                  </div>
+                </div>
               </div>
             )}
 
