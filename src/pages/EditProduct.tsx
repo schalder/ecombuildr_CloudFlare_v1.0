@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Save, Package, ChevronUp, ChevronDown, X, Plus, Clock } from "lucide-react";
+import { ArrowLeft, Save, Package, ChevronUp, ChevronDown, X, Plus, Clock, Globe, Info, DollarSign, Box, ToggleLeft, Layers, CreditCard, Image, Search, Truck } from "lucide-react";
 import { CompactMediaSelector } from "@/components/page-builder/components/CompactMediaSelector";
 import { toast } from "@/hooks/use-toast";
 import RichTextEditor from "@/components/ui/RichTextEditor";
@@ -98,6 +98,9 @@ export default function EditProduct() {
     "channel-category", "product-info", "pricing", "status", 
     "variations", "actions-payments", "media", "seo", "shipping"
   ]);
+  
+  // Active section tracking for sidebar navigation
+  const [activeSection, setActiveSection] = useState<string>("channel-category");
 
   const [hasVariants, setHasVariants] = useState(false);
   const [variations, setVariations] = useState<VariationOption[]>([]);
@@ -478,6 +481,74 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
     }
   };
 
+  // Navigate to section
+  const navigateToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      // Expand the section if it's collapsed
+      if (!expandedSections.includes(sectionId)) {
+        setExpandedSections([...expandedSections, sectionId]);
+        // Wait a bit for the accordion to expand before scrolling
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      } else {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      setActiveSection(sectionId);
+    }
+  };
+
+  // Track active section on scroll
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -60% 0px',
+      threshold: 0
+    };
+
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    // Observe all section elements
+    const sectionIds = [
+      "channel-category", "product-info", "pricing", "inventory", 
+      "status", "variations", "actions-payments", "media", "seo", "shipping"
+    ];
+
+    sectionIds.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) {
+        observer.observe(element);
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [expandedSections]);
+
+  // Define section navigation items
+  const sectionNavItems = [
+    { id: "channel-category", label: "Channel & Category", icon: Globe },
+    { id: "product-info", label: "Product Information", icon: Info },
+    { id: "pricing", label: "Pricing", icon: DollarSign },
+    ...(formData.product_type === 'physical' ? [{ id: "inventory", label: "Inventory", icon: Box }] : []),
+    { id: "status", label: "Status", icon: ToggleLeft },
+    { id: "variations", label: "Variations", icon: Layers },
+    { id: "actions-payments", label: "Actions & Payments", icon: CreditCard },
+    { id: "media", label: "Media", icon: Image },
+    { id: "seo", label: "SEO", icon: Search },
+    ...(formData.product_type === 'physical' ? [{ id: "shipping", label: "Shipping", icon: Truck }] : []),
+  ];
+
   if (loading) {
     return (
       <DashboardLayout title="Loading..." description="Loading product for editing">
@@ -528,10 +599,12 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="flex gap-6">
+          {/* Main Form */}
+          <form onSubmit={handleSubmit} className="flex-1 space-y-6">
           <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full space-y-4">
             {/* Selling Website & Category - Moved to Top */}
-            <AccordionItem value="channel-category" className="border rounded-lg">
+            <AccordionItem value="channel-category" id="channel-category" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -583,7 +656,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             </AccordionItem>
 
             {/* Product Information */}
-            <AccordionItem value="product-info" className="border rounded-lg">
+            <AccordionItem value="product-info" id="product-info" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -761,7 +834,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             </AccordionItem>
 
             {/* Pricing & Inventory */}
-            <AccordionItem value="pricing" className="border rounded-lg">
+            <AccordionItem value="pricing" id="pricing" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Pricing & Inventory</CardTitle>
@@ -863,7 +936,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             </AccordionItem>
 
             {/* Status */}
-            <AccordionItem value="status" className="border rounded-lg">
+            <AccordionItem value="status" id="status" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Status</CardTitle>
@@ -909,7 +982,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             </AccordionItem>
 
             {/* Variations */}
-            <AccordionItem value="variations" className="border rounded-lg">
+            <AccordionItem value="variations" id="variations" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Variations</CardTitle>
@@ -939,7 +1012,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             </AccordionItem>
 
             {/* Actions & Payments */}
-            <AccordionItem value="actions-payments" className="border rounded-lg">
+            <AccordionItem value="actions-payments" id="actions-payments" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Product Actions & Payments</CardTitle>
@@ -1143,7 +1216,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             </AccordionItem>
 
             {/* Media */}
-            <AccordionItem value="media" className="border rounded-lg">
+            <AccordionItem value="media" id="media" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Media</CardTitle>
@@ -1228,7 +1301,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             </AccordionItem>
 
             {/* SEO */}
-            <AccordionItem value="seo" className="border rounded-lg">
+            <AccordionItem value="seo" id="seo" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">SEO</CardTitle>
@@ -1262,7 +1335,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
             {/* Shipping & Returns */}
             {formData.product_type === 'physical' && (
-              <AccordionItem value="shipping" className="border rounded-lg">
+              <AccordionItem value="shipping" id="shipping" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Shipping & Returns</CardTitle>
@@ -1527,6 +1600,40 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           onSave={setDescriptionBuilder}
         />
         </form>
+
+        {/* Sticky Sidebar Navigation - Hidden on mobile/tablet */}
+        <aside className="hidden lg:block w-64 shrink-0">
+          <div className="sticky top-24">
+            <Card className="border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Navigation</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <nav className="space-y-1 px-2 pb-4">
+                  {sectionNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeSection === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => navigateToSection(item.id)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-md transition-colors ${
+                          isActive
+                            ? 'bg-primary text-primary-foreground font-medium'
+                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="text-left">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </CardContent>
+            </Card>
+          </div>
+        </aside>
+      </div>
       </div>
     </DashboardLayout>
   );

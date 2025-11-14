@@ -16,7 +16,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Save, Package, Upload, X, Plus, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowLeft, Save, Package, Upload, X, Plus, ChevronUp, ChevronDown, Globe, Info, DollarSign, Box, ToggleLeft, Layers, CreditCard, Image, Search, Truck } from "lucide-react";
 import { CompactMediaSelector } from "@/components/page-builder/components/CompactMediaSelector";
 import { toast } from "@/hooks/use-toast";
 import RichTextEditor from "@/components/ui/RichTextEditor";
@@ -43,6 +43,9 @@ export default function AddProduct() {
     "channel-category", "product-info", "pricing", "status", 
     "variations", "actions-payments", "media", "seo", "shipping"
   ]);
+  
+  // Active section tracking for sidebar navigation
+  const [activeSection, setActiveSection] = useState<string>("channel-category");
 
   const [formData, setFormData] = useState({
     name: '',
@@ -113,6 +116,74 @@ export default function AddProduct() {
       setExpandedSections([]);
     }
   };
+
+  // Navigate to section
+  const navigateToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      // Expand the section if it's collapsed
+      if (!expandedSections.includes(sectionId)) {
+        setExpandedSections([...expandedSections, sectionId]);
+        // Wait a bit for the accordion to expand before scrolling
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      } else {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      setActiveSection(sectionId);
+    }
+  };
+
+  // Track active section on scroll
+  useEffect(() => {
+    const observerOptions = {
+      root: null,
+      rootMargin: '-20% 0px -60% 0px',
+      threshold: 0
+    };
+
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    // Observe all section elements
+    const sectionIds = [
+      "channel-category", "product-info", "pricing", "inventory", 
+      "status", "variations", "actions-payments", "media", "seo", "shipping"
+    ];
+
+    sectionIds.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) {
+        observer.observe(element);
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [expandedSections]);
+
+  // Define section navigation items
+  const sectionNavItems = [
+    { id: "channel-category", label: "Channel & Category", icon: Globe },
+    { id: "product-info", label: "Product Information", icon: Info },
+    { id: "pricing", label: "Pricing", icon: DollarSign },
+    ...(formData.product_type === 'physical' ? [{ id: "inventory", label: "Inventory", icon: Box }] : []),
+    { id: "status", label: "Status", icon: ToggleLeft },
+    { id: "variations", label: "Variations", icon: Layers },
+    { id: "actions-payments", label: "Actions & Payments", icon: CreditCard },
+    { id: "media", label: "Media", icon: Image },
+    { id: "seo", label: "SEO", icon: Search },
+    ...(formData.product_type === 'physical' ? [{ id: "shipping", label: "Shipping", icon: Truck }] : []),
+  ];
 
   // Fetch store ID
   useEffect(() => {
@@ -319,7 +390,9 @@ export default function AddProduct() {
           </Button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="flex gap-6">
+          {/* Main Form */}
+          <form onSubmit={handleSubmit} className="flex-1 space-y-6">
           <Accordion 
             type="multiple" 
             value={expandedSections} 
@@ -327,7 +400,7 @@ export default function AddProduct() {
             className="w-full space-y-4"
           >
             {/* Selling Channel & Category */}
-            <AccordionItem value="channel-category" className="border rounded-lg">
+            <AccordionItem value="channel-category" id="channel-category" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -383,7 +456,7 @@ export default function AddProduct() {
             </AccordionItem>
 
             {/* Product Information */}
-            <AccordionItem value="product-info" className="border rounded-lg">
+            <AccordionItem value="product-info" id="product-info" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -551,7 +624,7 @@ export default function AddProduct() {
             </AccordionItem>
 
             {/* Pricing */}
-            <AccordionItem value="pricing" className="border rounded-lg">
+            <AccordionItem value="pricing" id="pricing" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Pricing</CardTitle>
@@ -601,7 +674,7 @@ export default function AddProduct() {
 
             {/* Inventory - Only for physical products */}
             {formData.product_type === 'physical' && (
-              <AccordionItem value="inventory" className="border rounded-lg">
+              <AccordionItem value="inventory" id="inventory" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Inventory</CardTitle>
@@ -654,7 +727,7 @@ export default function AddProduct() {
             )}
 
             {/* Status */}
-            <AccordionItem value="status" className="border rounded-lg">
+            <AccordionItem value="status" id="status" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Status</CardTitle>
@@ -700,7 +773,7 @@ export default function AddProduct() {
             </AccordionItem>
 
             {/* Variations */}
-            <AccordionItem value="variations" className="border rounded-lg">
+            <AccordionItem value="variations" id="variations" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Variations</CardTitle>
@@ -730,7 +803,7 @@ export default function AddProduct() {
             </AccordionItem>
 
             {/* Actions & Payments */}
-            <AccordionItem value="actions-payments" className="border rounded-lg">
+            <AccordionItem value="actions-payments" id="actions-payments" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Product Actions & Payments</CardTitle>
@@ -857,7 +930,7 @@ export default function AddProduct() {
             </AccordionItem>
 
             {/* Media */}
-            <AccordionItem value="media" className="border rounded-lg">
+            <AccordionItem value="media" id="media" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Media</CardTitle>
@@ -927,7 +1000,7 @@ export default function AddProduct() {
             </AccordionItem>
 
             {/* SEO */}
-            <AccordionItem value="seo" className="border rounded-lg">
+            <AccordionItem value="seo" id="seo" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">SEO</CardTitle>
@@ -962,7 +1035,7 @@ export default function AddProduct() {
 
             {/* Shipping & Returns - Only for physical products */}
             {formData.product_type === 'physical' && (
-              <AccordionItem value="shipping" className="border rounded-lg">
+              <AccordionItem value="shipping" id="shipping" className="border rounded-lg">
               <Card>
                 <AccordionTrigger className="hover:no-underline px-6 py-4">
                   <CardTitle className="text-base font-semibold">Shipping & Returns</CardTitle>
@@ -1235,6 +1308,40 @@ export default function AddProduct() {
             onSave={setDescriptionBuilder}
           />
         </form>
+
+        {/* Sticky Sidebar Navigation - Hidden on mobile/tablet */}
+        <aside className="hidden lg:block w-64 shrink-0">
+          <div className="sticky top-24">
+            <Card className="border">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-semibold">Navigation</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <nav className="space-y-1 px-2 pb-4">
+                  {sectionNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeSection === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => navigateToSection(item.id)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-md transition-colors ${
+                          isActive
+                            ? 'bg-primary text-primary-foreground font-medium'
+                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                        }`}
+                      >
+                        <Icon className="h-4 w-4 shrink-0" />
+                        <span className="text-left">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </CardContent>
+            </Card>
+          </div>
+        </aside>
+      </div>
       </div>
     </DashboardLayout>
   );
