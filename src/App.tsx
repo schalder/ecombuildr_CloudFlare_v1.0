@@ -116,6 +116,8 @@ import Courses from "@/pages/Courses";
 import CreateCourse from "@/pages/CreateCourse";
 import CourseEditor from "@/pages/CourseEditor";
 import CourseView from "@/pages/CourseView";
+import CourseSettings from "@/pages/CourseSettings";
+import CourseDomainSettings from "@/pages/CourseDomainSettings";
 // Lazy load course storefront components
 const StorefrontCourseLibrary = lazy(() => import("@/components/storefront/StorefrontCourseLibrary"));
 const CourseStorefrontLayout = lazy(() => import("@/components/course/CourseStorefrontLayout").then(m => ({ default: m.CourseStorefrontLayout })));
