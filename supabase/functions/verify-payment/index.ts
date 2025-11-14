@@ -63,8 +63,52 @@ serve(async (req) => {
       }
     }
 
-    // Update order status
-    const orderStatus = paymentStatus === 'success' ? 'processing' : 'payment_failed';
+    // ✅ Determine order status based on product types (only for successful payments)
+    // For digital products: preserve 'delivered' status (don't override)
+    // For physical products: set to 'processing' (payment collected, ready to process)
+    let orderStatus = paymentStatus === 'success' ? 'processing' : 'payment_failed';
+    
+    if (paymentStatus === 'success') {
+      // Get order items to check product types
+      const { data: orderItems, error: itemsError } = await supabase
+        .from('order_items')
+        .select('product_id')
+        .eq('order_id', orderId);
+
+      if (!itemsError && orderItems && orderItems.length > 0) {
+        const productIds = orderItems.map(item => item.product_id).filter(Boolean);
+        
+        if (productIds.length > 0) {
+          const { data: products, error: productsError } = await supabase
+            .from('products')
+            .select('id, product_type')
+            .in('id', productIds);
+
+          if (!productsError && products && products.length > 0) {
+            let hasDigitalProducts = false;
+            let hasPhysicalProducts = false;
+            
+            for (const product of products) {
+              if (product.product_type === 'digital') {
+                hasDigitalProducts = true;
+              } else {
+                hasPhysicalProducts = true;
+              }
+            }
+            
+            // If all products are digital, set to 'delivered' (instant delivery)
+            // If any product is physical, set to 'processing' (payment collected, ready to process)
+            if (hasDigitalProducts && !hasPhysicalProducts) {
+              orderStatus = 'delivered';
+              console.log('verify-payment: Order status set to delivered (digital products only)');
+            } else {
+              orderStatus = 'processing';
+              console.log('verify-payment: Order status set to processing (physical products, payment collected)');
+            }
+          }
+        }
+      }
+    }
     
     const { error } = await supabase
       .from('orders')
