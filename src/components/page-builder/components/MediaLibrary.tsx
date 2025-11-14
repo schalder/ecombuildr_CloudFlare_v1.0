@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Upload, Trash2, ExternalLink } from 'lucide-react';
+import { Search, Upload, Trash2, ExternalLink, Music } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,13 +23,15 @@ interface MediaLibraryProps {
   onClose: () => void;
   onSelect: (url: string) => void;
   currentUrl?: string;
+  mediaType?: 'image' | 'audio' | 'all';
 }
 
 export const MediaLibrary: React.FC<MediaLibraryProps> = ({
   isOpen,
   onClose,
   onSelect,
-  currentUrl
+  currentUrl,
+  mediaType = 'image'
 }) => {
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<MediaItem[]>([]);
@@ -68,7 +70,12 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
       if (error) throw error;
 
       const items: MediaItem[] = data
-        .filter(file => file.metadata && file.metadata.mimetype?.startsWith('image/'))
+        .filter(file => {
+          if (!file.metadata?.mimetype) return false;
+          if (mediaType === 'image') return file.metadata.mimetype.startsWith('image/');
+          if (mediaType === 'audio') return file.metadata.mimetype.startsWith('audio/');
+          return file.metadata.mimetype.startsWith('image/') || file.metadata.mimetype.startsWith('audio/');
+        })
         .map(file => {
           const { data: { publicUrl } } = supabase.storage
             .from('images')
@@ -111,13 +118,13 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
 
       setMediaItems(prev => prev.filter(item => item.name !== fileName));
       toast({
-        title: "Image deleted",
-        description: "The image has been removed from your library"
+        title: "File deleted",
+        description: "The file has been removed from your library"
       });
     } catch (error) {
       toast({
         title: "Delete failed",
-        description: "Could not delete the image",
+        description: "Could not delete the file",
         variant: "destructive"
       });
     }
@@ -135,7 +142,9 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh]">
         <DialogHeader>
-          <DialogTitle>Media Library</DialogTitle>
+          <DialogTitle>
+            {mediaType === 'audio' ? 'Audio Library' : mediaType === 'all' ? 'Media Library' : 'Image Library'}
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -143,7 +152,7 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
               <Input
-                placeholder="Search images..."
+                placeholder={mediaType === 'audio' ? "Search audio files..." : mediaType === 'all' ? "Search media..." : "Search images..."}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -167,7 +176,9 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
             ) : filteredItems.length === 0 ? (
               <div className="flex items-center justify-center h-32">
                 <p className="text-muted-foreground">
-                  {searchTerm ? 'No images found matching your search' : 'No images in your library'}
+                  {searchTerm 
+                    ? `No ${mediaType === 'audio' ? 'audio files' : mediaType === 'all' ? 'media' : 'images'} found matching your search`
+                    : `No ${mediaType === 'audio' ? 'audio files' : mediaType === 'all' ? 'media' : 'images'} in your library`}
                 </p>
               </div>
             ) : (
@@ -181,11 +192,17 @@ export const MediaLibrary: React.FC<MediaLibraryProps> = ({
                     onClick={() => setSelectedItem(selectedItem === item.name ? null : item.name)}
                   >
                     <div className="aspect-square">
-                      <img
-                        src={item.url}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
+                      {item.metadata?.mimetype?.startsWith('audio/') ? (
+                        <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                          <Music className="w-12 h-12 text-primary" />
+                        </div>
+                      ) : (
+                        <img
+                          src={item.url}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
                     </div>
                     
                     {selectedItem === item.name && (

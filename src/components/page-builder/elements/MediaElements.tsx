@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Image, Video, ChevronLeft, ChevronRight, Play, Radio } from 'lucide-react';
+import { Image, Video, ChevronLeft, ChevronRight, Play, Radio, Music } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious, type CarouselApi } from '@/components/ui/carousel';
@@ -456,6 +456,100 @@ const VideoPlaylistElement: React.FC<{
   );
 };
 
+// Audio Player Element
+const AudioPlayerElement: React.FC<{
+  element: PageBuilderElement;
+  isEditing?: boolean;
+  deviceType?: 'desktop' | 'tablet' | 'mobile';
+  onUpdate?: (updates: Partial<PageBuilderElement>) => void;
+}> = ({ element, isEditing, deviceType = 'desktop' }) => {
+  const audioUrl = element.content.audioUrl || '';
+  const autoplay = element.content.autoplay || false;
+  const loop = element.content.loop || false;
+  const showVolume = element.content.showVolume !== false; // Default to true
+
+  // Get custom colors from styles
+  const playerBackgroundColor = element.styles?.playerBackgroundColor || '';
+  const buttonColor = element.styles?.buttonColor || '';
+  const progressBarColor = element.styles?.progressBarColor || '';
+
+  // Build custom CSS for audio player
+  const audioPlayerStyles: React.CSSProperties = {
+    ...renderElementStyles(element, deviceType),
+  };
+
+  // Generate CSS for custom colors
+  const customCSS = `
+    .audio-player-${element.id} {
+      ${playerBackgroundColor ? `background-color: ${playerBackgroundColor} !important;` : ''}
+      ${playerBackgroundColor ? `border-radius: 8px;` : ''}
+      ${playerBackgroundColor ? `padding: 12px;` : ''}
+    }
+    .audio-player-${element.id} audio {
+      width: 100%;
+    }
+    .audio-player-${element.id} audio::-webkit-media-controls-panel {
+      ${playerBackgroundColor ? `background-color: ${playerBackgroundColor} !important;` : ''}
+    }
+    .audio-player-${element.id} audio::-webkit-media-controls-play-button,
+    .audio-player-${element.id} audio::-webkit-media-controls-pause-button,
+    .audio-player-${element.id} audio::-webkit-media-controls-mute-button,
+    .audio-player-${element.id} audio::-webkit-media-controls-volume-slider {
+      ${buttonColor ? `background-color: ${buttonColor} !important;` : ''}
+    }
+    .audio-player-${element.id} audio::-webkit-media-controls-current-time-display,
+    .audio-player-${element.id} audio::-webkit-media-controls-time-remaining-display {
+      ${buttonColor ? `color: ${buttonColor} !important;` : ''}
+    }
+    .audio-player-${element.id} audio::-webkit-media-controls-timeline {
+      ${progressBarColor ? `background-color: ${progressBarColor} !important;` : ''}
+    }
+    .audio-player-${element.id} audio::-webkit-media-controls-volume-slider-container {
+      ${!showVolume ? `display: none !important;` : ''}
+    }
+  `;
+
+  if (isEditing && !audioUrl) {
+    return (
+      <div className="max-w-2xl mx-auto" style={audioPlayerStyles}>
+        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+          <Music className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Add an audio file in the properties panel</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!audioUrl) {
+    return null;
+  }
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: customCSS }} />
+      <div className="max-w-2xl mx-auto" style={audioPlayerStyles}>
+        <div className={`audio-player-${element.id}`}>
+          <audio
+            controls
+            controlsList="nodownload"
+            autoPlay={autoplay}
+            loop={loop}
+            preload="metadata"
+            style={{
+              width: '100%',
+            }}
+          >
+            <source src={audioUrl} type="audio/mpeg" />
+            <source src={audioUrl} type="audio/wav" />
+            <source src={audioUrl} type="audio/ogg" />
+            Your browser does not support the audio element.
+          </audio>
+        </div>
+      </div>
+    </>
+  );
+};
+
 // Register Media Elements
 export const registerMediaElements = () => {
   elementRegistry.register({
@@ -566,5 +660,20 @@ export const registerMediaElements = () => {
       }
     },
     description: 'Live-like webinar experience with countdown, chat, and live indicators'
+  });
+
+  elementRegistry.register({
+    id: 'audio-player',
+    name: 'Audio Player',
+    category: 'media',
+    icon: Music,
+    component: AudioPlayerElement,
+    defaultContent: {
+      audioUrl: '',
+      autoplay: false,
+      loop: false,
+      showVolume: true
+    },
+    description: 'MP3 audio player'
   });
 };

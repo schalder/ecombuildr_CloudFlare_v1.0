@@ -57,7 +57,8 @@ import {
 import { 
   ImageGalleryProperties,
   ImageCarouselProperties,
-  VideoPlaylistProperties
+  VideoPlaylistProperties,
+  AudioPlayerProperties
 } from './MediaProperties';
 import { EvergreenWebinarContentProperties } from './EvergreenWebinarContentProperties';
 import {
@@ -184,8 +185,8 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
       return <EvergreenWebinarElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} />;
     }
 
-    // Media elements (image, video, image-carousel, image-gallery, video-playlist)
-    if (['image', 'video', 'image-carousel', 'image-gallery', 'video-playlist'].includes(selectedElement.type)) {
+    // Media elements (image, video, image-carousel, image-gallery, video-playlist, audio-player)
+    if (['image', 'video', 'image-carousel', 'image-gallery', 'video-playlist', 'audio-player'].includes(selectedElement.type)) {
       return <MediaElementStyles element={selectedElement} onStyleUpdate={handleStyleUpdate} onContentUpdate={handleContentUpdate} />;
     }
     
@@ -464,6 +465,13 @@ export const PropertiesPanel: React.FC<PropertiesPanelProps> = ({
 
                 {selectedElement.type === 'video-playlist' && (
                   <VideoPlaylistProperties 
+                    element={selectedElement} 
+                    onUpdate={handleContentUpdate} 
+                  />
+                )}
+
+                {selectedElement.type === 'audio-player' && (
+                  <AudioPlayerProperties 
                     element={selectedElement} 
                     onUpdate={handleContentUpdate} 
                   />

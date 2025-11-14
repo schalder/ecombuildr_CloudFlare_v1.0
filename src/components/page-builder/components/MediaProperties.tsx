@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { MediaSelector } from './MediaSelector';
 import { CompactMediaSelector } from './CompactMediaSelector';
+import { AudioSelector } from './AudioSelector';
 import { Plus, Trash2, GripVertical, Monitor, Tablet, Smartphone } from 'lucide-react';
 import { PageBuilderElement, ElementVisibility } from '../types';
 import { useDevicePreview } from '../contexts/DevicePreviewContext';
@@ -507,6 +508,86 @@ export const VideoPlaylistProperties: React.FC<MediaPropertiesProps> = ({
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Audio Player Properties
+export const AudioPlayerProperties: React.FC<MediaPropertiesProps> = ({
+  element,
+  onUpdate
+}) => {
+  const audioUrl = element.content.audioUrl || '';
+  const autoplay = element.content.autoplay || false;
+  const loop = element.content.loop || false;
+  const showVolume = element.content.showVolume !== false; // Default to true
+  
+  // Default visibility settings
+  const defaultVisibility: ElementVisibility = {
+    desktop: true,
+    tablet: true,
+    mobile: true
+  };
+
+  const currentVisibility = element.visibility || defaultVisibility;
+
+  const handleVisibilityChange = (visibility: ElementVisibility) => {
+    onUpdate('visibility', visibility);
+  };
+
+  return (
+    <div className="space-y-4">
+      <VisibilityControl
+        visibility={currentVisibility}
+        onVisibilityChange={handleVisibilityChange}
+      />
+      
+      <div>
+        <AudioSelector
+          value={audioUrl}
+          onChange={(url) => onUpdate('audioUrl', url)}
+          label="Audio File"
+          maxSize={50}
+        />
+      </div>
+
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="audio-autoplay">Autoplay</Label>
+            <p className="text-xs text-muted-foreground">Start playing automatically when page loads</p>
+          </div>
+          <Switch
+            id="audio-autoplay"
+            checked={autoplay}
+            onCheckedChange={(checked) => onUpdate('autoplay', checked)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="audio-loop">Loop</Label>
+            <p className="text-xs text-muted-foreground">Automatically restart when finished</p>
+          </div>
+          <Switch
+            id="audio-loop"
+            checked={loop}
+            onCheckedChange={(checked) => onUpdate('loop', checked)}
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <Label htmlFor="audio-volume">Show Volume Control</Label>
+            <p className="text-xs text-muted-foreground">Display volume slider in player</p>
+          </div>
+          <Switch
+            id="audio-volume"
+            checked={showVolume}
+            onCheckedChange={(checked) => onUpdate('showVolume', checked)}
+          />
         </div>
       </div>
     </div>

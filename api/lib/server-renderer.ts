@@ -286,6 +286,42 @@ function renderElement(element: ServerPageBuilderElement): string {
       elementHTML = `<div${anchorAttr}${styleAttr}><video controls><source src="${videoSrc}" type="video/mp4">Your browser does not support the video tag.</video>${videoCaption}</div>`;
       break;
       
+    case 'audio-player':
+      const audioUrl = content.audioUrl || '';
+      const autoplay = content.autoplay ? ' autoplay' : '';
+      const loop = content.loop ? ' loop' : '';
+      const playerBackgroundColor = styles?.playerBackgroundColor || '';
+      const buttonColor = styles?.buttonColor || '';
+      const progressBarColor = styles?.progressBarColor || '';
+      
+      // Generate custom CSS for audio player colors
+      let audioPlayerCSS = '';
+      if (playerBackgroundColor || buttonColor || progressBarColor) {
+        audioPlayerCSS = `<style>
+          .audio-player-${element.id} {
+            ${playerBackgroundColor ? `background-color: ${playerBackgroundColor}; border-radius: 8px; padding: 12px;` : ''}
+          }
+          .audio-player-${element.id} audio::-webkit-media-controls-panel {
+            ${playerBackgroundColor ? `background-color: ${playerBackgroundColor};` : ''}
+          }
+          .audio-player-${element.id} audio::-webkit-media-controls-play-button,
+          .audio-player-${element.id} audio::-webkit-media-controls-pause-button,
+          .audio-player-${element.id} audio::-webkit-media-controls-mute-button {
+            ${buttonColor ? `background-color: ${buttonColor};` : ''}
+          }
+          .audio-player-${element.id} audio::-webkit-media-controls-timeline {
+            ${progressBarColor ? `background-color: ${progressBarColor};` : ''}
+          }
+        </style>`;
+      }
+      
+      if (audioUrl) {
+        elementHTML = `<div${anchorAttr}${styleAttr}>${audioPlayerCSS}<div class="audio-player-${element.id}"><audio controls controlsList="nodownload"${autoplay}${loop} preload="metadata"><source src="${audioUrl}" type="audio/mpeg"><source src="${audioUrl}" type="audio/wav"><source src="${audioUrl}" type="audio/ogg">Your browser does not support the audio element.</audio></div></div>`;
+      } else {
+        elementHTML = `<div${anchorAttr}${styleAttr}></div>`;
+      }
+      break;
+      
     case 'form':
       const formAction = content.action || '#';
       const formMethod = content.method || 'POST';

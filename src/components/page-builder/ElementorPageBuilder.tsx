@@ -33,7 +33,8 @@ import {
   Move,
   Columns,
   PanelLeftOpen,
-  PanelLeftClose
+  PanelLeftClose,
+  Music
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -156,7 +157,8 @@ const ELEMENT_CATEGORIES = [
     elements: [
       { id: 'image-gallery', name: 'Image Gallery', icon: Image, description: 'Multiple images in gallery' },
       { id: 'image-carousel', name: 'Image Carousel', icon: Image, description: 'Sliding image carousel' },
-      { id: 'video-playlist', name: 'Video Playlist', icon: Video, description: 'Multiple videos' }
+      { id: 'video-playlist', name: 'Video Playlist', icon: Video, description: 'Multiple videos' },
+      { id: 'audio-player', name: 'Audio Player', icon: Music, description: 'MP3 audio player' }
     ]
   },
   {

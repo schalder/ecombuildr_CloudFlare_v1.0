@@ -41,6 +41,7 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
   const [effectsOpen, setEffectsOpen] = React.useState(false);
   const [spacingOpen, setSpacingOpen] = React.useState(false);
   const [playlistButtonOpen, setPlaylistButtonOpen] = React.useState(false);
+  const [audioPlayerColorsOpen, setAudioPlayerColorsOpen] = React.useState(false);
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
   const currentStyles = (responsiveStyles as any)[responsiveTab] || {};
   
@@ -276,6 +277,31 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
           />
         </div>
       </CollapsibleGroup>
+
+      {/* Audio Player Colors - Only for audio-player */}
+      {element.type === 'audio-player' && (
+        <CollapsibleGroup title="Audio Player Colors" isOpen={audioPlayerColorsOpen} onToggle={setAudioPlayerColorsOpen}>
+          <div className="space-y-4">
+            <ColorPicker
+              label="Player Background Color"
+              color={element.styles?.playerBackgroundColor || ''}
+              onChange={(color) => onStyleUpdate('playerBackgroundColor', color)}
+            />
+            
+            <ColorPicker
+              label="Button Color"
+              color={element.styles?.buttonColor || ''}
+              onChange={(color) => onStyleUpdate('buttonColor', color)}
+            />
+            
+            <ColorPicker
+              label="Progress Bar Color"
+              color={element.styles?.progressBarColor || ''}
+              onChange={(color) => onStyleUpdate('progressBarColor', color)}
+            />
+          </div>
+        </CollapsibleGroup>
+      )}
 
       {/* Playlist Button Styling - Only for video-playlist */}
       {element.type === 'video-playlist' && (
