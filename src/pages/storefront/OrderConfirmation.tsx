@@ -144,7 +144,10 @@ useEffect(() => {
         clearCart();
         
         // Track Purchase event when order confirmation page loads (for online payments)
-        if (orderData && itemsData.length > 0) {
+        // Check if purchase was already tracked (e.g., from PaymentProcessing for deferred payments)
+        const alreadyTracked = sessionStorage.getItem('purchase_tracked_' + orderData.id) === 'true';
+        
+        if (!alreadyTracked && orderData && itemsData.length > 0) {
           const trackingItems = itemsData.map(item => ({
             item_id: item.id,
             item_name: item.product_name,
@@ -158,6 +161,14 @@ useEffect(() => {
             value: orderData.total,
             items: trackingItems
           });
+          
+          // Store tracking flag to prevent future duplicates
+          sessionStorage.setItem('purchase_tracked_' + orderData.id, 'true');
+        }
+        
+        // Clear tracking flag after processing
+        if (alreadyTracked) {
+          sessionStorage.removeItem('purchase_tracked_' + orderData.id);
         }
       }
     } catch (error) {

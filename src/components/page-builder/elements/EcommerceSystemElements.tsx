@@ -1249,7 +1249,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     }
     if (fields.phone?.enabled && (fields.phone?.required ?? true)) {
       if (isEmpty(form.customer_phone)) {
-        errors.customer_phone = 'Phone number is required';
+      errors.customer_phone = 'Phone number is required';
       } else if (form.payment_method === 'cod') {
         // Validate phone format for COD orders (must be 11 digits starting with 01)
         const phoneError = getPhoneValidationError(form.customer_phone);
@@ -1600,7 +1600,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                                 });
                               }
                             }
-                          }}
+                          }} 
                           required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))} 
                           aria-required={!!(fields.phone?.enabled && (fields.phone?.required ?? true))}
                           aria-invalid={!!validationErrors.customer_phone}
@@ -1952,7 +1952,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
 // Order Confirmation Element (reads orderId from path or ?orderId=)
 const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditing?: boolean }> = ({ element, isEditing }) => {
-  const { orderId, websiteId } = useParams<{ orderId?: string; websiteId?: string }>();
+  const { orderId, websiteId, funnelId } = useParams<{ orderId?: string; websiteId?: string; funnelId?: string }>();
   const { store, loadStoreById } = useStore();
   const paths = useEcomPaths();
   const [order, setOrder] = useState<any | null>(null);
@@ -1964,6 +1964,10 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   const query = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
   const id = orderId || query.get('orderId') || '';
   const orderToken = query.get('ot') || '';
+  
+  // Get pixel context for tracking
+  const { pixels } = usePixelContext();
+  const { trackPurchase } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
 
   const cfg: any = element.content || {};
   const texts = cfg.texts || {
@@ -2087,6 +2091,92 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           } catch (genErr) {
             // ignore and keep empty
           }
+        }
+        
+        // Track Purchase event when order confirmation element loads (for funnel context)
+        // Check if purchase was already tracked (e.g., from PaymentProcessing for deferred payments)
+        const alreadyTracked = sessionStorage.getItem('purchase_tracked_' + id) === 'true';
+        
+        if (!alreadyTracked && data?.order && data?.items && data.items.length > 0) {
+          const trackingItems = data.items.map((item: any) => ({
+            item_id: item.product_id || item.id,
+            item_name: item.product_name,
+            price: item.price,
+            quantity: item.quantity,
+            item_category: undefined
+          }));
+          
+          // If in funnel context, fetch funnel pixel config and track directly
+          if (funnelId) {
+            try {
+              const { data: funnelData } = await supabase
+                .from('funnels')
+                .select('settings')
+                .eq('id', funnelId)
+                .single();
+              
+              if (funnelData?.settings) {
+                const settings = funnelData.settings as any;
+                const funnelPixels = {
+                  facebook_pixel_id: settings?.facebook_pixel_id || pixels?.facebook_pixel_id,
+                  google_analytics_id: settings?.google_analytics_id || pixels?.google_analytics_id,
+                  google_ads_id: settings?.google_ads_id || pixels?.google_ads_id,
+                };
+                
+                // Track directly with funnel pixel config
+                const eventData = {
+                  content_ids: trackingItems.map(item => item.item_id),
+                  content_type: 'product',
+                  value: data.order.total,
+                  currency: 'BDT',
+                  contents: trackingItems.map(item => ({
+                    id: item.item_id,
+                    quantity: item.quantity,
+                  })),
+                };
+                
+                // Facebook Pixel
+                if (funnelPixels.facebook_pixel_id && window.fbq) {
+                  try {
+                    window.fbq('track', 'Purchase', eventData);
+                  } catch (error) {
+                    console.error('OrderConfirmationElement: Error tracking Facebook Purchase:', error);
+                  }
+                }
+                
+                // Google Analytics
+                if ((funnelPixels.google_analytics_id || funnelPixels.google_ads_id) && window.gtag) {
+                  try {
+                    window.gtag('event', 'purchase', {
+                      transaction_id: data.order.id,
+                      currency: 'BDT',
+                      value: data.order.total,
+                      items: trackingItems,
+                    });
+                  } catch (error) {
+                    console.error('OrderConfirmationElement: Error tracking Google Purchase:', error);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('OrderConfirmationElement: Error fetching funnel pixel config:', error);
+            }
+          }
+          
+          // Also use the hook-based tracking for database storage (uses context pixels)
+          trackPurchase({
+            transaction_id: data.order.id,
+            value: data.order.total,
+            items: trackingItems
+          });
+          
+          // Store tracking flag to prevent future duplicates
+          sessionStorage.setItem('purchase_tracked_' + id, 'true');
+        }
+        
+        // Clear tracking flag after processing if it was already tracked
+        if (alreadyTracked) {
+          sessionStorage.removeItem('purchase_tracked_' + id);
         }
       } catch (e) {
         // Error fetching order

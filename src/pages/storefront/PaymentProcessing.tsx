@@ -335,20 +335,29 @@ useEffect(() => {
                 }
                 
                 // Also use the hook-based tracking for database storage
-                // Use setTimeout to ensure pixelConfig state is updated
-                setTimeout(() => {
-                  trackPurchase({
-                    transaction_id: data.order.id,
-                    value: data.order.total,
-                    items: trackingItems,
-                  });
-                }, 50);
+                // Call trackPurchase directly for immediate tracking
+                trackPurchase({
+                  transaction_id: data.order.id,
+                  value: data.order.total,
+                  items: trackingItems,
+                });
+                
+                // Store tracking flag to prevent duplicate tracking on redirect
+                sessionStorage.setItem('purchase_tracked_' + data.order.id, 'true');
               }
             }
           } catch (error) {
             console.error('PaymentProcessing: Error tracking purchase event:', error);
             // Don't block order creation if tracking fails
           }
+        }
+        
+        // Add small delay to ensure database storage initiates before redirect
+        try {
+          await new Promise(resolve => setTimeout(resolve, 150));
+        } catch (error) {
+          // Don't block redirect if delay fails
+          console.error('PaymentProcessing: Error in delay before redirect:', error);
         }
         
         // ✅ CONDITIONAL REDIRECT LOGIC
