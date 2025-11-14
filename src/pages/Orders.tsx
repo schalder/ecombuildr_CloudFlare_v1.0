@@ -45,7 +45,8 @@ import {
   X,
   Package,
   Trash2,
-  Ban
+  Ban,
+  CheckCircle
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
@@ -102,6 +103,19 @@ function normalizeIP(ip: string | null | undefined): string | null {
   }
   return trimmed;
 }
+
+// Helper function to determine if payment is confirmed
+const isPaymentConfirmed = (order: Order): boolean => {
+  // For EPS/EB Pay: payment is confirmed if transaction number exists
+  if ((order.payment_method === 'eps' || order.payment_method === 'ebpay') && order.payment_transaction_number) {
+    return true;
+  }
+  // For COD: payment is confirmed when order is shipped or delivered
+  if (order.payment_method === 'cod' && (order.status === 'shipped' || order.status === 'delivered')) {
+    return true;
+  }
+  return false;
+};
 
 export default function Orders() {
   const { user } = useAuth();
@@ -1726,7 +1740,12 @@ export default function Orders() {
                           <div className="text-right">
                             <div className="font-semibold">৳{order.total.toLocaleString()}</div>
                             <div className="text-xs text-muted-foreground">
-                              {order.payment_method.toUpperCase()}
+                              <div className="flex items-center gap-1.5">
+                                <span>{order.payment_method.toUpperCase()}</span>
+                                {isPaymentConfirmed(order) && (
+                                  <CheckCircle className="h-3 w-3 text-green-600" />
+                                )}
+                              </div>
                               {order.payment_transaction_number && ` - ${order.payment_transaction_number}`}
                             </div>
                           </div>
@@ -1932,7 +1951,7 @@ export default function Orders() {
                     <TableHead>Order</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead className="hidden md:table-cell">Channel</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Delivery</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead className="hidden lg:table-cell">Payment</TableHead>
                     <TableHead className="hidden lg:table-cell">Shipping</TableHead>
@@ -2023,7 +2042,12 @@ export default function Orders() {
                         ৳{order.total.toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        {order.payment_method.toUpperCase()}
+                        <div className="flex items-center gap-2">
+                          <span>{order.payment_method.toUpperCase()}</span>
+                          {isPaymentConfirmed(order) && (
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                          )}
+                        </div>
                         {order.payment_transaction_number && (
                           <div className="text-xs text-muted-foreground">TXN: {order.payment_transaction_number}</div>
                         )}
