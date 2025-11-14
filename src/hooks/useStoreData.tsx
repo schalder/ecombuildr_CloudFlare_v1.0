@@ -78,10 +78,16 @@ export const useStoreProducts = (options?: {
           .from('products')
           .select('*')
           .eq('store_id', store.id)
-          .eq('is_active', true)
-          .eq('show_on_website', true)
-          .in('id', productIds)
-          .order('created_at', { ascending: false });
+          .eq('is_active', true);
+        
+        // Only filter by show_on_website when NOT fetching specific products
+        // (specificProductIds means merchant explicitly selected products for funnel checkout)
+        // Funnel checkouts should show products regardless of show_on_website status
+        if (!options?.specificProductIds || options.specificProductIds.length === 0) {
+          query = query.eq('show_on_website', true);
+        }
+        
+        query = query.in('id', productIds).order('created_at', { ascending: false });
 
         // Filter by specific product IDs (intersection with visible products)
         if (options?.specificProductIds && options.specificProductIds.length > 0) {
