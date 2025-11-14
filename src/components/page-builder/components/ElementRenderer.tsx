@@ -206,6 +206,12 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     );
   }
 
+  // Don't render element if it's not visible on current device (in preview mode)
+  // This ensures elements are completely removed from the DOM when hidden, matching sections, rows, and columns behavior
+  if (!isVisible && isPreviewMode) {
+    return null;
+  }
+
   const ElementComponent = elementType.component;
 
   // Merge responsive styles for spacing
