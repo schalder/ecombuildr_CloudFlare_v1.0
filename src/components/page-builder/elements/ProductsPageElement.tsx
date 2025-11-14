@@ -426,7 +426,8 @@ export const ProductsPageElement: React.FC<{
           .from('products')
           .select('*')
           .eq('store_id', store.id)
-          .eq('is_active', true);
+          .eq('is_active', true)
+          .eq('show_on_website', true);
 
         // Apply website visibility filter if we have specific product IDs
         if (productIds) {
