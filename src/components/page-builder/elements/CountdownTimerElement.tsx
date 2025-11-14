@@ -75,8 +75,8 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
       // Use stored target time (calculated once on mount)
       if (fixedTargetTime === null) {
         // Fallback if not set yet (shouldn't happen, but safety check)
-        const totalMs = (duration.days * 24 * 60 * 60 + duration.hours * 60 * 60 + duration.minutes * 60 + duration.seconds) * 1000;
-        targetTime = Date.now() + totalMs;
+      const totalMs = (duration.days * 24 * 60 * 60 + duration.hours * 60 * 60 + duration.minutes * 60 + duration.seconds) * 1000;
+      targetTime = Date.now() + totalMs;
       } else {
         targetTime = fixedTargetTime;
       }

@@ -113,8 +113,43 @@ serve(async (req) => {
       ...(paymentDetails && { payment_details: paymentDetails })
     };
 
-    // Set status to confirmed for successful payments
-    orderData.status = 'confirmed';
+    // ✅ Determine order status based on product types and payment method
+    // For EPS/EB Pay (payment collected upfront):
+    // - Digital products: 'delivered' (instant delivery)
+    // - Physical products: 'processing' (skip pending, start processing)
+    const productIds = itemsData.map(item => item.product_id).filter(Boolean);
+    let hasDigitalProducts = false;
+    let hasPhysicalProducts = false;
+
+    if (productIds.length > 0) {
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('id, product_type')
+        .in('id', productIds);
+
+      if (!productsError && products && products.length > 0) {
+        for (const product of products) {
+          if (product.product_type === 'digital') {
+            hasDigitalProducts = true;
+          } else {
+            hasPhysicalProducts = true;
+          }
+        }
+      }
+    }
+
+    // Set status based on product types
+    // If all products are digital, set to 'delivered' (instant delivery)
+    // If any product is physical, set to 'processing' (payment collected, ready to process)
+    if (hasDigitalProducts && !hasPhysicalProducts) {
+      // All digital products - instant delivery
+      orderData.status = 'delivered';
+      console.log('Order status set to delivered (digital products only)');
+    } else {
+      // Has physical products - start processing (payment already collected)
+      orderData.status = 'processing';
+      console.log('Order status set to processing (physical products, payment collected)');
+    }
 
     // Insert order
     const { data: order, error: orderError } = await supabase

@@ -90,56 +90,56 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
       <CollapsibleGroup title="Inline Checkout Products" isOpen={productsOpen} onToggle={setProductsOpen}>
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground break-words">Select products to show on this checkout form and choose the default one.</p>
-          
-          <div className="space-y-3">
-            <Label className="text-sm">Available Products</Label>
+        
+        <div className="space-y-3">
+        <Label className="text-sm">Available Products</Label>
             <div className="border rounded-md p-3 max-h-60 overflow-auto overflow-x-hidden space-y-2">
-              {!hasStoreContext && (
-                <div className="text-xs text-muted-foreground">
-                  Product selection available when connected to a store.
-                </div>
-              )}
-              {hasStoreContext && loading && <div className="text-xs text-muted-foreground">Loading products…</div>}
-              {hasStoreContext && !loading && products.length === 0 && (
-                <div className="text-xs text-muted-foreground">No products found for this store.</div>
-              )}
-              {hasStoreContext && !loading && products.map((p) => {
-                const checked = (selectedIds || []).includes(p.id);
-                return (
-                  <label key={p.id} className="flex items-center gap-2 text-sm min-w-0">
-                    <input type="checkbox" checked={checked} onChange={(e) => toggleProduct(p.id, e.target.checked)} className="flex-shrink-0" />
+          {!hasStoreContext && (
+            <div className="text-xs text-muted-foreground">
+              Product selection available when connected to a store.
+            </div>
+          )}
+          {hasStoreContext && loading && <div className="text-xs text-muted-foreground">Loading products…</div>}
+          {hasStoreContext && !loading && products.length === 0 && (
+            <div className="text-xs text-muted-foreground">No products found for this store.</div>
+          )}
+          {hasStoreContext && !loading && products.map((p) => {
+            const checked = (selectedIds || []).includes(p.id);
+            return (
+              <label key={p.id} className="flex items-center gap-2 text-sm min-w-0">
+                <input type="checkbox" checked={checked} onChange={(e) => toggleProduct(p.id, e.target.checked)} className="flex-shrink-0" />
                     <span className="truncate min-w-0" title={p.name}>
                       {truncateProductName(p.name)}
                     </span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
+              </label>
+            );
+          })}
+        </div>
+      </div>
 
-          <div className="grid grid-cols-1 gap-2">
-            <Label className="text-sm">Default Product</Label>
-            <Select 
-              value={defaultProductId || (selectedIds[0] || '')} 
-              onValueChange={handleDefaultChange}
-              disabled={!hasStoreContext}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={
-                  !hasStoreContext 
-                    ? 'Available when connected to store'
-                    : selectedIds.length 
-                      ? 'Select default product' 
-                      : 'No products selected'
-                } />
-              </SelectTrigger>
-              <SelectContent>
-                {(selectedIds.length ? products.filter((p) => selectedIds.includes(p.id)) : products).map((p) => (
-                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      <div className="grid grid-cols-1 gap-2">
+        <Label className="text-sm">Default Product</Label>
+        <Select 
+          value={defaultProductId || (selectedIds[0] || '')} 
+          onValueChange={handleDefaultChange}
+          disabled={!hasStoreContext}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={
+              !hasStoreContext 
+                ? 'Available when connected to store'
+                : selectedIds.length 
+                  ? 'Select default product' 
+                  : 'No products selected'
+            } />
+          </SelectTrigger>
+          <SelectContent>
+            {(selectedIds.length ? products.filter((p) => selectedIds.includes(p.id)) : products).map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={!!allowSwitching} onChange={(e) => onUpdate('allowSwitching', e.target.checked)} />
@@ -149,7 +149,7 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={!!showQuantity} onChange={(e) => onUpdate('showQuantity', e.target.checked)} />
             <Label className="text-sm">Show quantity selector</Label>
-          </div>
+      </div>
 
           <div className="flex items-center gap-2">
             <input type="checkbox" checked={!!useTwoColumnGrid} onChange={(e) => onUpdate('useTwoColumnGrid', e.target.checked)} />

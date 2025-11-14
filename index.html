@@ -40,13 +40,21 @@
     
     <!-- Dynamic SEO tags are managed in code per-page via setSEO function -->
     <!-- Favicon is set dynamically per website/funnel in setSEO() function -->
-    <!-- Font Awesome for icon lists -->
+    <!-- Font Awesome for icon lists - Load asynchronously for better performance -->
     <link
-      rel="stylesheet"
+      rel="preload"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-      crossorigin="anonymous"
-      referrerpolicy="no-referrer"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"
+      />
+    </noscript>
     </head>
 
   <body>

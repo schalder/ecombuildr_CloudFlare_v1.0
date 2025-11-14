@@ -112,6 +112,7 @@ const handler = async (req: Request): Promise<Response> => {
       .gt('download_count', 0);
 
     // If this is the first download for any file in this order, mark as delivered
+    // Update from any status (pending, confirmed, processing) to delivered for digital products
     if (downloadedFiles && downloadedFiles.length === 1 && downloadedFiles[0].download_count === 1) {
       const { error: orderUpdateError } = await supabase
         .from('orders')
@@ -120,10 +121,12 @@ const handler = async (req: Request): Promise<Response> => {
           updated_at: new Date().toISOString()
         })
         .eq('id', orderId)
-        .eq('status', 'pending');
+        .in('status', ['pending', 'confirmed', 'processing']); // Allow update from multiple statuses
 
       if (!orderUpdateError) {
         console.log(`Order ${orderId} status updated to delivered after first download`);
+      } else {
+        console.error(`Failed to update order status to delivered:`, orderUpdateError);
       }
     }
 

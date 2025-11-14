@@ -276,8 +276,8 @@ export default function Customers() {
           </TabsList>
 
           <TabsContent value="all" className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -334,18 +334,18 @@ export default function Customers() {
               <Switch 
                 checked={blurSensitiveData} 
                 onCheckedChange={setBlurSensitiveData}
-              />
-            </div>
-            <Button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              variant="outline"
-              size="sm"
-              className={isMobile ? 'w-full justify-center' : ''}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            />
+          </div>
+          <Button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            variant="outline"
+            size="sm"
+            className={isMobile ? 'w-full justify-center' : ''}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
           </div>
         </div>
 
@@ -503,7 +503,7 @@ export default function Customers() {
                             <div className="flex items-center gap-1 text-sm">
                               <Mail className="h-3 w-3" />
                               <span style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
-                                {customer.email}
+                              {customer.email}
                               </span>
                             </div>
                           )}
@@ -511,7 +511,7 @@ export default function Customers() {
                             <div className="flex items-center gap-1 text-sm">
                               <Phone className="h-3 w-3" />
                               <span style={{ filter: blurSensitiveData ? 'blur(4px)' : 'none' }}>
-                                {customer.phone}
+                              {customer.phone}
                               </span>
                               <button
                                 onClick={(e) => {

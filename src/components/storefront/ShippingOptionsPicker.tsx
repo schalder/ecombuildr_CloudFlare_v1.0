@@ -48,9 +48,9 @@ export const ShippingOptionsPicker: React.FC<ShippingOptionsPickerProps> = ({
         {options.map((option) => (
           <label 
             key={option.id} 
-            htmlFor={option.id}
+              htmlFor={option.id} 
             className="flex items-start gap-3 border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-          >
+            >
             <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-center">
@@ -61,7 +61,7 @@ export const ShippingOptionsPicker: React.FC<ShippingOptionsPickerProps> = ({
                   {option.fee === 0 ? 'Free' : formatCurrency(option.fee)}
                 </span>
               </div>
-            </div>
+          </div>
           </label>
         ))}
       </RadioGroup>

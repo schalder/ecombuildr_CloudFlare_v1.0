@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
+import { lazy, Suspense } from 'react';
+import { Loader2 } from 'lucide-react';
 import { DomainRouter } from "@/components/domain/DomainRouter";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -90,21 +92,23 @@ import TermsOfService from "./pages/legal/TermsOfService";
 import CookiePolicy from "./pages/legal/CookiePolicy";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentFailed from "./pages/PaymentFailed";
-import { StorefrontHome } from "./pages/storefront/StorefrontHome";
-import { StorefrontProducts } from "./pages/storefront/StorefrontProducts";
-import { CollectionPage } from "./pages/storefront/CollectionPage";
-import ProductDetail from "./pages/storefront/ProductDetail";
-import { SearchResults } from "./pages/storefront/SearchResults";
-import { CheckoutPage } from "./pages/storefront/CheckoutPage";
-import { PaymentProcessing } from "./pages/storefront/PaymentProcessing";
-import { OrderConfirmation } from "./pages/storefront/OrderConfirmation";
-import { CartPage } from "./pages/storefront/CartPage";
-import { StorefrontPage } from "./pages/storefront/StorefrontPage";
-import { FunnelStepPage } from "./pages/storefront/FunnelStepPage";
-import { WebsitePage } from "./pages/storefront/WebsitePage";
+// Lazy load storefront pages for better performance
+const StorefrontHome = lazy(() => import("./pages/storefront/StorefrontHome").then(m => ({ default: m.StorefrontHome })));
+const StorefrontProducts = lazy(() => import("./pages/storefront/StorefrontProducts").then(m => ({ default: m.StorefrontProducts })));
+const CollectionPage = lazy(() => import("./pages/storefront/CollectionPage").then(m => ({ default: m.CollectionPage })));
+const ProductDetail = lazy(() => import("./pages/storefront/ProductDetail"));
+const SearchResults = lazy(() => import("./pages/storefront/SearchResults").then(m => ({ default: m.SearchResults })));
+const CheckoutPage = lazy(() => import("./pages/storefront/CheckoutPage").then(m => ({ default: m.CheckoutPage })));
+const PaymentProcessing = lazy(() => import("./pages/storefront/PaymentProcessing").then(m => ({ default: m.PaymentProcessing })));
+const OrderConfirmation = lazy(() => import("./pages/storefront/OrderConfirmation").then(m => ({ default: m.OrderConfirmation })));
+const CartPage = lazy(() => import("./pages/storefront/CartPage").then(m => ({ default: m.CartPage })));
+const StorefrontPage = lazy(() => import("./pages/storefront/StorefrontPage").then(m => ({ default: m.StorefrontPage })));
+const FunnelStepPage = lazy(() => import("./pages/storefront/FunnelStepPage").then(m => ({ default: m.FunnelStepPage })));
+const WebsitePage = lazy(() => import("./pages/storefront/WebsitePage").then(m => ({ default: m.WebsitePage })));
+const WebsiteOverrideRoute = lazy(() => import("./pages/storefront/WebsiteOverrideRoute").then(m => ({ default: m.WebsiteOverrideRoute })));
+const WebsiteProductDetailRoute = lazy(() => import("./pages/storefront/WebsiteProductDetailRoute").then(m => ({ default: m.WebsiteProductDetailRoute })));
+// WebsiteLayout is a layout component, keep as direct import (not lazy) since it's lightweight
 import { WebsiteLayout } from "@/components/storefront/WebsiteLayout";
-import { WebsiteOverrideRoute } from "./pages/storefront/WebsiteOverrideRoute";
-import { WebsiteProductDetailRoute } from "./pages/storefront/WebsiteProductDetailRoute";
 import { ScrollToHash } from "@/components/ScrollToHash";
 import { RequireSuperAdmin } from "@/components/admin/RequireSuperAdmin";
 import MemberRoutes from "@/components/MemberRoutes";
@@ -112,15 +116,21 @@ import Courses from "@/pages/Courses";
 import CreateCourse from "@/pages/CreateCourse";
 import CourseEditor from "@/pages/CourseEditor";
 import CourseView from "@/pages/CourseView";
-import StorefrontCourseLibrary from "@/components/storefront/StorefrontCourseLibrary";
-import { StorefrontCourseDetailWrapper, StorefrontCourseCheckoutWrapper } from "@/components/course/CourseRouteWrappers";
-import { CourseStorefrontLayout } from "@/components/course/CourseStorefrontLayout";
-import CourseDomainSettings from "@/pages/CourseDomainSettings";
-import CourseSettings from "@/pages/CourseSettings";
-import CourseMemberLoginPage from "@/pages/CourseMemberLoginPage";
-import CourseMemberDashboard from "@/components/course/CourseMemberDashboard";
+// Lazy load course storefront components
+const StorefrontCourseLibrary = lazy(() => import("@/components/storefront/StorefrontCourseLibrary"));
+const CourseStorefrontLayout = lazy(() => import("@/components/course/CourseStorefrontLayout").then(m => ({ default: m.CourseStorefrontLayout })));
+const CourseMemberLoginPage = lazy(() => import("@/pages/CourseMemberLoginPage"));
+const CourseMemberDashboard = lazy(() => import("@/components/course/CourseMemberDashboard"));
+const CoursePlayerPage = lazy(() => import("@/pages/CoursePlayerPage"));
+
+// Wrapper components for CourseRouteWrappers named exports
+const StorefrontCourseDetailWrapper = lazy(() => 
+  import("@/components/course/CourseRouteWrappers").then(m => ({ default: m.StorefrontCourseDetailWrapper }))
+);
+const StorefrontCourseCheckoutWrapper = lazy(() => 
+  import("@/components/course/CourseRouteWrappers").then(m => ({ default: m.StorefrontCourseCheckoutWrapper }))
+);
 import { MemberAuthProvider } from "@/hooks/useMemberAuth";
-import CoursePlayerPage from "@/pages/CoursePlayerPage";
 import { OnboardingGate } from "@/components/dashboard/OnboardingGate";
 
 const queryClient = new QueryClient({
@@ -144,6 +154,13 @@ const queryClient = new QueryClient({
 const CartProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <CartProvider>{children}</CartProvider>;
 };
+
+// Loading fallback for lazy-loaded storefront routes
+const StorefrontLoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -218,24 +235,88 @@ const App = () => (
                 <Route path="/dashboard/training/:courseSlug" element={<TrainingCourse />} />
                 
                 {/* Store-Specific Course Routes */}
-                <Route path="/course/:storeId/members/login" element={<CourseMemberLoginPage />} />
-                <Route path="/course/:storeId/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
-                <Route path="/course/:storeId/learn/:courseId" element={<CoursePlayerPage />} />
-                <Route path="/course/:storeId/cart" element={<CartPage />} />
-                <Route path="/course/:storeId/search" element={<SearchResults />} />
-                <Route path="/course/:storeId" element={<CourseStorefrontLayout><StorefrontCourseLibrary /></CourseStorefrontLayout>} />
-                <Route path="/course/:storeId/:courseId" element={<CourseStorefrontLayout><StorefrontCourseDetailWrapper /></CourseStorefrontLayout>} />
-                <Route path="/course/:storeId/:courseId/checkout" element={<CourseStorefrontLayout><StorefrontCourseCheckoutWrapper /></CourseStorefrontLayout>} />
+                <Route path="/course/:storeId/members/login" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CourseMemberLoginPage />
+                  </Suspense>
+                } />
+                <Route path="/course/:storeId/members" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>
+                  </Suspense>
+                } />
+                <Route path="/course/:storeId/learn/:courseId" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CoursePlayerPage />
+                  </Suspense>
+                } />
+                <Route path="/course/:storeId/cart" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CartPage />
+                  </Suspense>
+                } />
+                <Route path="/course/:storeId/search" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <SearchResults />
+                  </Suspense>
+                } />
+                <Route path="/course/:storeId" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CourseStorefrontLayout><StorefrontCourseLibrary /></CourseStorefrontLayout>
+                  </Suspense>
+                } />
+                <Route path="/course/:storeId/:courseId" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CourseStorefrontLayout><StorefrontCourseDetailWrapper /></CourseStorefrontLayout>
+                  </Suspense>
+                } />
+                <Route path="/course/:storeId/:courseId/checkout" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CourseStorefrontLayout><StorefrontCourseCheckoutWrapper /></CourseStorefrontLayout>
+                  </Suspense>
+                } />
 
                 {/* Legacy Course Library Routes (fallback) */}
-                <Route path="/courses/members/login" element={<CourseMemberLoginPage />} />
-                <Route path="/courses/members" element={<MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>} />
-                <Route path="/courses/learn/:courseId" element={<CoursePlayerPage />} />
-                <Route path="/courses/cart" element={<CartPage />} />
-                <Route path="/courses/search" element={<SearchResults />} />
-                <Route path="/courses" element={<CourseStorefrontLayout><StorefrontCourseLibrary /></CourseStorefrontLayout>} />
-                <Route path="/courses/:courseId" element={<CourseStorefrontLayout><StorefrontCourseDetailWrapper /></CourseStorefrontLayout>} />
-                <Route path="/courses/:courseId/checkout" element={<CourseStorefrontLayout><StorefrontCourseCheckoutWrapper /></CourseStorefrontLayout>} />
+                <Route path="/courses/members/login" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CourseMemberLoginPage />
+                  </Suspense>
+                } />
+                <Route path="/courses/members" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <MemberAuthProvider><CourseMemberDashboard /></MemberAuthProvider>
+                  </Suspense>
+                } />
+                <Route path="/courses/learn/:courseId" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CoursePlayerPage />
+                  </Suspense>
+                } />
+                <Route path="/courses/cart" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CartPage />
+                  </Suspense>
+                } />
+                <Route path="/courses/search" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <SearchResults />
+                  </Suspense>
+                } />
+                <Route path="/courses" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CourseStorefrontLayout><StorefrontCourseLibrary /></CourseStorefrontLayout>
+                  </Suspense>
+                } />
+                <Route path="/courses/:courseId" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CourseStorefrontLayout><StorefrontCourseDetailWrapper /></CourseStorefrontLayout>
+                  </Suspense>
+                } />
+                <Route path="/courses/:courseId/checkout" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CourseStorefrontLayout><StorefrontCourseCheckoutWrapper /></CourseStorefrontLayout>
+                  </Suspense>
+                } />
                 
                 
                 {/* Admin Routes - Protected by SuperAdmin Guard */}
@@ -296,102 +377,250 @@ const App = () => (
                 <Route path="/payment-failed" element={<PaymentFailed />} />
                 
                 {/* Public Storefront Routes */}
-                <Route path="/store/:slug/products" element={<StorefrontProducts />} />
-                <Route path="/store/:slug/products/:productSlug" element={<ProductDetail />} />
-                <Route path="/store/:slug/collections/:collectionSlug" element={<CollectionPage />} />
-                <Route path="/store/:slug/search" element={<SearchResults />} />
-                <Route path="/store/:slug/cart" element={<CartPage />} />
-                <Route path="/store/:slug/checkout" element={<CheckoutPage />} />
-                <Route path="/store/:slug/payment-processing" element={<PaymentProcessing />} />
-                <Route path="/store/:slug/payment-processing/:orderId" element={<PaymentProcessing />} />
-                <Route path="/store/:slug/order-confirmation/:orderId" element={<OrderConfirmation />} />
-                <Route path="/store/:slug/:pageSlug" element={<StorefrontPage />} />
-                <Route path="/store/:slug" element={<StorefrontHome />} />
+                <Route path="/store/:slug/products" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <StorefrontProducts />
+                  </Suspense>
+                } />
+                <Route path="/store/:slug/products/:productSlug" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <ProductDetail />
+                  </Suspense>
+                } />
+                <Route path="/store/:slug/collections/:collectionSlug" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CollectionPage />
+                  </Suspense>
+                } />
+                <Route path="/store/:slug/search" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <SearchResults />
+                  </Suspense>
+                } />
+                <Route path="/store/:slug/cart" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CartPage />
+                  </Suspense>
+                } />
+                <Route path="/store/:slug/checkout" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <CheckoutPage />
+                  </Suspense>
+                } />
+                <Route path="/store/:slug/payment-processing" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <PaymentProcessing />
+                  </Suspense>
+                } />
+                <Route path="/store/:slug/payment-processing/:orderId" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <PaymentProcessing />
+                  </Suspense>
+                } />
+                <Route path="/store/:slug/order-confirmation/:orderId" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <OrderConfirmation />
+                  </Suspense>
+                } />
+                <Route path="/store/:slug/:pageSlug" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <StorefrontPage />
+                  </Suspense>
+                } />
+                <Route path="/store/:slug" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <StorefrontHome />
+                  </Suspense>
+                } />
                 
                 {/* Funnel Routes */}
-                <Route path="/funnel/:funnelId/:stepSlug" element={<FunnelStepPage />} />
-                <Route path="/funnel/:funnelId" element={<FunnelStepPage />} />
+                <Route path="/funnel/:funnelId/:stepSlug" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <FunnelStepPage />
+                  </Suspense>
+                } />
+                <Route path="/funnel/:funnelId" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <FunnelStepPage />
+                  </Suspense>
+                } />
 
                 {/* Website Routes */}
                 <Route path="/website/:websiteId" element={<WebsiteLayout />}>
-                  <Route index element={<WebsitePage />} />
+                  <Route index element={
+                    <Suspense fallback={<StorefrontLoadingFallback />}>
+                      <WebsitePage />
+                    </Suspense>
+                  } />
                   <Route
                     path="products"
-                    element={<WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />
+                      </Suspense>
+                    }
                   />
-                  <Route path="products/:productSlug" element={<WebsiteProductDetailRoute />} />
-                  <Route path="collections/:collectionSlug" element={<CollectionPage />} />
+                  <Route path="products/:productSlug" element={
+                    <Suspense fallback={<StorefrontLoadingFallback />}>
+                      <WebsiteProductDetailRoute />
+                    </Suspense>
+                  } />
+                  <Route path="collections/:collectionSlug" element={
+                    <Suspense fallback={<StorefrontLoadingFallback />}>
+                      <CollectionPage />
+                    </Suspense>
+                  } />
                   <Route
                     path="search"
-                    element={<WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />
+                      </Suspense>
+                    }
                   />
                   <Route
                     path="cart"
-                    element={<WebsiteOverrideRoute slug="cart" fallback={<CartPage />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="cart" fallback={<CartPage />} />
+                      </Suspense>
+                    }
                   />
                   <Route
                     path="checkout"
-                    element={<WebsiteOverrideRoute slug="checkout" fallback={<CheckoutPage />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="checkout" fallback={<CheckoutPage />} />
+                      </Suspense>
+                    }
                   />
                   {/* Support both param and query styles for order-related pages with override */}
                   <Route
                     path="payment-processing"
-                    element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />
+                      </Suspense>
+                    }
                   />
                   <Route
                     path="payment-processing/:orderId"
-                    element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />
+                      </Suspense>
+                    }
                   />
                   <Route
                     path="order-confirmation"
-                    element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />
+                      </Suspense>
+                    }
                   />
                   <Route
                     path="order-confirmation/:orderId"
-                    element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />
+                      </Suspense>
+                    }
                   />
-                  <Route path=":pageSlug" element={<WebsitePage />} />
+                  <Route path=":pageSlug" element={
+                    <Suspense fallback={<StorefrontLoadingFallback />}>
+                      <WebsitePage />
+                    </Suspense>
+                  } />
                 </Route>
 
                 {/* Clean slug-based Website Routes */}
                 <Route path="/site/:websiteSlug" element={<WebsiteLayout />}>
-                  <Route index element={<WebsitePage />} />
+                  <Route index element={
+                    <Suspense fallback={<StorefrontLoadingFallback />}>
+                      <WebsitePage />
+                    </Suspense>
+                  } />
                   <Route
                     path="products"
-                    element={<WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="products" fallback={<StorefrontProducts />} />
+                      </Suspense>
+                    }
                   />
-                  <Route path="products/:productSlug" element={<WebsiteProductDetailRoute />} />
-                  <Route path="collections/:collectionSlug" element={<CollectionPage />} />
+                  <Route path="products/:productSlug" element={
+                    <Suspense fallback={<StorefrontLoadingFallback />}>
+                      <WebsiteProductDetailRoute />
+                    </Suspense>
+                  } />
+                  <Route path="collections/:collectionSlug" element={
+                    <Suspense fallback={<StorefrontLoadingFallback />}>
+                      <CollectionPage />
+                    </Suspense>
+                  } />
                   <Route
                     path="search"
-                    element={<WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="search" fallback={<SearchResults />} />
+                      </Suspense>
+                    }
                   />
                   <Route
                     path="cart"
-                    element={<WebsiteOverrideRoute slug="cart" fallback={<CartPage />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="cart" fallback={<CartPage />} />
+                      </Suspense>
+                    }
                   />
                   <Route
                     path="checkout"
-                    element={<WebsiteOverrideRoute slug="checkout" fallback={<CheckoutPage />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="checkout" fallback={<CheckoutPage />} />
+                      </Suspense>
+                    }
                   />
                   {/* Support both param and query styles for order-related pages with override */}
                   <Route
                     path="payment-processing"
-                    element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />
+                      </Suspense>
+                    }
                   />
                   <Route
                     path="payment-processing/:orderId"
-                    element={<WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="payment-processing" fallback={<PaymentProcessing />} />
+                      </Suspense>
+                    }
                   />
                   <Route
                     path="order-confirmation"
-                    element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />
+                      </Suspense>
+                    }
                   />
                   <Route
                     path="order-confirmation/:orderId"
-                    element={<WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />}
+                    element={
+                      <Suspense fallback={<StorefrontLoadingFallback />}>
+                        <WebsiteOverrideRoute slug="order-confirmation" fallback={<OrderConfirmation />} />
+                      </Suspense>
+                    }
                   />
-                  <Route path=":pageSlug" element={<WebsitePage />} />
+                  <Route path=":pageSlug" element={
+                    <Suspense fallback={<StorefrontLoadingFallback />}>
+                      <WebsitePage />
+                    </Suspense>
+                  } />
                 </Route>
 
                 {/* Member and Course Routes */}

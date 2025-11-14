@@ -304,7 +304,42 @@ serve(async (req) => {
 
     // Prepare order insert with safe defaults and status normalization
     const allowedStatuses = new Set(['pending','confirmed','processing','shipped','delivered','cancelled']);
-    const defaultStatus = (order.payment_method === 'cod') ? 'pending' : 'processing';
+    
+    // ✅ Determine default status based on payment method and product types
+    // For COD: Digital products = 'delivered', Physical products = 'pending'
+    // For other payment methods: Use 'processing' as default
+    let defaultStatus = (order.payment_method === 'cod') ? 'pending' : 'processing';
+    
+    // Check product types if items are provided
+    if (items && items.length > 0) {
+      const productIds = items.map(i => i.product_id).filter(Boolean);
+      if (productIds.length > 0) {
+        const { data: products, error: productsError } = await supabase
+          .from('products')
+          .select('id, product_type')
+          .in('id', productIds);
+
+        if (!productsError && products && products.length > 0) {
+          let hasDigitalProducts = false;
+          let hasPhysicalProducts = false;
+          
+          for (const product of products) {
+            if (product.product_type === 'digital') {
+              hasDigitalProducts = true;
+            } else {
+              hasPhysicalProducts = true;
+            }
+          }
+          
+          // For COD orders: If all products are digital, set to 'delivered' (instant delivery)
+          if (order.payment_method === 'cod' && hasDigitalProducts && !hasPhysicalProducts) {
+            defaultStatus = 'delivered';
+            console.log('COD order with digital products only: status set to delivered');
+          }
+        }
+      }
+    }
+    
     const incomingStatus = (order.status || '').toLowerCase();
     const safeStatus = allowedStatuses.has(incomingStatus) ? incomingStatus : defaultStatus;
 

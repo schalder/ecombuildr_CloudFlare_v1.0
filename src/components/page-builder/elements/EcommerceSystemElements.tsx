@@ -1349,7 +1349,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         shipping_cost: productTypes.hasPhysical ? shippingCost : 0,
         discount_amount: 0,
         total: total + (productTypes.hasPhysical ? shippingCost : 0),
-        status: form.payment_method === 'cod' ? 'pending' as const : (isManual ? 'pending' as const : 'pending' as const),
+        // Status will be set by create-order or create-order-on-payment-success based on payment method and product types
         // Persist custom fields with labels for better display later
         custom_fields: (customFields || [])
           .filter((cf: any) => cf.enabled)

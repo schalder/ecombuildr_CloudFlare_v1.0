@@ -77,9 +77,36 @@ export default function PageBuilder() {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(!!pageId);
+  const [elementsLoaded, setElementsLoaded] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [previewDeviceType, setPreviewDeviceType] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  
+  // Lazy load page builder elements when admin page builder mounts
+  useEffect(() => {
+    let mounted = true;
+    
+    const loadElements = async () => {
+      try {
+        // Dynamically import and register all page builder elements
+        await import('@/components/page-builder/elements');
+        if (mounted) {
+          setElementsLoaded(true);
+        }
+      } catch (error) {
+        console.error('Failed to load page builder elements:', error);
+        if (mounted) {
+          setElementsLoaded(true); // Still allow rendering even if load fails
+        }
+      }
+    };
+    
+    loadElements();
+    
+    return () => {
+      mounted = false;
+    };
+  }, []);
   
   // Handle preview mode switching with CSS management
   const handlePreviewToggle = useCallback(() => {
@@ -399,7 +426,7 @@ export default function PageBuilder() {
     window.open(previewUrl, '_blank');
   };
 
-  if (isLoading) {
+  if (isLoading || !elementsLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

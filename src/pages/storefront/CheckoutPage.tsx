@@ -358,7 +358,7 @@ useEffect(() => {
         discount_amount: discountAmount,
         discount_code: form.discount_code || null,
         total: total + shippingCost - discountAmount,
-        status: form.payment_method === 'cod' ? 'pending' as const : (isManual ? 'pending' as const : 'pending' as const),
+        // Status will be set by create-order or create-order-on-payment-success based on payment method and product types
         order_number: `ORD-${Date.now()}`,
         idempotency_key: idempotencyKey,
       };

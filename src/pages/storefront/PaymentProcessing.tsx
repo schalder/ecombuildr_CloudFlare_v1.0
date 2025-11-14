@@ -203,8 +203,7 @@ useEffect(() => {
         discount_amount: checkoutData.orderData.discount_amount || 0,
         total: checkoutData.orderData.total,
         payment_method: checkoutData.orderData.payment_method,
-        // ✅ Status will be set to 'confirmed' by create-order-on-payment-success edge function
-        // Do not set status here to ensure edge function is single source of truth
+        // Status will be set by create-order-on-payment-success based on product types
         notes: checkoutData.orderData.notes || '',
         payment_transaction_number: checkoutData.orderData.payment_transaction_number || '',
         website_id: checkoutData.orderData.website_id,
@@ -454,41 +453,41 @@ useEffect(() => {
                 }
               } else if (currentStep.on_success_step_id) {
                 // Fallback to step ID if no custom URL
-                // Get the next step details
-                const { data: nextStep, error: nextStepError } = await supabase
-                  .from('funnel_steps')
-                  .select('slug, funnel_id')
-                  .eq('id', currentStep.on_success_step_id)
-                  .single();
+              // Get the next step details
+              const { data: nextStep, error: nextStepError } = await supabase
+                .from('funnel_steps')
+                .select('slug, funnel_id')
+                .eq('id', currentStep.on_success_step_id)
+                .single();
+              
+              if (!nextStepError && nextStep?.slug) {
+                // Environment-aware redirect to next step
+                const isAppEnvironment = (
+                  window.location.hostname === 'localhost' || 
+                  window.location.hostname === 'ecombuildr.com' ||
+                  window.location.hostname === 'ecombuildr.com' ||
+                  window.location.hostname === 'ecombuildr.com' ||
+                  window.location.hostname === 'ecombuildr.com'
+                );
                 
-                if (!nextStepError && nextStep?.slug) {
-                  // Environment-aware redirect to next step
-                  const isAppEnvironment = (
-                    window.location.hostname === 'localhost' || 
-                    window.location.hostname === 'ecombuildr.com' ||
-                    window.location.hostname === 'ecombuildr.com' ||
-                    window.location.hostname === 'ecombuildr.com' ||
-                    window.location.hostname === 'ecombuildr.com'
-                  );
-                  
-                  if (isAppEnvironment) {
-                    // App/sandbox: use funnel-aware paths
-                    const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                if (isAppEnvironment) {
+                  // App/sandbox: use funnel-aware paths
+                  const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
                     console.log(`PaymentProcessing: Funnel redirect (app): ${nextUrl}`);
-                    window.location.href = nextUrl;
-                    return;
-                  } else {
-                    // Custom domain: use clean paths
-                    const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
-                    console.log(`PaymentProcessing: Funnel redirect (custom domain): ${nextUrl}`);
-                    window.location.href = nextUrl;
-                    return;
-                  }
+                  window.location.href = nextUrl;
+                  return;
                 } else {
-                  console.log('PaymentProcessing: Next step not found for funnel checkout');
+                  // Custom domain: use clean paths
+                  const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                    console.log(`PaymentProcessing: Funnel redirect (custom domain): ${nextUrl}`);
+                  window.location.href = nextUrl;
+                  return;
                 }
               } else {
-                console.log('PaymentProcessing: Current step not found or no next step configured');
+                console.log('PaymentProcessing: Next step not found for funnel checkout');
+              }
+            } else {
+              console.log('PaymentProcessing: Current step not found or no next step configured');
                 // Fallback: redirect to order confirmation if no funnel redirect configured
                 const newOrderToken = data.order.access_token;
                 toast.success('Order created successfully!');
@@ -849,13 +848,13 @@ useEffect(() => {
 
               {/* Only show Continue Shopping for site checkout */}
               {!funnelContext?.isFunnelCheckout && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => navigate(paths.home)}
-                  className="w-full"
-                >
-                  Continue Shopping
-                </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(paths.home)}
+                className="w-full"
+              >
+                Continue Shopping
+              </Button>
               )}
             </div>
 

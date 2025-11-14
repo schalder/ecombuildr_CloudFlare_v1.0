@@ -4,9 +4,8 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { PageBuilderData } from '@/components/page-builder/types';
 import { SectionRenderer } from '@/components/page-builder/components/SectionRenderer';
 import { BREAKPOINTS, DeviceType } from '@/components/page-builder/utils/responsive';
-// Ensure elements are registered on storefront render too
-import '@/components/page-builder/elements';
-import { elementRegistry } from '@/components/page-builder/elements';
+// Elements are lazy-loaded when needed (fallback renderer only)
+// StorefrontPageBuilder (preferred) uses storefrontRegistry which already lazy-loads
 import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 import { useStorefrontRenderer } from '@/hooks/useStorefrontRenderer';
 import { StorefrontPageBuilder } from './renderer/StorefrontPageBuilder';
@@ -126,10 +125,8 @@ export const PageBuilderRenderer: React.FC<PageBuilderRendererProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, [propDeviceType]);
 
-  React.useEffect(() => {
-    const ids = elementRegistry.getAll().map(e => e.id);
-    
-  }, []);
+  // Note: elementRegistry access removed - not needed for fallback renderer
+  // SectionRenderer handles element rendering without needing the registry
 
   
   

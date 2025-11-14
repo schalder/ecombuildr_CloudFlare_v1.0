@@ -3,8 +3,9 @@ import { HelmetProvider } from 'react-helmet-async'
 import App from './App.tsx'
 import './index.css'
 
-// Initialize page builder elements registry
-import './components/page-builder/elements';
+// Page builder elements are now lazy-loaded when needed:
+// - Storefront pages use storefrontRegistry (already lazy-loads)
+// - Admin page builder loads elements when PageBuilder component mounts
 
 const container = document.getElementById("root")!;
 const root = createRoot(container);
