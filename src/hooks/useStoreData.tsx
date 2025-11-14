@@ -75,6 +75,8 @@ export const useStoreProducts = (options?: {
           return;
         }
 
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - Type instantiation is excessively deep (known Supabase type inference limitation)
         let query = supabase
           .from('products')
           .select('*')
@@ -84,10 +86,10 @@ export const useStoreProducts = (options?: {
         // Only filter by show_on_website if skipShowOnWebsiteFilter is NOT true
         // (for funnel checkout product selection, we want to show all active products)
         if (!options?.skipShowOnWebsiteFilter) {
-          query = query.eq('show_on_website', true);
+          query = (query as any).eq('show_on_website', true);
         }
         
-        query = query.in('id', productIds).order('created_at', { ascending: false });
+        query = (query as any).in('id', productIds).order('created_at', { ascending: false });
 
         // Filter by specific product IDs (intersection with visible products)
         if (options?.specificProductIds && options.specificProductIds.length > 0) {
