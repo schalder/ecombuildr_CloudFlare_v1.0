@@ -207,10 +207,13 @@ useEffect(() => {
         notes: checkoutData.orderData.notes || '',
         payment_transaction_number: checkoutData.orderData.payment_transaction_number || '',
         website_id: checkoutData.orderData.website_id,
-        // ✅ Generate fresh idempotency_key to prevent duplicate key constraint violation
-        idempotency_key: crypto.randomUUID(),
-        // Store funnel context in custom_fields instead of direct fields
+        // ✅ Preserve original idempotency_key to prevent duplicate orders
+        idempotency_key: checkoutData.orderData.idempotency_key || crypto.randomUUID(),
+        // ✅ Set funnel_id directly on the order (not just in custom_fields)
+        funnel_id: checkoutData.orderData.funnelId || checkoutData.orderData.funnel_id || null,
+        // Store additional funnel context in custom_fields
         custom_fields: {
+          ...(checkoutData.orderData.custom_fields || {}),
           funnelId: checkoutData.orderData.funnelId,
           currentStepId: checkoutData.orderData.currentStepId,
           isFunnelCheckout: checkoutData.orderData.isFunnelCheckout

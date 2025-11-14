@@ -41,8 +41,13 @@ import {
   MapPin,
   Phone,
   Mail,
-  MessageCircle
+  MessageCircle,
+  X,
+  Package,
+  Trash2,
+  Ban
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
 import { nameWithVariant, openWhatsApp } from '@/lib/utils';
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -123,6 +128,11 @@ export default function Orders() {
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
   const [isIPBlocked, setIsIPBlocked] = useState<boolean>(false);
   const [blockedIPInfo, setBlockedIPInfo] = useState<any>(null);
+  
+  // Bulk selection state
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [bulkActionProgress, setBulkActionProgress] = useState<{ current: number; total: number } | null>(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -995,6 +1005,313 @@ export default function Orders() {
 
   const steadfastTrackUrl = (code?: string | null) => code ? `https://steadfast.com.bd/t/${encodeURIComponent(code)}` : '#';
 
+  // Bulk selection helpers
+  const toggleOrderSelection = (orderId: string) => {
+    setSelectedOrderIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllOrders = () => {
+    if (selectedOrderIds.size === orders.length) {
+      setSelectedOrderIds(new Set());
+    } else {
+      setSelectedOrderIds(new Set(orders.map(o => o.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedOrderIds(new Set());
+  };
+
+  const isAllSelected = orders.length > 0 && selectedOrderIds.size === orders.length;
+  const isSomeSelected = selectedOrderIds.size > 0 && selectedOrderIds.size < orders.length;
+
+  // Bulk action functions
+  const bulkUpdateOrderStatus = async (newStatus: 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled') => {
+    if (selectedOrderIds.size === 0) return;
+
+    const orderIds = Array.from(selectedOrderIds);
+    setIsBulkProcessing(true);
+    setBulkActionProgress({ current: 0, total: orderIds.length });
+
+    let successCount = 0;
+    let failCount = 0;
+    const errors: string[] = [];
+
+    try {
+      for (let i = 0; i < orderIds.length; i++) {
+        const orderId = orderIds[i];
+        setBulkActionProgress({ current: i + 1, total: orderIds.length });
+
+        try {
+          const order = orders.find(o => o.id === orderId);
+          if (!order) {
+            failCount++;
+            errors.push(`Order ${orderId} not found`);
+            continue;
+          }
+
+          const { error } = await supabase
+            .from('orders')
+            .update({ status: newStatus })
+            .eq('id', orderId);
+
+          if (error) throw error;
+
+          // Update local state
+          setOrders(prev => prev.map(o => 
+            o.id === orderId ? { ...o, status: newStatus } : o
+          ));
+
+          // Send cancellation email if order is cancelled
+          if (newStatus === 'cancelled') {
+            try {
+              await supabase.functions.invoke('send-order-email', {
+                body: {
+                  order_id: orderId,
+                  store_id: order.store_id,
+                  website_id: order.website_id,
+                  event_type: 'order_cancelled'
+                }
+              });
+            } catch (emailError) {
+              console.error('Failed to send cancellation email:', emailError);
+            }
+          }
+
+          // Check for low stock after order delivery
+          if (newStatus === 'delivered') {
+            try {
+              const { data: orderItems } = await supabase
+                .from('order_items')
+                .select(`
+                  product_id,
+                  products!inner(
+                    id,
+                    name,
+                    inventory_quantity,
+                    track_inventory,
+                    store_id
+                  )
+                `)
+                .eq('order_id', orderId);
+
+              if (orderItems) {
+                for (const item of orderItems) {
+                  const product = item.products;
+                  if (product.track_inventory && product.inventory_quantity <= 5) {
+                    try {
+                      await supabase.functions.invoke('send-low-stock-email', {
+                        body: {
+                          store_id: product.store_id,
+                          product_id: product.id
+                        }
+                      });
+                    } catch (lowStockError) {
+                      console.error('Failed to send low stock email:', lowStockError);
+                    }
+                  }
+                }
+              }
+            } catch (stockCheckError) {
+              console.error('Error checking stock levels:', stockCheckError);
+            }
+          }
+
+          successCount++;
+        } catch (error: any) {
+          failCount++;
+          const order = orders.find(o => o.id === orderId);
+          errors.push(`Order ${order?.order_number || orderId}: ${error.message || 'Failed to update'}`);
+          console.error(`Error updating order ${orderId}:`, error);
+        }
+      }
+
+      // Show summary toast
+      if (successCount > 0 && failCount === 0) {
+        toast({
+          title: "Success",
+          description: `Successfully updated ${successCount} order${successCount > 1 ? 's' : ''} to ${newStatus}`,
+        });
+      } else if (successCount > 0 && failCount > 0) {
+        toast({
+          title: "Partial Success",
+          description: `Updated ${successCount} order${successCount > 1 ? 's' : ''}. ${failCount} failed.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `Failed to update ${failCount} order${failCount > 1 ? 's' : ''}`,
+          variant: "destructive",
+        });
+      }
+
+      // Clear selection on success
+      if (failCount === 0) {
+        clearSelection();
+      }
+    } finally {
+      setIsBulkProcessing(false);
+      setBulkActionProgress(null);
+    }
+  };
+
+  const bulkPushToSteadfast = async () => {
+    if (selectedOrderIds.size === 0) return;
+
+    const orderIds = Array.from(selectedOrderIds);
+    const selectedOrders = orders.filter(o => orderIds.includes(o.id));
+    
+    setIsBulkProcessing(true);
+    setBulkActionProgress({ current: 0, total: selectedOrders.length });
+
+    let successCount = 0;
+    let failCount = 0;
+    const errors: string[] = [];
+
+    try {
+      for (let i = 0; i < selectedOrders.length; i++) {
+        const order = selectedOrders[i];
+        setBulkActionProgress({ current: i + 1, total: selectedOrders.length });
+
+        try {
+          // Check if already pushed
+          const { data: shipments } = await supabase
+            .from('courier_shipments')
+            .select('id, consignment_id, tracking_code')
+            .eq('order_id', order.id)
+            .eq('provider', 'steadfast')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          if (shipments && shipments.length > 0) {
+            // Already pushed, skip
+            successCount++;
+            continue;
+          }
+
+          const { data, error } = await supabase.functions.invoke('steadfast-create-order', {
+            body: { store_id: order.store_id, order_id: order.id },
+          });
+
+          if (error) throw error;
+          
+          if (data?.ok) {
+            const consignment = data?.consignment || {};
+            setOrders(prev => prev.map(o => 
+              o.id === order.id 
+                ? { 
+                    ...o, 
+                    status: 'shipped', 
+                    courier_name: 'steadfast', 
+                    tracking_number: consignment?.tracking_code || consignment?.consignment_id || null 
+                  }
+                : o
+            ));
+            successCount++;
+          } else {
+            throw new Error(data?.error || "Failed to create consignment");
+          }
+        } catch (error: any) {
+          failCount++;
+          errors.push(`Order ${order.order_number}: ${error.message || 'Failed to push'}`);
+          console.error(`Error pushing order ${order.id}:`, error);
+        }
+      }
+
+      // Show summary toast
+      if (successCount > 0 && failCount === 0) {
+        toast({
+          title: "Success",
+          description: `Successfully pushed ${successCount} order${successCount > 1 ? 's' : ''} to Steadfast`,
+        });
+        clearSelection();
+      } else if (successCount > 0 && failCount > 0) {
+        toast({
+          title: "Partial Success",
+          description: `Pushed ${successCount} order${successCount > 1 ? 's' : ''}. ${failCount} failed.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `Failed to push ${failCount} order${failCount > 1 ? 's' : ''} to Steadfast`,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsBulkProcessing(false);
+      setBulkActionProgress(null);
+    }
+  };
+
+  const bulkDeleteOrders = async () => {
+    if (selectedOrderIds.size === 0) return;
+
+    const orderIds = Array.from(selectedOrderIds);
+    setIsBulkProcessing(true);
+    setBulkActionProgress({ current: 0, total: orderIds.length });
+
+    let successCount = 0;
+    let failCount = 0;
+    const errors: string[] = [];
+
+    try {
+      for (let i = 0; i < orderIds.length; i++) {
+        const orderId = orderIds[i];
+        setBulkActionProgress({ current: i + 1, total: orderIds.length });
+
+        try {
+          const { error } = await supabase.functions.invoke('delete-order', { 
+            body: { orderId } 
+          });
+
+          if (error) throw error;
+
+          setOrders(prev => prev.filter(o => o.id !== orderId));
+          successCount++;
+        } catch (error: any) {
+          failCount++;
+          const order = orders.find(o => o.id === orderId);
+          errors.push(`Order ${order?.order_number || orderId}: ${error.message || 'Failed to delete'}`);
+          console.error(`Error deleting order ${orderId}:`, error);
+        }
+      }
+
+      // Show summary toast
+      if (successCount > 0 && failCount === 0) {
+        toast({
+          title: "Success",
+          description: `Successfully deleted ${successCount} order${successCount > 1 ? 's' : ''}`,
+        });
+        clearSelection();
+      } else if (successCount > 0 && failCount > 0) {
+        toast({
+          title: "Partial Success",
+          description: `Deleted ${successCount} order${successCount > 1 ? 's' : ''}. ${failCount} failed.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `Failed to delete ${failCount} order${failCount > 1 ? 's' : ''}`,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsBulkProcessing(false);
+      setBulkActionProgress(null);
+    }
+  };
+
   const handlePushToSteadfast = async (order: Order, force: boolean = false) => {
     try {
       if (!force) {
@@ -1236,6 +1553,119 @@ export default function Orders() {
                 </Button>
               </div>
             )}
+
+            {/* Bulk Action Toolbar */}
+            {selectedOrderIds.size > 0 && !loading && (
+              <div className="flex items-center justify-between p-4 bg-primary/5 border rounded-lg mb-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium">
+                    {selectedOrderIds.size} order{selectedOrderIds.size > 1 ? 's' : ''} selected
+                  </span>
+                  {bulkActionProgress && (
+                    <span className="text-sm text-muted-foreground">
+                      Processing {bulkActionProgress.current} of {bulkActionProgress.total}...
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {(() => {
+                    const selectedOrders = orders.filter(o => selectedOrderIds.has(o.id));
+                    const allPending = selectedOrders.every(o => o.status === 'pending');
+                    const allProcessing = selectedOrders.every(o => o.status === 'processing');
+                    const allShipped = selectedOrders.every(o => o.status === 'shipped');
+                    const canCancel = selectedOrders.every(o => o.status !== 'cancelled' && o.status !== 'delivered');
+                    
+                    return (
+                      <>
+                        {allPending && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => bulkUpdateOrderStatus('processing')}
+                            disabled={isBulkProcessing}
+                          >
+                            <Package className="h-4 w-4 mr-2" />
+                            Mark Processing
+                          </Button>
+                        )}
+                        {allProcessing && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => bulkUpdateOrderStatus('shipped')}
+                            disabled={isBulkProcessing}
+                          >
+                            <Package className="h-4 w-4 mr-2" />
+                            Mark Shipped
+                          </Button>
+                        )}
+                        {allShipped && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => bulkUpdateOrderStatus('delivered')}
+                            disabled={isBulkProcessing}
+                          >
+                            <Package className="h-4 w-4 mr-2" />
+                            Mark Delivered
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (confirm(`Push ${selectedOrderIds.size} order${selectedOrderIds.size > 1 ? 's' : ''} to Steadfast?`)) {
+                              bulkPushToSteadfast();
+                            }
+                          }}
+                          disabled={isBulkProcessing}
+                        >
+                          <Package className="h-4 w-4 mr-2" />
+                          Push to Steadfast
+                        </Button>
+                        {canCancel && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              if (confirm(`Cancel ${selectedOrderIds.size} order${selectedOrderIds.size > 1 ? 's' : ''}?`)) {
+                                bulkUpdateOrderStatus('cancelled');
+                              }
+                            }}
+                            disabled={isBulkProcessing}
+                          >
+                            <Ban className="h-4 w-4 mr-2" />
+                            Cancel Order{selectedOrderIds.size > 1 ? 's' : ''}
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => {
+                            if (confirm(`Delete ${selectedOrderIds.size} order${selectedOrderIds.size > 1 ? 's' : ''} permanently? This cannot be undone.`)) {
+                              bulkDeleteOrders();
+                            }
+                          }}
+                          disabled={isBulkProcessing}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Order{selectedOrderIds.size > 1 ? 's' : ''}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={clearSelection}
+                          disabled={isBulkProcessing}
+                        >
+                          <X className="h-4 w-4 mr-2" />
+                          Clear Selection
+                        </Button>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
             {loading ? (
               <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
@@ -1253,14 +1683,34 @@ export default function Orders() {
             ) : isMobile ? (
               // Mobile Card View
               <div className="space-y-4 overflow-x-hidden">
+                {/* Select All for Mobile */}
+                {orders.length > 0 && (
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <Checkbox
+                      checked={isAllSelected}
+                      onCheckedChange={selectAllOrders}
+                      disabled={isBulkProcessing}
+                    />
+                    <label className="text-sm font-medium cursor-pointer" onClick={selectAllOrders}>
+                      Select All
+                    </label>
+                  </div>
+                )}
                 {orders.map((order) => (
                   <Card key={order.id} className="p-4">
                     <div className="space-y-3">
                       {/* Header Row */}
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <div className="font-semibold text-sm"># {order.order_number}</div>
-                          <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-start gap-2 flex-1">
+                          <Checkbox
+                            checked={selectedOrderIds.has(order.id)}
+                            onCheckedChange={() => toggleOrderSelection(order.id)}
+                            disabled={isBulkProcessing}
+                            className="mt-1"
+                          />
+                          <div className="space-y-1 flex-1">
+                            <div className="font-semibold text-sm"># {order.order_number}</div>
+                            <div className="flex items-center gap-2 flex-wrap">
                             <Badge variant={statusColors[order.status as keyof typeof statusColors] || "secondary"} className="text-xs">
                               {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                             </Badge>
@@ -1269,9 +1719,10 @@ export default function Orders() {
                                 Potential Fake
                               </Badge>
                             )}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <div className="text-right">
                             <div className="font-semibold">৳{order.total.toLocaleString()}</div>
                             <div className="text-xs text-muted-foreground">
@@ -1439,9 +1890,7 @@ export default function Orders() {
                             <span>{funnelMap[order.funnel_id] || 'Funnel'}</span>
                           ) : order.website_id ? (
                             <span>{websiteMap[order.website_id] || 'Website'}</span>
-                          ) : (
-                            <span>Storefront</span>
-                          )}
+                          ) : null}
                         </div>
                       </div>
 
@@ -1473,6 +1922,13 @@ export default function Orders() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <Checkbox
+                        checked={isAllSelected}
+                        onCheckedChange={selectAllOrders}
+                        disabled={isBulkProcessing}
+                      />
+                    </TableHead>
                     <TableHead>Order</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead className="hidden md:table-cell">Channel</TableHead>
@@ -1487,6 +1943,13 @@ export default function Orders() {
                 <TableBody>
                   {orders.map((order) => (
                     <TableRow key={order.id}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedOrderIds.has(order.id)}
+                          onCheckedChange={() => toggleOrderSelection(order.id)}
+                          disabled={isBulkProcessing}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">
                         <div>
                           <div className="flex items-center gap-2">
@@ -1549,9 +2012,7 @@ export default function Orders() {
                           <div className="text-sm">
                             {websiteMap[order.website_id] || 'Website'}
                           </div>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">Storefront</span>
-                        )}
+                        ) : null}
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusColors[order.status as keyof typeof statusColors] || "secondary"}>

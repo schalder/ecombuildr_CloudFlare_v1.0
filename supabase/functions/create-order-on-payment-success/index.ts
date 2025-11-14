@@ -70,6 +70,36 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    // ✅ Check for existing order if idempotency key is provided (prevent duplicates)
+    if (orderData.idempotency_key) {
+      const { data: existingOrder, error: existingError } = await supabase
+        .from('orders')
+        .select('*, order_items(*)')
+        .eq('store_id', storeId)
+        .eq('idempotency_key', orderData.idempotency_key)
+        .single();
+
+      if (!existingError && existingOrder) {
+        console.log('create-order-on-payment-success: returning existing order for idempotency key', orderData.idempotency_key);
+        const accessToken = existingOrder.custom_fields?.order_access_token || crypto.randomUUID();
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            order: { 
+              ...existingOrder, 
+              access_token: accessToken 
+            } 
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+
+    // ✅ Extract funnel_id from custom_fields if not already set
+    if (!orderData.funnel_id && orderData.custom_fields?.funnelId) {
+      orderData.funnel_id = orderData.custom_fields.funnelId;
+    }
+
     // Generate order number if not provided
     if (!orderData.order_number) {
       orderData.order_number = `ORD-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
