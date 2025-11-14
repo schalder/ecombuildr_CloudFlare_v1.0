@@ -21,6 +21,11 @@ export const PaymentProcessing: React.FC = () => {
   const [verifying, setVerifying] = useState(false);
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [isCoursePayment, setIsCoursePayment] = useState<boolean | null>(null);
+  const [funnelContext, setFunnelContext] = useState<{
+    isFunnelCheckout: boolean;
+    funnelId?: string;
+    currentStepId?: string;
+  } | null>(null);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const tempId = searchParams.get('tempId') || '';
@@ -103,6 +108,29 @@ useEffect(() => {
   }, [order, urlStatus, statusUpdated]);
 
   const handleFailedDeferredPayment = () => {
+    // Read checkout data BEFORE clearing it to preserve funnel context
+    const pendingCheckout = sessionStorage.getItem('pending_checkout');
+    let funnelContextData = null;
+    
+    if (pendingCheckout) {
+      try {
+        const checkoutData = JSON.parse(pendingCheckout);
+        if (checkoutData.orderData?.isFunnelCheckout) {
+          funnelContextData = {
+            isFunnelCheckout: true,
+            funnelId: checkoutData.orderData.funnelId,
+            currentStepId: checkoutData.orderData.currentStepId
+          };
+          console.log('PaymentProcessing: Preserved funnel context for failed payment:', funnelContextData);
+        }
+      } catch (e) {
+        console.error('Error parsing pending checkout:', e);
+      }
+    }
+    
+    // Store funnel context for UI
+    setFunnelContext(funnelContextData);
+    
     // Clear any stored checkout data since payment failed
     sessionStorage.removeItem('pending_checkout');
     
@@ -598,20 +626,63 @@ useEffect(() => {
 
               {(order.status === 'payment_failed' || order.status === 'cancelled' || urlStatus === 'failed' || urlStatus === 'cancelled') && (
                 <Button 
-                  onClick={() => navigate(paths.checkout)}
+                  onClick={async () => {
+                    if (funnelContext?.isFunnelCheckout && funnelContext.currentStepId) {
+                      // Funnel checkout: redirect back to current step
+                      try {
+                        console.log('PaymentProcessing: Redirecting to funnel step:', funnelContext);
+                        const { data: currentStep, error: stepError } = await supabase
+                          .from('funnel_steps')
+                          .select('slug, funnel_id')
+                          .eq('id', funnelContext.currentStepId)
+                          .single();
+                        
+                        if (!stepError && currentStep?.slug) {
+                          const isAppEnvironment = (
+                            window.location.hostname === 'localhost' || 
+                            window.location.hostname.includes('ecombuildr.com')
+                          );
+                          
+                          if (isAppEnvironment) {
+                            // App/sandbox: use funnel-aware paths
+                            const funnelUrl = `/funnel/${funnelContext.funnelId}/${currentStep.slug}`;
+                            console.log(`PaymentProcessing: Funnel redirect (app): ${funnelUrl}`);
+                            window.location.href = funnelUrl;
+                          } else {
+                            // Custom domain: use clean paths
+                            const funnelUrl = `/${currentStep.slug}`;
+                            console.log(`PaymentProcessing: Funnel redirect (custom domain): ${funnelUrl}`);
+                            window.location.href = funnelUrl;
+                          }
+                        } else {
+                          console.error('PaymentProcessing: Step not found, falling back to checkout');
+                          navigate(paths.checkout);
+                        }
+                      } catch (error) {
+                        console.error('PaymentProcessing: Error redirecting to funnel step:', error);
+                        navigate(paths.checkout);
+                      }
+                    } else {
+                      // Site checkout: existing behavior
+                      navigate(paths.checkout);
+                    }
+                  }}
                   className="w-full"
                 >
                   Try Again
                 </Button>
               )}
 
-              <Button 
-                variant="outline" 
-                onClick={() => navigate(paths.home)}
-                className="w-full"
-              >
-                Continue Shopping
-              </Button>
+              {/* Only show Continue Shopping for site checkout */}
+              {!funnelContext?.isFunnelCheckout && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate(paths.home)}
+                  className="w-full"
+                >
+                  Continue Shopping
+                </Button>
+              )}
             </div>
 
             <div className="text-center text-sm text-muted-foreground">
