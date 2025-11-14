@@ -123,23 +123,21 @@ export const AudioUpload: React.FC<AudioUploadProps> = ({
       
       {value ? (
         <div className="relative group">
-          <div className="bg-muted rounded-lg overflow-hidden border p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Music className="w-8 h-8 text-primary" />
+          <div className="bg-muted rounded-lg overflow-hidden border p-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Music className="w-6 h-6 text-primary" />
               </div>
-              <div className="flex-1">
-                <audio 
-                  src={value} 
-                  controls 
-                  className="w-full"
-                  controlsList="nodownload"
-                />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Audio file uploaded</p>
+                <p className="text-xs text-muted-foreground truncate" title={value}>
+                  {value}
+                </p>
               </div>
               <Button
                 variant="destructive"
                 size="sm"
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={clearAudio}
               >
                 <X className="w-4 h-4" />

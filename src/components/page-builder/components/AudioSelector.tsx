@@ -54,25 +54,22 @@ export const AudioSelector: React.FC<AudioSelectorProps> = ({
       
       {hasAudio && (
         <div className="relative group">
-          <div className="bg-muted rounded-lg overflow-hidden border p-4">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Music className="w-8 h-8 text-primary" />
+          <div className="bg-muted rounded-lg overflow-hidden border p-3">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Music className="w-6 h-6 text-primary" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">Audio file selected</p>
-                <p className="text-xs text-muted-foreground truncate">{value || urlPreview}</p>
-                <audio 
-                  src={value || urlPreview} 
-                  controls 
-                  className="mt-2 w-full"
-                  controlsList="nodownload"
-                />
+                <p className="text-xs text-muted-foreground truncate" title={value || urlPreview}>
+                  {value || urlPreview}
+                </p>
               </div>
               <Button
                 type="button"
                 size="sm"
                 variant="secondary"
+                className="flex-shrink-0"
                 onClick={() => {
                   onChange('');
                   setUrlInput('');
