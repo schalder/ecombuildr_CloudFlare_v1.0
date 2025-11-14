@@ -106,8 +106,8 @@ function normalizeIP(ip: string | null | undefined): string | null {
 
 // Helper function to determine if payment is confirmed
 const isPaymentConfirmed = (order: Order): boolean => {
-  // For EPS/EB Pay: payment is confirmed if transaction number exists
-  if ((order.payment_method === 'eps' || order.payment_method === 'ebpay') && order.payment_transaction_number) {
+  // For EPS/EB Pay: payment is confirmed if order status is 'confirmed'
+  if ((order.payment_method === 'eps' || order.payment_method === 'ebpay') && order.status === 'confirmed') {
     return true;
   }
   // For COD: payment is confirmed when order is shipped or delivered
