@@ -126,12 +126,32 @@ export default function AddProduct() {
         setExpandedSections([...expandedSections, sectionId]);
         // Wait a bit for the accordion to expand before scrolling
         setTimeout(() => {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 100);
+          scrollToSection(element);
+        }, 150);
       } else {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollToSection(element);
       }
       setActiveSection(sectionId);
+    }
+  };
+
+  // Scroll to section with proper offset
+  const scrollToSection = (element: HTMLElement) => {
+    // Find the scrolling container (main element with overflow-auto)
+    const mainElement = document.querySelector('main[class*="overflow-auto"]') as HTMLElement;
+    if (mainElement) {
+      const elementRect = element.getBoundingClientRect();
+      const containerRect = mainElement.getBoundingClientRect();
+      const scrollOffset = 24; // Offset for spacing from top
+      const scrollPosition = mainElement.scrollTop + (elementRect.top - containerRect.top) - scrollOffset;
+      
+      mainElement.scrollTo({
+        top: scrollPosition,
+        behavior: 'smooth'
+      });
+    } else {
+      // Fallback to default scrollIntoView
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
@@ -1313,7 +1333,7 @@ export default function AddProduct() {
         <div className="hidden lg:block w-64 shrink-0" aria-hidden="true" />
 
         {/* Fixed Sidebar Navigation - Positioned relative to viewport */}
-        <aside className="hidden lg:block fixed right-6 top-24 w-64 z-40">
+        <aside className="hidden lg:block fixed right-6 top-[136px] w-64 z-40">
           <Card className="border shadow-lg">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold">Navigation</CardTitle>

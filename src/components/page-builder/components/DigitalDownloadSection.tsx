@@ -73,49 +73,49 @@ export const DigitalDownloadSection: React.FC<DigitalDownloadSectionProps> = ({
     <div className="space-y-4">
       {/* Download Section for uploaded/library files */}
       {hasDownloads && (
-        <div className="rounded-lg border">
-          <div className="p-4 border-b">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Download className="h-5 w-5" />
-              Digital Downloads
-            </h3>
-          </div>
-          <div className="p-4 space-y-3">
-            {downloadLinks.map((link: any) => {
-              const fileName = link.digital_file_path.split('/').pop() || 'download';
-              const isExpired = new Date(link.expires_at) < new Date();
-              const isLimitReached = link.download_count >= link.max_downloads;
-              const canDownload = !isExpired && !isLimitReached;
-              
-              return (
-                <div key={link.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-blue-600" />
-                    <div>
-                      <p className="font-medium">{fileName}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Downloads: {link.download_count}/{link.max_downloads} | 
-                        Expires: {new Date(link.expires_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleDownloadFile(link.digital_file_path, fileName)}
-                    disabled={!canDownload}
-                    variant={canDownload ? "default" : "secondary"}
-                  >
-                    {isExpired ? 'Expired' : isLimitReached ? 'Limit Reached' : 'Download'}
-                  </Button>
+    <div className="rounded-lg border">
+      <div className="p-4 border-b">
+        <h3 className="font-semibold flex items-center gap-2">
+          <Download className="h-5 w-5" />
+          Digital Downloads
+        </h3>
+      </div>
+      <div className="p-4 space-y-3">
+        {downloadLinks.map((link: any) => {
+          const fileName = link.digital_file_path.split('/').pop() || 'download';
+          const isExpired = new Date(link.expires_at) < new Date();
+          const isLimitReached = link.download_count >= link.max_downloads;
+          const canDownload = !isExpired && !isLimitReached;
+          
+          return (
+            <div key={link.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <FileText className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="font-medium">{fileName}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Downloads: {link.download_count}/{link.max_downloads} | 
+                    Expires: {new Date(link.expires_at).toLocaleDateString()}
+                  </p>
                 </div>
-              );
-            })}
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <p className="text-sm text-blue-700">
-                💡 Save these files to your device. Download links expire after the specified time period.
-              </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={() => handleDownloadFile(link.digital_file_path, fileName)}
+                disabled={!canDownload}
+                variant={canDownload ? "default" : "secondary"}
+              >
+                {isExpired ? 'Expired' : isLimitReached ? 'Limit Reached' : 'Download'}
+              </Button>
             </div>
-          </div>
+          );
+        })}
+        <div className="bg-blue-50 p-3 rounded-lg">
+          <p className="text-sm text-blue-700">
+            💡 Save these files to your device. Download links expire after the specified time period.
+          </p>
+        </div>
+      </div>
         </div>
       )}
 
