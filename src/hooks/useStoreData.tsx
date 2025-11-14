@@ -79,6 +79,7 @@ export const useStoreProducts = (options?: {
           .select('*')
           .eq('store_id', store.id)
           .eq('is_active', true)
+          .eq('show_on_website', true)
           .in('id', productIds)
           .order('created_at', { ascending: false });
 

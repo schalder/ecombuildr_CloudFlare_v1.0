@@ -156,6 +156,7 @@ export const ProductDetail: React.FC = () => {
         .select('*')
         .eq('store_id', store.id)
         .eq('is_active', true)
+        .eq('show_on_website', true)
         .eq('slug', productSlug)
         .maybeSingle();
 

@@ -75,6 +75,7 @@ export default function EditProduct() {
     inventory_quantity: '',
     category_id: '',
     is_active: true,
+    show_on_website: true,
     images: [] as string[],
     video_url: '',
     seo_title: '',
@@ -263,6 +264,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           inventory_quantity: product.inventory_quantity?.toString() || '',
           category_id: product.category_id || '',
           is_active: product.is_active,
+          show_on_website: (product as any).show_on_website !== undefined ? (product as any).show_on_website : true,
           images: Array.isArray(product.images) ? product.images.filter((i: any) => typeof i === 'string') : [],
           video_url: (product as any).video_url || '',
           seo_title: (product as any).seo_title || '',
@@ -407,6 +409,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         easy_returns_enabled: easyReturnsEnabled,
         easy_returns_days: easyReturnsEnabled && easyReturnsDays ? parseInt(easyReturnsDays) : null,
         is_active: formData.is_active,
+        show_on_website: formData.show_on_website,
         updated_at: new Date().toISOString(),
         variations: hasVariants ? { options: variations, variants: variantEntries } : [],
         action_buttons: actionButtons as any,
@@ -874,11 +877,31 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                         onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
                       />
                       <Label htmlFor="is_active" className="text-sm font-medium">
-                        Product is active and visible to customers
+                        Product is active
                       </Label>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Inactive products won't appear on your website but remain in your catalog.
+                    <p className="text-sm text-muted-foreground ml-9">
+                      Active products can be used in funnels and orders. Inactive products are disabled everywhere.
+                    </p>
+                    
+                    <Separator />
+                    
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        id="show_on_website"
+                        checked={formData.show_on_website}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, show_on_website: checked }))}
+                        disabled={!formData.is_active}
+                      />
+                      <Label htmlFor="show_on_website" className="text-sm font-medium">
+                        Show on website
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground ml-9">
+                      {formData.is_active 
+                        ? "When enabled, this product will appear on your website storefront. When disabled, it will be hidden from the website but can still be used in funnels."
+                        : "Enable 'Product is active' first to control website visibility."
+                      }
                     </p>
                   </CardContent>
                 </AccordionContent>

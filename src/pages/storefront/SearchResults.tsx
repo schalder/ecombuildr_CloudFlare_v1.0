@@ -70,6 +70,7 @@ export const SearchResults: React.FC = () => {
         .select('*')
         .eq('store_id', store.id)
         .eq('is_active', true)
+        .eq('show_on_website', true)
         .or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,short_description.ilike.%${searchQuery}%`)
         .order('name');
 

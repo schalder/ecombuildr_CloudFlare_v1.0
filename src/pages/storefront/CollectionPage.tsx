@@ -113,7 +113,8 @@ function CollectionPage() {
             short_description,
             inventory_quantity,
             track_inventory,
-            is_active
+            is_active,
+            show_on_website
           )
         `)
         .eq('collection_id', collectionData.id)
@@ -123,7 +124,7 @@ function CollectionPage() {
 
       // Filter and transform the data
       const activeProducts = (productsData || [])
-        .filter(item => item.product?.is_active)
+        .filter(item => item.product?.is_active && item.product?.show_on_website !== false)
         .map(item => item.product)
         .filter(Boolean) as Product[];
 

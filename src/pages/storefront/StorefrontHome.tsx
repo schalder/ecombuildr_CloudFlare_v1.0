@@ -107,6 +107,7 @@ export const StorefrontHome: React.FC = () => {
         .select('id, name, slug, description, short_description, price, compare_price, images, is_active')
         .eq('store_id', store.id)
         .eq('is_active', true)
+        .eq('show_on_website', true)
         .limit(8);
 
       console.log('Products query result:', { data, error });

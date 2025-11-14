@@ -55,6 +55,7 @@ export default function AddProduct() {
     track_inventory: false,
     inventory_quantity: '0',
     is_active: true,
+    show_on_website: true,
     category_id: '',
     seo_title: '',
     seo_description: '',
@@ -214,6 +215,7 @@ export default function AddProduct() {
         track_inventory: formData.product_type === 'physical' ? formData.track_inventory : false,
         inventory_quantity: formData.product_type === 'physical' ? parseInt(formData.inventory_quantity) || 0 : 0,
         is_active: formData.is_active,
+        show_on_website: formData.show_on_website,
         category_id: formData.category_id || null,
         seo_title: formData.seo_title || null,
         seo_description: formData.seo_description || null,
@@ -666,11 +668,31 @@ export default function AddProduct() {
                         onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
                       />
                       <Label htmlFor="is_active" className="text-sm font-medium">
-                        Product is active and visible to customers
+                        Product is active
                       </Label>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Inactive products won't appear on your website but remain in your catalog.
+                    <p className="text-sm text-muted-foreground ml-9">
+                      Active products can be used in funnels and orders. Inactive products are disabled everywhere.
+                    </p>
+                    
+                    <Separator />
+                    
+                    <div className="flex items-center gap-3">
+                      <Switch
+                        id="show_on_website"
+                        checked={formData.show_on_website}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, show_on_website: checked }))}
+                        disabled={!formData.is_active}
+                      />
+                      <Label htmlFor="show_on_website" className="text-sm font-medium">
+                        Show on website
+                      </Label>
+                    </div>
+                    <p className="text-sm text-muted-foreground ml-9">
+                      {formData.is_active 
+                        ? "When enabled, this product will appear on your website storefront. When disabled, it will be hidden from the website but can still be used in funnels."
+                        : "Enable 'Product is active' first to control website visibility."
+                      }
                     </p>
                   </CardContent>
                 </AccordionContent>
