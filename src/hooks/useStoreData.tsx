@@ -62,6 +62,42 @@ export const useStoreProducts = (options?: {
       
       // If websiteId is provided, filter by website visibility
       if (options?.websiteId) {
+        // When specificProductIds is provided (products already selected for funnel),
+        // skip website visibility filtering and fetch products directly by their IDs
+        // This ensures products with show_on_website = false can be used in funnels
+        if (options?.specificProductIds && options.specificProductIds.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore - Type instantiation is excessively deep (known Supabase type inference limitation)
+          let query = supabase
+            .from('products')
+            .select('*')
+            .eq('store_id', store.id)
+            .eq('is_active', true)
+            .in('id', options.specificProductIds)
+            .order('created_at', { ascending: false });
+
+          // Filter by categories
+          if (options?.categoryIds && options.categoryIds.length > 0) {
+            query = (query as any).in('category_id', options.categoryIds);
+          }
+
+          // Apply limit
+          if (options?.limit) {
+            query = (query as any).limit(options.limit);
+          }
+
+          const { data, error } = await query;
+
+          if (error) {
+            setError(error.message);
+            return;
+          }
+
+          setProducts(data as Product[] || []);
+          return;
+        }
+
+        // For general product listing (no specificProductIds), use website visibility filtering
         const { data: visibleProductIds } = await supabase
           .from('product_website_visibility')
           .select('product_id')
@@ -83,25 +119,13 @@ export const useStoreProducts = (options?: {
           .eq('store_id', store.id)
           .eq('is_active', true);
         
-        // Only filter by show_on_website if:
-        // 1. skipShowOnWebsiteFilter is NOT true, AND
-        // 2. specificProductIds is NOT provided (when specificProductIds is provided, user has explicitly selected products for funnel, so don't filter)
-        // (for funnel checkout product selection and display, we want to show all active products)
-        if (!options?.skipShowOnWebsiteFilter && (!options?.specificProductIds || options.specificProductIds.length === 0)) {
+        // Only filter by show_on_website if skipShowOnWebsiteFilter is NOT true
+        // (for website storefront pages, we want to filter by show_on_website)
+        if (!options?.skipShowOnWebsiteFilter) {
           query = (query as any).eq('show_on_website', true);
         }
         
         query = (query as any).in('id', productIds).order('created_at', { ascending: false });
-
-        // Filter by specific product IDs (intersection with visible products)
-        if (options?.specificProductIds && options.specificProductIds.length > 0) {
-          const filteredIds = options.specificProductIds.filter(id => productIds.includes(id));
-          if (filteredIds.length === 0) {
-            setProducts([]);
-            return;
-          }
-          query = query.in('id', filteredIds);
-        }
 
         // Filter by categories
         if (options?.categoryIds && options.categoryIds.length > 0) {
