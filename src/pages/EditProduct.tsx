@@ -491,7 +491,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         // Wait a bit for the accordion to expand before scrolling
         setTimeout(() => {
           scrollToSection(element);
-        }, 150);
+        }, 200);
       } else {
         scrollToSection(element);
       }
@@ -501,21 +501,27 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
   // Scroll to section with proper offset
   const scrollToSection = (element: HTMLElement) => {
-    // Find the scrolling container (main element with overflow-auto)
-    const mainElement = document.querySelector('main[class*="overflow-auto"]') as HTMLElement;
-    if (mainElement) {
+    // Find the scrolling container - use a more reliable selector
+    const mainElement = document.querySelector('main') as HTMLElement;
+    if (mainElement && mainElement.classList.contains('overflow-auto')) {
+      // Calculate proper offset: header (64px) + container padding (24px) = 88px
+      const headerHeight = 64; // h-16 = 64px
+      const containerPadding = 24; // p-6 = 24px
+      const scrollOffset = headerHeight + containerPadding; // 88px
+      
       const elementRect = element.getBoundingClientRect();
       const containerRect = mainElement.getBoundingClientRect();
-      const scrollOffset = 24; // Offset for spacing from top
       const scrollPosition = mainElement.scrollTop + (elementRect.top - containerRect.top) - scrollOffset;
       
       mainElement.scrollTo({
-        top: scrollPosition,
+        top: Math.max(0, scrollPosition), // Ensure non-negative
         behavior: 'smooth'
       });
     } else {
-      // Fallback to default scrollIntoView
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Fallback to default scrollIntoView with offset
+      const yOffset = -88; // Account for header + padding
+      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
     }
   };
 

@@ -141,17 +141,28 @@ const ProductDetailElement: React.FC<{ element: PageBuilderElement }> = ({ eleme
       if (!store) return;
       try {
         setLoading(true);
-        let query = supabase.from('products').select('*').eq('store_id', store.id).eq('is_active', true);
-        if (productSlug) {
-          query = query.eq('slug', productSlug);
-        } else if (element.content?.productId) {
-          query = query.eq('id', element.content.productId);
-        } else {
+        if (!productSlug && !element.content?.productId) {
           setProduct(null);
           setLoading(false);
           return;
         }
-        const { data } = await query.single();
+        
+        // Build query with show_on_website filter
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - Type instantiation is excessively deep (known Supabase type inference limitation)
+        const queryBuilder = supabase
+          .from('products')
+          .select('*')
+          .eq('store_id', store.id)
+          .eq('is_active', true)
+          .eq('show_on_website', true);
+        
+        // Type assertion to avoid TypeScript deep instantiation error
+        const finalQuery = productSlug
+          ? (queryBuilder as any).eq('slug', productSlug)
+          : (queryBuilder as any).eq('id', element.content?.productId);
+        
+        const { data } = await finalQuery.single();
         setProduct({
           ...data,
           images: Array.isArray(data?.images) ? data.images : [],

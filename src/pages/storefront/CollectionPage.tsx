@@ -124,7 +124,7 @@ function CollectionPage() {
 
       // Filter and transform the data
       const activeProducts = (productsData || [])
-        .filter(item => item.product?.is_active && item.product?.show_on_website !== false)
+        .filter(item => item.product?.is_active && item.product?.show_on_website === true)
         .map(item => item.product)
         .filter(Boolean) as Product[];
 
