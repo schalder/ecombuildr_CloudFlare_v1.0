@@ -54,7 +54,10 @@ export const InlineCheckoutContentProperties: React.FC<InlineCheckoutContentProp
   // Resolve websiteId for filtering
   const resolvedWebsiteId = useResolvedWebsiteId(element);
   
-  const { products, loading } = useStoreProducts({ websiteId: resolvedWebsiteId });
+  const { products, loading } = useStoreProducts({ 
+    websiteId: resolvedWebsiteId,
+    skipShowOnWebsiteFilter: true // Show all active products for funnel checkout selection
+  });
 
   const toggleProduct = (id: string, checked: boolean) => {
     const next = checked ? Array.from(new Set([...(selectedIds || []), id])) : (selectedIds || []).filter((pid) => pid !== id);

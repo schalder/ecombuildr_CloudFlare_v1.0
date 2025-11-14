@@ -41,6 +41,7 @@ export const useStoreProducts = (options?: {
   limit?: number;
   specificProductIds?: string[];
   websiteId?: string;
+  skipShowOnWebsiteFilter?: boolean; // When true, don't filter by show_on_website (for funnel checkout product selection)
 }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,10 +81,9 @@ export const useStoreProducts = (options?: {
           .eq('store_id', store.id)
           .eq('is_active', true);
         
-        // Only filter by show_on_website when NOT fetching specific products
-        // (specificProductIds means merchant explicitly selected products for funnel checkout)
-        // Funnel checkouts should show products regardless of show_on_website status
-        if (!options?.specificProductIds || options.specificProductIds.length === 0) {
+        // Only filter by show_on_website if skipShowOnWebsiteFilter is NOT true
+        // (for funnel checkout product selection, we want to show all active products)
+        if (!options?.skipShowOnWebsiteFilter) {
           query = query.eq('show_on_website', true);
         }
         
