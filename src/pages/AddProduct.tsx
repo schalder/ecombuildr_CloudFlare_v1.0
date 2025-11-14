@@ -390,7 +390,7 @@ export default function AddProduct() {
           </Button>
         </div>
 
-        <div className="flex gap-6">
+        <div className="flex gap-6 items-start">
           {/* Main Form */}
           <form onSubmit={handleSubmit} className="flex-1 space-y-6">
           <Accordion 
@@ -1310,8 +1310,8 @@ export default function AddProduct() {
         </form>
 
         {/* Sticky Sidebar Navigation - Hidden on mobile/tablet */}
-        <aside className="hidden lg:block w-64 shrink-0">
-          <div className="sticky top-24">
+        <aside className="hidden lg:block w-64 shrink-0 self-start">
+          <div className="sticky top-6">
             <Card className="border">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-semibold">Navigation</CardTitle>
