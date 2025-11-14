@@ -157,7 +157,7 @@ export const useStoreProducts = (options?: {
     } finally {
       setLoading(false);
     }
-  }, [store, options?.categoryIds, options?.limit, options?.specificProductIds, options?.websiteId]);
+  }, [store, options?.categoryIds, options?.limit, options?.specificProductIds, options?.websiteId, options?.skipShowOnWebsiteFilter]);
 
   useEffect(() => {
     fetchProducts();
