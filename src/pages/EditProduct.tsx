@@ -599,7 +599,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           </Button>
         </div>
 
-        <div className="flex gap-6 items-start">
+        <div className="flex gap-6 items-start relative">
           {/* Main Form */}
           <form onSubmit={handleSubmit} className="flex-1 space-y-6">
           <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full space-y-4">
@@ -1601,37 +1601,38 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         />
         </form>
 
-        {/* Sticky Sidebar Navigation - Hidden on mobile/tablet */}
-        <aside className="hidden lg:block w-64 shrink-0 self-start">
-          <div className="sticky top-6">
-            <Card className="border">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold">Navigation</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <nav className="space-y-1 px-2 pb-4">
-                  {sectionNavItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeSection === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => navigateToSection(item.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-md transition-colors ${
-                          isActive
-                            ? 'bg-primary text-primary-foreground font-medium'
-                            : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                        }`}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        <span className="text-left">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </nav>
-              </CardContent>
-            </Card>
-          </div>
+        {/* Spacer for sidebar on desktop - maintains layout spacing */}
+        <div className="hidden lg:block w-64 shrink-0" aria-hidden="true" />
+
+        {/* Fixed Sidebar Navigation - Positioned relative to viewport */}
+        <aside className="hidden lg:block fixed right-6 top-24 w-64 z-40">
+          <Card className="border shadow-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-semibold">Navigation</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <nav className="space-y-1 px-2 pb-4">
+                {sectionNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeSection === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => navigateToSection(item.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm rounded-md transition-colors ${
+                        isActive
+                          ? 'bg-primary text-primary-foreground font-medium'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className="text-left">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </CardContent>
+          </Card>
         </aside>
       </div>
       </div>
