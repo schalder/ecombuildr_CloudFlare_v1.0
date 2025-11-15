@@ -157,31 +157,20 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
 
   // Calculate container styles
   const getContainerStyles = useCallback((): React.CSSProperties => {
+    // Separate alignment-related styles (margins) from other styles
+    // Margins should only be applied to the image, not the container
+    const { marginLeft, marginRight, marginTop, marginBottom, margin, ...nonMarginStyles } = style || {};
+    
     const baseStyles: React.CSSProperties = {
       position: 'relative',
       overflow: 'hidden',
       // Remove default background color to preserve transparency
-      ...style
+      // Exclude margins - they should only be on the image element
+      ...nonMarginStyles
     };
 
-    // When preserving original, respect all styles from page builder
-    // But ensure alignment works properly by setting display and width constraints
+    // When preserving original, respect all styles from page builder (except margins)
     if (preserveOriginal) {
-      // If margin auto is set (for alignment), ensure display allows it to work
-      const hasAutoMargin = (style?.marginLeft === 'auto' || style?.marginRight === 'auto');
-      
-      if (hasAutoMargin) {
-        // For margin auto to work, we need either:
-        // 1. display: inline-block (shrink-wrap to content)
-        // 2. Or a constrained width
-        // Use inline-block if no explicit width is set, otherwise keep block
-        if (!style?.width && !width) {
-          baseStyles.display = 'inline-block';
-        } else {
-          baseStyles.display = style?.display || 'block';
-        }
-      }
-      
       return baseStyles;
     }
 

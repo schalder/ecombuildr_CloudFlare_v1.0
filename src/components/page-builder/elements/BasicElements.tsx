@@ -147,13 +147,12 @@ const ImageElement: React.FC<{
 
   // Generate responsive CSS for this element
   // Exclude border properties from responsive CSS since borders are applied directly to the image via inline styles
-  // Also exclude width when alignment is set (not 'full') to prevent alignment issues on live pages
   const responsiveCSS = React.useMemo(() => {
     if (!element.styles?.responsive) {
       return generateResponsiveCSS(element.id, element.styles);
     }
     
-    // Filter out border properties and width (when alignment is not 'full') from responsive styles
+    // Filter out border properties from responsive styles to prevent double borders
     const filteredStyles = {
       ...element.styles,
       responsive: {
@@ -164,24 +163,17 @@ const ImageElement: React.FC<{
     };
     
     // Remove border properties from responsive styles for each device
-    // Also remove width if alignment is not 'full' to preserve alignment margins
     ['desktop', 'tablet', 'mobile'].forEach(device => {
       if (filteredStyles.responsive[device]) {
         delete filteredStyles.responsive[device].borderWidth;
         delete filteredStyles.responsive[device].borderColor;
         delete filteredStyles.responsive[device].borderStyle;
         delete filteredStyles.responsive[device].borderRadius;
-        
-        // Exclude width from responsive CSS when alignment is not 'full'
-        // This prevents responsive width from overriding alignment margins on live pages
-        if (alignment !== 'full') {
-          delete filteredStyles.responsive[device].width;
-        }
       }
     });
     
     return generateResponsiveCSS(element.id, filteredStyles);
-  }, [element.id, element.styles, alignment]);
+  }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
@@ -203,6 +195,38 @@ const ImageElement: React.FC<{
     return cleanStyles;
   };
 
+  // Get alignment styles (margins) - should be applied to link wrapper if present, otherwise to image
+  const getAlignmentStyles = (): React.CSSProperties => {
+    const alignmentStyles: React.CSSProperties = {
+      display: 'block' // Required for margins to work properly
+    };
+    
+    if (alignment === 'full') {
+      alignmentStyles.width = '100%';
+      alignmentStyles.marginLeft = '0';
+      alignmentStyles.marginRight = '0';
+    } else {
+      // Apply alignment
+      switch (alignment) {
+        case 'left':
+          alignmentStyles.marginLeft = '0';
+          alignmentStyles.marginRight = 'auto';
+          break;
+        case 'right':
+          alignmentStyles.marginLeft = 'auto';
+          alignmentStyles.marginRight = '0';
+          break;
+        case 'center':
+        default:
+          alignmentStyles.marginLeft = 'auto';
+          alignmentStyles.marginRight = 'auto';
+          break;
+      }
+    }
+    
+    return alignmentStyles;
+  };
+
   // Calculate image styles with alignment and border (width handled by responsive CSS)
   const getImageStyles = (): React.CSSProperties => {
     const baseStyles = {
@@ -215,28 +239,13 @@ const ImageElement: React.FC<{
         : undefined)
     } as React.CSSProperties;
 
-    // Apply alignment as margin styles directly to the image
-    if (alignment === 'full') {
+    // Apply alignment as margin styles directly to the image (only if no link wrapper)
+    // If there's a link wrapper, alignment will be applied to the wrapper instead
+    if (!linkUrl) {
+      const alignmentStyles = getAlignmentStyles();
+      Object.assign(baseStyles, alignmentStyles);
+    } else if (alignment === 'full') {
       baseStyles.width = '100%';
-      baseStyles.marginLeft = '0';
-      baseStyles.marginRight = '0';
-    } else {
-      // Apply alignment
-      switch (alignment) {
-        case 'left':
-          baseStyles.marginLeft = '0';
-          baseStyles.marginRight = 'auto';
-          break;
-        case 'right':
-          baseStyles.marginLeft = 'auto';
-          baseStyles.marginRight = '0';
-          break;
-        case 'center':
-        default:
-          baseStyles.marginLeft = 'auto';
-          baseStyles.marginRight = 'auto';
-          break;
-      }
     }
 
     // Apply border styles directly to the image
@@ -373,7 +382,7 @@ const ImageElement: React.FC<{
       href={linkUrl} 
       target={linkTarget}
       className="select-none"
-      style={alignment === 'full' ? { display: 'inline-block' } : { display: 'block' }}
+      style={getAlignmentStyles()}
       onClick={(e) => {
         // In editing mode, prevent navigation but allow selection
         if (isEditing) {
