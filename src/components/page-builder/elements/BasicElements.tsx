@@ -195,38 +195,6 @@ const ImageElement: React.FC<{
     return cleanStyles;
   };
 
-  // Get wrapper styles for link (when linkUrl exists)
-  const getLinkWrapperStyles = (): React.CSSProperties => {
-    const wrapperStyles: React.CSSProperties = {
-      display: 'block',
-    };
-
-    // Apply alignment to wrapper
-    if (alignment === 'full') {
-      wrapperStyles.width = '100%';
-      wrapperStyles.marginLeft = '0';
-      wrapperStyles.marginRight = '0';
-    } else {
-      switch (alignment) {
-        case 'left':
-          wrapperStyles.marginLeft = '0';
-          wrapperStyles.marginRight = 'auto';
-          break;
-        case 'right':
-          wrapperStyles.marginLeft = 'auto';
-          wrapperStyles.marginRight = '0';
-          break;
-        case 'center':
-        default:
-          wrapperStyles.marginLeft = 'auto';
-          wrapperStyles.marginRight = 'auto';
-          break;
-      }
-    }
-
-    return wrapperStyles;
-  };
-
   // Calculate image styles with alignment and border (width handled by responsive CSS)
   const getImageStyles = (): React.CSSProperties => {
     const baseStyles = {
@@ -239,34 +207,28 @@ const ImageElement: React.FC<{
         : undefined)
     } as React.CSSProperties;
 
-    // Apply alignment as margin styles directly to the image (only when NOT wrapped in link)
-    // When wrapped in link, alignment is applied to the wrapper instead
-    if (!linkUrl) {
-      if (alignment === 'full') {
-        baseStyles.width = '100%';
-        baseStyles.marginLeft = '0';
-        baseStyles.marginRight = '0';
-      } else {
-        // Apply alignment
-        switch (alignment) {
-          case 'left':
-            baseStyles.marginLeft = '0';
-            baseStyles.marginRight = 'auto';
-            break;
-          case 'right':
-            baseStyles.marginLeft = 'auto';
-            baseStyles.marginRight = '0';
-            break;
-          case 'center':
-          default:
-            baseStyles.marginLeft = 'auto';
-            baseStyles.marginRight = 'auto';
-            break;
-        }
-      }
-    } else if (alignment === 'full') {
-      // For full width, still apply to image when wrapped
+    // Apply alignment as margin styles directly to the image
+    if (alignment === 'full') {
       baseStyles.width = '100%';
+      baseStyles.marginLeft = '0';
+      baseStyles.marginRight = '0';
+    } else {
+      // Apply alignment
+      switch (alignment) {
+        case 'left':
+          baseStyles.marginLeft = '0';
+          baseStyles.marginRight = 'auto';
+          break;
+        case 'right':
+          baseStyles.marginLeft = 'auto';
+          baseStyles.marginRight = '0';
+          break;
+        case 'center':
+        default:
+          baseStyles.marginLeft = 'auto';
+          baseStyles.marginRight = 'auto';
+          break;
+      }
     }
 
     // Apply border styles directly to the image
@@ -361,6 +323,8 @@ const ImageElement: React.FC<{
     
     // Use optimized component for live pages
     if (!isEditing) {
+      // Pass styles directly - AdvancedImageOptimizer will handle alignment properly
+      // by setting display: inline-block when margin auto is detected
       return (
         <StorefrontImage
           src={imageUrl}
@@ -402,8 +366,7 @@ const ImageElement: React.FC<{
     <a 
       href={linkUrl} 
       target={linkTarget}
-      className="select-none"
-      style={getLinkWrapperStyles()}
+      className="inline-block select-none"
       onClick={(e) => {
         // In editing mode, prevent navigation but allow selection
         if (isEditing) {

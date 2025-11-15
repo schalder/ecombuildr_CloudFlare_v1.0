@@ -9,15 +9,7 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
   
   // Desktop styles (default)
   if (Object.keys(desktop).length > 0) {
-    const { 
-      hoverColor, 
-      hoverBackgroundColor, 
-      borderWidth, 
-      borderColor, 
-      borderStyle, 
-      borderRadius, 
-      ...restDesktop 
-    } = desktop as any;
+    const { hoverColor, hoverBackgroundColor, ...restDesktop } = desktop as any;
     const desktopProps = Object.entries(restDesktop)
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');
@@ -35,15 +27,7 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
   
   // Tablet styles (768px to 1023px)
   if (Object.keys(tablet).length > 0) {
-    const { 
-      hoverColor: tHoverColor, 
-      hoverBackgroundColor: tHoverBg, 
-      borderWidth: tBorderWidth, 
-      borderColor: tBorderColor, 
-      borderStyle: tBorderStyle, 
-      borderRadius: tBorderRadius, 
-      ...restTablet 
-    } = tablet as any;
+    const { hoverColor: tHoverColor, hoverBackgroundColor: tHoverBg, ...restTablet } = tablet as any;
     const tabletProps = Object.entries(restTablet)
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');
@@ -74,15 +58,7 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
   
   // Mobile styles (max-width: 767px)
   if (Object.keys(mobile).length > 0) {
-    const { 
-      hoverColor: mHoverColor, 
-      hoverBackgroundColor: mHoverBg, 
-      borderWidth: mBorderWidth, 
-      borderColor: mBorderColor, 
-      borderStyle: mBorderStyle, 
-      borderRadius: mBorderRadius, 
-      ...restMobile 
-    } = mobile as any;
+    const { hoverColor: mHoverColor, hoverBackgroundColor: mHoverBg, ...restMobile } = mobile as any;
     const mobileProps = Object.entries(restMobile)
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');

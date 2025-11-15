@@ -157,21 +157,6 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
 
   // Calculate container styles
   const getContainerStyles = useCallback((): React.CSSProperties => {
-    // When preserving original, separate margin styles (alignment) from container styles
-    // Margins should only be applied to the image, not the container
-    // Also separate width/maxWidth - these should be on the image, not the container
-    if (preserveOriginal && style) {
-      const { margin, marginTop, marginRight, marginBottom, marginLeft, width, maxWidth, minWidth, ...containerStyles } = style;
-      return {
-        position: 'relative',
-        overflow: 'hidden',
-        display: 'block', // Ensure container is block-level to allow child margins to work
-        // DO NOT force width: '100%' - let the image's width control its size
-        // The container should be block-level but not constrain the image width
-        ...containerStyles
-      };
-    }
-
     const baseStyles: React.CSSProperties = {
       position: 'relative',
       overflow: 'hidden',
@@ -179,8 +164,24 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
       ...style
     };
 
-    // When preserving original, respect all styles from page builder (but margins are handled above)
+    // When preserving original, respect all styles from page builder
+    // But ensure alignment works properly by setting display and width constraints
     if (preserveOriginal) {
+      // If margin auto is set (for alignment), ensure display allows it to work
+      const hasAutoMargin = (style?.marginLeft === 'auto' || style?.marginRight === 'auto');
+      
+      if (hasAutoMargin) {
+        // For margin auto to work, we need either:
+        // 1. display: inline-block (shrink-wrap to content)
+        // 2. Or a constrained width
+        // Use inline-block if no explicit width is set, otherwise keep block
+        if (!style?.width && !width) {
+          baseStyles.display = 'inline-block';
+        } else {
+          baseStyles.display = style?.display || 'block';
+        }
+      }
+      
       return baseStyles;
     }
 
@@ -241,7 +242,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
       
       {/* Render image when in view */}
       {isInView && (
-        <picture style={preserveOriginal ? { display: 'block' } : undefined}>
+        <picture>
           {generateModernSources()}
           <img
             ref={imgRef}
