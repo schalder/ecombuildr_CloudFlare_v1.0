@@ -226,6 +226,69 @@ const ImageElement: React.FC<{
     return baseStyles;
   };
 
+  // Get container styles (without borders) for StorefrontImage wrapper
+  const getContainerStylesForLive = (): React.CSSProperties => {
+    const elementStyles = renderElementStyles(element, deviceType);
+    const containerStyles: React.CSSProperties = {};
+    
+    // Copy all styles except borders (borders go on the image itself)
+    if (elementStyles.height) containerStyles.height = elementStyles.height;
+    if (elementStyles.width) containerStyles.width = elementStyles.width;
+    if (elementStyles.maxWidth) containerStyles.maxWidth = elementStyles.maxWidth;
+    if (elementStyles.minWidth) containerStyles.minWidth = elementStyles.minWidth;
+    if (elementStyles.maxHeight) containerStyles.maxHeight = elementStyles.maxHeight;
+    if (elementStyles.minHeight) containerStyles.minHeight = elementStyles.minHeight;
+    if (elementStyles.objectFit) containerStyles.objectFit = elementStyles.objectFit;
+    
+    // Apply alignment margins to container
+    if (alignment === 'full') {
+      containerStyles.width = '100%';
+      containerStyles.marginLeft = '0';
+      containerStyles.marginRight = '0';
+    } else {
+      switch (alignment) {
+        case 'left':
+          containerStyles.marginLeft = '0';
+          containerStyles.marginRight = 'auto';
+          break;
+        case 'right':
+          containerStyles.marginLeft = 'auto';
+          containerStyles.marginRight = '0';
+          break;
+        case 'center':
+        default:
+          containerStyles.marginLeft = 'auto';
+          containerStyles.marginRight = 'auto';
+          break;
+      }
+    }
+    
+    return containerStyles;
+  };
+
+  // Get image-only styles (borders and image-specific properties) for StorefrontImage
+  const getImageOnlyStyles = (): React.CSSProperties => {
+    const elementStyles = renderElementStyles(element, deviceType);
+    const imageStyles: React.CSSProperties = {
+      display: 'block',
+    };
+    
+    // Only apply border styles to the image
+    if (elementStyles.borderWidth) {
+      imageStyles.borderWidth = elementStyles.borderWidth;
+      imageStyles.borderStyle = elementStyles.borderStyle || 'solid';
+      imageStyles.borderColor = elementStyles.borderColor || '#e5e7eb';
+    }
+    
+    if (elementStyles.borderRadius) {
+      imageStyles.borderRadius = elementStyles.borderRadius;
+    } else {
+      imageStyles.borderRadius = '0.5rem'; // Default rounded-lg
+    }
+    
+    return imageStyles;
+  };
+
   const handleImageLoad = () => {
     setImageLoading(false);
     setImageError(false);
@@ -256,19 +319,24 @@ const ImageElement: React.FC<{
     
     // Use optimized component for live pages
     if (!isEditing) {
+      // For live pages, we need to pass container styles separately from image styles
+      // StorefrontImage applies style to container, so we pass container styles without borders
+      // Then we'll need to apply image styles (borders) directly via a wrapper or className
       return (
-        <StorefrontImage
-          src={imageUrl}
-          alt={alt || (!src ? 'Placeholder image' : '')}
-          className={`element-${element.id}`}
-          style={getImageStyles()}
-          priority={isCritical}
-          isCritical={isCritical}
-          width={element.styles?.width ? parseInt(element.styles.width) : undefined}
-          height={element.styles?.height ? parseInt(element.styles.height) : undefined}
-          aspectRatio={element.styles?.aspectRatio}
-          preserveOriginal={true}
-        />
+        <div style={getContainerStylesForLive()}>
+          <StorefrontImage
+            src={imageUrl}
+            alt={alt || (!src ? 'Placeholder image' : '')}
+            className={`element-${element.id}`}
+            style={getImageOnlyStyles()}
+            priority={isCritical}
+            isCritical={isCritical}
+            width={element.styles?.width ? parseInt(element.styles.width) : undefined}
+            height={element.styles?.height ? parseInt(element.styles.height) : undefined}
+            aspectRatio={element.styles?.aspectRatio}
+            preserveOriginal={true}
+          />
+        </div>
       );
     }
     

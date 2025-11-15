@@ -157,14 +157,18 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
 
   // Calculate container styles
   const getContainerStyles = useCallback((): React.CSSProperties => {
+    // Extract border styles from style prop (borders should only be on the image, not container)
+    const { borderWidth, borderColor, borderStyle, borderRadius, ...nonBorderStyles } = style || {};
+    
     const baseStyles: React.CSSProperties = {
       position: 'relative',
       overflow: 'hidden',
       // Remove default background color to preserve transparency
-      ...style
+      // Don't include border styles in container (they go on the image)
+      ...nonBorderStyles
     };
 
-    // When preserving original, respect all styles from page builder
+    // When preserving original, respect all styles from page builder (except borders)
     if (preserveOriginal) {
       return baseStyles;
     }
@@ -240,7 +244,13 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
             className={`${preserveOriginal ? 'block max-w-full h-auto' : 'absolute inset-0 w-full h-full object-cover'} transition-opacity duration-300 ${
               isLoaded ? 'opacity-100' : 'opacity-0'
             }`}
-            style={preserveOriginal ? style : undefined}
+            style={preserveOriginal ? {
+              // Only apply border styles to the image when preserveOriginal is true
+              borderWidth: style?.borderWidth,
+              borderColor: style?.borderColor,
+              borderStyle: style?.borderStyle,
+              borderRadius: style?.borderRadius,
+            } : undefined}
             loading={isCritical ? 'eager' : 'lazy'}
             decoding="async"
             sizes={preserveOriginal ? undefined : sizes}
