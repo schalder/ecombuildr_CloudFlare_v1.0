@@ -1382,36 +1382,31 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         variation: (i as any).variation ?? null,
       }));
 
-      // For EPS/EB Pay, defer order creation until after payment success
+      // ✅ Create order immediately for ALL payment methods (like funnel checkout)
+      // This ensures we have a real order ID to update if payment fails
+      const { data, error } = await supabase.functions.invoke('create-order', {
+        body: {
+          order: orderData,
+          items: itemsPayload,
+          storeId: store.id,
+        }
+      });
+      if (error) throw error;
+      const orderId: string | undefined = data?.order?.id;
+      const accessToken = data?.order?.access_token;
+      if (!orderId) throw new Error('Order was not created');
+      const orderResponse = data;
+      
+      // For EPS/EB Pay, store checkout data for potential deferred order creation
+      // (though order is already created, this is kept for backward compatibility)
       const isLivePayment = form.payment_method === 'eps' || form.payment_method === 'ebpay';
-      
-      let orderId: string | undefined;
-      let orderResponse: any = null;
-      
       if (isLivePayment) {
-        // Store checkout data temporarily for order creation after payment
         sessionStorage.setItem('pending_checkout', JSON.stringify({
           orderData,
           itemsPayload,
           storeId: store.id,
           timestamp: Date.now()
         }));
-        
-        // Generate temporary ID for tracking
-        orderId = crypto.randomUUID();
-      } else {
-        // Create order immediately for COD and manual payments
-        const { data, error } = await supabase.functions.invoke('create-order', {
-          body: {
-            order: orderData,
-            items: itemsPayload,
-            storeId: store.id,
-          }
-        });
-        if (error) throw error;
-        orderId = data?.order?.id;
-        if (!orderId) throw new Error('Order was not created');
-        orderResponse = data;
       }
       
       
@@ -1440,7 +1435,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         // Get order access token from the response
-        const orderToken = orderResponse?.order?.custom_fields?.order_access_token;
+        const orderToken = orderResponse?.order?.custom_fields?.order_access_token || accessToken;
         navigate(paths.orderConfirmation(orderId, orderToken));
       } else {
         await initiatePayment(orderId, orderData.total, form.payment_method);
@@ -1469,11 +1464,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         case 'eps':
           response = await supabase.functions.invoke('eps-payment', { 
             body: { 
-              tempOrderId: orderId,
+              orderId: orderId, // ✅ Use real orderId (order already created)
               amount, 
               storeId: store!.id, 
-              orderData: checkoutData?.orderData,
-              itemsData: checkoutData?.itemsPayload,
               customerData: { 
                 name: form.customer_name, 
                 email: form.customer_email, 
@@ -1490,11 +1483,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         case 'ebpay':
           response = await supabase.functions.invoke('ebpay-payment', { 
             body: { 
-              tempOrderId: orderId,
+              orderId: orderId, // ✅ Use real orderId (order already created)
               amount, 
               storeId: store!.id, 
-              orderData: checkoutData?.orderData,
-              itemsData: checkoutData?.itemsPayload,
               redirectOrigin: window.location.origin,
               customerData: { 
                 name: form.customer_name, 

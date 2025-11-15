@@ -143,7 +143,9 @@ useEffect(() => {
     // Clear any stored checkout data since payment failed
     sessionStorage.removeItem('pending_checkout');
     
-    // ✅ Update the real order in the database (tempId is the real orderId)
+    // ✅ Update the real order in the database
+    // For checkout-full: tempId is now the real orderId (order created immediately)
+    // For funnel checkout: tempId was already the real orderId
     if (tempId && store) {
       const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
       console.log('PaymentProcessing: Updating order status to', orderStatus, 'for order', tempId);

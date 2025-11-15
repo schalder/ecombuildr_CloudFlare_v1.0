@@ -9,8 +9,8 @@ const corsHeaders = {
 };
 
 interface EBPayPaymentRequest {
-  tempOrderId: string; // Temporary ID for tracking before order creation
-  orderId?: string; // Real order ID (for backward compatibility)
+  tempOrderId?: string; // Temporary ID for tracking (backward compatibility)
+  orderId?: string; // Real order ID (preferred when order is already created)
   amount: number;
   storeId: string;
   orderData?: any; // Full order data for deferred creation
@@ -47,7 +47,11 @@ serve(async (req) => {
 
   try {
     const { tempOrderId, orderId, amount, storeId, orderData, itemsData, customerData, redirectOrigin }: EBPayPaymentRequest = await req.json();
-    const trackingId = tempOrderId || orderId;
+    // ✅ Prioritize orderId (real order) over tempOrderId (for backward compatibility)
+    const trackingId = orderId || tempOrderId;
+    if (!trackingId) {
+      throw new Error('orderId or tempOrderId is required');
+    }
     console.log('EB Pay Payment Request:', { 
       trackingId, 
       amount, 

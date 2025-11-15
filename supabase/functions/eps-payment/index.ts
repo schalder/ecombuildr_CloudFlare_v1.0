@@ -11,8 +11,8 @@ const corsHeaders = {
 };
 
 interface EPSPaymentRequest {
-  tempOrderId: string; // Temporary ID for tracking before order creation
-  orderId?: string; // Real order ID (for backward compatibility)
+  tempOrderId?: string; // Temporary ID for tracking (backward compatibility)
+  orderId?: string; // Real order ID (preferred when order is already created)
   amount: number;
   storeId: string;
   orderData?: any; // Full order data for deferred creation
@@ -76,7 +76,11 @@ serve(async (req) => {
 
   try {
     const { tempOrderId, orderId, amount, storeId, orderData, itemsData, customerData, redirectOrigin }: EPSPaymentRequest = await req.json();
-    const trackingId = tempOrderId || orderId;
+    // ✅ Prioritize orderId (real order) over tempOrderId (for backward compatibility)
+    const trackingId = orderId || tempOrderId;
+    if (!trackingId) {
+      throw new Error('orderId or tempOrderId is required');
+    }
     console.log('EPS Payment Request:', { 
       trackingId, 
       amount, 
@@ -199,7 +203,8 @@ serve(async (req) => {
       totalAmount: amount,
       ipAddress: "127.0.0.1", // Default IP
       version: "1",
-      // Pass tracking ID in URLs for payment processing
+      // Pass order ID in URLs for payment processing (use orderId if available, otherwise tempId)
+      // PaymentProcessing.tsx handles both tempId (for backward compatibility) and orderId
       successUrl: originBase.includes('ecombuildr.com') 
         ? `${originBase}/store/${await getStoreSlug(supabase, storeId)}/payment-processing?tempId=${trackingId}&status=success&pm=eps`
         : `${originBase}/payment-processing?tempId=${trackingId}&status=success&pm=eps`,
