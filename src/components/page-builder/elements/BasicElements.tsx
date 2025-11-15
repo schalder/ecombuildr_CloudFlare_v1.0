@@ -148,10 +148,14 @@ const ImageElement: React.FC<{
   // Generate responsive CSS for this element
   // Exclude border properties from responsive CSS since they're handled via inline styles in getImageStyles()
   // This prevents double borders (one from CSS class, one from inline styles)
-  const responsiveCSS = React.useMemo(() => 
-    generateResponsiveCSS(element.id, element.styles, ['borderWidth', 'borderColor', 'borderStyle', 'borderRadius']), 
-    [element.id, element.styles]
-  );
+  // Add explicit CSS override to ensure no borders are applied via CSS class (only via inline styles)
+  const responsiveCSS = React.useMemo(() => {
+    const baseCSS = generateResponsiveCSS(element.id, element.styles, ['borderWidth', 'borderColor', 'borderStyle', 'borderRadius']);
+    // Explicitly reset any border styles that might come from CSS classes
+    // Borders are ONLY applied via inline styles in getImageStyles() to prevent double borders
+    const borderReset = `.element-${element.id} { border: none !important; }`;
+    return baseCSS ? `${baseCSS}\n${borderReset}` : borderReset;
+  }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
@@ -316,7 +320,7 @@ const ImageElement: React.FC<{
 
   return (
     <>
-      <style>{responsiveCSS}</style>
+      {responsiveCSS && <style>{responsiveCSS}</style>}
       <figure 
         className="w-full"
         style={getContainerStyles()}
