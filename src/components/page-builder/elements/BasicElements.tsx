@@ -145,41 +145,41 @@ const ImageElement: React.FC<{
     }
   }, [src]);
 
-  // Generate responsive CSS for this element
-  // For image elements, exclude border properties from responsive CSS
-  // Borders should only be applied via inline styles to prevent double borders
+  // Generate responsive CSS for this element - EXCLUDE border properties since they're applied inline
   const responsiveCSS = React.useMemo(() => {
-    // Always filter out border properties from styles before generating CSS
+    if (!element.styles) return '';
+    
+    // Filter out border properties from responsive styles before generating CSS
+    const borderProps = ['borderWidth', 'borderColor', 'borderStyle', 'borderRadius'];
+    
     const filteredStyles = {
       ...element.styles,
+      responsive: element.styles.responsive ? {
+        desktop: Object.fromEntries(
+          Object.entries(element.styles.responsive.desktop || {}).filter(
+            ([key]) => !borderProps.includes(key)
+          )
+        ),
+        tablet: Object.fromEntries(
+          Object.entries(element.styles.responsive.tablet || {}).filter(
+            ([key]) => !borderProps.includes(key)
+          )
+        ),
+        mobile: Object.fromEntries(
+          Object.entries(element.styles.responsive.mobile || {}).filter(
+            ([key]) => !borderProps.includes(key)
+          )
+        ),
+      } : undefined
     };
     
-    // Remove border properties from base styles
-    delete filteredStyles.borderWidth;
-    delete filteredStyles.borderColor;
-    delete filteredStyles.borderStyle;
-    delete filteredStyles.borderRadius;
+    // Also remove border properties from base styles
+    const { borderWidth, borderColor, borderStyle, borderRadius, ...baseStylesWithoutBorders } = filteredStyles;
     
-    // If responsive styles exist, filter border properties from them too
-    if (filteredStyles.responsive) {
-      filteredStyles.responsive = {
-        desktop: { ...filteredStyles.responsive.desktop },
-        tablet: { ...filteredStyles.responsive.tablet },
-        mobile: { ...filteredStyles.responsive.mobile }
-      };
-      
-      // Remove border properties from responsive styles to prevent double borders
-      ['desktop', 'tablet', 'mobile'].forEach(device => {
-        if (filteredStyles.responsive[device]) {
-          delete filteredStyles.responsive[device].borderWidth;
-          delete filteredStyles.responsive[device].borderColor;
-          delete filteredStyles.responsive[device].borderStyle;
-          delete filteredStyles.responsive[device].borderRadius;
-        }
-      });
-    }
-    
-    return generateResponsiveCSS(element.id, filteredStyles);
+    return generateResponsiveCSS(element.id, {
+      ...baseStylesWithoutBorders,
+      responsive: filteredStyles.responsive
+    });
   }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
@@ -238,13 +238,11 @@ const ImageElement: React.FC<{
       }
     }
 
-    // Apply border styles directly to the image
-    // Use getEffectiveResponsiveValue to get device-specific border values
-    // This ensures borders work correctly across all devices and are only applied via inline styles
+    // Apply border styles directly to the image - use responsive helper for proper inheritance
     const borderWidth = getEffectiveResponsiveValue(element, 'borderWidth', deviceType, '');
     const borderColor = getEffectiveResponsiveValue(element, 'borderColor', deviceType, '');
     const borderStyle = getEffectiveResponsiveValue(element, 'borderStyle', deviceType, 'solid');
-    const borderRadius = getEffectiveResponsiveValue(element, 'borderRadius', deviceType, '0.5rem');
+    const borderRadius = getEffectiveResponsiveValue(element, 'borderRadius', deviceType, '');
     
     if (borderWidth) {
       baseStyles.borderWidth = borderWidth;
@@ -252,7 +250,11 @@ const ImageElement: React.FC<{
       baseStyles.borderColor = borderColor || '#e5e7eb';
     }
     
-    baseStyles.borderRadius = borderRadius || '0.5rem'; // Default rounded-lg
+    if (borderRadius) {
+      baseStyles.borderRadius = borderRadius;
+    } else {
+      baseStyles.borderRadius = '0.5rem'; // Default rounded-lg
+    }
 
     return baseStyles;
   };
