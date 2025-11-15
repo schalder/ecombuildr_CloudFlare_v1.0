@@ -629,6 +629,30 @@ const App = () => (
                 <Route path="/members/*" element={<MemberRoutes />} />
                 <Route path="/courses/*" element={<MemberRoutes />} />
 
+                {/* ✅ Root-level routes for custom domains - payment-processing and order-confirmation
+                    These routes work independently using sessionStorage funnel context
+                    and don't require website/funnel connection selection */}
+                <Route path="/payment-processing" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <PaymentProcessing />
+                  </Suspense>
+                } />
+                <Route path="/payment-processing/:orderId" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <PaymentProcessing />
+                  </Suspense>
+                } />
+                <Route path="/order-confirmation" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <OrderConfirmation />
+                  </Suspense>
+                } />
+                <Route path="/order-confirmation/:orderId" element={
+                  <Suspense fallback={<StorefrontLoadingFallback />}>
+                    <OrderConfirmation />
+                  </Suspense>
+                } />
+
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
                 </Routes>
