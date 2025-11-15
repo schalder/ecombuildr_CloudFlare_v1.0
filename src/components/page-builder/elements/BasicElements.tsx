@@ -146,10 +146,34 @@ const ImageElement: React.FC<{
   }, [src]);
 
   // Generate responsive CSS for this element
-  const responsiveCSS = React.useMemo(() => 
-    generateResponsiveCSS(element.id, element.styles), 
-    [element.id, element.styles]
-  );
+  // Exclude border properties from responsive CSS since borders are applied directly to the image via inline styles
+  const responsiveCSS = React.useMemo(() => {
+    if (!element.styles?.responsive) {
+      return generateResponsiveCSS(element.id, element.styles);
+    }
+    
+    // Filter out border properties from responsive styles to prevent double borders
+    const filteredStyles = {
+      ...element.styles,
+      responsive: {
+        desktop: { ...element.styles.responsive.desktop },
+        tablet: { ...element.styles.responsive.tablet },
+        mobile: { ...element.styles.responsive.mobile }
+      }
+    };
+    
+    // Remove border properties from responsive styles for each device
+    ['desktop', 'tablet', 'mobile'].forEach(device => {
+      if (filteredStyles.responsive[device]) {
+        delete filteredStyles.responsive[device].borderWidth;
+        delete filteredStyles.responsive[device].borderColor;
+        delete filteredStyles.responsive[device].borderStyle;
+        delete filteredStyles.responsive[device].borderRadius;
+      }
+    });
+    
+    return generateResponsiveCSS(element.id, filteredStyles);
+  }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
@@ -173,12 +197,9 @@ const ImageElement: React.FC<{
 
   // Calculate image styles with alignment and border (width handled by responsive CSS)
   const getImageStyles = (): React.CSSProperties => {
-    // Get all element styles including responsive borders
-    const elementStyles = renderElementStyles(element, deviceType);
-    
     const baseStyles = {
-      height: elementStyles.height || element.styles?.height || 'auto',
-      objectFit: elementStyles.objectFit || element.styles?.objectFit || 'cover',
+      height: element.styles?.height || 'auto',
+      objectFit: element.styles?.objectFit || 'cover',
       display: 'block',
       // ADD: Prevent layout shift with aspect ratio
       aspectRatio: element.styles?.aspectRatio || (element.styles?.width && element.styles?.height 
@@ -210,83 +231,66 @@ const ImageElement: React.FC<{
       }
     }
 
-    // Apply border styles directly to the image (from renderElementStyles which handles responsive)
-    if (elementStyles.borderWidth) {
-      baseStyles.borderWidth = elementStyles.borderWidth;
-      baseStyles.borderStyle = elementStyles.borderStyle || 'solid';
-      baseStyles.borderColor = elementStyles.borderColor || '#e5e7eb';
+    // Apply border styles directly to the image
+    // Check responsive styles first, then fall back to base styles
+    const responsiveStyles = element.styles?.responsive || {};
+    const currentDeviceStyles = responsiveStyles[deviceType] || {};
+    
+    // Get border values with responsive fallback (mobile -> tablet -> desktop -> base)
+    // Check if borderWidth exists (not undefined/null/empty) for current device
+    const hasCurrentBorder = currentDeviceStyles.borderWidth !== undefined && 
+                             currentDeviceStyles.borderWidth !== null && 
+                             currentDeviceStyles.borderWidth !== '';
+    
+    let borderWidth = hasCurrentBorder ? currentDeviceStyles.borderWidth : undefined;
+    let borderColor = hasCurrentBorder ? currentDeviceStyles.borderColor : undefined;
+    let borderStyle = hasCurrentBorder ? currentDeviceStyles.borderStyle : undefined;
+    let borderRadius = currentDeviceStyles.borderRadius !== undefined ? currentDeviceStyles.borderRadius : undefined;
+    
+    // Fallback inheritance for mobile/tablet
+    if (!hasCurrentBorder) {
+      if (deviceType === 'mobile') {
+        // Mobile: try tablet, then desktop, then base
+        borderWidth = responsiveStyles.tablet?.borderWidth || responsiveStyles.desktop?.borderWidth || element.styles?.borderWidth;
+        borderColor = responsiveStyles.tablet?.borderColor || responsiveStyles.desktop?.borderColor || element.styles?.borderColor;
+        borderStyle = responsiveStyles.tablet?.borderStyle || responsiveStyles.desktop?.borderStyle || element.styles?.borderStyle;
+        borderRadius = responsiveStyles.tablet?.borderRadius || responsiveStyles.desktop?.borderRadius || element.styles?.borderRadius;
+      } else if (deviceType === 'tablet') {
+        // Tablet: try desktop, then base
+        borderWidth = responsiveStyles.desktop?.borderWidth || element.styles?.borderWidth;
+        borderColor = responsiveStyles.desktop?.borderColor || element.styles?.borderColor;
+        borderStyle = responsiveStyles.desktop?.borderStyle || element.styles?.borderStyle;
+        borderRadius = responsiveStyles.desktop?.borderRadius || element.styles?.borderRadius;
+      } else {
+        // Desktop: use base styles
+        borderWidth = element.styles?.borderWidth;
+        borderColor = element.styles?.borderColor;
+        borderStyle = element.styles?.borderStyle;
+        borderRadius = element.styles?.borderRadius;
+      }
     }
     
-    if (elementStyles.borderRadius) {
-      baseStyles.borderRadius = elementStyles.borderRadius;
-    } else {
+    // Handle borderRadius separately as it can be set independently
+    if (borderRadius === undefined) {
+      borderRadius = element.styles?.borderRadius;
+    }
+    
+    // Apply border styles if borderWidth is set
+    if (borderWidth) {
+      baseStyles.borderWidth = borderWidth;
+      baseStyles.borderStyle = borderStyle || 'solid';
+      baseStyles.borderColor = borderColor || '#e5e7eb';
+    }
+    
+    // Apply border radius (can be set independently)
+    if (borderRadius) {
+      baseStyles.borderRadius = borderRadius;
+    } else if (!borderWidth) {
+      // Only apply default borderRadius if no border is set
       baseStyles.borderRadius = '0.5rem'; // Default rounded-lg
     }
 
     return baseStyles;
-  };
-
-  // Get container styles (without borders) for StorefrontImage wrapper
-  const getContainerStylesForLive = (): React.CSSProperties => {
-    const elementStyles = renderElementStyles(element, deviceType);
-    const containerStyles: React.CSSProperties = {};
-    
-    // Copy all styles except borders (borders go on the image itself)
-    if (elementStyles.height) containerStyles.height = elementStyles.height;
-    if (elementStyles.width) containerStyles.width = elementStyles.width;
-    if (elementStyles.maxWidth) containerStyles.maxWidth = elementStyles.maxWidth;
-    if (elementStyles.minWidth) containerStyles.minWidth = elementStyles.minWidth;
-    if (elementStyles.maxHeight) containerStyles.maxHeight = elementStyles.maxHeight;
-    if (elementStyles.minHeight) containerStyles.minHeight = elementStyles.minHeight;
-    if (elementStyles.objectFit) containerStyles.objectFit = elementStyles.objectFit;
-    
-    // Apply alignment margins to container
-    if (alignment === 'full') {
-      containerStyles.width = '100%';
-      containerStyles.marginLeft = '0';
-      containerStyles.marginRight = '0';
-    } else {
-      switch (alignment) {
-        case 'left':
-          containerStyles.marginLeft = '0';
-          containerStyles.marginRight = 'auto';
-          break;
-        case 'right':
-          containerStyles.marginLeft = 'auto';
-          containerStyles.marginRight = '0';
-          break;
-        case 'center':
-        default:
-          containerStyles.marginLeft = 'auto';
-          containerStyles.marginRight = 'auto';
-          break;
-      }
-    }
-    
-    return containerStyles;
-  };
-
-  // Get image-only styles (borders and image-specific properties) for StorefrontImage
-  const getImageOnlyStyles = (): React.CSSProperties => {
-    const elementStyles = renderElementStyles(element, deviceType);
-    const imageStyles: React.CSSProperties = {
-      display: 'block',
-    };
-    
-    // Only apply border styles to the image
-    if (elementStyles.borderWidth) {
-      imageStyles.borderWidth = elementStyles.borderWidth;
-      imageStyles.borderStyle = elementStyles.borderStyle || 'solid';
-      imageStyles.borderColor = elementStyles.borderColor || '#e5e7eb';
-    }
-    
-    if (elementStyles.borderRadius) {
-      imageStyles.borderRadius = elementStyles.borderRadius;
-    } else {
-      imageStyles.borderRadius = '0.5rem'; // Default rounded-lg
-    }
-    
-    return imageStyles;
   };
 
   const handleImageLoad = () => {
@@ -319,24 +323,19 @@ const ImageElement: React.FC<{
     
     // Use optimized component for live pages
     if (!isEditing) {
-      // For live pages, we need to pass container styles separately from image styles
-      // StorefrontImage applies style to container, so we pass container styles without borders
-      // Then we'll need to apply image styles (borders) directly via a wrapper or className
       return (
-        <div style={getContainerStylesForLive()}>
-          <StorefrontImage
-            src={imageUrl}
-            alt={alt || (!src ? 'Placeholder image' : '')}
-            className={`element-${element.id}`}
-            style={getImageOnlyStyles()}
-            priority={isCritical}
-            isCritical={isCritical}
-            width={element.styles?.width ? parseInt(element.styles.width) : undefined}
-            height={element.styles?.height ? parseInt(element.styles.height) : undefined}
-            aspectRatio={element.styles?.aspectRatio}
-            preserveOriginal={true}
-          />
-        </div>
+        <StorefrontImage
+          src={imageUrl}
+          alt={alt || (!src ? 'Placeholder image' : '')}
+          className={`element-${element.id}`}
+          style={getImageStyles()}
+          priority={isCritical}
+          isCritical={isCritical}
+          width={element.styles?.width ? parseInt(element.styles.width) : undefined}
+          height={element.styles?.height ? parseInt(element.styles.height) : undefined}
+          aspectRatio={element.styles?.aspectRatio}
+          preserveOriginal={true}
+        />
       );
     }
     
