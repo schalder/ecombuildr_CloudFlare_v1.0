@@ -146,10 +146,24 @@ const ImageElement: React.FC<{
   }, [src]);
 
   // Generate responsive CSS for this element
-  const responsiveCSS = React.useMemo(() => 
-    generateResponsiveCSS(element.id, element.styles), 
-    [element.id, element.styles]
-  );
+  // Exclude border properties from responsive CSS since they're applied directly to the image via inline styles
+  const responsiveCSS = React.useMemo(() => {
+    const stylesWithoutBorders = { ...element.styles };
+    if (stylesWithoutBorders?.responsive) {
+      const { desktop, tablet, mobile } = stylesWithoutBorders.responsive;
+      const filterBorders = (deviceStyles: any) => {
+        if (!deviceStyles) return deviceStyles;
+        const { borderWidth, borderColor, borderStyle, borderRadius, ...rest } = deviceStyles;
+        return rest;
+      };
+      stylesWithoutBorders.responsive = {
+        desktop: filterBorders(desktop),
+        tablet: filterBorders(tablet),
+        mobile: filterBorders(mobile),
+      };
+    }
+    return generateResponsiveCSS(element.id, stylesWithoutBorders);
+  }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
