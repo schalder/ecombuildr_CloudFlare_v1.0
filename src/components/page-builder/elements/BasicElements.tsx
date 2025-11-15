@@ -149,6 +149,16 @@ const ImageElement: React.FC<{
   // Exclude border properties from responsive CSS since they're applied directly to the image via inline styles
   const responsiveCSS = React.useMemo(() => {
     const stylesWithoutBorders = { ...element.styles };
+    
+    // Remove border properties from base styles to prevent them from being included in any CSS generation
+    if (stylesWithoutBorders) {
+      delete stylesWithoutBorders.borderWidth;
+      delete stylesWithoutBorders.borderColor;
+      delete stylesWithoutBorders.borderStyle;
+      delete stylesWithoutBorders.borderRadius;
+    }
+    
+    // Remove border properties from responsive styles (desktop, tablet, mobile)
     if (stylesWithoutBorders?.responsive) {
       const { desktop, tablet, mobile } = stylesWithoutBorders.responsive;
       const filterBorders = (deviceStyles: any) => {
@@ -162,6 +172,7 @@ const ImageElement: React.FC<{
         mobile: filterBorders(mobile),
       };
     }
+    
     return generateResponsiveCSS(element.id, stylesWithoutBorders);
   }, [element.id, element.styles]);
 
