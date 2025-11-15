@@ -146,31 +146,33 @@ const ImageElement: React.FC<{
   }, [src]);
 
   // Generate responsive CSS for this element
-  // Exclude border properties from responsive CSS since they're applied inline to the image
+  // For image elements, exclude border properties from responsive CSS
+  // Borders should only be applied via inline styles to prevent double borders
   const responsiveCSS = React.useMemo(() => {
-    if (!element.styles?.responsive) return '';
+    if (element.styles?.responsive) {
+      const filteredStyles = {
+        ...element.styles,
+        responsive: {
+          desktop: { ...element.styles.responsive.desktop },
+          tablet: { ...element.styles.responsive.tablet },
+          mobile: { ...element.styles.responsive.mobile }
+        }
+      };
+      
+      // Remove border properties from responsive styles to prevent double borders
+      ['desktop', 'tablet', 'mobile'].forEach(device => {
+        if (filteredStyles.responsive[device]) {
+          delete filteredStyles.responsive[device].borderWidth;
+          delete filteredStyles.responsive[device].borderColor;
+          delete filteredStyles.responsive[device].borderStyle;
+          delete filteredStyles.responsive[device].borderRadius;
+        }
+      });
+      
+      return generateResponsiveCSS(element.id, filteredStyles);
+    }
     
-    // Create a filtered copy of styles without border properties
-    const filteredStyles = {
-      ...element.styles,
-      responsive: {
-        desktop: { ...element.styles.responsive.desktop },
-        tablet: { ...element.styles.responsive.tablet },
-        mobile: { ...element.styles.responsive.mobile }
-      }
-    };
-    
-    // Remove border properties from responsive styles
-    ['desktop', 'tablet', 'mobile'].forEach(device => {
-      if (filteredStyles.responsive[device]) {
-        delete filteredStyles.responsive[device].borderWidth;
-        delete filteredStyles.responsive[device].borderColor;
-        delete filteredStyles.responsive[device].borderStyle;
-        delete filteredStyles.responsive[device].borderRadius;
-      }
-    });
-    
-    return generateResponsiveCSS(element.id, filteredStyles);
+    return generateResponsiveCSS(element.id, element.styles);
   }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
@@ -229,12 +231,13 @@ const ImageElement: React.FC<{
       }
     }
 
-    // Apply border styles directly to the image with responsive support
-    // Check responsive styles first, then fall back to base styles
-    const borderWidth = getEffectiveResponsiveValue(element, 'borderWidth', deviceType, '') || element.styles?.borderWidth || '';
-    const borderColor = getEffectiveResponsiveValue(element, 'borderColor', deviceType, '') || element.styles?.borderColor || '#e5e7eb';
-    const borderStyle = getEffectiveResponsiveValue(element, 'borderStyle', deviceType, '') || element.styles?.borderStyle || 'solid';
-    const borderRadius = getEffectiveResponsiveValue(element, 'borderRadius', deviceType, '') || element.styles?.borderRadius || '0.5rem';
+    // Apply border styles directly to the image
+    // Use getEffectiveResponsiveValue to get device-specific border values
+    // This ensures borders work correctly across all devices and are only applied via inline styles
+    const borderWidth = getEffectiveResponsiveValue(element, 'borderWidth', deviceType, '');
+    const borderColor = getEffectiveResponsiveValue(element, 'borderColor', deviceType, '');
+    const borderStyle = getEffectiveResponsiveValue(element, 'borderStyle', deviceType, 'solid');
+    const borderRadius = getEffectiveResponsiveValue(element, 'borderRadius', deviceType, '0.5rem');
     
     if (borderWidth) {
       baseStyles.borderWidth = borderWidth;
