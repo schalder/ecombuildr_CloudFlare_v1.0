@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, FunnelChart, Funnel, LabelList } from 'recharts';
 import { Eye, Users, Percent, Clock, FileText, CheckCircle } from 'lucide-react';
 import { useFunnelStats } from '@/hooks/useFunnelStats';
+import { formatCurrency } from '@/lib/currency';
 
 interface FunnelStatsProps {
   funnelId: string;
@@ -131,9 +132,8 @@ export const FunnelStats: React.FC<FunnelStatsProps> = ({ funnelId }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</p>
+                <p className="text-2xl font-bold">{formatCurrency(stats.totalRevenue, { code: stats.currencyCode as any })}</p>
               </div>
-              <div className="text-green-500">$</div>
             </div>
           </CardContent>
         </Card>

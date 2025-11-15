@@ -34,6 +34,7 @@ const funnelSettingsSchema = z.object({
   google_analytics_id: z.string().optional(),
   google_ads_id: z.string().optional(),
   favicon_url: z.string().optional(),
+  currency_code: z.enum(['BDT','USD','INR','EUR','GBP']).default('BDT'),
   // SEO defaults
   seo_title: z.string().optional(),
   seo_description: z.string().optional(),
@@ -84,7 +85,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
   const [openSections, setOpenSections] = React.useState<string[]>([]);
 
   const toggleAllSections = () => {
-    const allSections = ['basic', 'domain', 'seo', 'tracking'];
+    const allSections = ['basic', 'domain', 'currency', 'seo', 'tracking'];
     if (openSections.length === allSections.length) {
       setOpenSections([]);
     } else {
@@ -118,6 +119,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
       google_analytics_id: funnel.settings?.google_analytics_id || '',
       google_ads_id: funnel.settings?.google_ads_id || '',
       favicon_url: funnel.settings?.favicon_url || '',
+      currency_code: funnel.settings?.currency_code || 'BDT',
       seo_title: funnel.seo_title || '',
       seo_description: funnel.seo_description || '',
       og_image: funnel.og_image || '',
@@ -173,6 +175,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         google_analytics_id, 
         google_ads_id, 
         favicon_url,
+        currency_code,
         domain,
         website_id,
         seo_title,
@@ -191,6 +194,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         google_analytics_id: google_analytics_id || null,
         google_ads_id: google_ads_id || null,
         favicon_url: favicon_url || null,
+        currency_code: currency_code || 'BDT',
       };
 
       // Determine canonical domain for this funnel
@@ -638,6 +642,46 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                  </div>
                </AccordionContent>
              </AccordionItem>
+
+            <AccordionItem value="currency" className="border rounded-lg">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <div className="flex flex-col items-start text-left">
+                  <h3 className="text-base font-semibold text-foreground">Localization & Currency</h3>
+                  <p className="text-sm text-muted-foreground">Choose the currency used across this funnel.</p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent forceMount className="px-6 pb-6">
+                <div className={openSections.includes('currency') ? 'block space-y-4' : 'hidden'}>
+                  <FormField
+                    control={form.control}
+                    name="currency_code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground">Currency</FormLabel>
+                        <FormControl>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select currency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="BDT">Bangladeshi Taka (BDT)</SelectItem>
+                              <SelectItem value="USD">US Dollar (USD)</SelectItem>
+                              <SelectItem value="INR">Indian Rupee (INR)</SelectItem>
+                              <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                              <SelectItem value="GBP">British Pound (GBP)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormDescription>
+                          This currency will be applied globally across your funnel sales and stats.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
 
             <AccordionItem value="seo" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">

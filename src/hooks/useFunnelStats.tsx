@@ -34,6 +34,7 @@ interface FunnelStats {
   createdAt: string;
   updatedAt: string;
   funnelUrl: string;
+  currencyCode: string;
 }
 
 interface FunnelStatsHookReturn {
@@ -54,14 +55,27 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
       setLoading(true);
       setError(null);
 
-      // Get funnel basic info
+      // Get funnel basic info with website for currency inheritance
       const { data: funnel, error: funnelError } = await supabase
         .from('funnels')
-        .select('*')
+        .select('*, website_id')
         .eq('id', funnelId)
         .single();
 
       if (funnelError) throw funnelError;
+
+      // Get currency from funnel settings, or inherit from website, or default to BDT
+      let currencyCode = 'BDT';
+      if (funnel.settings?.currency_code) {
+        currencyCode = funnel.settings.currency_code;
+      } else if (funnel.website_id) {
+        const { data: website } = await supabase
+          .from('websites')
+          .select('settings')
+          .eq('id', funnel.website_id)
+          .maybeSingle();
+        currencyCode = (website?.settings as any)?.currency?.code || (website?.settings as any)?.currency_code || 'BDT';
+      }
 
       // Get funnel steps count
       const { data: steps, error: stepsError } = await supabase
@@ -196,6 +210,7 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
         createdAt: funnel.created_at,
         updatedAt: funnel.updated_at,
         funnelUrl: `https://ecombuildr.com/funnel/${funnel.slug}`,
+        currencyCode,
       });
 
     } catch (err: any) {

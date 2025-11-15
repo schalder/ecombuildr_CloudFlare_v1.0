@@ -6,6 +6,7 @@ import { DateRangeFilter } from '@/components/ui/date-range-filter';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { DollarSign, ShoppingCart, TrendingUp, Users, ArrowUp, ArrowDown } from 'lucide-react';
 import { useFunnelSales } from '@/hooks/useFunnelSales';
+import { formatCurrency } from '@/lib/currency';
 
 interface FunnelSalesProps {
   funnelId: string;
@@ -72,7 +73,7 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">${sales.totalRevenue.toLocaleString()}</p>
+                <p className="text-2xl font-bold">{formatCurrency(sales.totalRevenue, { code: sales.currencyCode as any })}</p>
                 <div className="flex items-center mt-2">
                   {sales.comparison.changes.revenue.percentage >= 0 ? (
                     <ArrowUp className="h-4 w-4 text-green-500 mr-1" />
@@ -116,7 +117,7 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Average Order Value</p>
-                <p className="text-2xl font-bold">${sales.averageOrderValue.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(sales.averageOrderValue, { code: sales.currencyCode as any })}</p>
                 <p className="text-sm text-muted-foreground mt-2">Per order</p>
               </div>
               <TrendingUp className="h-8 w-8 text-muted-foreground" />
@@ -179,7 +180,7 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="revenue"
-                      label={({ method, revenue }) => `${method}: $${revenue.toLocaleString()}`}
+                      label={({ method, revenue }) => `${method}: ${formatCurrency(revenue, { code: sales.currencyCode as any })}`}
                     >
                       {sales.analytics.paymentMethods.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -210,7 +211,7 @@ export const FunnelSales: React.FC<FunnelSalesProps> = ({ funnelId }) => {
               <div key={status.status} className="text-center">
                 <p className="text-2xl font-bold">{status.count}</p>
                 <p className="text-sm font-medium capitalize">{status.status}</p>
-                <p className="text-xs text-muted-foreground">${status.revenue.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground">{formatCurrency(status.revenue, { code: sales.currencyCode as any })}</p>
               </div>
             ))}
           </div>
