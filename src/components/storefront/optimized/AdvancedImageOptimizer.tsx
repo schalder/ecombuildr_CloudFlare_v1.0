@@ -155,19 +155,16 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
     onError?.();
   }, [onError, src]);
 
-  // Calculate container styles - exclude alignment margins which should only be on the image
+  // Calculate container styles
   const getContainerStyles = useCallback((): React.CSSProperties => {
-    // Extract alignment-related margins from style prop (these should only be on the image)
-    const { marginLeft, marginRight, marginTop, marginBottom, ...nonAlignmentStyles } = style || {};
-    
     const baseStyles: React.CSSProperties = {
       position: 'relative',
       overflow: 'hidden',
       // Remove default background color to preserve transparency
-      ...nonAlignmentStyles  // Only non-alignment styles on container
+      ...style
     };
 
-    // When preserving original, respect all styles except alignment margins
+    // When preserving original, respect all styles from page builder
     if (preserveOriginal) {
       return baseStyles;
     }
@@ -243,18 +240,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
             className={`${preserveOriginal ? 'block max-w-full h-auto' : 'absolute inset-0 w-full h-full object-cover'} transition-opacity duration-300 ${
               isLoaded ? 'opacity-100' : 'opacity-0'
             }`}
-            style={preserveOriginal ? (() => {
-              // Extract alignment margins and apply them to the image
-              const { marginLeft, marginRight, marginTop, marginBottom, ...otherStyles } = style || {};
-              return {
-                ...otherStyles,
-                // Apply alignment margins to image for proper alignment
-                ...(marginLeft !== undefined && { marginLeft }),
-                ...(marginRight !== undefined && { marginRight }),
-                ...(marginTop !== undefined && { marginTop }),
-                ...(marginBottom !== undefined && { marginBottom }),
-              };
-            })() : undefined}
+            style={preserveOriginal ? style : undefined}
             loading={isCritical ? 'eager' : 'lazy'}
             decoding="async"
             sizes={preserveOriginal ? undefined : sizes}

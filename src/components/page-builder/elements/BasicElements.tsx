@@ -147,33 +147,50 @@ const ImageElement: React.FC<{
 
   // Generate responsive CSS for this element
   // Exclude border properties from responsive CSS since borders are applied directly to the image via inline styles
+  // Also exclude width when alignment is not 'full' to prevent breaking margin-based alignment
   const responsiveCSS = React.useMemo(() => {
-    if (!element.styles?.responsive) {
-      return generateResponsiveCSS(element.id, element.styles);
-    }
-    
-    // Filter out border properties from responsive styles to prevent double borders
+    // Filter out border properties and width (when alignment is set) from styles
     const filteredStyles = {
       ...element.styles,
-      responsive: {
+    };
+    
+    // Remove border properties from base styles (they're applied via inline styles)
+    delete filteredStyles.borderWidth;
+    delete filteredStyles.borderColor;
+    delete filteredStyles.borderStyle;
+    delete filteredStyles.borderRadius;
+    
+    // Remove width from base styles when alignment is set (not 'full') to prevent breaking alignment
+    if (alignment !== 'full') {
+      delete filteredStyles.width;
+    }
+    
+    // Process responsive styles if they exist
+    if (element.styles?.responsive) {
+      filteredStyles.responsive = {
         desktop: { ...element.styles.responsive.desktop },
         tablet: { ...element.styles.responsive.tablet },
         mobile: { ...element.styles.responsive.mobile }
-      }
-    };
-    
-    // Remove border properties from responsive styles for each device
-    ['desktop', 'tablet', 'mobile'].forEach(device => {
-      if (filteredStyles.responsive[device]) {
-        delete filteredStyles.responsive[device].borderWidth;
-        delete filteredStyles.responsive[device].borderColor;
-        delete filteredStyles.responsive[device].borderStyle;
-        delete filteredStyles.responsive[device].borderRadius;
-      }
-    });
+      };
+      
+      // Remove border properties and width from responsive styles for each device
+      ['desktop', 'tablet', 'mobile'].forEach(device => {
+        if (filteredStyles.responsive[device]) {
+          delete filteredStyles.responsive[device].borderWidth;
+          delete filteredStyles.responsive[device].borderColor;
+          delete filteredStyles.responsive[device].borderStyle;
+          delete filteredStyles.responsive[device].borderRadius;
+          // Exclude width from responsive CSS when alignment is set (not 'full')
+          // Width will be applied via inline styles in getImageStyles() instead
+          if (alignment !== 'full') {
+            delete filteredStyles.responsive[device].width;
+          }
+        }
+      });
+    }
     
     return generateResponsiveCSS(element.id, filteredStyles);
-  }, [element.id, element.styles]);
+  }, [element.id, element.styles, alignment]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
@@ -197,6 +214,14 @@ const ImageElement: React.FC<{
 
   // Calculate image styles with alignment and border (width handled by responsive CSS)
   const getImageStyles = (): React.CSSProperties => {
+    // Get responsive width to check if it's set
+    const responsiveStyles = element.styles?.responsive || {};
+    const currentDeviceStyles = responsiveStyles[deviceType] || {};
+    const responsiveWidth = currentDeviceStyles.width || 
+      (deviceType === 'mobile' ? (responsiveStyles.tablet?.width || responsiveStyles.desktop?.width) : 
+       deviceType === 'tablet' ? responsiveStyles.desktop?.width : undefined) ||
+      element.styles?.width;
+
     const baseStyles = {
       height: element.styles?.height || 'auto',
       objectFit: element.styles?.objectFit || 'cover',
@@ -208,12 +233,21 @@ const ImageElement: React.FC<{
     } as React.CSSProperties;
 
     // Apply alignment as margin styles directly to the image
+    // For alignment to work properly, we need to ensure the container doesn't have width: 100%
+    // which would break margin-based alignment
     if (alignment === 'full') {
       baseStyles.width = '100%';
       baseStyles.marginLeft = '0';
       baseStyles.marginRight = '0';
     } else {
-      // Apply alignment
+      // Apply alignment - ensure width is not 100% to allow margins to work
+      // If responsive width is set and not 100%, use it; otherwise let image be its natural width
+      if (responsiveWidth && responsiveWidth !== '100%' && responsiveWidth !== 'auto') {
+        baseStyles.width = responsiveWidth;
+      }
+      // Don't set width to 100% when alignment is set - this breaks margin-based alignment
+      
+      // Apply alignment margins
       switch (alignment) {
         case 'left':
           baseStyles.marginLeft = '0';
@@ -233,8 +267,7 @@ const ImageElement: React.FC<{
 
     // Apply border styles directly to the image
     // Check responsive styles first, then fall back to base styles
-    const responsiveStyles = element.styles?.responsive || {};
-    const currentDeviceStyles = responsiveStyles[deviceType] || {};
+    // Note: responsiveStyles and currentDeviceStyles are already declared above for width checking
     
     // Get border values with responsive fallback (mobile -> tablet -> desktop -> base)
     // Check if borderWidth exists (not undefined/null/empty) for current device
