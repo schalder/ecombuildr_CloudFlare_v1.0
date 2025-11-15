@@ -23,7 +23,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Search, Users, Mail, Phone, MapPin, RefreshCw, Calendar, Eye, EyeOff, TrendingUp, DollarSign, AlertCircle, MessageCircle } from "lucide-react";
+import { Search, Users, Mail, Phone, MapPin, RefreshCw, Calendar, Eye, EyeOff, TrendingUp, DollarSign, AlertCircle, MessageCircle, Trash2, MoreHorizontal, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -31,6 +31,21 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { openWhatsApp } from "@/lib/utils";
 import { normalizePhoneNumber } from "@/utils/authValidation";
+import { Checkbox as UICheckbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Customer {
   id: string;
@@ -59,12 +74,22 @@ export default function Customers() {
   const [activeTab, setActiveTab] = useState("all");
   const [customerFilter, setCustomerFilter] = useState<"all" | "one-time" | "repeat" | "vip">("all");
   const [lastOrderDates, setLastOrderDates] = useState<Record<string, string>>({});
+  const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteProgress, setDeleteProgress] = useState<{ current: number; total: number } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchCustomers();
     }
   }, [user]);
+
+  // Clear selection when switching tabs
+  useEffect(() => {
+    setSelectedCustomerIds(new Set());
+  }, [activeTab]);
 
   useEffect(() => {
     const search = searchParams.get("search");
@@ -263,6 +288,148 @@ export default function Customers() {
   const endIndexFiltered = startIndexFiltered + customersPerPage;
   const paginatedFilteredCustomers = filteredCustomersByTab.slice(startIndexFiltered, endIndexFiltered);
 
+  // Bulk selection helpers
+  const toggleCustomerSelection = (customerId: string) => {
+    setSelectedCustomerIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(customerId)) {
+        newSet.delete(customerId);
+      } else {
+        newSet.add(customerId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllCustomers = () => {
+    const currentCustomers = activeTab === 'all' ? paginatedCustomers : paginatedFilteredCustomers;
+    if (selectedCustomerIds.size === currentCustomers.length) {
+      setSelectedCustomerIds(new Set());
+    } else {
+      setSelectedCustomerIds(new Set(currentCustomers.map(c => c.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedCustomerIds(new Set());
+  };
+
+  const currentCustomersForSelection = activeTab === 'all' ? paginatedCustomers : paginatedFilteredCustomers;
+  const isAllSelected = currentCustomersForSelection.length > 0 && selectedCustomerIds.size === currentCustomersForSelection.length;
+  const isSomeSelected = selectedCustomerIds.size > 0 && selectedCustomerIds.size < currentCustomersForSelection.length;
+
+  // Delete customer function
+  const deleteCustomer = async (customerId: string) => {
+    try {
+      // First, delete customer_addresses if they exist
+      const { error: addressesError } = await supabase
+        .from('customer_addresses')
+        .delete()
+        .eq('customer_id', customerId);
+
+      if (addressesError) {
+        console.error('Error deleting customer addresses:', addressesError);
+        // Continue even if addresses deletion fails (might not exist)
+      }
+
+      // Delete the customer (orders will have customer_id set to NULL due to ON DELETE SET NULL)
+      const { error: customerError } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', customerId);
+
+      if (customerError) throw customerError;
+
+      // Remove from local state
+      setCustomers(prev => prev.filter(c => c.id !== customerId));
+      setSelectedCustomerIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(customerId);
+        return newSet;
+      });
+
+      toast({
+        title: "Success",
+        description: "Customer deleted successfully",
+      });
+    } catch (error: any) {
+      console.error('Error deleting customer:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete customer",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Bulk delete customers
+  const bulkDeleteCustomers = async () => {
+    if (selectedCustomerIds.size === 0) return;
+
+    const customerIds = Array.from(selectedCustomerIds);
+    setIsDeleting(true);
+    setDeleteProgress({ current: 0, total: customerIds.length });
+
+    let successCount = 0;
+    let failCount = 0;
+    const errors: string[] = [];
+
+    try {
+      for (let i = 0; i < customerIds.length; i++) {
+        const customerId = customerIds[i];
+        setDeleteProgress({ current: i + 1, total: customerIds.length });
+
+        try {
+          // Delete customer_addresses first
+          await supabase
+            .from('customer_addresses')
+            .delete()
+            .eq('customer_id', customerId);
+
+          // Delete the customer
+          const { error } = await supabase
+            .from('customers')
+            .delete()
+            .eq('id', customerId);
+
+          if (error) throw error;
+
+          setCustomers(prev => prev.filter(c => c.id !== customerId));
+          successCount++;
+        } catch (error: any) {
+          failCount++;
+          const customer = customers.find(c => c.id === customerId);
+          errors.push(`Customer ${customer?.full_name || customerId}: ${error.message || 'Failed to delete'}`);
+          console.error(`Error deleting customer ${customerId}:`, error);
+        }
+      }
+
+      // Show summary toast
+      if (successCount > 0 && failCount === 0) {
+        toast({
+          title: "Success",
+          description: `Successfully deleted ${successCount} customer${successCount > 1 ? 's' : ''}`,
+        });
+        clearSelection();
+      } else if (successCount > 0 && failCount > 0) {
+        toast({
+          title: "Partial Success",
+          description: `Deleted ${successCount} customer${successCount > 1 ? 's' : ''}. ${failCount} failed.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: `Failed to delete ${failCount} customer${failCount > 1 ? 's' : ''}`,
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsDeleting(false);
+      setDeleteProgress(null);
+    }
+  };
+
   return (
     <DashboardLayout 
       title="Customers" 
@@ -363,6 +530,45 @@ export default function Customers() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Bulk Action Toolbar */}
+            {selectedCustomerIds.size > 0 && !loading && (
+              <div className="flex items-center justify-between p-4 bg-primary/5 border rounded-lg mb-4">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium">
+                    {selectedCustomerIds.size} customer{selectedCustomerIds.size > 1 ? 's' : ''} selected
+                  </span>
+                  {deleteProgress && (
+                    <span className="text-sm text-muted-foreground">
+                      Deleting {deleteProgress.current} of {deleteProgress.total}...
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      if (confirm(`Delete ${selectedCustomerIds.size} customer${selectedCustomerIds.size > 1 ? 's' : ''} permanently? This cannot be undone. Orders will be preserved but customer information will be removed.`)) {
+                        bulkDeleteCustomers();
+                      }
+                    }}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Customer{selectedCustomerIds.size > 1 ? 's' : ''}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={clearSelection}
+                    disabled={isDeleting}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+            )}
             {loading ? (
               <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
@@ -391,12 +597,31 @@ export default function Customers() {
             ) : isMobile ? (
               // Mobile Card View
               <div className="space-y-4">
+                {/* Select All for Mobile */}
+                {paginatedCustomers.length > 0 && (
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <UICheckbox
+                      checked={isAllSelected}
+                      onCheckedChange={selectAllCustomers}
+                      disabled={isDeleting}
+                    />
+                    <label className="text-sm font-medium cursor-pointer" onClick={selectAllCustomers}>
+                      Select All
+                    </label>
+                  </div>
+                )}
                 {paginatedCustomers.map((customer) => (
                   <Card key={customer.id} className="p-4">
                     <div className="space-y-3">
                       {/* Header Row */}
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <UICheckbox
+                            checked={selectedCustomerIds.has(customer.id)}
+                            onCheckedChange={() => toggleCustomerSelection(customer.id)}
+                            disabled={isDeleting}
+                            className="mt-1"
+                          />
                           <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                             <span className="text-sm font-medium text-primary">
                               {customer.full_name.charAt(0).toUpperCase()}
@@ -411,9 +636,31 @@ export default function Customers() {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <div className="font-semibold">৳{customer.total_spent.toLocaleString()}</div>
-                          <div className="text-xs text-muted-foreground">Total</div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="text-right">
+                            <div className="font-semibold">৳{customer.total_spent.toLocaleString()}</div>
+                            <div className="text-xs text-muted-foreground">Total</div>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Open menu</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setCustomerToDelete(customer);
+                                  setDeleteDialogOpen(true);
+                                }}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Customer
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
 
@@ -472,17 +719,32 @@ export default function Customers() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <UICheckbox
+                        checked={isAllSelected}
+                        onCheckedChange={selectAllCustomers}
+                        disabled={isDeleting}
+                      />
+                    </TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead className="hidden md:table-cell">Contact</TableHead>
                     <TableHead className="hidden lg:table-cell">Location</TableHead>
                     <TableHead>Orders</TableHead>
                     <TableHead>Total Spent</TableHead>
                     <TableHead className="hidden md:table-cell">First Order</TableHead>
+                    <TableHead className="w-16"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedCustomers.map((customer) => (
                     <TableRow key={customer.id}>
+                      <TableCell>
+                        <UICheckbox
+                          checked={selectedCustomerIds.has(customer.id)}
+                          onCheckedChange={() => toggleCustomerSelection(customer.id)}
+                          disabled={isDeleting}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -546,6 +808,28 @@ export default function Customers() {
                       </TableCell>
                       <TableCell className="hidden md:table-cell">
                         {new Date(customer.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-9 w-9 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setCustomerToDelete(customer);
+                                setDeleteDialogOpen(true);
+                              }}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete Customer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -715,6 +999,45 @@ export default function Customers() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {/* Bulk Action Toolbar */}
+                {selectedCustomerIds.size > 0 && !loading && (
+                  <div className="flex items-center justify-between p-4 bg-primary/5 border rounded-lg mb-4">
+                    <div className="flex items-center gap-4">
+                      <span className="text-sm font-medium">
+                        {selectedCustomerIds.size} customer{selectedCustomerIds.size > 1 ? 's' : ''} selected
+                      </span>
+                      {deleteProgress && (
+                        <span className="text-sm text-muted-foreground">
+                          Deleting {deleteProgress.current} of {deleteProgress.total}...
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          if (confirm(`Delete ${selectedCustomerIds.size} customer${selectedCustomerIds.size > 1 ? 's' : ''} permanently? This cannot be undone. Orders will be preserved but customer information will be removed.`)) {
+                            bulkDeleteCustomers();
+                          }
+                        }}
+                        disabled={isDeleting}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Customer{selectedCustomerIds.size > 1 ? 's' : ''}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={clearSelection}
+                        disabled={isDeleting}
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Clear Selection
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {loading ? (
                   <div className="space-y-4">
                     {[...Array(5)].map((_, i) => (
@@ -732,11 +1055,30 @@ export default function Customers() {
                 ) : isMobile ? (
                   // Mobile Card View
                   <div className="space-y-4">
+                    {/* Select All for Mobile */}
+                    {paginatedFilteredCustomers.length > 0 && (
+                      <div className="flex items-center gap-2 pb-2 border-b">
+                        <UICheckbox
+                          checked={isAllSelected}
+                          onCheckedChange={selectAllCustomers}
+                          disabled={isDeleting}
+                        />
+                        <label className="text-sm font-medium cursor-pointer" onClick={selectAllCustomers}>
+                          Select All
+                        </label>
+                      </div>
+                    )}
                     {paginatedFilteredCustomers.map((customer) => (
                       <Card key={customer.id} className="p-4">
                         <div className="space-y-3">
                           <div className="flex items-start justify-between">
                             <div className="flex items-center gap-3 min-w-0 flex-1">
+                              <UICheckbox
+                                checked={selectedCustomerIds.has(customer.id)}
+                                onCheckedChange={() => toggleCustomerSelection(customer.id)}
+                                disabled={isDeleting}
+                                className="mt-1"
+                              />
                               <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                                 <span className="text-sm font-medium text-primary">
                                   {customer.full_name.charAt(0).toUpperCase()}
@@ -751,9 +1093,31 @@ export default function Customers() {
                                 </div>
                               </div>
                             </div>
-                            <div className="text-right flex-shrink-0">
-                              <div className="font-semibold">৳{customer.total_spent.toLocaleString()}</div>
-                              <div className="text-xs text-muted-foreground">Total</div>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <div className="text-right">
+                                <div className="font-semibold">৳{customer.total_spent.toLocaleString()}</div>
+                                <div className="text-xs text-muted-foreground">Total</div>
+                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Open menu</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setCustomerToDelete(customer);
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Delete Customer
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </div>
 
@@ -818,6 +1182,13 @@ export default function Customers() {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">
+                          <UICheckbox
+                            checked={isAllSelected}
+                            onCheckedChange={selectAllCustomers}
+                            disabled={isDeleting}
+                          />
+                        </TableHead>
                         <TableHead>Customer</TableHead>
                         <TableHead className="hidden md:table-cell">Contact</TableHead>
                         <TableHead className="hidden lg:table-cell">Location</TableHead>
@@ -825,11 +1196,19 @@ export default function Customers() {
                         <TableHead>Last Order</TableHead>
                         <TableHead>Total Orders</TableHead>
                         <TableHead>Total Spent</TableHead>
+                        <TableHead className="w-16"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedFilteredCustomers.map((customer) => (
                         <TableRow key={customer.id}>
+                          <TableCell>
+                            <UICheckbox
+                              checked={selectedCustomerIds.has(customer.id)}
+                              onCheckedChange={() => toggleCustomerSelection(customer.id)}
+                              disabled={isDeleting}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
@@ -897,6 +1276,28 @@ export default function Customers() {
                           <TableCell className="font-medium">
                             ৳{customer.total_spent.toLocaleString()}
                           </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-9 w-9 p-0">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Open menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setCustomerToDelete(customer);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete Customer
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -941,6 +1342,39 @@ export default function Customers() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Customer</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete <strong>{customerToDelete?.full_name}</strong>? This action cannot be undone.
+                <br />
+                <br />
+                Orders associated with this customer will be preserved, but the customer information will be permanently removed from the database.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={async () => {
+                  if (customerToDelete) {
+                    await deleteCustomer(customerToDelete.id);
+                    setDeleteDialogOpen(false);
+                    setCustomerToDelete(null);
+                  }
+                }}
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete Customer"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
