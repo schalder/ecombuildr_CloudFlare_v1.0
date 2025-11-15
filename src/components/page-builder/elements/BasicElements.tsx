@@ -214,13 +214,18 @@ const ImageElement: React.FC<{
 
   // Calculate image styles with alignment and border (width handled by responsive CSS)
   const getImageStyles = (): React.CSSProperties => {
-    // Get responsive width to check if it's set
+    // Get responsive width and maxWidth to check if they're set
     const responsiveStyles = element.styles?.responsive || {};
     const currentDeviceStyles = responsiveStyles[deviceType] || {};
+    
+    // Get width with responsive fallback (mobile -> tablet -> desktop -> base)
     const responsiveWidth = currentDeviceStyles.width || 
       (deviceType === 'mobile' ? (responsiveStyles.tablet?.width || responsiveStyles.desktop?.width) : 
        deviceType === 'tablet' ? responsiveStyles.desktop?.width : undefined) ||
       element.styles?.width;
+    
+    // Get maxWidth (stored in base styles, not responsive)
+    const maxWidth = element.styles?.maxWidth;
 
     const baseStyles = {
       height: element.styles?.height || 'auto',
@@ -239,13 +244,23 @@ const ImageElement: React.FC<{
       baseStyles.width = '100%';
       baseStyles.marginLeft = '0';
       baseStyles.marginRight = '0';
+      // Still apply maxWidth even for full alignment if set
+      if (maxWidth) {
+        baseStyles.maxWidth = maxWidth;
+      }
     } else {
-      // Apply alignment - ensure width is not 100% to allow margins to work
-      // If responsive width is set and not 100%, use it; otherwise let image be its natural width
+      // Apply width if set (preset like "50%" or custom value)
+      // Width should be applied to control image size, but not 100% as it breaks alignment
       if (responsiveWidth && responsiveWidth !== '100%' && responsiveWidth !== 'auto') {
         baseStyles.width = responsiveWidth;
       }
-      // Don't set width to 100% when alignment is set - this breaks margin-based alignment
+      
+      // Apply maxWidth if set (this constrains the maximum width)
+      // maxWidth works together with width - if width is 50% and maxWidth is 30%, 
+      // the image will be constrained to 30% max
+      if (maxWidth) {
+        baseStyles.maxWidth = maxWidth;
+      }
       
       // Apply alignment margins
       switch (alignment) {
