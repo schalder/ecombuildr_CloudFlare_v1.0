@@ -145,14 +145,38 @@ const ImageElement: React.FC<{
     }
   }, [src]);
 
-  // Generate responsive CSS for this element
-  // Exclude border properties from responsive CSS since they're handled via inline styles in getImageStyles()
-  // This prevents double borders (one from CSS class, one from inline styles)
-  // Note: Inline styles have higher specificity than CSS classes, so borders from getImageStyles() will always take precedence
-  const responsiveCSS = React.useMemo(() => 
-    generateResponsiveCSS(element.id, element.styles, ['borderWidth', 'borderColor', 'borderStyle', 'borderRadius']), 
-    [element.id, element.styles]
-  );
+  // Generate responsive CSS for this element (excluding border properties which are handled inline)
+  const responsiveCSS = React.useMemo(() => {
+    // Create a copy of styles without border properties for CSS generation
+    // Borders are applied via inline styles in getImageStyles() to avoid double borders
+    const stylesWithoutBorders = { ...element.styles };
+    
+    // Remove non-responsive border properties
+    if (stylesWithoutBorders) {
+      delete stylesWithoutBorders.borderWidth;
+      delete stylesWithoutBorders.borderColor;
+      delete stylesWithoutBorders.borderStyle;
+      delete stylesWithoutBorders.borderRadius;
+    }
+    
+    // Remove border properties from responsive styles
+    if (stylesWithoutBorders?.responsive) {
+      const responsiveCopy = { ...stylesWithoutBorders.responsive };
+      ['desktop', 'tablet', 'mobile'].forEach(device => {
+        if (responsiveCopy[device]) {
+          const deviceStyles = { ...responsiveCopy[device] };
+          delete deviceStyles.borderWidth;
+          delete deviceStyles.borderColor;
+          delete deviceStyles.borderStyle;
+          delete deviceStyles.borderRadius;
+          responsiveCopy[device] = deviceStyles;
+        }
+      });
+      stylesWithoutBorders.responsive = responsiveCopy;
+    }
+    
+    return generateResponsiveCSS(element.id, stylesWithoutBorders);
+  }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
@@ -210,20 +234,21 @@ const ImageElement: React.FC<{
       }
     }
 
-    // Apply border styles using getEffectiveResponsiveValue to prevent double borders
-    // This checks responsive styles first, then falls back to base styles
+    // Apply border styles directly to the image (using responsive values to avoid double borders)
+    // Borders are applied inline, not via CSS classes, to prevent conflicts with responsive CSS
     const borderWidth = getEffectiveResponsiveValue(element, 'borderWidth', deviceType, '');
-    const borderColor = getEffectiveResponsiveValue(element, 'borderColor', deviceType, '#e5e7eb');
-    const borderStyle = getEffectiveResponsiveValue(element, 'borderStyle', deviceType, 'solid');
-    const borderRadius = getEffectiveResponsiveValue(element, 'borderRadius', deviceType, '0.5rem');
-    
     if (borderWidth) {
       baseStyles.borderWidth = borderWidth;
-      baseStyles.borderStyle = borderStyle;
-      baseStyles.borderColor = borderColor;
+      baseStyles.borderStyle = getEffectiveResponsiveValue(element, 'borderStyle', deviceType, 'solid') || 'solid';
+      baseStyles.borderColor = getEffectiveResponsiveValue(element, 'borderColor', deviceType, '#e5e7eb') || '#e5e7eb';
     }
     
-    baseStyles.borderRadius = borderRadius;
+    const borderRadius = getEffectiveResponsiveValue(element, 'borderRadius', deviceType, '');
+    if (borderRadius) {
+      baseStyles.borderRadius = borderRadius;
+    } else {
+      baseStyles.borderRadius = '0.5rem'; // Default rounded-lg
+    }
 
     return baseStyles;
   };
@@ -317,7 +342,7 @@ const ImageElement: React.FC<{
 
   return (
     <>
-      {responsiveCSS && <style>{responsiveCSS}</style>}
+      <style>{responsiveCSS}</style>
       <figure 
         className="w-full"
         style={getContainerStyles()}
