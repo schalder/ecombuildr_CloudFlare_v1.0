@@ -46,22 +46,78 @@ export const PaymentProcessing: React.FC = () => {
   // Get status from URL - this takes priority over database status
   const urlStatus = searchParams.get('status');
   const [statusUpdated, setStatusUpdated] = useState(false);
-useEffect(() => {
-  if (slug) {
-    loadStore(slug);
-  } else if (websiteId) {
-    (async () => {
-      const { data: website } = await supabase
-        .from('websites')
-        .select('store_id')
-        .eq('id', websiteId)
-        .single();
-      if (website?.store_id) {
-        await loadStoreById(website.store_id);
+
+  // ✅ Load store with priority: Funnel context > Website > Slug
+  // This ensures funnel payment processing works independently of website status
+  useEffect(() => {
+    const loadStoreData = async () => {
+      // Priority 1: Check for funnel context in sessionStorage (for funnel checkouts)
+      const pendingCheckout = sessionStorage.getItem('pending_checkout');
+      if (pendingCheckout) {
+        try {
+          const checkoutData = JSON.parse(pendingCheckout);
+          if (checkoutData.orderData?.isFunnelCheckout && checkoutData.orderData.funnelId) {
+            console.log('PaymentProcessing: Detected funnel checkout, loading store from funnel');
+            
+            // Load store from funnel (funnel.store_id)
+            const { data: funnel, error: funnelError } = await supabase
+              .from('funnels')
+              .select('store_id')
+              .eq('id', checkoutData.orderData.funnelId)
+              .eq('is_active', true)
+              .maybeSingle();
+            
+            if (!funnelError && funnel?.store_id) {
+              await loadStoreById(funnel.store_id);
+              console.log('PaymentProcessing: ✅ Store loaded from funnel:', funnel.store_id);
+              
+              // Set funnel context for UI
+              setFunnelContext({
+                isFunnelCheckout: true,
+                funnelId: checkoutData.orderData.funnelId,
+                currentStepId: checkoutData.orderData.currentStepId
+              });
+              return; // Exit early - don't try website loading
+            } else {
+              console.warn('PaymentProcessing: Failed to load store from funnel, falling back to website');
+            }
+          }
+        } catch (e) {
+          console.error('PaymentProcessing: Error parsing funnel context:', e);
+          // Fall through to website loading
+        }
       }
-    })();
-  }
-}, [slug, websiteId, loadStore, loadStoreById]);
+      
+      // Priority 2: Load store from website (for site checkouts)
+      // This is optional and non-blocking - won't prevent funnel payment processing
+      if (websiteId) {
+        try {
+          const { data: website } = await supabase
+            .from('websites')
+            .select('store_id')
+            .eq('id', websiteId)
+            .maybeSingle(); // Use maybeSingle to avoid errors if website not found/unpublished
+          
+          if (website?.store_id) {
+            await loadStoreById(website.store_id);
+            console.log('PaymentProcessing: ✅ Store loaded from website:', website.store_id);
+          } else {
+            console.log('PaymentProcessing: Website not found or not published, but continuing (may be funnel checkout)');
+          }
+        } catch (e) {
+          console.warn('PaymentProcessing: Error loading website (non-blocking):', e);
+          // Don't block - continue processing
+        }
+      }
+      
+      // Priority 3: Load store from slug (legacy support)
+      if (slug) {
+        loadStore(slug);
+      }
+    };
+    
+    loadStoreData();
+  }, [slug, websiteId, loadStore, loadStoreById]);
 
 
   useEffect(() => {
@@ -94,7 +150,17 @@ useEffect(() => {
   }, [tempId, orderId]);
 
   useEffect(() => {
-    if (store && isCoursePayment === false) {
+    // ✅ For funnel checkouts, proceed even if store is not loaded yet (it will load from funnel)
+    // For site checkouts, wait for store to be loaded
+    const isFunnelCheckout = sessionStorage.getItem('pending_checkout') 
+      ? JSON.parse(sessionStorage.getItem('pending_checkout') || '{}')?.orderData?.isFunnelCheckout 
+      : false;
+    
+    // If it's a funnel checkout, we can proceed without store (store will load from funnel)
+    // If it's a site checkout, we need store to be loaded
+    const canProceed = isFunnelCheckout || store;
+    
+    if (canProceed && isCoursePayment === false) {
       if (tempId && (urlStatus === 'success' || urlStatus === 'completed')) {
         handleDeferredOrderCreation();
       } else if (tempId && (urlStatus === 'failed' || urlStatus === 'cancelled')) {
@@ -120,6 +186,7 @@ useEffect(() => {
     // Read checkout data BEFORE clearing it to preserve funnel context
     const pendingCheckout = sessionStorage.getItem('pending_checkout');
     let funnelContextData = null;
+    let storeIdForUpdate: string | null = null;
     
     if (pendingCheckout) {
       try {
@@ -131,6 +198,30 @@ useEffect(() => {
             currentStepId: checkoutData.orderData.currentStepId
           };
           console.log('PaymentProcessing: Preserved funnel context for failed payment:', funnelContextData);
+          
+          // ✅ Load store from funnel if not already loaded
+          if (!store && checkoutData.orderData.funnelId) {
+            const { data: funnel } = await supabase
+              .from('funnels')
+              .select('store_id')
+              .eq('id', checkoutData.orderData.funnelId)
+              .eq('is_active', true)
+              .maybeSingle();
+            
+            if (funnel?.store_id) {
+              storeIdForUpdate = funnel.store_id;
+              await loadStoreById(funnel.store_id);
+              console.log('PaymentProcessing: ✅ Store loaded from funnel for failed payment');
+            }
+          } else if (store) {
+            storeIdForUpdate = store.id;
+          }
+        } else if (checkoutData.storeId) {
+          // Site checkout - use storeId from checkout data
+          storeIdForUpdate = checkoutData.storeId;
+          if (!store) {
+            await loadStoreById(checkoutData.storeId);
+          }
         }
       } catch (e) {
         console.error('Error parsing pending checkout:', e);
@@ -146,7 +237,8 @@ useEffect(() => {
     // ✅ Update the real order in the database
     // For checkout-full: tempId is now the real orderId (order created immediately)
     // For funnel checkout: tempId was already the real orderId
-    if (tempId && store) {
+    const effectiveStoreId = store?.id || storeIdForUpdate;
+    if (tempId && effectiveStoreId) {
       const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
       console.log('PaymentProcessing: Updating order status to', orderStatus, 'for order', tempId);
       
@@ -156,7 +248,7 @@ useEffect(() => {
           body: {
             orderId: tempId,
             status: orderStatus,
-            storeId: store.id
+            storeId: effectiveStoreId
           }
         });
         
@@ -209,7 +301,49 @@ useEffect(() => {
   };
 
   const handleDeferredOrderCreation = async () => {
-    if (!tempId || !store) return;
+    if (!tempId) return;
+    
+    // ✅ For funnel checkouts, ensure store is loaded from funnel if not already loaded
+    if (!store) {
+      const pendingCheckout = sessionStorage.getItem('pending_checkout');
+      if (pendingCheckout) {
+        try {
+          const checkoutData = JSON.parse(pendingCheckout);
+          if (checkoutData.orderData?.isFunnelCheckout && checkoutData.orderData.funnelId) {
+            const { data: funnel } = await supabase
+              .from('funnels')
+              .select('store_id')
+              .eq('id', checkoutData.orderData.funnelId)
+              .eq('is_active', true)
+              .maybeSingle();
+            
+            if (funnel?.store_id) {
+              await loadStoreById(funnel.store_id);
+            } else {
+              console.error('PaymentProcessing: Cannot load store from funnel');
+              toast.error('Failed to load store information');
+              setLoading(false);
+              return;
+            }
+          } else {
+            console.error('PaymentProcessing: Store not loaded and not a funnel checkout');
+            toast.error('Store information not available');
+            setLoading(false);
+            return;
+          }
+        } catch (e) {
+          console.error('PaymentProcessing: Error loading store from funnel:', e);
+          toast.error('Failed to load store information');
+          setLoading(false);
+          return;
+        }
+      } else {
+        console.error('PaymentProcessing: Store not loaded and no checkout data');
+        toast.error('Store information not available');
+        setLoading(false);
+        return;
+      }
+    }
 
     setCreatingOrder(true);
     try {
@@ -575,7 +709,38 @@ useEffect(() => {
   };
 
   const updateOrderStatusToCancelled = async () => {
-    if (!order || !orderId || !store) return;
+    if (!order || !orderId) return;
+    
+    // ✅ Get store ID from order or load from funnel if needed
+    let effectiveStoreId = store?.id || order.store_id;
+    
+    // If still no store ID, try to get it from funnel context
+    if (!effectiveStoreId) {
+      const pendingCheckout = sessionStorage.getItem('pending_checkout');
+      if (pendingCheckout) {
+        try {
+          const checkoutData = JSON.parse(pendingCheckout);
+          if (checkoutData.orderData?.funnelId) {
+            const { data: funnel } = await supabase
+              .from('funnels')
+              .select('store_id')
+              .eq('id', checkoutData.orderData.funnelId)
+              .eq('is_active', true)
+              .maybeSingle();
+            if (funnel?.store_id) {
+              effectiveStoreId = funnel.store_id;
+            }
+          }
+        } catch (e) {
+          console.error('Error getting store from funnel:', e);
+        }
+      }
+    }
+    
+    if (!effectiveStoreId) {
+      console.error('PaymentProcessing: Cannot update order status - no store ID available');
+      return;
+    }
     
     setStatusUpdated(true);
     const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
@@ -586,7 +751,7 @@ useEffect(() => {
         body: {
           orderId: orderId,
           status: orderStatus,
-          storeId: store.id
+          storeId: effectiveStoreId
         }
       });
       
@@ -602,7 +767,38 @@ useEffect(() => {
   };
 
   const fetchOrder = async () => {
-    if (!orderId || !store) return;
+    if (!orderId) return;
+    
+    // ✅ For funnel checkouts, ensure store is loaded if not already
+    if (!store) {
+      // Try to get store from order itself
+      try {
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('store_id, funnel_id')
+          .eq('id', orderId)
+          .maybeSingle();
+        
+        if (orderData?.store_id) {
+          await loadStoreById(orderData.store_id);
+        } else if (orderData?.funnel_id) {
+          // Load store from funnel
+          const { data: funnel } = await supabase
+            .from('funnels')
+            .select('store_id')
+            .eq('id', orderData.funnel_id)
+            .eq('is_active', true)
+            .maybeSingle();
+          
+          if (funnel?.store_id) {
+            await loadStoreById(funnel.store_id);
+          }
+        }
+      } catch (e) {
+        console.error('PaymentProcessing: Error loading store for order fetch:', e);
+        // Continue anyway - order fetch might work without store
+      }
+    }
 
     try {
       // Get order token from URL params for secure access
