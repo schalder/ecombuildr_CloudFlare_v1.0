@@ -175,13 +175,16 @@ const ImageElement: React.FC<{
     
     let css = generateResponsiveCSS(element.id, stylesWithoutBorders);
     
-    // CRITICAL FIX: Add explicit CSS rule to remove borders from image element class
-    // This prevents double borders on live pages by ensuring no borders come from CSS
-    // Only inline styles from getImageStyles() will apply borders
-    css += `.element-${element.id} { border: none !important; border-width: 0 !important; border-style: none !important; }`;
+    // CRITICAL FIX: Only add CSS override rule on live pages (not in page builder)
+    // In page builder, borders should show from inline styles so users can see their changes
+    // On live pages, this prevents double borders by ensuring no borders come from CSS
+    // Only inline styles from getImageStyles() will apply borders on live pages
+    if (!isEditing) {
+      css += `.element-${element.id} { border: none !important; border-width: 0 !important; border-style: none !important; }`;
+    }
     
     return css;
-  }, [element.id, element.styles]);
+  }, [element.id, element.styles, isEditing]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
