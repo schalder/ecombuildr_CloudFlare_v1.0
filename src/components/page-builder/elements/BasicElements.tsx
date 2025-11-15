@@ -173,7 +173,14 @@ const ImageElement: React.FC<{
       };
     }
     
-    return generateResponsiveCSS(element.id, stylesWithoutBorders);
+    let css = generateResponsiveCSS(element.id, stylesWithoutBorders);
+    
+    // CRITICAL FIX: Add explicit CSS rule to remove borders from image element class
+    // This prevents double borders on live pages by ensuring no borders come from CSS
+    // Only inline styles from getImageStyles() will apply borders
+    css += `.element-${element.id} { border: none !important; border-width: 0 !important; border-style: none !important; }`;
+    
+    return css;
   }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
