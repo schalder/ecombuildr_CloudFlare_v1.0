@@ -194,6 +194,21 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
         const currentPath = window.location.pathname;
         let selectedConnection: DomainConnection | null = null;
         
+        // ✅ For system routes that work independently (payment-processing, order-confirmation),
+        // bypass connection selection and allow direct rendering
+        // These routes use sessionStorage funnel context and don't need a domain connection
+        const independentSystemRoutes = ['payment-processing', 'order-confirmation'];
+        const pathSegments = currentPath.split('/').filter(Boolean);
+        const potentialSlug = pathSegments[pathSegments.length - 1];
+        
+        if (independentSystemRoutes.includes(potentialSlug)) {
+          // These routes work independently using sessionStorage context
+          // Don't require a connection - allow direct rendering
+          setSelectedConnection(null);
+          setLoading(false);
+          return;
+        }
+        
         if (currentPath === '/' || currentPath === '') {
           // For root path, prioritize: explicit homepage > website > course_area > first funnel
           selectedConnection = 
@@ -218,7 +233,8 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
             } as DomainConnection;
           } else {
             // For non-course paths, check for system routes first
-            const systemRoutes = ['payment-processing', 'order-confirmation', 'cart', 'checkout'];
+            // Note: payment-processing and order-confirmation are already handled above
+            const systemRoutes = ['cart', 'checkout'];
             const pathSegments = currentPath.split('/').filter(Boolean);
             const potentialSlug = pathSegments[pathSegments.length - 1];
             
@@ -285,8 +301,24 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
     );
   }
   
-  // If no custom domain or content found, render normal app
-  if (!customDomain || !selectedConnection) {
+  // If no custom domain found, render normal app
+  if (!customDomain) {
+    return <>{children}</>;
+  }
+
+  // ✅ For independent system routes, always allow direct rendering
+  // These routes work independently using sessionStorage funnel context
+  const currentPath = window.location.pathname;
+  const pathSegments = currentPath.split('/').filter(Boolean);
+  const potentialSlug = pathSegments[pathSegments.length - 1];
+  const independentSystemRoutes = ['payment-processing', 'order-confirmation'];
+
+  if (independentSystemRoutes.includes(potentialSlug)) {
+    return <>{children}</>;
+  }
+
+  // If no connection found for other routes, render normal app
+  if (!selectedConnection) {
     return <>{children}</>;
   }
   
