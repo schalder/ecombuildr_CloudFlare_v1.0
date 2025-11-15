@@ -149,14 +149,23 @@ const ImageElement: React.FC<{
   // For image elements, exclude border properties from responsive CSS
   // Borders should only be applied via inline styles to prevent double borders
   const responsiveCSS = React.useMemo(() => {
-    if (element.styles?.responsive) {
-      const filteredStyles = {
-        ...element.styles,
-        responsive: {
-          desktop: { ...element.styles.responsive.desktop },
-          tablet: { ...element.styles.responsive.tablet },
-          mobile: { ...element.styles.responsive.mobile }
-        }
+    // Always filter out border properties from styles before generating CSS
+    const filteredStyles = {
+      ...element.styles,
+    };
+    
+    // Remove border properties from base styles
+    delete filteredStyles.borderWidth;
+    delete filteredStyles.borderColor;
+    delete filteredStyles.borderStyle;
+    delete filteredStyles.borderRadius;
+    
+    // If responsive styles exist, filter border properties from them too
+    if (filteredStyles.responsive) {
+      filteredStyles.responsive = {
+        desktop: { ...filteredStyles.responsive.desktop },
+        tablet: { ...filteredStyles.responsive.tablet },
+        mobile: { ...filteredStyles.responsive.mobile }
       };
       
       // Remove border properties from responsive styles to prevent double borders
@@ -168,11 +177,9 @@ const ImageElement: React.FC<{
           delete filteredStyles.responsive[device].borderRadius;
         }
       });
-      
-      return generateResponsiveCSS(element.id, filteredStyles);
     }
     
-    return generateResponsiveCSS(element.id, element.styles);
+    return generateResponsiveCSS(element.id, filteredStyles);
   }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
