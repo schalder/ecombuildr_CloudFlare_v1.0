@@ -1,6 +1,6 @@
 // Utility functions for generating responsive CSS from element styles
 
-export function generateResponsiveCSS(elementId: string, styles: any): string {
+export function generateResponsiveCSS(elementId: string, styles: any, excludeProperties: string[] = []): string {
   if (!styles?.responsive) return '';
   
   const { desktop = {}, tablet = {}, mobile = {} } = styles.responsive;
@@ -10,7 +10,9 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
   // Desktop styles (default)
   if (Object.keys(desktop).length > 0) {
     const { hoverColor, hoverBackgroundColor, ...restDesktop } = desktop as any;
-    const desktopProps = Object.entries(restDesktop)
+    // Filter out excluded properties (like border properties for image elements)
+    const filteredDesktop = Object.entries(restDesktop).filter(([prop]) => !excludeProperties.includes(prop));
+    const desktopProps = filteredDesktop
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');
 
@@ -28,7 +30,9 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
   // Tablet styles (768px to 1023px)
   if (Object.keys(tablet).length > 0) {
     const { hoverColor: tHoverColor, hoverBackgroundColor: tHoverBg, ...restTablet } = tablet as any;
-    const tabletProps = Object.entries(restTablet)
+    // Filter out excluded properties
+    const filteredTablet = Object.entries(restTablet).filter(([prop]) => !excludeProperties.includes(prop));
+    const tabletProps = filteredTablet
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');
     
@@ -59,7 +63,9 @@ export function generateResponsiveCSS(elementId: string, styles: any): string {
   // Mobile styles (max-width: 767px)
   if (Object.keys(mobile).length > 0) {
     const { hoverColor: mHoverColor, hoverBackgroundColor: mHoverBg, ...restMobile } = mobile as any;
-    const mobileProps = Object.entries(restMobile)
+    // Filter out excluded properties
+    const filteredMobile = Object.entries(restMobile).filter(([prop]) => !excludeProperties.includes(prop));
+    const mobileProps = filteredMobile
       .map(([prop, value]) => `${kebabCase(prop)}: ${value}`)
       .join('; ');
     
