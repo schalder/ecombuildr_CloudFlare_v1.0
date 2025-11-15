@@ -146,13 +146,17 @@ const ImageElement: React.FC<{
   }, [src]);
 
   // Generate responsive CSS for this element
-  // Exclude border properties from responsive CSS since borders are applied directly to the image via inline styles
+  // Exclude border and margin properties from responsive CSS since:
+  // - Borders are applied directly to the image via inline styles
+  // - Margins (alignment) are applied directly to the image via inline styles
   const responsiveCSS = React.useMemo(() => {
     if (!element.styles?.responsive) {
       return generateResponsiveCSS(element.id, element.styles);
     }
     
-    // Filter out border properties from responsive styles to prevent double borders
+    // Filter out border and margin properties from responsive styles
+    // Borders: prevent double borders
+    // Margins: prevent responsive margins from overriding alignment margins
     const filteredStyles = {
       ...element.styles,
       responsive: {
@@ -162,13 +166,21 @@ const ImageElement: React.FC<{
       }
     };
     
-    // Remove border properties from responsive styles for each device
+    // Remove border and margin properties from responsive styles for each device
     ['desktop', 'tablet', 'mobile'].forEach(device => {
       if (filteredStyles.responsive[device]) {
+        // Remove border properties
         delete filteredStyles.responsive[device].borderWidth;
         delete filteredStyles.responsive[device].borderColor;
         delete filteredStyles.responsive[device].borderStyle;
         delete filteredStyles.responsive[device].borderRadius;
+        
+        // Remove margin properties to prevent overriding alignment margins
+        delete filteredStyles.responsive[device].margin;
+        delete filteredStyles.responsive[device].marginTop;
+        delete filteredStyles.responsive[device].marginRight;
+        delete filteredStyles.responsive[device].marginBottom;
+        delete filteredStyles.responsive[device].marginLeft;
       }
     });
     
