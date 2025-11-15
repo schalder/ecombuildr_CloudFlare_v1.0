@@ -152,7 +152,7 @@ useEffect(() => {
         const { data: updatedOrder, error: updateError } = await supabase
           .from('orders')
           .update({ 
-            status: orderStatus as any,
+            status: orderStatus as any, // TypeScript types need regeneration after enum update
             updated_at: new Date().toISOString()
           })
           .eq('id', tempId)
@@ -584,7 +584,7 @@ useEffect(() => {
       const { error } = await supabase
         .from('orders')
         .update({ 
-          status: orderStatus as any,
+          status: orderStatus as any, // TypeScript types need regeneration after enum update
           updated_at: new Date().toISOString()
         })
         .eq('id', orderId)
