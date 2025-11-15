@@ -173,9 +173,12 @@ const ImageElement: React.FC<{
 
   // Calculate image styles with alignment and border (width handled by responsive CSS)
   const getImageStyles = (): React.CSSProperties => {
+    // Get all element styles including responsive borders
+    const elementStyles = renderElementStyles(element, deviceType);
+    
     const baseStyles = {
-      height: element.styles?.height || 'auto',
-      objectFit: element.styles?.objectFit || 'cover',
+      height: elementStyles.height || element.styles?.height || 'auto',
+      objectFit: elementStyles.objectFit || element.styles?.objectFit || 'cover',
       display: 'block',
       // ADD: Prevent layout shift with aspect ratio
       aspectRatio: element.styles?.aspectRatio || (element.styles?.width && element.styles?.height 
@@ -207,8 +210,18 @@ const ImageElement: React.FC<{
       }
     }
 
-    // Border styles are now handled by responsive CSS via .element-${element.id} class
-    // No inline border styles needed to prevent double borders
+    // Apply border styles directly to the image (from renderElementStyles which handles responsive)
+    if (elementStyles.borderWidth) {
+      baseStyles.borderWidth = elementStyles.borderWidth;
+      baseStyles.borderStyle = elementStyles.borderStyle || 'solid';
+      baseStyles.borderColor = elementStyles.borderColor || '#e5e7eb';
+    }
+    
+    if (elementStyles.borderRadius) {
+      baseStyles.borderRadius = elementStyles.borderRadius;
+    } else {
+      baseStyles.borderRadius = '0.5rem'; // Default rounded-lg
+    }
 
     return baseStyles;
   };
