@@ -147,12 +147,13 @@ const ImageElement: React.FC<{
 
   // Generate responsive CSS for this element
   // Exclude border properties from responsive CSS since borders are applied directly to the image via inline styles
+  // Also exclude width when alignment is set (not 'full') to prevent alignment issues on live pages
   const responsiveCSS = React.useMemo(() => {
     if (!element.styles?.responsive) {
       return generateResponsiveCSS(element.id, element.styles);
     }
     
-    // Filter out border properties from responsive styles to prevent double borders
+    // Filter out border properties and width (when alignment is not 'full') from responsive styles
     const filteredStyles = {
       ...element.styles,
       responsive: {
@@ -163,17 +164,24 @@ const ImageElement: React.FC<{
     };
     
     // Remove border properties from responsive styles for each device
+    // Also remove width if alignment is not 'full' to preserve alignment margins
     ['desktop', 'tablet', 'mobile'].forEach(device => {
       if (filteredStyles.responsive[device]) {
         delete filteredStyles.responsive[device].borderWidth;
         delete filteredStyles.responsive[device].borderColor;
         delete filteredStyles.responsive[device].borderStyle;
         delete filteredStyles.responsive[device].borderRadius;
+        
+        // Exclude width from responsive CSS when alignment is not 'full'
+        // This prevents responsive width from overriding alignment margins on live pages
+        if (alignment !== 'full') {
+          delete filteredStyles.responsive[device].width;
+        }
       }
     });
     
     return generateResponsiveCSS(element.id, filteredStyles);
-  }, [element.id, element.styles]);
+  }, [element.id, element.styles, alignment]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
@@ -323,8 +331,6 @@ const ImageElement: React.FC<{
     
     // Use optimized component for live pages
     if (!isEditing) {
-      // Pass styles directly - AdvancedImageOptimizer will handle alignment properly
-      // by setting display: inline-block when margin auto is detected
       return (
         <StorefrontImage
           src={imageUrl}
@@ -366,7 +372,8 @@ const ImageElement: React.FC<{
     <a 
       href={linkUrl} 
       target={linkTarget}
-      className="inline-block select-none"
+      className="select-none"
+      style={alignment === 'full' ? { display: 'inline-block' } : { display: 'block' }}
       onClick={(e) => {
         // In editing mode, prevent navigation but allow selection
         if (isEditing) {
