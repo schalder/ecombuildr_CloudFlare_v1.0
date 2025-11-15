@@ -146,45 +146,39 @@ const ImageElement: React.FC<{
   }, [src]);
 
   // Generate responsive CSS for this element
-  // Exclude border properties from responsive CSS since they're applied directly to the image via inline styles
+  // Exclude border properties from responsive CSS since we apply them directly via inline styles
   const responsiveCSS = React.useMemo(() => {
+    // Create a copy of styles without border properties
     const stylesWithoutBorders = { ...element.styles };
     
-    // Remove border properties from base styles to prevent them from being included in any CSS generation
-    if (stylesWithoutBorders) {
-      delete stylesWithoutBorders.borderWidth;
-      delete stylesWithoutBorders.borderColor;
-      delete stylesWithoutBorders.borderStyle;
-      delete stylesWithoutBorders.borderRadius;
+    // Remove border properties from base styles
+    if (stylesWithoutBorders.borderWidth) delete stylesWithoutBorders.borderWidth;
+    if (stylesWithoutBorders.borderColor) delete stylesWithoutBorders.borderColor;
+    if (stylesWithoutBorders.borderStyle) delete stylesWithoutBorders.borderStyle;
+    if (stylesWithoutBorders.borderRadius) delete stylesWithoutBorders.borderRadius;
+    
+    // Remove border properties from responsive styles
+    if (stylesWithoutBorders.responsive) {
+      const responsive = { ...stylesWithoutBorders.responsive };
+      
+      if (responsive.desktop) {
+        const { borderWidth, borderColor, borderStyle, borderRadius, ...restDesktop } = responsive.desktop;
+        responsive.desktop = restDesktop;
+      }
+      if (responsive.tablet) {
+        const { borderWidth, borderColor, borderStyle, borderRadius, ...restTablet } = responsive.tablet;
+        responsive.tablet = restTablet;
+      }
+      if (responsive.mobile) {
+        const { borderWidth, borderColor, borderStyle, borderRadius, ...restMobile } = responsive.mobile;
+        responsive.mobile = restMobile;
+      }
+      
+      stylesWithoutBorders.responsive = responsive;
     }
     
-    // Remove border properties from responsive styles (desktop, tablet, mobile)
-    if (stylesWithoutBorders?.responsive) {
-      const { desktop, tablet, mobile } = stylesWithoutBorders.responsive;
-      const filterBorders = (deviceStyles: any) => {
-        if (!deviceStyles) return deviceStyles;
-        const { borderWidth, borderColor, borderStyle, borderRadius, ...rest } = deviceStyles;
-        return rest;
-      };
-      stylesWithoutBorders.responsive = {
-        desktop: filterBorders(desktop),
-        tablet: filterBorders(tablet),
-        mobile: filterBorders(mobile),
-      };
-    }
-    
-    let css = generateResponsiveCSS(element.id, stylesWithoutBorders);
-    
-    // CRITICAL FIX: Only add CSS override rule on live pages (not in page builder)
-    // In page builder, borders should show from inline styles so users can see their changes
-    // On live pages, this prevents double borders by ensuring no borders come from CSS
-    // Only inline styles from getImageStyles() will apply borders on live pages
-    if (!isEditing) {
-      css += `.element-${element.id} { border: none !important; border-width: 0 !important; border-style: none !important; }`;
-    }
-    
-    return css;
-  }, [element.id, element.styles, isEditing]);
+    return generateResponsiveCSS(element.id, stylesWithoutBorders);
+  }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
