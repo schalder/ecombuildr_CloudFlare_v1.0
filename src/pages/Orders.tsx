@@ -2496,7 +2496,16 @@ export default function Orders() {
                 )}
                   <div>
                     <h4 className="font-medium">Order Summary</h4>
-                    <p>Status: <Badge>{selectedOrder.status}</Badge></p>
+                    <div className="space-y-1">
+                      <p>Status: <Badge>{selectedOrder.status}</Badge></p>
+                      {(selectedOrder.status === 'payment_failed' || selectedOrder.status === 'cancelled') && (
+                        <p className="text-sm text-muted-foreground ml-1">
+                          {selectedOrder.status === 'cancelled' 
+                            ? 'Customer cancelled payment' 
+                            : 'Customer did not complete checkout'}
+                        </p>
+                      )}
+                    </div>
                     <p>Total: ৳{selectedOrder.total.toLocaleString()}</p>
                     <p>Payment: {selectedOrder.payment_method}
                       {selectedOrder.payment_transaction_number && ` (TXN: ${selectedOrder.payment_transaction_number})`}
