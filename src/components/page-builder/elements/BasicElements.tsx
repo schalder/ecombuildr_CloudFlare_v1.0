@@ -166,7 +166,8 @@ const ImageElement: React.FC<{
       }
     };
     
-    // Remove border and margin properties from responsive styles for each device
+    // Remove border, margin, and width properties from responsive styles for each device
+    // Width is excluded when alignment is set because responsive width can override alignment
     ['desktop', 'tablet', 'mobile'].forEach(device => {
       if (filteredStyles.responsive[device]) {
         // Remove border properties
@@ -181,11 +182,20 @@ const ImageElement: React.FC<{
         delete filteredStyles.responsive[device].marginRight;
         delete filteredStyles.responsive[device].marginBottom;
         delete filteredStyles.responsive[device].marginLeft;
+        
+        // Remove width properties when alignment is set (not 'full')
+        // Responsive width can override alignment by setting width to 100%
+        const currentAlignment = element.content?.alignment || 'center';
+        if (currentAlignment && currentAlignment !== 'full') {
+          delete filteredStyles.responsive[device].width;
+          delete filteredStyles.responsive[device].maxWidth;
+          delete filteredStyles.responsive[device].minWidth;
+        }
       }
     });
     
     return generateResponsiveCSS(element.id, filteredStyles);
-  }, [element.id, element.styles]);
+  }, [element.id, element.styles, element.content?.alignment]);
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
@@ -225,6 +235,11 @@ const ImageElement: React.FC<{
       baseStyles.marginLeft = '0';
       baseStyles.marginRight = '0';
     } else {
+      // For alignment to work with auto margins, ensure width is auto (not constrained)
+      // unless explicitly set in styles
+      if (!element.styles?.width) {
+        baseStyles.width = 'auto';
+      }
       // Apply alignment
       switch (alignment) {
         case 'left':
@@ -376,7 +391,8 @@ const ImageElement: React.FC<{
     <a 
       href={linkUrl} 
       target={linkTarget}
-      className="inline-block select-none"
+      className="block select-none"
+      style={{ display: 'block' }}
       onClick={(e) => {
         // In editing mode, prevent navigation but allow selection
         if (isEditing) {

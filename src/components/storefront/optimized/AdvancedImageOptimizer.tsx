@@ -164,6 +164,8 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
       return {
         position: 'relative',
         overflow: 'hidden',
+        display: 'block', // Ensure container is block-level to allow child margins to work
+        width: '100%', // Full width to allow child auto margins to center properly
         ...containerStyles
       };
     }
@@ -237,7 +239,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
       
       {/* Render image when in view */}
       {isInView && (
-        <picture>
+        <picture style={preserveOriginal ? { display: 'block' } : undefined}>
           {generateModernSources()}
           <img
             ref={imgRef}
