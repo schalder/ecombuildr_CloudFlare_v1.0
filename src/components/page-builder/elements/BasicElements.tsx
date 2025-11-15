@@ -145,42 +145,11 @@ const ImageElement: React.FC<{
     }
   }, [src]);
 
-  // Generate responsive CSS for this element - EXCLUDE border properties since they're applied inline
-  const responsiveCSS = React.useMemo(() => {
-    if (!element.styles) return '';
-    
-    // Filter out border properties from responsive styles before generating CSS
-    const borderProps = ['borderWidth', 'borderColor', 'borderStyle', 'borderRadius'];
-    
-    const filteredStyles = {
-      ...element.styles,
-      responsive: element.styles.responsive ? {
-        desktop: Object.fromEntries(
-          Object.entries(element.styles.responsive.desktop || {}).filter(
-            ([key]) => !borderProps.includes(key)
-          )
-        ),
-        tablet: Object.fromEntries(
-          Object.entries(element.styles.responsive.tablet || {}).filter(
-            ([key]) => !borderProps.includes(key)
-          )
-        ),
-        mobile: Object.fromEntries(
-          Object.entries(element.styles.responsive.mobile || {}).filter(
-            ([key]) => !borderProps.includes(key)
-          )
-        ),
-      } : undefined
-    };
-    
-    // Also remove border properties from base styles
-    const { borderWidth, borderColor, borderStyle, borderRadius, ...baseStylesWithoutBorders } = filteredStyles;
-    
-    return generateResponsiveCSS(element.id, {
-      ...baseStylesWithoutBorders,
-      responsive: filteredStyles.responsive
-    });
-  }, [element.id, element.styles]);
+  // Generate responsive CSS for this element
+  const responsiveCSS = React.useMemo(() => 
+    generateResponsiveCSS(element.id, element.styles), 
+    [element.id, element.styles]
+  );
 
   // Get container styles using the shared renderer
   const getContainerStyles = (): React.CSSProperties => {
@@ -238,23 +207,8 @@ const ImageElement: React.FC<{
       }
     }
 
-    // Apply border styles directly to the image - use responsive helper for proper inheritance
-    const borderWidth = getEffectiveResponsiveValue(element, 'borderWidth', deviceType, '');
-    const borderColor = getEffectiveResponsiveValue(element, 'borderColor', deviceType, '');
-    const borderStyle = getEffectiveResponsiveValue(element, 'borderStyle', deviceType, 'solid');
-    const borderRadius = getEffectiveResponsiveValue(element, 'borderRadius', deviceType, '');
-    
-    if (borderWidth) {
-      baseStyles.borderWidth = borderWidth;
-      baseStyles.borderStyle = borderStyle || 'solid';
-      baseStyles.borderColor = borderColor || '#e5e7eb';
-    }
-    
-    if (borderRadius) {
-      baseStyles.borderRadius = borderRadius;
-    } else {
-      baseStyles.borderRadius = '0.5rem'; // Default rounded-lg
-    }
+    // Border styles are now handled by responsive CSS via .element-${element.id} class
+    // No inline border styles needed to prevent double borders
 
     return baseStyles;
   };
