@@ -214,18 +214,13 @@ const ImageElement: React.FC<{
 
   // Calculate image styles with alignment and border (width handled by responsive CSS)
   const getImageStyles = (): React.CSSProperties => {
-    // Get responsive width and maxWidth to check if they're set
+    // Get responsive width to check if it's set
     const responsiveStyles = element.styles?.responsive || {};
     const currentDeviceStyles = responsiveStyles[deviceType] || {};
-    
-    // Get width with responsive fallback (mobile -> tablet -> desktop -> base)
     const responsiveWidth = currentDeviceStyles.width || 
       (deviceType === 'mobile' ? (responsiveStyles.tablet?.width || responsiveStyles.desktop?.width) : 
        deviceType === 'tablet' ? responsiveStyles.desktop?.width : undefined) ||
       element.styles?.width;
-    
-    // Get maxWidth (stored in base styles, not responsive)
-    const maxWidth = element.styles?.maxWidth;
 
     const baseStyles = {
       height: element.styles?.height || 'auto',
@@ -237,6 +232,34 @@ const ImageElement: React.FC<{
         : undefined)
     } as React.CSSProperties;
 
+    // Apply dimension constraints (maxWidth, minWidth, maxHeight, minHeight) to the image
+    // Get responsive dimension properties with fallback inheritance
+    const getResponsiveDimension = (property: 'maxWidth' | 'minWidth' | 'maxHeight' | 'minHeight'): string | undefined => {
+      const currentValue = currentDeviceStyles[property];
+      if (currentValue !== undefined && currentValue !== null && currentValue !== '') {
+        return currentValue;
+      }
+      
+      // Fallback inheritance: mobile -> tablet -> desktop -> base
+      if (deviceType === 'mobile') {
+        return responsiveStyles.tablet?.[property] || responsiveStyles.desktop?.[property] || element.styles?.[property];
+      } else if (deviceType === 'tablet') {
+        return responsiveStyles.desktop?.[property] || element.styles?.[property];
+      } else {
+        return element.styles?.[property];
+      }
+    };
+
+    const maxWidth = getResponsiveDimension('maxWidth');
+    const minWidth = getResponsiveDimension('minWidth');
+    const maxHeight = getResponsiveDimension('maxHeight');
+    const minHeight = getResponsiveDimension('minHeight');
+    
+    if (maxWidth) baseStyles.maxWidth = maxWidth;
+    if (minWidth) baseStyles.minWidth = minWidth;
+    if (maxHeight) baseStyles.maxHeight = maxHeight;
+    if (minHeight) baseStyles.minHeight = minHeight;
+
     // Apply alignment as margin styles directly to the image
     // For alignment to work properly, we need to ensure the container doesn't have width: 100%
     // which would break margin-based alignment
@@ -244,23 +267,13 @@ const ImageElement: React.FC<{
       baseStyles.width = '100%';
       baseStyles.marginLeft = '0';
       baseStyles.marginRight = '0';
-      // Still apply maxWidth even for full alignment if set
-      if (maxWidth) {
-        baseStyles.maxWidth = maxWidth;
-      }
     } else {
-      // Apply width if set (preset like "50%" or custom value)
-      // Width should be applied to control image size, but not 100% as it breaks alignment
+      // Apply alignment - ensure width is not 100% to allow margins to work
+      // If responsive width is set and not 100%, use it; otherwise let image be its natural width
       if (responsiveWidth && responsiveWidth !== '100%' && responsiveWidth !== 'auto') {
         baseStyles.width = responsiveWidth;
       }
-      
-      // Apply maxWidth if set (this constrains the maximum width)
-      // maxWidth works together with width - if width is 50% and maxWidth is 30%, 
-      // the image will be constrained to 30% max
-      if (maxWidth) {
-        baseStyles.maxWidth = maxWidth;
-      }
+      // Don't set width to 100% when alignment is set - this breaks margin-based alignment
       
       // Apply alignment margins
       switch (alignment) {
