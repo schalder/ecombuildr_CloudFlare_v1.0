@@ -236,15 +236,21 @@ const ImageElement: React.FC<{
       }
     }
 
-    // Apply border styles directly to the image
-    if (element.styles?.borderWidth) {
-      baseStyles.borderWidth = element.styles.borderWidth;
-      baseStyles.borderStyle = element.styles.borderStyle || 'solid';
-      baseStyles.borderColor = element.styles.borderColor || '#e5e7eb';
+    // Apply border styles directly to the image - check both base and responsive styles
+    // This ensures borders are always applied via inline styles, preventing double borders from CSS
+    const borderWidth = getEffectiveResponsiveValue(element, 'borderWidth', deviceType, element.styles?.borderWidth || '');
+    const borderColor = getEffectiveResponsiveValue(element, 'borderColor', deviceType, element.styles?.borderColor || '');
+    const borderStyle = getEffectiveResponsiveValue(element, 'borderStyle', deviceType, element.styles?.borderStyle || 'solid');
+    const borderRadius = getEffectiveResponsiveValue(element, 'borderRadius', deviceType, element.styles?.borderRadius || '');
+    
+    if (borderWidth) {
+      baseStyles.borderWidth = borderWidth;
+      baseStyles.borderStyle = borderStyle || 'solid';
+      baseStyles.borderColor = borderColor || '#e5e7eb';
     }
     
-    if (element.styles?.borderRadius) {
-      baseStyles.borderRadius = element.styles.borderRadius;
+    if (borderRadius) {
+      baseStyles.borderRadius = borderRadius;
     } else {
       baseStyles.borderRadius = '0.5rem'; // Default rounded-lg
     }
