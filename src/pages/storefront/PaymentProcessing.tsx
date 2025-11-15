@@ -109,14 +109,14 @@ useEffect(() => {
     }
   }, [orderId, tempId, urlStatus, store, isCoursePayment]);
 
-  // Auto-update order status if URL indicates failure/cancellation
+  // Auto-update order status if URL indicates failure/cancellation (for orders fetched via orderId)
   useEffect(() => {
-    if (order && (urlStatus === 'failed' || urlStatus === 'cancelled') && !statusUpdated) {
+    if (order && orderId && (urlStatus === 'failed' || urlStatus === 'cancelled') && !statusUpdated) {
       updateOrderStatusToCancelled();
     }
-  }, [order, urlStatus, statusUpdated]);
+  }, [order, orderId, urlStatus, statusUpdated]);
 
-  const handleFailedDeferredPayment = () => {
+  const handleFailedDeferredPayment = async () => {
     // Read checkout data BEFORE clearing it to preserve funnel context
     const pendingCheckout = sessionStorage.getItem('pending_checkout');
     let funnelContextData = null;
@@ -143,18 +143,68 @@ useEffect(() => {
     // Clear any stored checkout data since payment failed
     sessionStorage.removeItem('pending_checkout');
     
-    // Create a mock order object for display purposes from URL params
-    const mockOrder = {
-      id: tempId,
-      order_number: searchParams.get('transactionId') || tempId,
-      payment_method: paymentMethod,
-      total: parseFloat(searchParams.get('paymentAmount') || '0'),
-      status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
-      customer_name: '',
-      created_at: new Date().toISOString()
-    };
+    // ✅ Update the real order in the database (tempId is the real orderId)
+    if (tempId && store) {
+      const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+      console.log('PaymentProcessing: Updating order status to', orderStatus, 'for order', tempId);
+      
+      try {
+        const { data: updatedOrder, error: updateError } = await supabase
+          .from('orders')
+          .update({ 
+            status: orderStatus as any,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', tempId)
+          .eq('store_id', store.id)
+          .select()
+          .single();
+        
+        if (updateError) {
+          console.error('PaymentProcessing: Error updating order status:', updateError);
+          // Fall back to mock order if update fails
+          const mockOrder = {
+            id: tempId,
+            order_number: searchParams.get('transactionId') || tempId,
+            payment_method: paymentMethod,
+            total: parseFloat(searchParams.get('paymentAmount') || '0'),
+            status: orderStatus,
+            customer_name: '',
+            created_at: new Date().toISOString()
+          };
+          setOrder(mockOrder);
+        } else if (updatedOrder) {
+          console.log('PaymentProcessing: ✅ Order status updated successfully:', updatedOrder);
+          setOrder(updatedOrder);
+        }
+      } catch (error) {
+        console.error('PaymentProcessing: Exception updating order status:', error);
+        // Fall back to mock order if update fails
+        const mockOrder = {
+          id: tempId,
+          order_number: searchParams.get('transactionId') || tempId,
+          payment_method: paymentMethod,
+          total: parseFloat(searchParams.get('paymentAmount') || '0'),
+          status: orderStatus,
+          customer_name: '',
+          created_at: new Date().toISOString()
+        };
+        setOrder(mockOrder);
+      }
+    } else {
+      // If no tempId or store, create a mock order object for display purposes
+      const mockOrder = {
+        id: tempId || '',
+        order_number: searchParams.get('transactionId') || tempId || '',
+        payment_method: paymentMethod,
+        total: parseFloat(searchParams.get('paymentAmount') || '0'),
+        status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+        customer_name: '',
+        created_at: new Date().toISOString()
+      };
+      setOrder(mockOrder);
+    }
     
-    setOrder(mockOrder);
     setLoading(false);
   };
 
@@ -525,23 +575,29 @@ useEffect(() => {
   };
 
   const updateOrderStatusToCancelled = async () => {
-    if (!order || !orderId) return;
+    if (!order || !orderId || !store) return;
     
     setStatusUpdated(true);
+    const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+    
     try {
       const { error } = await supabase
         .from('orders')
         .update({ 
-          status: 'cancelled',
+          status: orderStatus as any,
           updated_at: new Date().toISOString()
         })
-        .eq('id', orderId);
+        .eq('id', orderId)
+        .eq('store_id', store.id);
       
       if (!error) {
-        setOrder(prev => ({ ...prev, status: 'cancelled' }));
+        setOrder(prev => ({ ...prev, status: orderStatus }));
+        console.log('PaymentProcessing: ✅ Order status updated to', orderStatus);
+      } else {
+        console.error('PaymentProcessing: Error updating order status:', error);
       }
     } catch (error) {
-      console.error('Error updating order status:', error);
+      console.error('PaymentProcessing: Exception updating order status:', error);
     }
   };
 

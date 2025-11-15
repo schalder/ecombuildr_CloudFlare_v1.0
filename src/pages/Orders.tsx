@@ -344,10 +344,8 @@ export default function Orders() {
         if (paymentStatusFilter) {
           if (paymentStatusFilter === 'success') {
             // Exclude payment_failed and cancelled orders
-            ordersQuery = ordersQuery.neq('status', 'cancelled');
-            // Filter out payment_failed using a filter that checks status is not payment_failed
-            // Since payment_failed might not be in the type, we'll use a workaround
-            ordersQuery = ordersQuery.or('status.neq.payment_failed');
+            ordersQuery = ordersQuery.neq('status', 'cancelled' as any);
+            ordersQuery = ordersQuery.neq('status', 'payment_failed' as any);
           } else if (paymentStatusFilter === 'failed') {
             // Use a filter that matches payment_failed status
             ordersQuery = ordersQuery.eq('status', 'payment_failed' as any);
@@ -378,8 +376,8 @@ export default function Orders() {
         // Apply payment status filter to count query
         if (paymentStatusFilter) {
           if (paymentStatusFilter === 'success') {
-            countQuery = countQuery.neq('status', 'cancelled');
-            countQuery = countQuery.or('status.neq.payment_failed');
+            countQuery = countQuery.neq('status', 'cancelled' as any);
+            countQuery = countQuery.neq('status', 'payment_failed' as any);
           } else if (paymentStatusFilter === 'failed') {
             countQuery = countQuery.eq('status', 'payment_failed' as any);
           } else if (paymentStatusFilter === 'cancelled') {
@@ -522,8 +520,8 @@ export default function Orders() {
         // Apply payment status filter if paymentStatusFilter exists
         if (paymentStatusFilter) {
           if (paymentStatusFilter === 'success') {
-            ordersQuery = ordersQuery.neq('status', 'cancelled');
-            ordersQuery = ordersQuery.or('status.neq.payment_failed');
+            ordersQuery = ordersQuery.neq('status', 'cancelled' as any);
+            ordersQuery = ordersQuery.neq('status', 'payment_failed' as any);
           } else if (paymentStatusFilter === 'failed') {
             ordersQuery = ordersQuery.eq('status', 'payment_failed' as any);
           } else if (paymentStatusFilter === 'cancelled') {
@@ -559,8 +557,8 @@ export default function Orders() {
         // Apply payment status filter to count query
         if (paymentStatusFilter) {
           if (paymentStatusFilter === 'success') {
-            countQuery = countQuery.neq('status', 'cancelled');
-            countQuery = countQuery.or('status.neq.payment_failed');
+            countQuery = countQuery.neq('status', 'cancelled' as any);
+            countQuery = countQuery.neq('status', 'payment_failed' as any);
           } else if (paymentStatusFilter === 'failed') {
             countQuery = countQuery.eq('status', 'payment_failed' as any);
           } else if (paymentStatusFilter === 'cancelled') {
@@ -690,8 +688,8 @@ export default function Orders() {
       // Apply payment status filter if paymentStatusFilter exists
       if (paymentStatusFilter) {
         if (paymentStatusFilter === 'success') {
-          ordersQuery = ordersQuery.neq('status', 'cancelled');
-          ordersQuery = ordersQuery.or('status.neq.payment_failed');
+          ordersQuery = ordersQuery.neq('status', 'cancelled' as any);
+          ordersQuery = ordersQuery.neq('status', 'payment_failed' as any);
         } else if (paymentStatusFilter === 'failed') {
           ordersQuery = ordersQuery.eq('status', 'payment_failed' as any);
         } else if (paymentStatusFilter === 'cancelled') {
@@ -726,8 +724,8 @@ export default function Orders() {
       // Apply payment status filter to count query
       if (paymentStatusFilter) {
         if (paymentStatusFilter === 'success') {
-          countQuery = countQuery.neq('status', 'cancelled');
-          countQuery = countQuery.or('status.neq.payment_failed');
+          countQuery = countQuery.neq('status', 'cancelled' as any);
+          countQuery = countQuery.neq('status', 'payment_failed' as any);
         } else if (paymentStatusFilter === 'failed') {
           countQuery = countQuery.eq('status', 'payment_failed' as any);
         } else if (paymentStatusFilter === 'cancelled') {
