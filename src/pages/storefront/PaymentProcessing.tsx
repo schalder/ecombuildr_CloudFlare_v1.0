@@ -149,16 +149,14 @@ useEffect(() => {
       console.log('PaymentProcessing: Updating order status to', orderStatus, 'for order', tempId);
       
       try {
-        const { data: updatedOrder, error: updateError } = await supabase
-          .from('orders')
-          .update({ 
-            status: orderStatus as any, // TypeScript types need regeneration after enum update
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', tempId)
-          .eq('store_id', store.id)
-          .select()
-          .single();
+        // Use edge function instead of direct client update (bypasses RLS)
+        const { data, error: updateError } = await supabase.functions.invoke('update-order-status', {
+          body: {
+            orderId: tempId,
+            status: orderStatus,
+            storeId: store.id
+          }
+        });
         
         if (updateError) {
           console.error('PaymentProcessing: Error updating order status:', updateError);
@@ -173,9 +171,9 @@ useEffect(() => {
             created_at: new Date().toISOString()
           };
           setOrder(mockOrder);
-        } else if (updatedOrder) {
-          console.log('PaymentProcessing: ✅ Order status updated successfully:', updatedOrder);
-          setOrder(updatedOrder);
+        } else if (data?.order) {
+          console.log('PaymentProcessing: ✅ Order status updated successfully:', data.order);
+          setOrder(data.order);
         }
       } catch (error) {
         console.error('PaymentProcessing: Exception updating order status:', error);
@@ -581,16 +579,16 @@ useEffect(() => {
     const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
     
     try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ 
-          status: orderStatus as any, // TypeScript types need regeneration after enum update
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', orderId)
-        .eq('store_id', store.id);
+      // Use edge function instead of direct client update (bypasses RLS)
+      const { data, error } = await supabase.functions.invoke('update-order-status', {
+        body: {
+          orderId: orderId,
+          status: orderStatus,
+          storeId: store.id
+        }
+      });
       
-      if (!error) {
+      if (!error && data?.order) {
         setOrder(prev => ({ ...prev, status: orderStatus }));
         console.log('PaymentProcessing: ✅ Order status updated to', orderStatus);
       } else {
