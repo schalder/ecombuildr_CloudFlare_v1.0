@@ -363,6 +363,53 @@ const ImageElement: React.FC<{
     
     // Use optimized component for live pages
     if (!isEditing) {
+      // Helper to check if a value is a pixel value (not percentage)
+      const isPixelValue = (value: string | undefined): boolean => {
+        if (!value) return false;
+        // Check if it ends with 'px' or is a pure number (for pixel values)
+        return value.endsWith('px') || (!value.includes('%') && !value.includes('vw') && !value.includes('vh') && !isNaN(parseFloat(value)));
+      };
+      
+      // Get the actual width value that will be applied (with responsive fallback)
+      const getActualWidth = (): string | undefined => {
+        const responsiveStyles = element.styles?.responsive || {};
+        const currentDeviceStyles = responsiveStyles[deviceType] || {};
+        
+        let width = currentDeviceStyles.width;
+        if (width === undefined || width === null || width === '') {
+          if (deviceType === 'mobile') {
+            width = responsiveStyles.tablet?.width || responsiveStyles.desktop?.width || element.styles?.width;
+          } else if (deviceType === 'tablet') {
+            width = responsiveStyles.desktop?.width || element.styles?.width;
+          } else {
+            width = element.styles?.width;
+          }
+        }
+        return width;
+      };
+      
+      // Only pass numeric width/height if they're pixel values
+      // Percentage widths are handled via inline styles, not numeric props
+      const getNumericWidth = (): number | undefined => {
+        const width = getActualWidth();
+        if (!width) return undefined;
+        if (typeof width === 'string' && isPixelValue(width)) {
+          const num = parseInt(width.replace('px', ''));
+          return isNaN(num) ? undefined : num;
+        }
+        return undefined;
+      };
+      
+      const getNumericHeight = (): number | undefined => {
+        const height = element.styles?.height;
+        if (!height) return undefined;
+        if (typeof height === 'string' && isPixelValue(height)) {
+          const num = parseInt(height.replace('px', ''));
+          return isNaN(num) ? undefined : num;
+        }
+        return undefined;
+      };
+      
       return (
         <StorefrontImage
           src={imageUrl}
@@ -371,8 +418,8 @@ const ImageElement: React.FC<{
           style={getImageStyles()}
           priority={isCritical}
           isCritical={isCritical}
-          width={element.styles?.width ? parseInt(element.styles.width) : undefined}
-          height={element.styles?.height ? parseInt(element.styles.height) : undefined}
+          width={getNumericWidth()}
+          height={getNumericHeight()}
           aspectRatio={element.styles?.aspectRatio}
           preserveOriginal={true}
         />

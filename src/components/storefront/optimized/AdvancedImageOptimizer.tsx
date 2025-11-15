@@ -157,14 +157,22 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
 
   // Calculate container styles
   const getContainerStyles = useCallback((): React.CSSProperties => {
+    // When preserving original, exclude width-related properties from container
+    // These should only be applied to the image itself, not the container
+    let containerStyle = style || {};
+    if (preserveOriginal && style) {
+      const { width, maxWidth, minWidth, height, maxHeight, minHeight, margin, marginLeft, marginRight, marginTop, marginBottom, ...rest } = style;
+      containerStyle = rest;
+    }
+    
     const baseStyles: React.CSSProperties = {
       position: 'relative',
       overflow: 'hidden',
       // Remove default background color to preserve transparency
-      ...style
+      ...containerStyle
     };
 
-    // When preserving original, respect all styles from page builder
+    // When preserving original, container should not have width constraints
     if (preserveOriginal) {
       return baseStyles;
     }
