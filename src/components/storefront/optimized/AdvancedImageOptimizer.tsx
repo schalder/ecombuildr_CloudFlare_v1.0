@@ -159,13 +159,15 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
   const getContainerStyles = useCallback((): React.CSSProperties => {
     // When preserving original, separate margin styles (alignment) from container styles
     // Margins should only be applied to the image, not the container
+    // Also separate width/maxWidth - these should be on the image, not the container
     if (preserveOriginal && style) {
-      const { margin, marginTop, marginRight, marginBottom, marginLeft, ...containerStyles } = style;
+      const { margin, marginTop, marginRight, marginBottom, marginLeft, width, maxWidth, minWidth, ...containerStyles } = style;
       return {
         position: 'relative',
         overflow: 'hidden',
         display: 'block', // Ensure container is block-level to allow child margins to work
-        width: '100%', // Full width to allow child auto margins to center properly
+        // DO NOT force width: '100%' - let the image's width control its size
+        // The container should be block-level but not constrain the image width
         ...containerStyles
       };
     }
