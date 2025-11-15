@@ -146,17 +146,13 @@ const ImageElement: React.FC<{
   }, [src]);
 
   // Generate responsive CSS for this element
-  // Exclude border and margin properties from responsive CSS since:
-  // - Borders are applied directly to the image via inline styles
-  // - Margins (alignment) are applied directly to the image via inline styles
+  // Exclude border properties from responsive CSS since borders are applied directly to the image via inline styles
   const responsiveCSS = React.useMemo(() => {
     if (!element.styles?.responsive) {
       return generateResponsiveCSS(element.id, element.styles);
     }
     
-    // Filter out border and margin properties from responsive styles
-    // Borders: prevent double borders
-    // Margins: prevent responsive margins from overriding alignment margins
+    // Filter out border properties from responsive styles to prevent double borders
     const filteredStyles = {
       ...element.styles,
       responsive: {
@@ -166,26 +162,13 @@ const ImageElement: React.FC<{
       }
     };
     
-    // Remove border and margin properties from responsive styles for each device
-    // Width is NOT excluded - it's applied via inline styles with responsive fallback
-    // This allows width presets and maxWidth to work properly while alignment margins work correctly
+    // Remove border properties from responsive styles for each device
     ['desktop', 'tablet', 'mobile'].forEach(device => {
       if (filteredStyles.responsive[device]) {
-        // Remove border properties
         delete filteredStyles.responsive[device].borderWidth;
         delete filteredStyles.responsive[device].borderColor;
         delete filteredStyles.responsive[device].borderStyle;
         delete filteredStyles.responsive[device].borderRadius;
-        
-        // Remove margin properties to prevent overriding alignment margins
-        delete filteredStyles.responsive[device].margin;
-        delete filteredStyles.responsive[device].marginTop;
-        delete filteredStyles.responsive[device].marginRight;
-        delete filteredStyles.responsive[device].marginBottom;
-        delete filteredStyles.responsive[device].marginLeft;
-        
-        // DO NOT exclude width - width is applied via inline styles with responsive fallback
-        // This ensures width presets (full, half, 1/3, 1/4) and maxWidth work correctly
       }
     });
     
@@ -212,9 +195,39 @@ const ImageElement: React.FC<{
     return cleanStyles;
   };
 
-  // Calculate image styles with alignment, width, and border
-  // Width is applied via inline styles with responsive fallback (like borders)
-  // This ensures width presets and maxWidth work correctly while alignment margins work
+  // Get wrapper styles for link (when linkUrl exists)
+  const getLinkWrapperStyles = (): React.CSSProperties => {
+    const wrapperStyles: React.CSSProperties = {
+      display: 'block',
+    };
+
+    // Apply alignment to wrapper
+    if (alignment === 'full') {
+      wrapperStyles.width = '100%';
+      wrapperStyles.marginLeft = '0';
+      wrapperStyles.marginRight = '0';
+    } else {
+      switch (alignment) {
+        case 'left':
+          wrapperStyles.marginLeft = '0';
+          wrapperStyles.marginRight = 'auto';
+          break;
+        case 'right':
+          wrapperStyles.marginLeft = 'auto';
+          wrapperStyles.marginRight = '0';
+          break;
+        case 'center':
+        default:
+          wrapperStyles.marginLeft = 'auto';
+          wrapperStyles.marginRight = 'auto';
+          break;
+      }
+    }
+
+    return wrapperStyles;
+  };
+
+  // Calculate image styles with alignment and border (width handled by responsive CSS)
   const getImageStyles = (): React.CSSProperties => {
     const baseStyles = {
       height: element.styles?.height || 'auto',
@@ -226,61 +239,40 @@ const ImageElement: React.FC<{
         : undefined)
     } as React.CSSProperties;
 
-    // Get width with responsive fallback (like borders)
+    // Apply alignment as margin styles directly to the image (only when NOT wrapped in link)
+    // When wrapped in link, alignment is applied to the wrapper instead
+    if (!linkUrl) {
+      if (alignment === 'full') {
+        baseStyles.width = '100%';
+        baseStyles.marginLeft = '0';
+        baseStyles.marginRight = '0';
+      } else {
+        // Apply alignment
+        switch (alignment) {
+          case 'left':
+            baseStyles.marginLeft = '0';
+            baseStyles.marginRight = 'auto';
+            break;
+          case 'right':
+            baseStyles.marginLeft = 'auto';
+            baseStyles.marginRight = '0';
+            break;
+          case 'center':
+          default:
+            baseStyles.marginLeft = 'auto';
+            baseStyles.marginRight = 'auto';
+            break;
+        }
+      }
+    } else if (alignment === 'full') {
+      // For full width, still apply to image when wrapped
+      baseStyles.width = '100%';
+    }
+
+    // Apply border styles directly to the image
     // Check responsive styles first, then fall back to base styles
     const responsiveStyles = element.styles?.responsive || {};
     const currentDeviceStyles = responsiveStyles[deviceType] || {};
-    
-    // Get width with responsive fallback (mobile -> tablet -> desktop -> base)
-    let width = currentDeviceStyles.width || undefined;
-    if (!width) {
-      if (deviceType === 'mobile') {
-        // Mobile: try tablet, then desktop, then base
-        width = responsiveStyles.tablet?.width || responsiveStyles.desktop?.width || element.styles?.width;
-      } else if (deviceType === 'tablet') {
-        // Tablet: try desktop, then base
-        width = responsiveStyles.desktop?.width || element.styles?.width;
-      } else {
-        // Desktop: use base styles
-        width = element.styles?.width;
-      }
-    }
-    
-    // Get maxWidth (not responsive, only base)
-    const maxWidth = element.styles?.maxWidth;
-
-    // Apply alignment as margin styles directly to the image
-    if (alignment === 'full') {
-      baseStyles.width = '100%';
-      baseStyles.marginLeft = '0';
-      baseStyles.marginRight = '0';
-    } else {
-      // Apply width and maxWidth (if set)
-      // Width is needed for alignment margins to work correctly
-      if (width) {
-        baseStyles.width = width;
-      }
-      if (maxWidth) {
-        baseStyles.maxWidth = maxWidth;
-      }
-      
-      // Apply alignment margins - these work with the width set above
-      switch (alignment) {
-        case 'left':
-          baseStyles.marginLeft = '0';
-          baseStyles.marginRight = 'auto';
-          break;
-        case 'right':
-          baseStyles.marginLeft = 'auto';
-          baseStyles.marginRight = '0';
-          break;
-        case 'center':
-        default:
-          baseStyles.marginLeft = 'auto';
-          baseStyles.marginRight = 'auto';
-          break;
-      }
-    }
     
     // Get border values with responsive fallback (mobile -> tablet -> desktop -> base)
     // Check if borderWidth exists (not undefined/null/empty) for current device
@@ -410,8 +402,8 @@ const ImageElement: React.FC<{
     <a 
       href={linkUrl} 
       target={linkTarget}
-      className="block select-none"
-      style={{ display: 'block' }}
+      className="select-none"
+      style={getLinkWrapperStyles()}
       onClick={(e) => {
         // In editing mode, prevent navigation but allow selection
         if (isEditing) {
