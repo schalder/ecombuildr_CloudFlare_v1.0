@@ -128,10 +128,13 @@ export default function DashboardOverview() {
       const { data: ordersData } = await ordersQuery;
 
       // Build customers query with date filter
+      // Only count customers with completed purchases (total_orders > 0)
+      // Exclude customers who only have incomplete/failed/cancelled orders
       let customersQuery = supabase
         .from('customers')
         .select('*', { count: 'exact' })
-        .eq('store_id', store.id);
+        .eq('store_id', store.id)
+        .gt('total_orders', 0); // Only customers with completed purchases
 
       if (start && end) {
         customersQuery = customersQuery
