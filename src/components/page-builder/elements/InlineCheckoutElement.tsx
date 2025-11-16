@@ -466,12 +466,12 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       errors.customer_name = 'Full name is required';
     }
     
-    // Phone validation with format check for COD orders
+    // Phone validation with format check for all payment methods
     if (fields.phone?.enabled && (fields.phone?.required ?? true)) {
       if (isEmpty(form.customer_phone)) {
         errors.customer_phone = 'Phone number is required';
-      } else if (form.payment_method === 'cod') {
-        // Validate phone format for COD orders (must be 11 digits starting with 01)
+      } else {
+        // Validate phone format for all payment methods (must be 11 digits starting with 01)
         const phoneError = getPhoneValidationError(form.customer_phone);
         if (phoneError) {
           setPhoneError(phoneError);
@@ -1081,8 +1081,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                           clearFieldError('customer_phone'); // Clear validation error on input
                         }}
                         onBlur={(e) => {
-                          // Only validate for COD payment method
-                          if (form.payment_method === 'cod' && e.target.value.trim()) {
+                          // Validate phone format for all payment methods
+                          if (e.target.value.trim()) {
                             const error = getPhoneValidationError(e.target.value);
                             if (error) {
                               setPhoneError(error);
