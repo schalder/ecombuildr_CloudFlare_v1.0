@@ -25,6 +25,15 @@ const TermsOfService = () => {
             <h2 className="text-2xl font-semibold">1. Service Description</h2>
             <p>eComBuildr provides a comprehensive platform that enables users to build e-commerce websites, sales funnels, landing pages, and related features such as product management, checkout capabilities, and analytics.</p>
             <p>eComBuildr solely provides the website-building and eCommerce infrastructure. All products, content, and business activities conducted by merchants through their websites or funnels are entirely their own responsibility. eComBuildr is not liable for any illegal, unlicensed, restricted, counterfeit, or copyrighted items sold by users. All legal and compliance responsibilities belong exclusively to the merchant/site owner. eComBuildr reserves the right to remove content, restrict access, or suspend accounts if any violations of laws or platform policies are identified.</p>
+            
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 border-l-4 border-blue-500 rounded-r-md">
+              <h3 className="text-lg font-semibold mb-3 text-blue-900 dark:text-blue-100">বাংলা সংস্করণ (Bengali Version)</h3>
+              <div className="space-y-3 text-base text-gray-800 dark:text-gray-200">
+                <p>eComBuildr একটি পূর্ণাঙ্গ প্ল্যাটফর্ম যা ব্যবহারকারীদের ই-কমার্স ওয়েবসাইট, সেলস ফানেল, ল্যান্ডিং পেজ এবং পণ্য ব্যবস্থাপনা, চেকআউট সিস্টেম ও অ্যানালিটিক্সসহ প্রয়োজনীয় সব ফিচার তৈরি করতে সহায়তা করে।</p>
+                <p>eComBuildr শুধুমাত্র ওয়েবসাইট তৈরি এবং ই-কমার্স পরিচালনার জন্য প্রয়োজনীয় প্রযুক্তিগত অবকাঠামো প্রদান করে। মার্চেন্ট/সেলাররা তাদের ওয়েবসাইট বা ফানেলের মাধ্যমে যে সকল পণ্য, কনটেন্ট বা ব্যবসায়িক কার্যক্রম পরিচালনা করেন—তার সম্পূর্ণ দায়দায়িত্ব তাদের নিজস্ব। ব্যবহারকারীরা যদি কোনো অবৈধ, লাইসেন্সবিহীন, নিষিদ্ধ, নকল বা কপিরাইট-লঙ্ঘনকারী পণ্য বিক্রি করেন, তার জন্য eComBuildr কোনোভাবেই দায়ী নয়। সকল আইনগত ও কমপ্লায়েন্স-সংক্রান্ত দায়িত্ব সম্পূর্ণভাবে মার্চেন্ট/সেলার/সাইট মালিকের ওপর বর্তায়।</p>
+                <p>eComBuildr আইন বা প্ল্যাটফর্ম নীতি লঙ্ঘনের ক্ষেত্রে প্রয়োজন অনুযায়ী কোনো কনটেন্ট সরিয়ে দিতে, অ্যাক্সেস সীমিত করতে বা অ্যাকাউন্ট স্থগিত করতে পারে।</p>
+              </div>
+            </div>
           </section>
 
           <section className="space-y-3">
