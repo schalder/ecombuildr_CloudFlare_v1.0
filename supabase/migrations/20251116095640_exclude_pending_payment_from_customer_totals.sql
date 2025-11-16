@@ -1,8 +1,9 @@
--- Migration: Exclude pending_payment orders from customer totals
--- This ensures that incomplete orders (pending_payment status) are not counted
+-- Migration: Exclude incomplete/failed/cancelled orders from customer totals
+-- This ensures that orders that don't represent completed purchases are not counted
 -- in customer total_orders and total_spent calculations
+-- Excluded statuses: pending_payment, payment_failed, cancelled
 
--- 1) Update sync_customer_from_order() function to exclude pending_payment orders
+-- 1) Update sync_customer_from_order() function to exclude incomplete/failed/cancelled orders
 create or replace function public.sync_customer_from_order()
 returns trigger
 language plpgsql
@@ -13,8 +14,9 @@ declare
   customer_record public.customers%rowtype;
   normalized_new_phone text := public.normalize_phone(NEW.customer_phone);
 begin
-  -- Skip cancelled and pending_payment orders
-  if NEW.status = 'cancelled' or NEW.status = 'pending_payment' then
+  -- Skip cancelled, pending_payment, and payment_failed orders
+  -- These don't represent completed purchases and shouldn't count toward customer totals
+  if NEW.status = 'cancelled' or NEW.status = 'pending_payment' or NEW.status = 'payment_failed' then
     return NEW;
   end if;
 
@@ -78,7 +80,8 @@ begin
   end if;
 
   -- 2e) Recalculate totals for this customer
-  -- Exclude cancelled and pending_payment orders from totals
+  -- Exclude cancelled, pending_payment, and payment_failed orders from totals
+  -- Only count orders that represent completed purchases
   update public.customers
   set
     total_orders = (
@@ -86,6 +89,7 @@ begin
       where customer_id = customer_record.id 
         and status != 'cancelled' 
         and status != 'pending_payment'
+        and status != 'payment_failed'
     ),
     total_spent = (
       select coalesce(sum(total), 0)
@@ -93,6 +97,7 @@ begin
       where customer_id = customer_record.id 
         and status != 'cancelled' 
         and status != 'pending_payment'
+        and status != 'payment_failed'
     ),
     updated_at = now()
   where id = customer_record.id;
@@ -101,7 +106,7 @@ begin
 end;
 $function$;
 
--- 2) Recalculate all existing customer totals excluding pending_payment orders
+-- 2) Recalculate all existing customer totals excluding incomplete/failed/cancelled orders
 update public.customers c
 set
   total_orders = sub.cnt,
@@ -115,12 +120,14 @@ from (
   from public.orders
   where status != 'cancelled' 
     and status != 'pending_payment' 
+    and status != 'payment_failed'
     and customer_id is not null
   group by customer_id
 ) sub
 where c.id = sub.customer_id;
 
--- 3) Set total_orders and total_spent to 0 for customers who only have pending_payment orders
+-- 3) Set total_orders and total_spent to 0 for customers who only have incomplete/failed/cancelled orders
+-- These customers don't have any completed purchases and shouldn't appear in the customer list
 update public.customers c
 set
   total_orders = 0,
@@ -132,5 +139,6 @@ where c.id not in (
   where customer_id is not null 
     and status != 'cancelled' 
     and status != 'pending_payment'
+    and status != 'payment_failed'
 );
 

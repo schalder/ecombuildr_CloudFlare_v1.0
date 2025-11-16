@@ -203,11 +203,15 @@ export default function Customers() {
     }
   }, [customers]);
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone?.includes(searchTerm)
-  );
+  // Filter customers: only show those with completed purchases (total_orders > 0)
+  // Exclude customers who only have incomplete/failed/cancelled orders
+  const filteredCustomers = customers
+    .filter(c => c.total_orders > 0) // Only customers with completed purchases
+    .filter(customer =>
+      customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.phone?.includes(searchTerm)
+    );
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);
