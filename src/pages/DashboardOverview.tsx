@@ -112,10 +112,12 @@ export default function DashboardOverview() {
         .eq('store_id', store.id);
 
       // Build orders query with date filter
+      // Exclude incomplete orders (pending_payment status) from stats calculations
       let ordersQuery = supabase
         .from('orders')
         .select('total, created_at')
-        .eq('store_id', store.id);
+        .eq('store_id', store.id)
+        .neq('status', 'pending_payment' as any);
 
       if (start && end) {
         ordersQuery = ordersQuery
@@ -159,6 +161,7 @@ export default function DashboardOverview() {
           .from('orders')
           .select('id, order_number, customer_name, total, status, created_at, website_id, funnel_id')
           .eq('store_id', store.id)
+          .neq('status', 'pending_payment' as any)
           .order('created_at', { ascending: false })
           .limit(5)
       ]);
@@ -208,23 +211,27 @@ export default function DashboardOverview() {
       const { start, end } = getDateRange(dateFilter);
       
       // Build order count queries with date filter
+      // Exclude incomplete orders (pending_payment status) from operational stats
       let pendingQuery = supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
         .eq('store_id', store.id)
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .neq('status', 'pending_payment' as any);
 
       let shippedQuery = supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
         .eq('store_id', store.id)
-        .eq('status', 'shipped');
+        .eq('status', 'shipped')
+        .neq('status', 'pending_payment' as any);
 
       let cancelledQuery = supabase
         .from('orders')
         .select('*', { count: 'exact', head: true })
         .eq('store_id', store.id)
-        .eq('status', 'cancelled');
+        .eq('status', 'cancelled')
+        .neq('status', 'pending_payment' as any);
 
       // Apply date filtering if specified
       if (start && end) {

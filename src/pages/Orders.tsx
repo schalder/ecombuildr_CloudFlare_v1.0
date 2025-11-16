@@ -108,6 +108,10 @@ function normalizeIP(ip: string | null | undefined): string | null {
 
 // Helper function to determine if payment is confirmed
 const isPaymentConfirmed = (order: Order): boolean => {
+  // For incomplete orders (pending_payment), payment is not confirmed
+  if (order.status === 'pending_payment') {
+    return false;
+  }
   // For EPS/EB Pay: only show checkmark if payment succeeded (not failed/cancelled)
   if (order.payment_method === 'eps' || order.payment_method === 'ebpay') {
     return order.status !== 'payment_failed' && order.status !== 'cancelled';
@@ -138,7 +142,7 @@ export default function Orders() {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>(searchParams.get("paymentStatus") || "");
-  const [activeTab, setActiveTab] = useState<'all' | 'fake'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'fake' | 'incomplete'>('all');
   const [fakeOrderFilter, setFakeOrderFilter] = useState<'all' | 'blocked'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
@@ -174,6 +178,8 @@ export default function Orders() {
         } else {
           fetchFakeOrders();
         }
+      } else if (activeTab === 'incomplete') {
+        fetchOrders();
       } else {
         fetchOrders();
       }
@@ -330,9 +336,15 @@ export default function Orders() {
           ordersQuery = ordersQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%,ip_address.ilike.%${searchTerm}%`);
         }
 
-        // Exclude fake orders from "All Orders" tab (show orders that are not potential fake, or marked as not fake)
+        // Exclude fake orders and incomplete orders from "All Orders" tab
         if (activeTab === 'all') {
           ordersQuery = ordersQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
+          ordersQuery = ordersQuery.neq('status', 'pending_payment' as any);
+        }
+        
+        // For "Incomplete Orders" tab, only show pending_payment status orders
+        if (activeTab === 'incomplete') {
+          ordersQuery = ordersQuery.eq('status', 'pending_payment' as any);
         }
 
         // Apply status filter if statusFilter exists
@@ -360,9 +372,15 @@ export default function Orders() {
           .select('*', { count: 'exact', head: true })
           .in('store_id', storeIds);
 
-        // Exclude fake orders from "All Orders" tab count (show orders that are not potential fake, or marked as not fake)
+        // Exclude fake orders and incomplete orders from "All Orders" tab count
         if (activeTab === 'all') {
           countQuery = countQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
+          countQuery = countQuery.neq('status', 'pending_payment' as any);
+        }
+        
+        // For "Incomplete Orders" tab count, only count pending_payment status orders
+        if (activeTab === 'incomplete') {
+          countQuery = countQuery.eq('status', 'pending_payment' as any);
         }
 
         if (searchTerm.trim()) {
@@ -1714,6 +1732,15 @@ export default function Orders() {
                 }}
               >
                 All Orders
+              </Button>
+              <Button
+                variant={activeTab === 'incomplete' ? 'default' : 'outline'}
+                onClick={() => {
+                  setActiveTab('incomplete');
+                  setCurrentPage(1);
+                }}
+              >
+                Incomplete Orders
               </Button>
               <Button
                 variant={activeTab === 'fake' ? 'default' : 'outline'}

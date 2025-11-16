@@ -127,6 +127,7 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
       const endDate = dateRange.to.toISOString();
 
       // Get orders for both current and comparison periods
+      // Exclude incomplete orders (pending_payment status) from sales calculations
       const { data: allOrders, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -140,6 +141,7 @@ export function useFunnelSales(funnelId: string, initialDateRange?: DateRange): 
           created_at
         `)
         .eq('funnel_id', funnelId)
+        .neq('status', 'pending_payment')
         .gte('created_at', startDate)
         .lte('created_at', endDate)
         .order('created_at', { ascending: false });

@@ -86,10 +86,12 @@ export function useFunnelStats(funnelId: string): FunnelStatsHookReturn {
       if (stepsError) throw stepsError;
 
       // Get orders filtered by funnel
+      // Exclude incomplete orders (pending_payment status) from stats calculations
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
         .select('total')
-        .eq('funnel_id', funnelId);
+        .eq('funnel_id', funnelId)
+        .neq('status', 'pending_payment');
 
       if (ordersError && ordersError.code !== 'PGRST116') throw ordersError;
 

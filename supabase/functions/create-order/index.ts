@@ -303,12 +303,19 @@ serve(async (req) => {
     }
 
     // Prepare order insert with safe defaults and status normalization
-    const allowedStatuses = new Set(['pending','confirmed','processing','shipped','delivered','cancelled']);
+    const allowedStatuses = new Set(['pending','confirmed','processing','shipped','delivered','cancelled','payment_failed','pending_payment']);
     
     // ✅ Determine default status based on payment method and product types
+    // For EBPay/EPS: Use 'pending_payment' (incomplete orders until payment verified)
     // For COD: Digital products = 'delivered', Physical products = 'pending'
     // For other payment methods: Use 'processing' as default
-    let defaultStatus = (order.payment_method === 'cod') ? 'pending' : 'processing';
+    let defaultStatus = 'processing';
+    if (order.payment_method === 'eps' || order.payment_method === 'ebpay') {
+      defaultStatus = 'pending_payment';
+      console.log('EBPay/EPS order: status set to pending_payment (incomplete order)');
+    } else if (order.payment_method === 'cod') {
+      defaultStatus = 'pending';
+    }
     
     // Check product types if items are provided
     if (items && items.length > 0) {
@@ -341,7 +348,10 @@ serve(async (req) => {
     }
     
     const incomingStatus = (order.status || '').toLowerCase();
-    const safeStatus = allowedStatuses.has(incomingStatus) ? incomingStatus : defaultStatus;
+    // For EBPay/EPS, always use 'pending_payment' unless explicitly set to a valid status
+    const safeStatus = (order.payment_method === 'eps' || order.payment_method === 'ebpay') && !allowedStatuses.has(incomingStatus)
+      ? 'pending_payment'
+      : (allowedStatuses.has(incomingStatus) ? incomingStatus : defaultStatus);
 
     // Generate access token for public order access
     const accessToken = generateAccessToken();

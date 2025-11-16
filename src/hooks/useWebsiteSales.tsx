@@ -143,6 +143,7 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
       const endDate = dateRange.to.toISOString();
 
       // Get orders for both current and comparison periods - filtered by website_id
+      // Exclude incomplete orders (pending_payment status) from sales calculations
       const { data: allOrders, error: ordersError } = await supabase
         .from('orders')
         .select(`
@@ -158,6 +159,7 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
           created_at
         `)
         .eq('website_id', websiteId)
+        .neq('status', 'pending_payment')
         .gte('created_at', startDate)
         .lte('created_at', endDate)
         .order('created_at', { ascending: false });
