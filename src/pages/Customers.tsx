@@ -171,11 +171,13 @@ export default function Customers() {
         const customerIds = customers.map(c => c.id);
         
         // Fetch last order date for each customer
+        // Exclude incomplete orders (pending_payment status) from last order date calculation
         const { data: orderDates, error: orderError } = await supabase
           .from('orders')
           .select('customer_id, created_at')
           .in('store_id', stores.map(store => store.id))
           .in('customer_id', customerIds)
+          .neq('status', 'pending_payment' as any) // Exclude incomplete orders
           .order('created_at', { ascending: false });
 
         if (orderError) throw orderError;
@@ -231,23 +233,28 @@ export default function Customers() {
     setCurrentPage(prev => Math.min(prev + 1, totalPages));
   };
 
+  // Filter out customers with only incomplete orders (total_orders = 0) for statistics
+  const activeCustomers = customers.filter(c => c.total_orders > 0);
+
   const customerStats = {
-    total: customers.length,
-    totalSpent: customers.reduce((sum, customer) => sum + customer.total_spent, 0),
-    averageOrderValue: customers.length > 0 
-      ? customers.reduce((sum, customer) => sum + customer.total_spent, 0) / customers.reduce((sum, customer) => sum + customer.total_orders, 0)
+    total: activeCustomers.length,
+    totalSpent: activeCustomers.reduce((sum, customer) => sum + customer.total_spent, 0),
+    averageOrderValue: activeCustomers.length > 0 
+      ? activeCustomers.reduce((sum, customer) => sum + customer.total_spent, 0) / activeCustomers.reduce((sum, customer) => sum + customer.total_orders, 0)
       : 0,
   };
 
   // Calculate VIP customers (top 10% by spend or 5+ orders)
-  const sortedBySpend = [...customers].sort((a, b) => b.total_spent - a.total_spent);
+  // Only consider customers with completed orders
+  const sortedBySpend = [...activeCustomers].sort((a, b) => b.total_spent - a.total_spent);
   const vipThreshold = sortedBySpend.length > 0 ? sortedBySpend[Math.floor(sortedBySpend.length * 0.9)]?.total_spent || 0 : 0;
-  const vipCustomers = customers.filter(c => c.total_orders >= 5 || c.total_spent >= vipThreshold);
+  const vipCustomers = activeCustomers.filter(c => c.total_orders >= 5 || c.total_spent >= vipThreshold);
 
   // Repeat customers metrics
-  const repeatCustomers = customers.filter(c => c.total_orders >= 2);
-  const oneTimeCustomers = customers.filter(c => c.total_orders === 1);
-  const repeatCustomerRate = customers.length > 0 ? (repeatCustomers.length / customers.length * 100).toFixed(1) : '0';
+  // Only consider customers with completed orders
+  const repeatCustomers = activeCustomers.filter(c => c.total_orders >= 2);
+  const oneTimeCustomers = activeCustomers.filter(c => c.total_orders === 1);
+  const repeatCustomerRate = activeCustomers.length > 0 ? (repeatCustomers.length / activeCustomers.length * 100).toFixed(1) : '0';
   
   // Revenue from repeat customers in last 30 days
   const thirtyDaysAgo = new Date();
@@ -264,8 +271,11 @@ export default function Customers() {
   const lostPotentialRevenue = oneTimeCustomers.length * 0.15 * customerStats.averageOrderValue;
 
   // Filter customers based on selected filter
+  // Exclude customers with only incomplete orders (total_orders = 0) from main list
   const getFilteredCustomers = () => {
-    let filtered = [...customers];
+    // Filter out customers with only incomplete orders (total_orders = 0)
+    // These customers only have pending_payment orders and shouldn't appear in the main list
+    let filtered = customers.filter(c => c.total_orders > 0);
     
     if (customerFilter === "one-time") {
       filtered = filtered.filter(c => c.total_orders === 1);
