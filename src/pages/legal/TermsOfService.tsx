@@ -23,7 +23,8 @@ const TermsOfService = () => {
 
           <section className="space-y-3">
             <h2 className="text-2xl font-semibold">1. Service Description</h2>
-            <p>EcomBuildr provides tools to build e-commerce websites, funnels, and related features such as product management, checkout, and analytics.</p>
+            <p>eComBuildr provides a comprehensive platform that enables users to build e-commerce websites, sales funnels, landing pages, and related features such as product management, checkout capabilities, and analytics.</p>
+            <p>eComBuildr solely provides the website-building and eCommerce infrastructure. All products, content, and business activities conducted by merchants through their websites or funnels are entirely their own responsibility. eComBuildr is not liable for any illegal, unlicensed, restricted, counterfeit, or copyrighted items sold by users. All legal and compliance responsibilities belong exclusively to the merchant/site owner. eComBuildr reserves the right to remove content, restrict access, or suspend accounts if any violations of laws or platform policies are identified.</p>
           </section>
 
           <section className="space-y-3">
