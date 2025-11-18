@@ -32,6 +32,9 @@ const websiteSettingsSchema = z.object({
   header_tracking_code: z.string().optional(),
   footer_tracking_code: z.string().optional(),
   facebook_pixel_id: z.string().optional(),
+  facebook_access_token: z.string().optional(),
+  facebook_test_event_code: z.string().optional(),
+  facebook_server_side_enabled: z.boolean().default(false),
   google_analytics_id: z.string().optional(),
   google_ads_id: z.string().optional(),
   currency_code: z.enum(['BDT','USD','INR','EUR','GBP']).default('BDT'),
@@ -140,6 +143,9 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       header_tracking_code: website.settings?.header_tracking_code || '',
       footer_tracking_code: website.settings?.footer_tracking_code || '',
       facebook_pixel_id: website.settings?.facebook_pixel_id || '',
+      facebook_access_token: website.facebook_access_token || '',
+      facebook_test_event_code: website.facebook_test_event_code || '',
+      facebook_server_side_enabled: website.facebook_server_side_enabled ?? false,
       google_analytics_id: website.settings?.google_analytics_id || '',
       google_ads_id: website.settings?.google_ads_id || '',
       currency_code: website.settings?.currency?.code || 'BDT',
@@ -228,7 +234,10 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         favicon_url, 
         header_tracking_code, 
         footer_tracking_code, 
-        facebook_pixel_id, 
+        facebook_pixel_id,
+        facebook_access_token,
+        facebook_test_event_code,
+        facebook_server_side_enabled,
         google_analytics_id, 
         google_ads_id, 
         currency_code, 
@@ -307,6 +316,9 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         .update({
           ...basicFields,
           facebook_pixel_id: facebook_pixel_id || null,
+          facebook_access_token: facebook_access_token || null,
+          facebook_test_event_code: facebook_test_event_code || null,
+          facebook_server_side_enabled: facebook_server_side_enabled,
           google_analytics_id: google_analytics_id || null,
           google_ads_id: google_ads_id || null,
           settings,
@@ -902,6 +914,89 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                       </FormItem>
                     )}
                   />
+                </div>
+
+                {/* Facebook Server-Side Tracking */}
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-medium">Facebook Server-Side Tracking</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Improve tracking reliability by forwarding events server-side. Events won't be blocked by ad blockers.
+                      </div>
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="facebook_server_side_enabled"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {form.watch('facebook_server_side_enabled') && (
+                    <div className="space-y-4 pl-4 border-l-2">
+                      <FormField
+                        control={form.control}
+                        name="facebook_access_token"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-foreground">Facebook Access Token</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password"
+                                placeholder="Enter your Facebook Access Token" 
+                                className="text-foreground" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Get your Access Token from{' '}
+                              <a 
+                                href="https://business.facebook.com/events_manager" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline inline-flex items-center gap-1"
+                              >
+                                Facebook Events Manager
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                              {' '}→ Select your Pixel → Settings → Conversions API → Generate Token
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="facebook_test_event_code"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-foreground">Test Event Code (Optional)</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="TEST12345" 
+                                className="text-foreground" 
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Optional test code to verify server-side events in Facebook Events Manager Test Events.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <FormField

@@ -50,6 +50,14 @@ export default function FacebookAds() {
     ? selectedFunnel?.settings?.facebook_pixel_id
     : 'Multiple';
 
+  // Check server-side tracking status
+  const serverSideEnabled = selectedWebsiteId !== 'all'
+    ? selectedWebsite?.facebook_server_side_enabled && !!selectedWebsite?.facebook_access_token
+    : selectedFunnelId !== 'all'
+    ? selectedFunnel?.settings?.facebook_server_side_enabled && !!selectedFunnel?.settings?.facebook_access_token
+    : websites.some(w => w.facebook_server_side_enabled && w.facebook_access_token) || 
+      funnels.some(f => f.settings?.facebook_server_side_enabled && f.settings?.facebook_access_token);
+
   // Refresh function to manually refresh all data
   const handleRefresh = async () => {
     try {
@@ -91,10 +99,19 @@ export default function FacebookAds() {
             </h1>
             {showFacebookOnly ? (
               hasPixelId ? (
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <Badge variant="secondary">
                     Pixel ID: {displayPixelId}
                   </Badge>
+                  {serverSideEnabled ? (
+                    <Badge variant="default" className="bg-green-600">
+                      Server-Side Enabled
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="border-yellow-500 text-yellow-600">
+                      Client-Side Only
+                    </Badge>
+                  )}
                   <span className="text-sm text-muted-foreground">
                     Showing events sent to Facebook
                   </span>
@@ -233,6 +250,40 @@ export default function FacebookAds() {
                       {selectedWebsiteId !== 'all' ? 'Configure Website Pixel' : selectedFunnelId !== 'all' ? 'Configure Funnel Pixel' : 'Configure Pixels'}
                     </a>
                   </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Server-Side Tracking Status */}
+        {hasPixelId && (
+          <Card className={serverSideEnabled ? "border-green-500/50 bg-green-500/5" : "border-yellow-500/50 bg-yellow-500/5"}>
+            <CardContent className="p-6">
+              <div className="flex items-start space-x-3">
+                {serverSideEnabled ? (
+                  <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                ) : (
+                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <h3 className={`font-semibold ${serverSideEnabled ? 'text-green-600' : 'text-yellow-600'}`}>
+                    {serverSideEnabled ? 'Server-Side Tracking Active' : 'Server-Side Tracking Not Enabled'}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {serverSideEnabled 
+                      ? 'Events are being forwarded to Facebook Conversions API server-side. This provides better tracking reliability and works even with ad blockers.'
+                      : 'Only client-side tracking is active. Enable server-side tracking in your website/funnel settings for improved reliability and ad blocker resistance.'
+                    }
+                  </p>
+                  {!serverSideEnabled && (
+                    <Button variant="outline" size="sm" className="mt-3" asChild>
+                      <a href={selectedWebsiteId !== 'all' ? "/dashboard/websites" : selectedFunnelId !== 'all' ? "/dashboard/funnels" : "/dashboard/websites"}>
+                        <Settings className="h-4 w-4 mr-2" />
+                        Enable Server-Side Tracking
+                      </a>
+                    </Button>
+                  )}
                 </div>
               </div>
             </CardContent>

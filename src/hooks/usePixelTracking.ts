@@ -47,15 +47,21 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         sessionStorage.setItem('session_id', sessionId);
       }
       
-      // Add provider metadata to event data
+      // Generate event_id for deduplication (consistent between client and server-side)
+      // Use existing event_id if provided, otherwise generate one
+      const eventId = eventData.event_id || `${eventType}_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Add provider metadata and event_id to event data
       const enhancedEventData = {
         ...eventData,
+        event_id: eventId,
         _providers: providers || {}
       };
       
       const eventRecord = {
         store_id: storeId,
         website_id: websiteId || null,
+        funnel_id: funnelId || null,
         event_type: eventType,
         event_data: enhancedEventData,
         session_id: sessionId,
@@ -75,7 +81,7 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       }
 
       await supabase.from('pixel_events').insert(eventRecord);
-      logger.debug('[PixelTracking] Stored event in database:', eventType, enhancedEventData, { websiteId, funnelId });
+      logger.debug('[PixelTracking] Stored event in database:', eventType, enhancedEventData, { websiteId, funnelId, eventId });
     } catch (error) {
       logger.warn('[PixelTracking] Failed to store event:', error);
     }
@@ -106,13 +112,21 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       }
     };
 
+    // Generate event_id for deduplication (consistent between client and server-side)
+    const eventId = eventData.event_id || `${eventName}_${Date.now()}_${crypto.randomUUID()}`;
+    const eventDataWithId = {
+      ...eventData,
+      event_id: eventId
+    };
+
     // Facebook Pixel tracking - fire if fbq is available (regardless of pixelConfig)
     if (window.fbq) {
       providers.facebook.attempted = true;
       try {
-        window.fbq('track', eventName, eventData);
+        // Include event_id in Facebook Pixel call for deduplication
+        window.fbq('track', eventName, eventDataWithId);
         providers.facebook.success = true;
-        logger.debug('[PixelTracking] Facebook event:', eventName, eventData);
+        logger.debug('[PixelTracking] Facebook event:', eventName, eventDataWithId);
       } catch (error) {
         logger.warn('[PixelTracking] Facebook tracking error:', error);
       }
@@ -134,7 +148,7 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     }
 
     // Store event in database with provider metadata (only if storeId is provided)
-    storePixelEvent(eventName, eventData, providers);
+    storePixelEvent(eventName, eventDataWithId, providers);
   }, [pixelConfig, storePixelEvent]);
 
   const trackViewContent = useCallback((product: {
