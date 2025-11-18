@@ -9,6 +9,10 @@ import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 import { renderElementStyles } from '@/components/page-builder/utils/styleRenderer';
 import { formatCurrency } from '@/lib/currency';
 import { useEcomPaths } from '@/lib/pathResolver';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { usePixelContext } from '@/components/pixel/PixelManager';
+import { useStore } from '@/contexts/StoreContext';
+import { useParams } from 'react-router-dom';
 import type { PageBuilderElement } from '../types';
 
 interface FunnelOfferElementProps {
@@ -26,9 +30,14 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [stepData, setStepData] = useState<any>(null);
   const [productData, setProductData] = useState<any>(null);
+  const [hasTrackedViewContent, setHasTrackedViewContent] = useState(false);
   const { toast } = useToast();
   const { stepId, funnelId } = useFunnelStepContext();
   const paths = useEcomPaths();
+  const { pixels } = usePixelContext();
+  const { store } = useStore();
+  const { websiteId } = useParams<{ websiteId?: string }>();
+  const { trackViewContent, trackPurchase } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
 
   const orderId = searchParams.get('orderId');
   const token = searchParams.get('ot');
@@ -61,6 +70,23 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
 
     loadStepData();
   }, [stepId, isBuilder]);
+
+  // Track ViewContent event when offer product loads
+  useEffect(() => {
+    if (isBuilder || !productData || hasTrackedViewContent || !store || !pixels) return;
+
+    // Track ViewContent for the offer product
+    if (productData.id && productData.name && productData.price) {
+      trackViewContent({
+        id: productData.id,
+        name: productData.name,
+        price: parseFloat(stepData?.offer_price || productData.price || '0'),
+        category: productData.category || undefined,
+      });
+      setHasTrackedViewContent(true);
+      console.log('FunnelOfferElement: ViewContent event tracked for offer product:', productData.id);
+    }
+  }, [productData, stepData, isBuilder, hasTrackedViewContent, store, pixels, trackViewContent]);
 
   // Use dynamic data or fallback to element content
   const {
@@ -107,6 +133,32 @@ export const FunnelOfferElement: React.FC<FunnelOfferElementProps> = ({
       if (error) throw error;
 
       console.log('Offer response data:', data);
+
+      // Track Purchase event if offer was accepted
+      if (action === 'accept' && productData && store && pixels) {
+        try {
+          const offerPriceValue = parseFloat(stepData?.offer_price || productData.price || '0');
+          trackPurchase({
+            transaction_id: orderId || `offer_${Date.now()}`,
+            value: offerPriceValue,
+            items: [{
+              item_id: productData.id,
+              item_name: productData.name,
+              price: offerPriceValue,
+              quantity: 1,
+              item_category: productData.category || undefined,
+            }],
+          });
+          console.log('FunnelOfferElement: Purchase event tracked for accepted offer:', {
+            productId: productData.id,
+            value: offerPriceValue,
+            orderId
+          });
+        } catch (trackError) {
+          console.error('FunnelOfferElement: Error tracking Purchase event:', trackError);
+          // Don't block offer processing if tracking fails
+        }
+      }
 
       if (data?.nextStepSlug && data?.funnelSlug) {
         // Environment-aware redirect to next step

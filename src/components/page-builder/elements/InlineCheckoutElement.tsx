@@ -700,6 +700,14 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     id: item.item_id,
                     quantity: item.quantity,
                   })),
+                  // Include customer data for better Facebook matching
+                  customer_email: form.customer_email || null,
+                  customer_phone: form.customer_phone || null,
+                  customer_name: form.customer_name || null,
+                  shipping_city: form.shipping_city || null,
+                  shipping_state: form.shipping_state || null,
+                  shipping_postal_code: form.shipping_postal_code || null,
+                  shipping_country: form.shipping_country || null,
                   _providers: {
                     facebook: {
                       configured: !!funnelPixels.facebook_pixel_id,
@@ -718,6 +726,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                 await supabase.from('pixel_events').insert({
                   store_id: store.id,
                   website_id: resolvedWebsiteId || null,
+                  funnel_id: orderFunnelId || null, // ✅ Add funnel_id column for server-side tracking
                   event_type: 'Purchase',
                   event_data: eventData,
                   session_id: sessionId,

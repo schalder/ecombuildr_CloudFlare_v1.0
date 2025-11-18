@@ -2135,6 +2135,14 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                     id: item.item_id,
                     quantity: item.quantity,
                   })),
+                  // Include customer data for better Facebook matching
+                  customer_email: data.order.customer_email || null,
+                  customer_phone: data.order.customer_phone || null,
+                  customer_name: data.order.customer_name || null,
+                  shipping_city: data.order.shipping_city || null,
+                  shipping_state: data.order.shipping_state || null,
+                  shipping_postal_code: data.order.shipping_postal_code || null,
+                  shipping_country: data.order.shipping_country || null,
                 };
                 
                 // Facebook Pixel
@@ -2188,6 +2196,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                   await supabase.from('pixel_events').insert({
                     store_id: store?.id || '',
                     website_id: websiteId || null,
+                    funnel_id: funnelId || null, // ✅ Add funnel_id column for server-side tracking
                     event_type: 'Purchase',
                     event_data: dbEventData,
                     session_id: sessionId,

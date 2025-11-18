@@ -187,6 +187,14 @@ useEffect(() => {
                   id: item.item_id,
                   quantity: item.quantity,
                 })),
+                // Include customer data for better Facebook matching
+                customer_email: orderData.customer_email || null,
+                customer_phone: orderData.customer_phone || null,
+                customer_name: orderData.customer_name || null,
+                shipping_city: orderData.shipping_city || null,
+                shipping_state: orderData.shipping_state || null,
+                shipping_postal_code: orderData.shipping_postal_code || null,
+                shipping_country: orderData.shipping_country || null,
                 _providers: {
                   facebook: {
                     configured: !!pixels?.facebook_pixel_id,
@@ -205,6 +213,7 @@ useEffect(() => {
               await supabase.from('pixel_events').insert({
                 store_id: store?.id || '',
                 website_id: websiteId || null,
+                funnel_id: finalFunnelId || null, // ✅ Add funnel_id column for server-side tracking
                 event_type: 'Purchase',
                 event_data: eventData,
                 session_id: sessionId,
