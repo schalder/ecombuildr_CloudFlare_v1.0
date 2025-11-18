@@ -15,6 +15,40 @@ async function hashValue(value: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// Validate if user data has sufficient information for Facebook matching
+// Facebook requires at least one of these combinations:
+// 1. Email (em)
+// 2. Phone (ph)
+// 3. First name + Last name (fn + ln)
+// 4. City + State + Zip + Country (ct + st + zp + country)
+function hasSufficientUserData(userData: {
+  email?: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  country?: string;
+}): boolean {
+  // Check for email
+  if (userData.email && userData.email.trim()) return true;
+  
+  // Check for phone
+  if (userData.phone && userData.phone.trim()) return true;
+  
+  // Check for first name + last name
+  if (userData.firstName && userData.lastName && 
+      userData.firstName.trim() && userData.lastName.trim()) return true;
+  
+  // Check for city + state + zip + country
+  if (userData.city && userData.state && userData.zipCode && userData.country &&
+      userData.city.trim() && userData.state.trim() && 
+      userData.zipCode.trim() && userData.country.trim()) return true;
+  
+  return false;
+}
+
 // Map event types to Facebook event names
 function mapEventTypeToFacebook(eventType: string): string {
   const eventMap: Record<string, string> = {
@@ -47,7 +81,13 @@ async function buildFacebookPayload(
   eventId?: string,
   eventTime?: number,
   testEventCode?: string
-): Promise<any> {
+): Promise<any | null> {
+  // Validate user data first - Facebook requires at least one identifier
+  if (!hasSufficientUserData(userData)) {
+    console.warn(`Skipping Facebook event ${eventName}: insufficient user data for matching`);
+    return null; // Return null to indicate skip
+  }
+
   const hashedUserData: any = {};
 
   // Hash user identifiers
@@ -189,6 +229,21 @@ serve(async (req) => {
       event_time,
       test_event_code
     );
+
+    // If payload is null, skip sending (insufficient user data)
+    if (!payload) {
+      return new Response(
+        JSON.stringify({ 
+          success: true,
+          skipped: true,
+          reason: 'Insufficient user data for Facebook matching - event requires at least email, phone, name (first+last), or address (city+state+zip+country)'
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     // Set access token
     payload.access_token = access_token;
