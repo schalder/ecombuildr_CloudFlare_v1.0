@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RefreshCw, Facebook, ExternalLink, BarChart3, AlertCircle, Settings } from 'lucide-react';
+import { RefreshCw, Facebook, ExternalLink, BarChart3, AlertCircle, Settings, CheckCircle2 } from 'lucide-react';
 import { PixelEventOverview } from '@/components/analytics/PixelEventOverview';
 import { ConversionFunnel } from '@/components/analytics/ConversionFunnel';
 import { EventTimeline } from '@/components/analytics/EventTimeline';
