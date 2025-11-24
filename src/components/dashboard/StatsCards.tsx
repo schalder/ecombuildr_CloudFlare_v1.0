@@ -100,7 +100,7 @@ export function StatsCards({ stats, loading = false, dateFilter = 'allTime' }: S
   const filterDescription = getFilterDescription(dateFilter);
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
         title="Total Revenue"
         value={`৳${data.totalRevenue.toLocaleString()}`}
