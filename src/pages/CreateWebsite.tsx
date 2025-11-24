@@ -16,6 +16,129 @@ import { usePlanLimits } from '@/hooks/usePlanLimits';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
+// Helper function to create default system pages for a new website
+const createDefaultSystemPages = async (websiteId: string): Promise<void> => {
+  // Helper to create base section structure (matches CreatePageModal pattern)
+  const baseSection = (elements: any[] = []) => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    return {
+      id: `section_${timestamp}_${random}`,
+      width: 'wide',
+      rows: [
+        {
+          id: `row_${timestamp}_${random}`,
+          columnLayout: '1',
+          columns: [
+            { id: `col_${timestamp}_${random}`, width: 12, elements } as any
+          ]
+        }
+      ]
+    };
+  };
+
+  // Define all system pages with their default content
+  const systemPages = [
+    {
+      title: 'Products',
+      slug: 'products',
+      content: { 
+        sections: [baseSection([{ 
+          id: `el_${Date.now()}_${Math.random().toString(36).substring(7)}`, 
+          type: 'products-page', 
+          content: {} 
+        }])] 
+      }
+    },
+    {
+      title: 'Cart',
+      slug: 'cart',
+      content: { 
+        sections: [baseSection([{ 
+          id: `el_${Date.now()}_${Math.random().toString(36).substring(7)}`, 
+          type: 'cart-full', 
+          content: {} 
+        }])] 
+      }
+    },
+    {
+      title: 'Checkout',
+      slug: 'checkout',
+      content: { 
+        sections: [baseSection([{ 
+          id: `el_${Date.now()}_${Math.random().toString(36).substring(7)}`, 
+          type: 'checkout-full', 
+          content: {} 
+        }])] 
+      }
+    },
+    {
+      title: 'Order Confirmation',
+      slug: 'order-confirmation',
+      content: { 
+        sections: [baseSection([{ 
+          id: `el_${Date.now()}_${Math.random().toString(36).substring(7)}`, 
+          type: 'order-confirmation', 
+          content: {} 
+        }])] 
+      }
+    },
+    {
+      title: 'Payment Processing',
+      slug: 'payment-processing',
+      content: { 
+        sections: [baseSection([{ 
+          id: `el_${Date.now()}_${Math.random().toString(36).substring(7)}`, 
+          type: 'payment-processing', 
+          content: {} 
+        }])] 
+      }
+    }
+  ];
+
+  try {
+    // Check if any of these pages already exist (idempotency check)
+    const { data: existingPages } = await supabase
+      .from('website_pages')
+      .select('slug')
+      .eq('website_id', websiteId)
+      .in('slug', systemPages.map(p => p.slug));
+
+    const existingSlugs = new Set(existingPages?.map(p => p.slug) || []);
+    
+    // Filter out pages that already exist
+    const pagesToCreate = systemPages.filter(page => !existingSlugs.has(page.slug));
+
+    if (pagesToCreate.length === 0) {
+      // All pages already exist, nothing to do
+      return;
+    }
+
+    // Insert all system pages in a single batch
+    const { error } = await supabase
+      .from('website_pages')
+      .insert(
+        pagesToCreate.map(page => ({
+          website_id: websiteId,
+          title: page.title,
+          slug: page.slug,
+          content: page.content,
+          is_published: true, // ✅ Auto-publish system pages for immediate use
+          is_homepage: false
+        }))
+      );
+
+    if (error) {
+      console.error('Error creating default system pages:', error);
+      // Don't throw - allow website creation to succeed even if pages fail
+      // Pages can be created manually later if needed
+    }
+  } catch (error) {
+    console.error('Unexpected error creating default system pages:', error);
+    // Don't throw - website creation should still succeed
+  }
+};
+
 export default function CreateWebsite() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -149,12 +272,22 @@ export default function CreateWebsite() {
       // Get the current store to invalidate the correct cache
       const currentStore = await getOrCreateStore();
       
+      // ✅ Create default system pages automatically (non-blocking)
+      // This runs in background and won't block website creation if it fails
+      createDefaultSystemPages(website.id).catch(error => {
+        console.error('Failed to create default system pages:', error);
+        // Silently fail - pages can be created manually later
+      });
+      
       // Invalidate storeWebsites cache so the new website appears immediately
       queryClient.invalidateQueries({ queryKey: ['storeWebsites', currentStore.id] });
       
+      // Also invalidate website pages cache so new pages appear immediately
+      queryClient.invalidateQueries({ queryKey: ['website-pages', website.id] });
+      
       toast({
         title: "Website created",
-        description: "Your website has been created successfully.",
+        description: "Your website has been created successfully with default e-commerce pages.",
       });
       navigate(`/dashboard/websites/${website.id}`);
     },
