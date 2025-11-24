@@ -20,6 +20,9 @@ import { FunnelSettings } from '@/components/funnel/FunnelSettings';
 import { FunnelContacts } from '@/components/funnel/FunnelContacts';
 import { FunnelHeaderBuilder } from '@/components/funnel/FunnelHeaderBuilder';
 import { FunnelFooterBuilder } from '@/components/funnel/FunnelFooterBuilder';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface Funnel {
   id: string;
@@ -50,15 +53,9 @@ interface FunnelStep {
   preview_image_url?: string;
 }
 const FunnelManagement = () => {
-  const {
-    id
-  } = useParams<{
-    id: string;
-  }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -76,10 +73,18 @@ const FunnelManagement = () => {
     stepId: '',
     stepTitle: ''
   });
-  const {
-    data: funnel,
-    isLoading
-  } = useQuery({
+  const isMobile = useIsMobile();
+  const tabs = [
+    { id: 'steps', label: 'Steps', icon: CheckCircle },
+    { id: 'stats', label: 'Stats', icon: BarChart3 },
+    { id: 'sales', label: 'Sales', icon: DollarSign },
+    { id: 'contacts', label: 'Contacts', icon: Users },
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'header', label: 'Header', icon: ArrowUp },
+    { id: 'footer', label: 'Footer', icon: ArrowDown },
+  ];
+
+  const { data: funnel, isLoading } = useQuery({
     queryKey: ['funnel', id],
     queryFn: async () => {
       const {
@@ -269,6 +274,74 @@ const FunnelManagement = () => {
       });
     }
   };
+  const renderStepsList = () => (
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <Droppable droppableId="funnel-steps">
+        {provided => (
+          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
+            {steps.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground mb-4">No steps created yet</p>
+                <Button onClick={handleCreateStep} size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Step
+                </Button>
+              </div>
+            ) : (
+              steps.map((step, index) => (
+                <Draggable key={step.id} draggableId={step.id} index={index}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.draggableProps}
+                      className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${
+                        selectedStepId === step.id ? 'bg-primary/10 border-primary' : 'bg-background'
+                      } ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                      onClick={() => handleSelectStep(step.id)}
+                    >
+                      <div className="flex-shrink-0" {...provided.dragHandleProps}>
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-xs font-bold text-foreground">{step.title}</p>
+                          {index === 0 && (
+                            <Badge variant="secondary" className="text-xs px-1 py-0">
+                              <Home className="h-3 w-3" />
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {getStepTypeLabel(step.step_type)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {step.is_published && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleDeleteStep(step.id, step.title);
+                          }}
+                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                          disabled={deleteStepMutation.isPending}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </Draggable>
+              ))
+            )}
+            {provided.placeholder}
+          </div>
+        )}
+      </Droppable>
+    </DragDropContext>
+  );
+
   if (isLoading) {
     return <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -306,111 +379,82 @@ const FunnelManagement = () => {
 
         {/* Top Navigation Tabs */}
         <div className="border-b px-4 sm:px-6">
-          <div className="overflow-x-auto scrollbar-hide -mx-1 p-1">
-            <div className="flex space-x-6 whitespace-nowrap">
-              {[{
-              id: 'steps',
-              label: 'Steps',
-              icon: CheckCircle
-            }, {
-              id: 'stats',
-              label: 'Stats',
-              icon: BarChart3
-            }, {
-              id: 'sales',
-              label: 'Sales',
-              icon: DollarSign
-            }, {
-              id: 'contacts',
-              label: 'Contacts',
-              icon: Users
-            }, {
-              id: 'settings',
-              label: 'Settings',
-              icon: Settings
-            }, {
-              id: 'header',
-              label: 'Header',
-              icon: ArrowUp
-            }, {
-              id: 'footer',
-              label: 'Footer',
-              icon: ArrowDown
-            }].map(tab => {
-              const Icon = tab.icon;
-              return <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`py-4 px-3 sm:px-1 border-b-2 flex items-center gap-2 font-medium transition-colors shrink-0 text-sm sm:text-base ${activeTab === tab.id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground hover:text-foreground'}`}>
-                    <Icon className="h-4 w-4" />
+          {isMobile ? (
+            <Select value={activeTab} onValueChange={setActiveTab}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select section" />
+              </SelectTrigger>
+              <SelectContent>
+                {tabs.map((tab) => (
+                  <SelectItem key={tab.id} value={tab.id}>
                     {tab.label}
-                  </button>;
-            })}
-            </div>
-          </div>
-        </div>
-
-        {activeTab === 'steps' && <div className="flex flex-col md:flex-row">
-            {/* Left Sidebar */}
-            <div className="w-full md:w-80 border-r-0 md:border-r bg-muted/30 p-4 sm:p-6">
-              <div className="space-y-6">
-                {/* Steps Section */}
-                <div>
-                  <div className="flex items-center space-x-2 mb-4">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <h3 className="font-medium text-foreground">Funnel Steps</h3>
-                  </div>
-                  
-                  <DragDropContext onDragEnd={handleDragEnd}>
-                    <Droppable droppableId="funnel-steps">
-                      {provided => <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-                          {steps.length === 0 ? <div className="text-center py-8">
-                              <p className="text-muted-foreground mb-4">No steps created yet</p>
-                              <Button onClick={handleCreateStep} size="sm">
-                                <Plus className="h-4 w-4 mr-2" />
-                                Create Your First Step
-                              </Button>
-                            </div> : steps.map((step, index) => <Draggable key={step.id} draggableId={step.id} index={index}>
-                                {(provided, snapshot) => <div ref={provided.innerRef} {...provided.draggableProps} className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${selectedStepId === step.id ? 'bg-primary/10 border-primary' : 'bg-background'} ${snapshot.isDragging ? 'shadow-lg' : ''}`} onClick={() => handleSelectStep(step.id)}>
-                                     <div className="flex-shrink-0" {...provided.dragHandleProps}>
-                                       <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                     </div>
-                                     
-                                     
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                          <p className="truncate text-xs font-bold text-foreground">{step.title}</p>
-                                          {index === 0 && <Badge variant="secondary" className="text-xs px-1 py-0">
-                                              <Home className="h-3 w-3" />
-                                            </Badge>}
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">
-                                          {getStepTypeLabel(step.step_type)}
-                                        </p>
-                                      </div>
-                                     <div className="flex items-center gap-2">
-                                       {step.is_published && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
-                                       <Button variant="ghost" size="sm" onClick={e => {
-                            e.stopPropagation();
-                            handleDeleteStep(step.id, step.title);
-                          }} className="text-destructive hover:text-destructive h-8 w-8 p-0" disabled={deleteStepMutation.isPending}>
-                                         <Trash2 className="h-3 w-3" />
-                                       </Button>
-                                     </div>
-                                   </div>}
-                               </Draggable>)}
-                           {provided.placeholder}
-                        </div>}
-                    </Droppable>
-                  </DragDropContext>
-
-                  <Button onClick={handleCreateStep} className="w-full mt-4" variant="outline" size="sm">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add New Step
-                  </Button>
-                </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="overflow-x-auto scrollbar-hide -mx-1 p-1">
+              <div className="flex space-x-6 whitespace-nowrap">
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`py-4 px-3 sm:px-1 border-b-2 flex items-center gap-2 font-medium transition-colors shrink-0 text-sm sm:text-base ${
+                        activeTab === tab.id
+                          ? 'border-primary text-primary'
+                          : 'border-transparent text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
+          )}
+        </div>
+
+        {activeTab === 'steps' && (
+          <div className="flex flex-col md:flex-row">
+            {isMobile ? (
+              <div className="w-full p-4 sm:p-6">
+                <Accordion type="single" collapsible defaultValue="steps">
+                  <AccordionItem value="steps">
+                    <AccordionTrigger className="text-left">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="font-medium text-foreground">Funnel Steps</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 space-y-4">
+                      {renderStepsList()}
+                      <Button onClick={handleCreateStep} className="w-full" variant="outline" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add New Step
+                      </Button>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            ) : (
+              <div className="w-full md:w-80 border-r bg-muted/30 p-4 sm:p-6 space-y-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <h3 className="font-medium text-foreground">Funnel Steps</h3>
+                </div>
+                {renderStepsList()}
+                <Button onClick={handleCreateStep} className="w-full" variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add New Step
+                </Button>
+              </div>
+            )}
 
             {/* Main Content */}
-            <div className="flex-1 p-4 sm:p-6">
+            <div className="flex-1 w-full p-4 sm:p-6">
               <div className="max-w-4xl">
                 {/* Main Content - Steps Overview */}
                 <>

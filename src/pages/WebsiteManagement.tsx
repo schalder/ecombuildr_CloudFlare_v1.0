@@ -21,6 +21,8 @@ import { WebsiteFooterBuilder } from '@/components/website/WebsiteFooterBuilder'
 import { WebsiteStats } from '@/components/website/WebsiteStats';
 import { WebsiteSales } from '@/components/website/WebsiteSales';
 import { WebsiteFOMO } from '@/components/website/WebsiteFOMO';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Website {
   id: string;
@@ -58,6 +60,18 @@ const WebsiteManagement = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedPage, setSelectedPage] = useState<WebsitePage | null>(null);
   const [urlCopied, setUrlCopied] = useState(false);
+  const isMobile = useIsMobile();
+  
+  const tabs = [
+    { id: 'pages', label: 'Pages' },
+    { id: 'header', label: 'Header' },
+    { id: 'footer', label: 'Footer' },
+    { id: 'stats', label: 'Stats' },
+    { id: 'sales', label: 'Sales' },
+    { id: 'shipping', label: 'Shipping & Delivery' },
+    { id: 'fomo', label: 'FOMO' },
+    { id: 'settings', label: 'Settings' },
+  ];
   
   const activeTab = searchParams.get('tab') || 'pages';
 
@@ -248,88 +262,36 @@ const WebsiteManagement = () => {
 
         {/* Navigation Tabs */}
         <div className="border-b px-2 sm:px-6">
-          <div className="flex space-x-1 sm:space-x-8 overflow-x-auto scrollbar-hide">
-            <button 
-              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
-                activeTab === 'pages' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => handleTabChange('pages')}
-            >
-              Pages
-            </button>
-            <button 
-              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
-                activeTab === 'header' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => handleTabChange('header')}
-            >
-              Header
-            </button>
-            <button 
-              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
-                activeTab === 'footer' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => handleTabChange('footer')}
-            >
-              Footer
-            </button>
-            <button 
-              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
-                activeTab === 'stats' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => handleTabChange('stats')}
-            >
-              Stats
-            </button>
-            <button 
-              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
-                activeTab === 'sales' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => handleTabChange('sales')}
-            >
-              Sales
-            </button>
-            <button 
-              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
-                activeTab === 'shipping' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => handleTabChange('shipping')}
-            >
-              Shipping & Delivery
-            </button>
-            <button 
-              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
-                activeTab === 'fomo' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => handleTabChange('fomo')}
-            >
-              FOMO
-            </button>
-            <button 
-              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
-                activeTab === 'settings' 
-                  ? 'border-primary text-primary' 
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
-              onClick={() => handleTabChange('settings')}
-            >
-              Settings
-            </button>
-          </div>
+          {isMobile ? (
+            <Select value={activeTab} onValueChange={handleTabChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select section" />
+              </SelectTrigger>
+              <SelectContent>
+                {tabs.map((tab) => (
+                  <SelectItem key={tab.id} value={tab.id}>
+                    {tab.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <div className="flex space-x-8 overflow-x-auto scrollbar-hide">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  className={`py-4 px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-base ${
+                    activeTab === tab.id
+                      ? 'border-primary text-primary'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                  onClick={() => handleTabChange(tab.id)}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Main Content */}
@@ -347,33 +309,35 @@ const WebsiteManagement = () => {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="homepage-url">Homepage URL</Label>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row">
                       <Input
                         id="homepage-url"
                         value={homepageUrl}
                         readOnly
-                        className="flex-1"
+                        className="w-full sm:flex-1"
                       />
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCopyUrl}
-                        className="px-3"
-                      >
-                        {urlCopied ? (
-                          <CheckIcon className="h-4 w-4" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleVisitSite}
-                        className="px-3"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2 sm:flex-none">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCopyUrl}
+                          className="flex-1 px-3 sm:flex-none"
+                        >
+                          {urlCopied ? (
+                            <CheckIcon className="h-4 w-4" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleVisitSite}
+                          className="flex-1 px-3 sm:flex-none"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
