@@ -654,7 +654,7 @@ const CourseEditor = () => {
               <Card className="border-0">
                 <AccordionTrigger className="px-6 hover:no-underline">
                   <CardHeader className="p-0 text-left">
-                    <CardTitle className="text-left">Course Information</CardTitle>
+                    <CardTitle className="text-left text-base font-semibold">Course Information</CardTitle>
                     <CardDescription className="text-left">Basic course details and description</CardDescription>
                   </CardHeader>
                 </AccordionTrigger>
@@ -704,7 +704,7 @@ const CourseEditor = () => {
               <Card className="border-0">
                 <AccordionTrigger className="px-6 hover:no-underline">
                   <CardHeader className="p-0 text-left">
-                    <CardTitle className="text-left">Course Overview</CardTitle>
+                    <CardTitle className="text-left text-base font-semibold">Course Overview</CardTitle>
                     <CardDescription className="text-left">Write a detailed description of your course content</CardDescription>
                   </CardHeader>
                 </AccordionTrigger>
@@ -729,7 +729,7 @@ const CourseEditor = () => {
               <Card className="border-0">
                 <AccordionTrigger className="px-6 hover:no-underline">
                   <CardHeader className="p-0 flex-1 text-left">
-                    <CardTitle className="text-left">Course Content</CardTitle>
+                    <CardTitle className="text-left text-base font-semibold">Course Content</CardTitle>
                     <CardDescription className="text-left">Organize your course into modules and lessons</CardDescription>
                   </CardHeader>
                 </AccordionTrigger>
@@ -901,7 +901,7 @@ const CourseEditor = () => {
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardTitle className="flex items-center justify-between text-base">
+                  <CardTitle className="flex items-center justify-between text-base font-semibold">
                     Pricing
                     <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.pricing ? 'rotate-45' : ''}`} />
                   </CardTitle>
@@ -935,7 +935,7 @@ const CourseEditor = () => {
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardTitle className="flex items-center justify-between text-base">
+                  <CardTitle className="flex items-center justify-between text-base font-semibold">
                     Settings
                     <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.settings ? 'rotate-45' : ''}`} />
                   </CardTitle>
@@ -967,7 +967,7 @@ const CourseEditor = () => {
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardTitle className="flex items-center justify-between text-base">
+                  <CardTitle className="flex items-center justify-between text-base font-semibold">
                     Theme Settings
                     <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.theme ? 'rotate-45' : ''}`} />
                   </CardTitle>
@@ -1056,7 +1056,7 @@ const CourseEditor = () => {
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardTitle className="flex items-center justify-between text-base">
+                  <CardTitle className="flex items-center justify-between text-base font-semibold">
                     Navigation Menu
                     <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.navigation ? 'rotate-45' : ''}`} />
                   </CardTitle>
@@ -1079,10 +1079,10 @@ const CourseEditor = () => {
               <Card>
                 <CollapsibleTrigger asChild>
                   <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                    <CardTitle className="flex items-center justify-between text-base">
+                    <CardTitle className="flex items-center justify-between text-base font-semibold">
                       Payment Methods
                       <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.payment ? 'rotate-45' : ''}`} />
-                    </CardTitle>
+                  </CardTitle>
                   </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>
@@ -1103,7 +1103,7 @@ const CourseEditor = () => {
             <Card>
               <CollapsibleTrigger asChild>
                 <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
-                  <CardTitle className="flex items-center justify-between text-base">
+                  <CardTitle className="flex items-center justify-between text-base font-semibold">
                     Course Thumbnail
                     <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.thumbnail ? 'rotate-45' : ''}`} />
                   </CardTitle>

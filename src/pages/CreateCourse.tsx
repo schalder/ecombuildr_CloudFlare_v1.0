@@ -154,7 +154,7 @@ const CreateCourse = () => {
                 <Card className="border-0">
                   <AccordionTrigger className="px-6 hover:no-underline text-left">
                     <CardHeader className="p-0 text-left">
-                      <CardTitle className="text-left">Course Information</CardTitle>
+                      <CardTitle className="text-left text-base font-semibold">Course Information</CardTitle>
                       <CardDescription className="text-left">
                         Enter the basic details about your course
                       </CardDescription>
@@ -217,7 +217,7 @@ const CreateCourse = () => {
                 <Card className="border-0">
                   <AccordionTrigger className="px-6 hover:no-underline text-left">
                     <CardHeader className="p-0 text-left">
-                      <CardTitle className="text-left">Course Overview</CardTitle>
+                      <CardTitle className="text-left text-base font-semibold">Course Overview</CardTitle>
                       <CardDescription className="text-left">
                         Write a detailed description of your course content
                       </CardDescription>
@@ -240,7 +240,7 @@ const CreateCourse = () => {
                 <Card className="border-0">
                   <AccordionTrigger className="px-6 hover:no-underline text-left">
                     <CardHeader className="p-0 text-left">
-                      <CardTitle className="text-left">What This Course Includes</CardTitle>
+                      <CardTitle className="text-left text-base font-semibold">What This Course Includes</CardTitle>
                       <CardDescription className="text-left">
                         Optional section to highlight what students will get with this course
                       </CardDescription>
@@ -311,7 +311,7 @@ const CreateCourse = () => {
             {/* Pricing */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
                   <DollarSign className="h-5 w-5" />
                   Pricing
                 </CardTitle>
@@ -351,7 +351,7 @@ const CreateCourse = () => {
             {/* Publication Settings */}
             <Card>
               <CardHeader>
-                <CardTitle>Publication Settings</CardTitle>
+                <CardTitle className="text-base font-semibold">Publication Settings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
