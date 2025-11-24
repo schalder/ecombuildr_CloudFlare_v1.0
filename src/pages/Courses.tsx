@@ -427,11 +427,11 @@ const Courses = () => {
                         </Badge>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="grid grid-cols-2 gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 min-w-[120px]"
+                          className="w-full"
                           onClick={() => navigate(`/dashboard/courses/${course.id}`)}
                         >
                           <Eye className="h-4 w-4 mr-2" />
@@ -440,7 +440,7 @@ const Courses = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 min-w-[120px]"
+                          className="w-full"
                           onClick={() => navigate(`/dashboard/courses/${course.id}/edit`)}
                         >
                           <Edit className="h-4 w-4 mr-2" />
@@ -449,7 +449,7 @@ const Courses = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1 min-w-[120px]"
+                          className="w-full"
                           onClick={() => toggleCourseStatus(course.id, course.is_active)}
                         >
                           {course.is_active ? 'Deactivate' : 'Activate'}
@@ -457,7 +457,7 @@ const Courses = () => {
                         <Button
                           variant="destructive"
                           size="sm"
-                          className="flex-1 min-w-[120px]"
+                          className="w-full"
                           onClick={() => handleDeleteCourse(course.id)}
                         >
                           Delete
