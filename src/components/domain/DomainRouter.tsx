@@ -291,9 +291,15 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
     checkCustomDomain();
   }, []);
   
+  // ✅ FIX: Return placeholder while loading to prevent 404 flash
+  // This prevents React Router from matching catch-all routes while domain check is in progress
+  if (loading) {
+    return <div className="min-h-screen" />;
+  }
+  
   // Optimistic rendering - render children immediately while checking domain
   // If no custom domain found, render normal app
-  if (!loading && !customDomain) {
+  if (!customDomain) {
     return <>{children}</>;
   }
 
