@@ -162,90 +162,95 @@ const Courses = () => {
   );
 
   return (
-    <DashboardLayout title="Courses" description="Create, edit and manage your online courses and lessons">
-      <div className="space-y-6 w-full max-w-full overflow-x-hidden">
+    <DashboardLayout>
+      <div className="flex flex-col space-y-6">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 w-full">
-          <div className="w-full min-w-0 md:flex-1">
-            <h1 className="text-xl md:text-2xl font-bold text-foreground break-words">All Courses</h1>
-            <p className="text-sm md:text-base text-muted-foreground break-words mt-1">
-              Manage your course content, pricing, and publication status
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Courses</h1>
+            <p className="text-muted-foreground">
+              Create and manage your online courses and lessons
             </p>
           </div>
-        <div className="flex flex-col gap-2 w-full md:w-auto md:flex-shrink-0">
-          <Button onClick={() => navigate('/dashboard/courses/domains')} variant="outline" className="w-full md:w-auto">
-            <Globe className="h-4 w-4 mr-2" />
-            Course Domains
-          </Button>
-          <Button onClick={() => navigate('/dashboard/courses/create')} className="w-full md:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Course
-          </Button>
-        </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button onClick={() => navigate('/dashboard/courses/domains')} variant="outline" className="w-full sm:w-auto">
+              <Globe className="mr-2 h-4 w-4" />
+              Course Domains
+            </Button>
+            <Button onClick={() => navigate('/dashboard/courses/create')} className="w-full sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Course
+            </Button>
+          </div>
         </div>
 
-        {/* Search and Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 w-full">
-          <Card className="min-w-0 w-full overflow-hidden">
-            <CardContent className="p-3 md:p-4">
-              <div className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-primary flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xl md:text-2xl font-bold truncate">{courses.length}</p>
-                  <p className="text-xs md:text-sm text-muted-foreground truncate">Total Courses</p>
-                </div>
-              </div>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="bg-gradient-card border-border shadow-soft">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Courses</CardTitle>
+              <GraduationCap className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{courses.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">Active courses</p>
             </CardContent>
           </Card>
           
-          <Card className="min-w-0 w-full overflow-hidden">
-            <CardContent className="p-3 md:p-4">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xl md:text-2xl font-bold truncate">
-                    {courses.reduce((total, course) => total + (course._count?.modules || 0), 0)}
-                  </p>
-                  <p className="text-xs md:text-sm text-muted-foreground truncate">Total Modules</p>
-                </div>
+          <Card className="bg-gradient-card border-border shadow-soft">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Modules</CardTitle>
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {courses.reduce((total, course) => total + (course._count?.modules || 0), 0)}
               </div>
+              <p className="text-xs text-muted-foreground mt-1">Course modules</p>
             </CardContent>
           </Card>
 
-          <Card className="min-w-0 w-full overflow-hidden">
-            <CardContent className="p-3 md:p-4">
-              <div className="flex items-center gap-2">
-                <PlayCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xl md:text-2xl font-bold truncate">
-                    {courses.reduce((total, course) => total + (course._count?.lessons || 0), 0)}
-                  </p>
-                  <p className="text-xs md:text-sm text-muted-foreground truncate">Total Lessons</p>
-                </div>
+          <Card className="bg-gradient-card border-border shadow-soft">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Total Lessons</CardTitle>
+              <PlayCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {courses.reduce((total, course) => total + (course._count?.lessons || 0), 0)}
               </div>
+              <p className="text-xs text-muted-foreground mt-1">Video lessons</p>
             </CardContent>
           </Card>
 
-          <div className="relative w-full min-w-0 md:max-w-full lg:max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
-            <Input
-              placeholder="Search courses..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 text-foreground w-full"
-            />
-          </div>
+          <Card className="bg-gradient-card border-border shadow-soft">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Search</CardTitle>
+              <Search className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="relative">
+                <Input
+                  placeholder="Search courses..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 text-foreground"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Courses Table */}
-        <Card className="w-full max-w-full overflow-hidden">
-          <CardHeader className="p-4 md:p-6">
-            <CardTitle className="break-words">All Courses</CardTitle>
-            <CardDescription className="break-words">
+        <Card>
+          <CardHeader>
+            <CardTitle>All Courses</CardTitle>
+            <CardDescription>
               Manage your course content, pricing, and publication status
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-4 md:p-6">
+          <CardContent>
             {loading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
