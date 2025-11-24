@@ -167,8 +167,8 @@ const Courses = () => {
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Courses</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Courses</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
               Create and manage your online courses and lessons
             </p>
           </div>
@@ -184,26 +184,39 @@ const Courses = () => {
           </div>
         </div>
 
+        {/* Search Bar - Mobile Full Width */}
+        <div className="md:hidden">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search courses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 text-foreground w-full"
+            />
+          </div>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-gradient-card border-border shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Courses</CardTitle>
-              <GraduationCap className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Total Courses</CardTitle>
+              <GraduationCap className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">{courses.length}</div>
+              <div className="text-xl md:text-2xl font-bold text-foreground">{courses.length}</div>
               <p className="text-xs text-muted-foreground mt-1">Active courses</p>
             </CardContent>
           </Card>
           
           <Card className="bg-gradient-card border-border shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Modules</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Total Modules</CardTitle>
+              <BookOpen className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-xl md:text-2xl font-bold text-foreground">
                 {courses.reduce((total, course) => total + (course._count?.modules || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Course modules</p>
@@ -212,18 +225,19 @@ const Courses = () => {
 
           <Card className="bg-gradient-card border-border shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Total Lessons</CardTitle>
-              <PlayCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">Total Lessons</CardTitle>
+              <PlayCircle className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-foreground">
+              <div className="text-xl md:text-2xl font-bold text-foreground">
                 {courses.reduce((total, course) => total + (course._count?.lessons || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Video lessons</p>
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-card border-border shadow-soft">
+          {/* Search Card - Desktop Only */}
+          <Card className="hidden md:block bg-gradient-card border-border shadow-soft">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Search</CardTitle>
               <Search className="h-4 w-4 text-muted-foreground" />
@@ -244,9 +258,9 @@ const Courses = () => {
 
         {/* Courses Table */}
         <Card>
-          <CardHeader>
-            <CardTitle>All Courses</CardTitle>
-            <CardDescription>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-lg md:text-xl">All Courses</CardTitle>
+            <CardDescription className="text-sm">
               Manage your course content, pricing, and publication status
             </CardDescription>
           </CardHeader>
@@ -377,7 +391,7 @@ const Courses = () => {
 
                 <div className="space-y-4 md:hidden">
                   {filteredCourses.map((course) => (
-                    <div key={course.id} className="border rounded-lg p-4 space-y-4 w-full overflow-hidden">
+                    <div key={course.id} className="border rounded-lg p-3 md:p-4 space-y-3 md:space-y-4 w-full overflow-hidden">
                       <div className="flex items-center gap-3">
                         {course.thumbnail_url ? (
                           <img 
