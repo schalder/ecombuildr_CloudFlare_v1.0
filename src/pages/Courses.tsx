@@ -165,19 +165,19 @@ const Courses = () => {
     <DashboardLayout title="Courses" description="Create, edit and manage your online courses and lessons">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">All Courses</h1>
             <p className="text-muted-foreground">
               Manage your course content, pricing, and publication status
             </p>
           </div>
-        <div className="flex gap-2">
-          <Button onClick={() => navigate('/dashboard/courses/domains')} variant="outline">
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <Button onClick={() => navigate('/dashboard/courses/domains')} variant="outline" className="w-full md:w-auto">
             <Globe className="h-4 w-4 mr-2" />
             Course Domains
           </Button>
-          <Button onClick={() => navigate('/dashboard/courses/create')}>
+          <Button onClick={() => navigate('/dashboard/courses/create')} className="w-full md:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Create Course
           </Button>
@@ -226,7 +226,7 @@ const Courses = () => {
             </CardContent>
           </Card>
 
-          <div className="relative">
+          <div className="relative w-full md:max-w-full lg:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search courses..."
