@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { LayoutDashboard, Package, ShoppingCart, Users, FileText, BarChart3, Megaphone, Settings, Plus, Search, ChevronDown, ChevronRight, Palette, Globe, Shield, Images, BookOpen, PlayCircle, GraduationCap, Sparkles } from "lucide-react";
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar";
@@ -164,15 +164,16 @@ export function AppSidebar() {
     sidebarContext = useSidebar();
   } catch (error) {
     // Fallback if not in sidebar context
-    sidebarContext = { open: true };
+    sidebarContext = { open: true, openMobile: false, isMobile: false };
   }
   
-  const { open } = sidebarContext;
+  const { open, openMobile, isMobile } = sidebarContext;
   const collapsed = !open;
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Check if user is super admin
   useEffect(() => {
@@ -189,6 +190,19 @@ export function AppSidebar() {
     };
     checkSuperAdmin();
   }, []);
+
+  // Prevent auto-focus when sidebar opens on mobile
+  useEffect(() => {
+    if (isMobile && openMobile && searchInputRef.current) {
+      // Blur the input if it gets focused automatically when sidebar opens
+      const timer = setTimeout(() => {
+        if (document.activeElement === searchInputRef.current) {
+          searchInputRef.current?.blur();
+        }
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile, openMobile]);
   const currentPath = location.pathname;
   const isActive = (url: string | {
     pathname: string;
@@ -243,7 +257,14 @@ export function AppSidebar() {
         {!collapsed && <div className="p-4 border-b border-sidebar-border">
             <div className="relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-8 bg-sidebar-accent border-sidebar-border min-h-[44px] touch-manipulation" />
+              <Input 
+                ref={searchInputRef}
+                placeholder="Search..." 
+                value={searchQuery} 
+                onChange={e => setSearchQuery(e.target.value)} 
+                className="pl-8 bg-sidebar-accent border-sidebar-border min-h-[44px] touch-manipulation"
+                autoFocus={false}
+              />
             </div>
           </div>}
 
