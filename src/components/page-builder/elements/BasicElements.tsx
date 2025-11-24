@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { elementRegistry } from './ElementRegistry';
 import { InlineEditor } from '../components/InlineEditor';
 import { InlineRTE, sanitizeHtml } from '../components/InlineRTE';
-import { renderElementStyles } from '../utils/styleRenderer';
+import { renderElementStyles, getDeviceAwareSpacing } from '../utils/styleRenderer';
 import { generateResponsiveCSS } from '../utils/responsiveStyles';
 import { getIconByName } from '@/components/icons/icon-sources';
 import { useEcomPaths } from '@/lib/pathResolver';
@@ -986,8 +986,32 @@ const VideoElement: React.FC<{
   
   const containerStyles = renderElementStyles(element, deviceType);
   
-  // Strip width-related properties AND padding to prevent conflicts
-  // Padding is handled by ElementRenderer wrapper (just like margin)
+  // Extract padding to apply directly to video container
+  // Get device-aware padding values
+  const paddingByDevice = (element.styles as any)?.paddingByDevice;
+  const deviceAwarePadding = paddingByDevice ? getDeviceAwareSpacing(paddingByDevice, deviceType) : null;
+  
+  // Build padding styles object
+  const videoPaddingStyles: React.CSSProperties = {};
+  if (deviceAwarePadding) {
+    if (deviceAwarePadding.top > 0) videoPaddingStyles.paddingTop = `${deviceAwarePadding.top}px`;
+    if (deviceAwarePadding.right > 0) videoPaddingStyles.paddingRight = `${deviceAwarePadding.right}px`;
+    if (deviceAwarePadding.bottom > 0) videoPaddingStyles.paddingBottom = `${deviceAwarePadding.bottom}px`;
+    if (deviceAwarePadding.left > 0) videoPaddingStyles.paddingLeft = `${deviceAwarePadding.left}px`;
+  } else {
+    // Fallback to legacy padding from containerStyles
+    if (containerStyles.paddingTop) videoPaddingStyles.paddingTop = containerStyles.paddingTop;
+    if (containerStyles.paddingRight) videoPaddingStyles.paddingRight = containerStyles.paddingRight;
+    if (containerStyles.paddingBottom) videoPaddingStyles.paddingBottom = containerStyles.paddingBottom;
+    if (containerStyles.paddingLeft) videoPaddingStyles.paddingLeft = containerStyles.paddingLeft;
+    if (containerStyles.padding && !containerStyles.paddingTop && !containerStyles.paddingRight && 
+        !containerStyles.paddingBottom && !containerStyles.paddingLeft) {
+      videoPaddingStyles.padding = containerStyles.padding;
+    }
+  }
+  
+  // Strip width-related properties and padding from containerStyles
+  // Padding is now applied directly to video container
   const { 
     width: _, 
     maxWidth: __, 
@@ -1148,7 +1172,7 @@ const VideoElement: React.FC<{
   if (videoType === 'embed' && embedCode) {
     const sanitizedCode = sanitizeEmbedCode(embedCode);
     return (
-      <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
+      <div className={`${widthClasses} aspect-video`} style={{ ...cleanContainerStyles, ...videoPaddingStyles }}>
         <div 
           className="w-full h-full"
           dangerouslySetInnerHTML={{ __html: sanitizedCode }}
@@ -1164,7 +1188,7 @@ const VideoElement: React.FC<{
     if (videoInfo.type === 'hosted') {
       // Direct video file
       return (
-        <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
+        <div className={`${widthClasses} aspect-video`} style={{ ...cleanContainerStyles, ...videoPaddingStyles }}>
           <video
             src={url}
             controls={controls}
@@ -1187,7 +1211,7 @@ const VideoElement: React.FC<{
       });
 
       return (
-        <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
+        <div className={`${widthClasses} aspect-video`} style={{ ...cleanContainerStyles, ...videoPaddingStyles }}>
           <iframe
             src={finalEmbedUrl}
             className="w-full h-full rounded-lg"

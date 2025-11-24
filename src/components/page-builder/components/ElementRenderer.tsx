@@ -226,7 +226,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   const deviceAwarePadding = paddingByDevice ? getDeviceAwareSpacing(paddingByDevice, deviceType) : null;
   
   // Don't apply spacing for media elements as they handle it internally
+  // Video element handles padding internally, so exclude it from wrapper padding
   const isMediaElement = ['image-carousel', 'image-gallery', 'video-playlist'].includes(element.type);
+  const isVideoElement = element.type === 'video';
   
   // For button elements, only apply margins if explicitly set by user
   const isButtonElement = element.type === 'button';
@@ -266,8 +268,8 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     marginRight: deviceAwareMargin?.right ? `${deviceAwareMargin.right}px` : mergedStyles.marginRight,
   };
 
-  // For button elements, don't apply padding from the wrapper - let the button handle its own padding
-  const shouldApplyPadding = !isButtonElement;
+  // For button and video elements, don't apply padding from the wrapper - let them handle their own padding
+  const shouldApplyPadding = !isButtonElement && !isVideoElement;
   
   return (
     <div
