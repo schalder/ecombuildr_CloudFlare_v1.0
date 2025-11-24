@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from 'react-helmet-async';
 import { lazy, Suspense } from 'react';
-import { Loader2 } from 'lucide-react';
 import { DomainRouter } from "@/components/domain/DomainRouter";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -157,11 +156,9 @@ const CartProviderWrapper: React.FC<{ children: React.ReactNode }> = ({ children
   return <CartProvider>{children}</CartProvider>;
 };
 
-// Loading fallback for lazy-loaded storefront routes
+// Loading fallback for lazy-loaded storefront routes - optimistic rendering
 const StorefrontLoadingFallback = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-  </div>
+  <div className="min-h-screen" />
 );
 
 const App = () => (

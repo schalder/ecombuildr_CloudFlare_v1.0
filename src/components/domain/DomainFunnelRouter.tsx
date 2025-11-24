@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { StorefrontPageBuilder } from '@/components/storefront/renderer/StorefrontPageBuilder';
 import { ScriptManager } from '@/components/storefront/optimized/ScriptManager';
@@ -156,14 +155,6 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
     });
   }, [step, funnel, store]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
   // ✅ Handle system routes (payment-processing, order-confirmation, etc.)
   const systemRoutes = ['payment-processing', 'order-confirmation', 'cart', 'checkout'];
   if (systemRoutes.includes(stepSlug)) {
@@ -185,7 +176,8 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
     );
   }
 
-  if (error || !step) {
+  // Optimistic rendering - show page structure immediately
+  if (!loading && (error || !step)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -197,10 +189,10 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
   }
 
   return (
-    <FunnelStepProvider stepId={step.id} funnelId={funnel.id}>
+    <FunnelStepProvider stepId={step?.id || ''} funnelId={funnel.id}>
       <FontOptimizer />
       <PerformanceMonitor page={`funnel-${stepSlug || 'home'}`} />
-      {!useStorefront && (
+      {!useStorefront && step && (
         <TrackingCodeManager 
           headerCode={step.custom_scripts}
           priority="page"
@@ -209,7 +201,7 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
       <div className="w-full min-h-screen flex flex-col">
         <FunnelHeader funnel={funnel} />
         <main className="flex-1">
-          {step.content?.sections ? (
+          {step?.content?.sections ? (
             useStorefront ? (
               <>
                 <StorefrontPageBuilder data={step.content} />
@@ -218,11 +210,13 @@ export const DomainFunnelRouter: React.FC<DomainFunnelRouterProps> = ({ funnel }
             ) : (
               <PageBuilderRenderer data={step.content} />
             )
-          ) : (
+          ) : step ? (
             <div className="container mx-auto px-4 py-8">
               <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
               <p className="text-muted-foreground">This funnel step is still being set up.</p>
             </div>
+          ) : (
+            <div className="w-full min-h-screen" />
           )}
         </main>
         <FunnelFooter funnel={funnel} />

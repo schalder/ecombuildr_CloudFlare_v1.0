@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { useStore } from '@/contexts/StoreContext';
 import { setSEO, buildCanonical } from '@/lib/seo';
@@ -189,15 +188,8 @@ export const FunnelStepPage: React.FC = () => {
     }
   }, [step, funnel, store]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !step || !funnel) {
+  // Optimistic rendering - show page structure immediately
+  if (!loading && (error || !step || !funnel)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -210,28 +202,30 @@ export const FunnelStepPage: React.FC = () => {
   }
 
   return (
-    <FunnelStepProvider stepId={step.id} funnelId={funnel.id}>
+    <FunnelStepProvider stepId={step?.id || ''} funnelId={funnel?.id || ''}>
       <PixelManager 
-        storeId={funnel.store_id}
-        funnelId={funnel.id}
+        storeId={funnel?.store_id || ''}
+        funnelId={funnel?.id || ''}
         websitePixels={{
-          facebook_pixel_id: funnel.settings?.facebook_pixel_id,
-          google_analytics_id: funnel.settings?.google_analytics_id,
-          google_ads_id: funnel.settings?.google_ads_id,
+          facebook_pixel_id: funnel?.settings?.facebook_pixel_id,
+          google_analytics_id: funnel?.settings?.google_analytics_id,
+          google_ads_id: funnel?.settings?.google_ads_id,
         }}
       >
         <div className="w-full min-h-screen">
-          <FunnelHeader funnel={funnel} />
+          {funnel && <FunnelHeader funnel={funnel} />}
           {/* Render funnel step content using PageBuilderRenderer */}
-          {step.content?.sections ? (
+          {step?.content?.sections ? (
             <PageBuilderRenderer data={step.content} />
-          ) : (
+          ) : step ? (
             <div className="container mx-auto px-4 py-8">
               <h1 className="text-3xl font-bold mb-6">{step.title}</h1>
               <p className="text-muted-foreground">This step is still being set up.</p>
             </div>
+          ) : (
+            <div className="w-full min-h-screen" />
           )}
-          <FunnelFooter funnel={funnel} />
+          {funnel && <FunnelFooter funnel={funnel} />}
         </div>
       </PixelManager>
     </FunnelStepProvider>

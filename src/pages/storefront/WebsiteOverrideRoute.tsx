@@ -1,7 +1,6 @@
 import React from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { StorefrontPageBuilder } from '@/components/storefront/renderer/StorefrontPageBuilder';
 import { ScriptManager } from '@/components/storefront/optimized/ScriptManager';
@@ -197,22 +196,15 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
     );
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-[50vh] flex items-center justify-center" role="status" aria-live="polite">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    );
-  }
-
-  if (!page) return fallback;
+  // Optimistic rendering - show page structure immediately
+  if (!loading && !page) return fallback;
 
   return (
     <>
       <FontOptimizer />
       <PerformanceMonitor page={`website-${slug}`} />
       <main>
-        {page.content?.sections ? (
+        {page?.content?.sections ? (
           useStorefront ? (
             <>
               <StorefrontPageBuilder data={page.content} />
@@ -221,11 +213,13 @@ export const WebsiteOverrideRoute: React.FC<WebsiteOverrideRouteProps> = ({ slug
           ) : (
             <PageBuilderRenderer data={page.content} />
           )
-        ) : (
+        ) : page ? (
           <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
             <p className="text-muted-foreground">This page is still being set up.</p>
           </div>
+        ) : (
+          <div className="min-h-[50vh]" />
         )}
       </main>
     </>

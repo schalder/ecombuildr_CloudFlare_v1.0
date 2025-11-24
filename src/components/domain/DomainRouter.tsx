@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
 import { DomainWebsiteRenderer } from './DomainWebsiteRenderer';
 import { DomainFunnelRenderer } from './DomainFunnelRenderer';
 import CourseDomainRouter from './CourseDomainRouter';
@@ -292,17 +291,9 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
     checkCustomDomain();
   }, []);
   
-  // Show loading while checking domain
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-  
+  // Optimistic rendering - render children immediately while checking domain
   // If no custom domain found, render normal app
-  if (!customDomain) {
+  if (!loading && !customDomain) {
     return <>{children}</>;
   }
 

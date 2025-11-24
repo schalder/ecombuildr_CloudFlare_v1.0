@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useStore } from '@/contexts/StoreContext';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -235,14 +234,7 @@ export const StorefrontPage: React.FC = () => {
     fetchPage();
   }, [store?.id, pageSlug]);
 
-  if (storeLoading || loading) {
-    return (
-      <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
+  // Optimistic rendering - show page structure immediately
   if (storeError) {
     return (
       <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
@@ -254,7 +246,7 @@ export const StorefrontPage: React.FC = () => {
     );
   }
 
-  if (error || !page) {
+  if (!storeLoading && !loading && (error || !page)) {
     return (
       <div className="container mx-auto px-4 py-8 min-h-[400px] flex items-center justify-center">
         <div className="text-center">
@@ -267,10 +259,10 @@ export const StorefrontPage: React.FC = () => {
   }
 
   // Set up SEO metadata
-  if (page.seo_title) {
+  if (page?.seo_title) {
     document.title = page.seo_title;
   }
-  if (page.seo_description) {
+  if (page?.seo_description) {
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute('content', page.seo_description);
@@ -280,21 +272,23 @@ export const StorefrontPage: React.FC = () => {
   return (
     <div className="w-full">
       {/* Check for page builder content first (sections format) */}
-      {page.content?.sections ? (
+      {page?.content?.sections ? (
         <PageBuilderRenderer data={page.content} />
-      ) : (page.content as any)?.blocks ? (
+      ) : page?.content && (page.content as any)?.blocks ? (
         <div className="container mx-auto px-4 py-8">
           <BlockRenderer blocks={(page.content as any).blocks} />
         </div>
-      ) : page.content?.sections ? (
+      ) : page?.content?.sections ? (
         <div className="container mx-auto px-4 py-8">
           <PageContentRenderer sections={page.content.sections} />
         </div>
-      ) : (
+      ) : page ? (
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
           <p className="text-muted-foreground">This page is still being set up.</p>
         </div>
+      ) : (
+        <div className="w-full min-h-[400px]" />
       )}
     </div>
   );

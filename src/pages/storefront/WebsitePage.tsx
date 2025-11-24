@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
@@ -210,15 +209,8 @@ export const WebsitePage: React.FC = () => {
     try { setGlobalCurrency(code as any); } catch {}
   }, [website?.settings?.currency?.code]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" role="status" aria-live="polite">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !page || !website) {
+  // Optimistic rendering - show page structure immediately
+  if (error || (!loading && (!page || !website))) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -230,17 +222,18 @@ export const WebsitePage: React.FC = () => {
     );
   }
 
-
   return (
     <div className="w-full min-h-screen">
       <main>
-        {page.content?.sections ? (
+        {page?.content?.sections ? (
           <PageBuilderRenderer data={page.content} />
-        ) : (
+        ) : page ? (
           <div className="container mx-auto px-4 py-8">
             <h1 className="text-3xl font-bold mb-6">{page.title}</h1>
             <p className="text-muted-foreground">This page is still being set up.</p>
           </div>
+        ) : (
+          <div className="w-full min-h-screen" />
         )}
       </main>
     </div>

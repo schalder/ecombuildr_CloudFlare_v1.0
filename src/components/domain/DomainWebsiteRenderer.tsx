@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2 } from 'lucide-react';
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
 import { setSEO } from '@/lib/seo';
@@ -114,17 +113,8 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
     }
   }, [website?.settings?.favicon_url, website?.stores?.favicon_url]);
 
-  // Show loading while fetching data
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  // Show error if website not found or error occurred
-  if (error || !website) {
+  // Optimistic rendering - show page structure immediately
+  if (!loading && (error || !website)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -138,14 +128,14 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
   }
 
   // Set CSS variables for primary/secondary colors if store has them
-  const storeData = website.stores;
+  const storeData = website?.stores;
   
   // Render the website with proper layout structure matching WebsiteLayout
   return (
-    <WebsiteProvider websiteId={websiteId} websiteSlug={website.slug}>
+    <WebsiteProvider websiteId={websiteId} websiteSlug={website?.slug || ''}>
       <TrackingCodeManager
-        headerCode={website.settings?.header_tracking_code}
-        footerCode={website.settings?.footer_tracking_code}
+        headerCode={website?.settings?.header_tracking_code}
+        footerCode={website?.settings?.footer_tracking_code}
         priority="website"
       />
       <div className="min-h-screen flex flex-col bg-background">
@@ -153,21 +143,24 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
           :root {
             ${storeData?.primary_color ? `--store-primary: ${storeData.primary_color};` : '--store-primary: #10B981;'}
             ${storeData?.secondary_color ? `--store-secondary: ${storeData.secondary_color};` : '--store-secondary: #059669;'}
-            ${website.settings?.product_button_bg ? `--product-button-bg: ${website.settings.product_button_bg};` : ''}
-            ${website.settings?.product_button_text ? `--product-button-text: ${website.settings.product_button_text};` : ''}
-            ${website.settings?.product_button_hover_bg ? `--product-button-hover-bg: ${website.settings.product_button_hover_bg};` : ''}
-            ${website.settings?.product_button_hover_text ? `--product-button-hover-text: ${website.settings.product_button_hover_text};` : ''}
-            ${website.settings?.variant_button_selected_bg ? `--variant-button-selected-bg: ${website.settings.variant_button_selected_bg};` : ''}
-            ${website.settings?.variant_button_selected_text ? `--variant-button-selected-text: ${website.settings.variant_button_selected_text};` : ''}
-            ${website.settings?.variant_button_hover_bg ? `--variant-button-hover-bg: ${website.settings.variant_button_hover_bg};` : ''}
-            ${website.settings?.variant_button_hover_text ? `--variant-button-hover-text: ${website.settings.variant_button_hover_text};` : ''}
+            ${website?.settings?.product_button_bg ? `--product-button-bg: ${website.settings.product_button_bg};` : ''}
+            ${website?.settings?.product_button_text ? `--product-button-text: ${website.settings.product_button_text};` : ''}
+            ${website?.settings?.product_button_hover_bg ? `--product-button-hover-bg: ${website.settings.product_button_hover_bg};` : ''}
+            ${website?.settings?.product_button_hover_text ? `--product-button-hover-text: ${website.settings.product_button_hover_text};` : ''}
+            ${website?.settings?.variant_button_selected_bg ? `--variant-button-selected-bg: ${website.settings.variant_button_selected_bg};` : ''}
+            ${website?.settings?.variant_button_selected_text ? `--variant-button-selected-text: ${website.settings.variant_button_selected_text};` : ''}
+            ${website?.settings?.variant_button_hover_bg ? `--variant-button-hover-bg: ${website.settings.variant_button_hover_bg};` : ''}
+            ${website?.settings?.variant_button_hover_text ? `--variant-button-hover-text: ${website.settings.variant_button_hover_text};` : ''}
           }
         `}</style>
-        <DomainWebsiteRouter 
-          websiteId={websiteId} 
-          customDomain={customDomain}
-          website={website}
-        />
+        {website && (
+          <DomainWebsiteRouter 
+            websiteId={websiteId} 
+            customDomain={customDomain}
+            website={website}
+          />
+        )}
+        {!website && <div className="min-h-screen" />}
       </div>
     </WebsiteProvider>
   );

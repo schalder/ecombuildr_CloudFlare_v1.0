@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { setSEO, buildCanonical } from '@/lib/seo';
-import { Loader2 } from 'lucide-react';
 import { DomainFunnelRouter } from './DomainFunnelRouter';
 import { PixelManager } from '@/components/pixel/PixelManager';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
@@ -119,15 +118,8 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
     });
   }, [funnel, customDomain, store]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !funnel) {
+  // Optimistic rendering - show page structure immediately
+  if (!loading && (error || !funnel)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -141,19 +133,20 @@ export const DomainFunnelRenderer: React.FC<DomainFunnelRendererProps> = ({
   return (
     <PixelManager 
       websitePixels={{
-        facebook_pixel_id: funnel.settings?.facebook_pixel_id,
-        google_analytics_id: funnel.settings?.google_analytics_id,
-        google_ads_id: funnel.settings?.google_ads_id,
+        facebook_pixel_id: funnel?.settings?.facebook_pixel_id,
+        google_analytics_id: funnel?.settings?.google_analytics_id,
+        google_ads_id: funnel?.settings?.google_ads_id,
       }}
-      storeId={funnel.store_id}
-      funnelId={funnel.id}
+      storeId={funnel?.store_id || ''}
+      funnelId={funnel?.id || ''}
     >
       <TrackingCodeManager 
-        headerCode={funnel.settings?.header_tracking_code}
-        footerCode={funnel.settings?.footer_tracking_code}
+        headerCode={funnel?.settings?.header_tracking_code}
+        footerCode={funnel?.settings?.footer_tracking_code}
         priority="funnel"
       />
-      <DomainFunnelRouter funnel={funnel} />
+      {funnel && <DomainFunnelRouter funnel={funnel} />}
+      {!funnel && <div className="min-h-screen" />}
     </PixelManager>
   );
 };
