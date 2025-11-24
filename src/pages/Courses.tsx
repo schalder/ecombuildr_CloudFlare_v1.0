@@ -239,9 +239,9 @@ const Courses = () => {
 
         {/* Courses Table */}
         <Card>
-          <CardHeader>
-            <CardTitle>All Courses</CardTitle>
-            <CardDescription>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="break-words">All Courses</CardTitle>
+            <CardDescription className="break-words">
               Manage your course content, pricing, and publication status
             </CardDescription>
           </CardHeader>
