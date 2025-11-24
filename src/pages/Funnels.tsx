@@ -206,14 +206,14 @@ export default function Funnels() {
   return (
     <DashboardLayout>
       <div className="flex flex-col space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="space-y-1">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Funnels</h1>
             <p className="text-muted-foreground">
               Create high-converting sales funnels with sequential landing pages
             </p>
           </div>
-          <Button onClick={handleCreateFunnel}>
+          <Button onClick={handleCreateFunnel} className="w-full md:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Create Funnel
           </Button>
@@ -258,9 +258,9 @@ export default function Funnels() {
           <div className="space-y-4">
             {filteredFunnels.map((funnel) => (
               <div key={funnel.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow bg-card">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center space-x-3">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex-1 space-y-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-3">
                       <h3 className="text-lg font-semibold text-foreground">{funnel.name}</h3>
                       <div className="flex space-x-2">
                         <Badge variant={funnel.is_published ? "default" : "secondary"}>
@@ -276,13 +276,13 @@ export default function Funnels() {
                       {funnel.description || 'No description'}
                     </p>
                     
-                    <div className="flex items-center text-sm text-muted-foreground">
+                    <div className="flex items-center text-sm text-muted-foreground break-all">
                       <TrendingUp className="mr-2 h-4 w-4" />
                       {funnel.canonical_domain || funnel.domain || `funnel/${funnel.id}`}
                     </div>
 
                     {/* Publish Status */}
-                    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg max-w-sm">
+                    <div className="flex items-center justify-between w-full p-3 bg-muted/50 rounded-lg md:max-w-sm">
                       <div className="flex-1">
                         <div className="text-sm font-medium">
                           {funnel.is_published ? "Funnel is Live" : "Funnel is Hidden"}
@@ -302,10 +302,11 @@ export default function Funnels() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2 ml-4">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2 md:ml-4">
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full md:w-auto"
                       onClick={() => handleEditFunnel(funnel.id)}
                     >
                       <Edit className="mr-2 h-3 w-3" />
@@ -314,6 +315,7 @@ export default function Funnels() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="w-full md:w-auto"
                       onClick={() => handlePreviewFunnel(funnel)}
                     >
                       <Eye className="mr-2 h-3 w-3" />
@@ -323,7 +325,7 @@ export default function Funnels() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteFunnel(funnel.id, funnel.name)}
-                      className="text-destructive hover:text-destructive"
+                      className="w-full md:w-auto text-destructive hover:text-destructive"
                       disabled={deleteFunnelMutation.isPending}
                     >
                       <Trash2 className="h-3 w-3" />
