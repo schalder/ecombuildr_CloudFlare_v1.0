@@ -165,14 +165,14 @@ const Courses = () => {
     <DashboardLayout title="Courses" description="Create, edit and manage your online courses and lessons">
       <div className="space-y-6 w-full max-w-full overflow-x-hidden">
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">All Courses</h1>
-            <p className="text-muted-foreground">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 w-full">
+          <div className="w-full min-w-0 md:flex-1">
+            <h1 className="text-xl md:text-2xl font-bold text-foreground break-words">All Courses</h1>
+            <p className="text-sm md:text-base text-muted-foreground break-words mt-1">
               Manage your course content, pricing, and publication status
             </p>
           </div>
-        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+        <div className="flex flex-col gap-2 w-full md:w-auto md:flex-shrink-0">
           <Button onClick={() => navigate('/dashboard/courses/domains')} variant="outline" className="w-full md:w-auto">
             <Globe className="h-4 w-4 mr-2" />
             Course Domains
@@ -185,49 +185,49 @@ const Courses = () => {
         </div>
 
         {/* Search and Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="min-w-0">
-            <CardContent className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4 w-full">
+          <Card className="min-w-0 w-full overflow-hidden">
+            <CardContent className="p-3 md:p-4">
               <div className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-2xl font-bold">{courses.length}</p>
-                  <p className="text-sm text-muted-foreground">Total Courses</p>
+                <GraduationCap className="h-5 w-5 text-primary flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xl md:text-2xl font-bold truncate">{courses.length}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground truncate">Total Courses</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="min-w-0">
-            <CardContent className="p-4">
+          <Card className="min-w-0 w-full overflow-hidden">
+            <CardContent className="p-3 md:p-4">
               <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-2xl font-bold">
+                <BookOpen className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xl md:text-2xl font-bold truncate">
                     {courses.reduce((total, course) => total + (course._count?.modules || 0), 0)}
                   </p>
-                  <p className="text-sm text-muted-foreground">Total Modules</p>
+                  <p className="text-xs md:text-sm text-muted-foreground truncate">Total Modules</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="min-w-0">
-            <CardContent className="p-4">
+          <Card className="min-w-0 w-full overflow-hidden">
+            <CardContent className="p-3 md:p-4">
               <div className="flex items-center gap-2">
-                <PlayCircle className="h-5 w-5 text-green-500" />
-                <div>
-                  <p className="text-2xl font-bold">
+                <PlayCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xl md:text-2xl font-bold truncate">
                     {courses.reduce((total, course) => total + (course._count?.lessons || 0), 0)}
                   </p>
-                  <p className="text-sm text-muted-foreground">Total Lessons</p>
+                  <p className="text-xs md:text-sm text-muted-foreground truncate">Total Lessons</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
           <div className="relative w-full min-w-0 md:max-w-full lg:max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 z-10" />
             <Input
               placeholder="Search courses..."
               value={searchTerm}
