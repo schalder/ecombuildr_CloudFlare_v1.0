@@ -272,12 +272,14 @@ export default function CreateWebsite() {
       // Get the current store to invalidate the correct cache
       const currentStore = await getOrCreateStore();
       
-      // ✅ Create default system pages automatically (non-blocking)
-      // This runs in background and won't block website creation if it fails
-      createDefaultSystemPages(website.id).catch(error => {
+      // ✅ Wait for default system pages to be created before navigating
+      // Ensures pages exist when user lands on management page
+      try {
+        await createDefaultSystemPages(website.id);
+      } catch (error) {
         console.error('Failed to create default system pages:', error);
-        // Silently fail - pages can be created manually later
-      });
+        // Still proceed - pages can be created manually later
+      }
       
       // Invalidate storeWebsites cache so the new website appears immediately
       queryClient.invalidateQueries({ queryKey: ['storeWebsites', currentStore.id] });
