@@ -576,10 +576,11 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
     if (paddingByDevice) {
       // Use device-aware padding
       const padding = getDeviceAwareSpacing(paddingByDevice, deviceType);
-      if (padding.top > 0) styles.paddingTop = `${padding.top}px`;
-      if (padding.right > 0) styles.paddingRight = `${padding.right}px`;
-      if (padding.bottom > 0) styles.paddingBottom = `${padding.bottom}px`;
-      if (padding.left > 0) styles.paddingLeft = `${padding.left}px`;
+      // Always apply padding values to ensure they're set (even if 0, to override any defaults)
+      styles.paddingTop = `${padding.top}px`;
+      styles.paddingRight = `${padding.right}px`;
+      styles.paddingBottom = `${padding.bottom}px`;
+      styles.paddingLeft = `${padding.left}px`;
     } else {
       // Fallback to legacy padding styles
       if (element.styles.paddingTop || element.styles.paddingRight || element.styles.paddingBottom || element.styles.paddingLeft) {
