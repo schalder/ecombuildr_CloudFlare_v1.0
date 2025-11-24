@@ -27,8 +27,8 @@ export function DashboardLayout({ children, title, description }: DashboardLayou
         <AppSidebar />
         <SidebarInset className="flex-1">
           <DashboardHeader title={title} description={description} />
-          <main className="flex-1 overflow-auto">
-            <div className="container mx-auto px-4 py-6 md:p-6 space-y-6">
+          <main className="flex-1 overflow-auto overflow-x-hidden">
+            <div className="container mx-auto px-4 py-6 md:p-6 space-y-6 w-full max-w-full">
               {children}
             </div>
           </main>

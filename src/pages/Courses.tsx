@@ -163,7 +163,7 @@ const Courses = () => {
 
   return (
     <DashboardLayout title="Courses" description="Create, edit and manage your online courses and lessons">
-      <div className="space-y-6">
+      <div className="space-y-6 w-full max-w-full overflow-x-hidden">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -238,14 +238,14 @@ const Courses = () => {
         </div>
 
         {/* Courses Table */}
-        <Card>
+        <Card className="w-full max-w-full overflow-hidden">
           <CardHeader className="p-4 md:p-6">
             <CardTitle className="break-words">All Courses</CardTitle>
             <CardDescription className="break-words">
               Manage your course content, pricing, and publication status
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6">
             {loading ? (
               <div className="flex justify-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
