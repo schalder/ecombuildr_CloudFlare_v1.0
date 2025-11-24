@@ -234,7 +234,7 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         favicon_url, 
         header_tracking_code, 
         footer_tracking_code, 
-        facebook_pixel_id,
+        facebook_pixel_id, 
         facebook_access_token,
         facebook_test_event_code,
         facebook_server_side_enabled,

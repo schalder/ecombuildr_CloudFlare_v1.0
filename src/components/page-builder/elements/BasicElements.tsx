@@ -986,30 +986,19 @@ const VideoElement: React.FC<{
   
   const containerStyles = renderElementStyles(element, deviceType);
   
-  // Extract padding from container styles to apply to video element itself
-  // Keep margin on wrapper (ElementRenderer handles it), but padding should be on video
-  const {
+  // Strip width-related properties AND padding to prevent conflicts
+  // Padding is handled by ElementRenderer wrapper (just like margin)
+  const { 
+    width: _, 
+    maxWidth: __, 
+    minWidth: ___, 
     paddingTop,
     paddingRight,
     paddingBottom,
     paddingLeft,
     padding,
-    width: _,
-    maxWidth: __,
-    minWidth: ___,
-    ...cleanContainerStyles
+    ...cleanContainerStyles 
   } = containerStyles;
-  
-  // Create padding styles object for video element
-  const videoPaddingStyles: React.CSSProperties = {};
-  if (paddingTop) videoPaddingStyles.paddingTop = paddingTop;
-  if (paddingRight) videoPaddingStyles.paddingRight = paddingRight;
-  if (paddingBottom) videoPaddingStyles.paddingBottom = paddingBottom;
-  if (paddingLeft) videoPaddingStyles.paddingLeft = paddingLeft;
-  // Handle shorthand padding if individual values aren't set
-  if (padding && !paddingTop && !paddingRight && !paddingBottom && !paddingLeft) {
-    videoPaddingStyles.padding = padding;
-  }
   
   // Normalize widthByDevice with proper fallbacks for each device independently
   const normalizedWidthByDevice = React.useMemo(() => {
@@ -1162,7 +1151,6 @@ const VideoElement: React.FC<{
       <div className={`${widthClasses} aspect-video`} style={cleanContainerStyles}>
         <div 
           className="w-full h-full"
-          style={videoPaddingStyles}
           dangerouslySetInnerHTML={{ __html: sanitizedCode }}
         />
       </div>
@@ -1183,7 +1171,6 @@ const VideoElement: React.FC<{
             autoPlay={autoplay}
             muted={muted}
             className="w-full h-full rounded-lg"
-            style={videoPaddingStyles}
           >
             Your browser does not support the video tag.
           </video>
@@ -1204,7 +1191,6 @@ const VideoElement: React.FC<{
           <iframe
             src={finalEmbedUrl}
             className="w-full h-full rounded-lg"
-            style={videoPaddingStyles}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen

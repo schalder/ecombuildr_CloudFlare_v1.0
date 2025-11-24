@@ -177,7 +177,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
       const { 
         header_tracking_code, 
         footer_tracking_code, 
-        facebook_pixel_id,
+        facebook_pixel_id, 
         facebook_access_token,
         facebook_test_event_code,
         facebook_server_side_enabled,
@@ -691,9 +691,9 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                       </FormItem>
                     )}
                   />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
+                 </div>
+               </AccordionContent>
+             </AccordionItem>
 
             <AccordionItem value="seo" className="border rounded-lg">
               <AccordionTrigger className="px-6 py-4 hover:no-underline">

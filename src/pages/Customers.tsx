@@ -208,10 +208,10 @@ export default function Customers() {
   const filteredCustomers = customers
     .filter(c => c.total_orders > 0) // Only customers with completed purchases
     .filter(customer =>
-      customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      customer.phone?.includes(searchTerm)
-    );
+    customer.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.phone?.includes(searchTerm)
+  );
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredCustomers.length / customersPerPage);

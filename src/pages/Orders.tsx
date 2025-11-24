@@ -406,7 +406,7 @@ export default function Orders() {
         const { count, error: countError } = await countQuery;
         if (countError) throw countError;
         setTotalCount(count || 0);
-        
+
         // Calculate offset for pagination
         const offset = (currentPage - 1) * ordersPerPage;
         
