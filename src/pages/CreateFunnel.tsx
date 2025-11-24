@@ -16,6 +16,7 @@ import { useStoreWebsitesForSelection } from '@/hooks/useWebsiteVisibility';
 import { debounce } from '@/lib/utils';
 import { usePlanLimits } from '@/hooks/usePlanLimits';
 import { useEffect } from 'react';
+import { Switch } from '@/components/ui/switch';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
@@ -43,6 +44,7 @@ export default function CreateFunnel() {
     description: '',
     website_id: '',
   });
+  const [isPublished, setIsPublished] = useState(true);
 
   // Slug validation state
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
@@ -104,7 +106,7 @@ export default function CreateFunnel() {
   );
 
   const createFunnelMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: typeof formData & { isPublished: boolean }) => {
       // Ensure store exists, create if necessary
       const currentStore = await getOrCreateStore();
 
@@ -119,6 +121,7 @@ export default function CreateFunnel() {
           slug: slug,
           description: data.description,
           website_id: data.website_id || null,
+          is_published: data.isPublished,
         })
         .select()
         .single();
@@ -202,6 +205,7 @@ export default function CreateFunnel() {
     createFunnelMutation.mutate({
       ...formData,
       slug: slugToUse,
+      isPublished,
     });
   };
 
@@ -377,6 +381,24 @@ export default function CreateFunnel() {
                 <p className="text-sm text-muted-foreground mt-1">
                   Choose which website this funnel belongs to for consistent branding
                 </p>
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                <div className="space-y-0.5 flex-1">
+                  <Label htmlFor="funnel-publish-toggle" className="text-base font-medium">
+                    Publish Funnel
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {isPublished
+                      ? "Your funnel will be live and ready to convert visitors immediately."
+                      : "Keep as draft – you can publish it later from the funnel management page."}
+                  </p>
+                </div>
+                <Switch
+                  id="funnel-publish-toggle"
+                  checked={isPublished}
+                  onCheckedChange={setIsPublished}
+                />
               </div>
 
               <div className="flex space-x-3 pt-4">

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -162,6 +163,7 @@ export default function CreateWebsite() {
     slug: '',
     description: '',
   });
+  const [isPublished, setIsPublished] = useState(true);
   
   // Slug validation state
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
@@ -220,7 +222,7 @@ export default function CreateWebsite() {
   );
 
   const createWebsiteMutation = useMutation({
-    mutationFn: async (data: typeof formData) => {
+    mutationFn: async (data: typeof formData & { isPublished: boolean }) => {
       // Ensure store exists, create if necessary
       const currentStore = await getOrCreateStore();
 
@@ -234,6 +236,7 @@ export default function CreateWebsite() {
           name: data.name,
           slug: slug,
           description: data.description,
+          is_published: data.isPublished,
         })
         .select()
         .single();
@@ -328,6 +331,7 @@ export default function CreateWebsite() {
     createWebsiteMutation.mutate({
       ...formData,
       slug: slugToUse,
+      isPublished,
     });
   };
 
@@ -484,6 +488,24 @@ export default function CreateWebsite() {
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
+                />
+              </div>
+
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                <div className="space-y-0.5 flex-1">
+                  <Label htmlFor="publish-toggle" className="text-base font-medium">
+                    Publish Website
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {isPublished
+                      ? "Your website will be live and accessible to visitors immediately."
+                      : "Keep as draft – you can publish it later from the website management page."}
+                  </p>
+                </div>
+                <Switch
+                  id="publish-toggle"
+                  checked={isPublished}
+                  onCheckedChange={setIsPublished}
                 />
               </div>
 
