@@ -253,21 +253,6 @@ export function AppSidebar() {
             </div>
           </div>}
 
-        {/* Search */}
-        {!collapsed && <div className="p-4 border-b border-sidebar-border">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input 
-                ref={searchInputRef}
-                placeholder="Search..." 
-                value={searchQuery} 
-                onChange={e => setSearchQuery(e.target.value)} 
-                className="pl-8 bg-sidebar-accent border-sidebar-border min-h-[44px] touch-manipulation"
-                autoFocus={false}
-              />
-            </div>
-          </div>}
-
         {/* Navigation Menu */}
         <SidebarGroup className="flex-1">
           <SidebarGroupContent>
