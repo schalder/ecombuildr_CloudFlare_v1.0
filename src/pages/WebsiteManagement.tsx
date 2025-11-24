@@ -60,8 +60,10 @@ const WebsiteManagement = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedPage, setSelectedPage] = useState<WebsitePage | null>(null);
   const [urlCopied, setUrlCopied] = useState(false);
-  const isMobile = useIsMobile();
   
+  const activeTab = searchParams.get('tab') || 'pages';
+
+  const isMobile = useIsMobile();
   const tabs = [
     { id: 'pages', label: 'Pages' },
     { id: 'header', label: 'Header' },
@@ -72,8 +74,6 @@ const WebsiteManagement = () => {
     { id: 'fomo', label: 'FOMO' },
     { id: 'settings', label: 'Settings' },
   ];
-  
-  const activeTab = searchParams.get('tab') || 'pages';
 
   const { data: website, isLoading } = useQuery({
     queryKey: ['website', id],
@@ -276,11 +276,11 @@ const WebsiteManagement = () => {
               </SelectContent>
             </Select>
           ) : (
-            <div className="flex space-x-8 overflow-x-auto scrollbar-hide">
+            <div className="flex space-x-1 sm:space-x-8 overflow-x-auto scrollbar-hide">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  className={`py-4 px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-base ${
+                  className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
                     activeTab === tab.id
                       ? 'border-primary text-primary'
                       : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -321,7 +321,7 @@ const WebsiteManagement = () => {
                           variant="outline"
                           size="sm"
                           onClick={handleCopyUrl}
-                          className="flex-1 px-3 sm:flex-none"
+                          className="flex-1 sm:flex-initial"
                         >
                           {urlCopied ? (
                             <CheckIcon className="h-4 w-4" />
@@ -333,7 +333,7 @@ const WebsiteManagement = () => {
                           variant="outline"
                           size="sm"
                           onClick={handleVisitSite}
-                          className="flex-1 px-3 sm:flex-none"
+                          className="flex-1 sm:flex-initial"
                         >
                           <ExternalLink className="h-4 w-4" />
                         </Button>

@@ -53,10 +53,26 @@ interface FunnelStep {
   preview_image_url?: string;
 }
 const FunnelManagement = () => {
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
+  const tabs = [
+    { id: 'steps', label: 'Steps', icon: CheckCircle },
+    { id: 'stats', label: 'Stats', icon: BarChart3 },
+    { id: 'sales', label: 'Sales', icon: DollarSign },
+    { id: 'contacts', label: 'Contacts', icon: Users },
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'header', label: 'Header', icon: ArrowUp },
+    { id: 'footer', label: 'Footer', icon: ArrowDown },
+  ];
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('steps');
@@ -73,18 +89,10 @@ const FunnelManagement = () => {
     stepId: '',
     stepTitle: ''
   });
-  const isMobile = useIsMobile();
-  const tabs = [
-    { id: 'steps', label: 'Steps', icon: CheckCircle },
-    { id: 'stats', label: 'Stats', icon: BarChart3 },
-    { id: 'sales', label: 'Sales', icon: DollarSign },
-    { id: 'contacts', label: 'Contacts', icon: Users },
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'header', label: 'Header', icon: ArrowUp },
-    { id: 'footer', label: 'Footer', icon: ArrowDown },
-  ];
-
-  const { data: funnel, isLoading } = useQuery({
+  const {
+    data: funnel,
+    isLoading
+  } = useQuery({
     queryKey: ['funnel', id],
     queryFn: async () => {
       const {
@@ -274,72 +282,92 @@ const FunnelManagement = () => {
       });
     }
   };
-  const renderStepsList = () => (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <Droppable droppableId="funnel-steps">
-        {provided => (
-          <div {...provided.droppableProps} ref={provided.innerRef} className="space-y-3">
-            {steps.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground mb-4">No steps created yet</p>
-                <Button onClick={handleCreateStep} size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Your First Step
-                </Button>
-              </div>
-            ) : (
-              steps.map((step, index) => (
-                <Draggable key={step.id} draggableId={step.id} index={index}>
-                  {(provided, snapshot) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${
-                        selectedStepId === step.id ? 'bg-primary/10 border-primary' : 'bg-background'
-                      } ${snapshot.isDragging ? 'shadow-lg' : ''}`}
-                      onClick={() => handleSelectStep(step.id)}
-                    >
-                      <div className="flex-shrink-0" {...provided.dragHandleProps}>
-                        <GripVertical className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-xs font-bold text-foreground">{step.title}</p>
-                          {index === 0 && (
-                            <Badge variant="secondary" className="text-xs px-1 py-0">
-                              <Home className="h-3 w-3" />
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {getStepTypeLabel(step.step_type)}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {step.is_published && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={e => {
-                            e.stopPropagation();
-                            handleDeleteStep(step.id, step.title);
-                          }}
-                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                          disabled={deleteStepMutation.isPending}
+  const stepsSidebarContent = (
+    <div className="space-y-6">
+      {/* Steps Section */}
+      <div>
+        <div className="flex items-center space-x-2 mb-4">
+          <CheckCircle className="h-5 w-5 text-green-500" />
+          <h3 className="font-medium text-foreground">Funnel Steps</h3>
+        </div>
+
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="funnel-steps">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="space-y-3"
+              >
+                {steps.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">No steps created yet</p>
+                    <Button onClick={handleCreateStep} size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Your First Step
+                    </Button>
+                  </div>
+                ) : (
+                  steps.map((step, index) => (
+                    <Draggable key={step.id} draggableId={step.id} index={index}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer hover:bg-muted/50 ${
+                            selectedStepId === step.id ? 'bg-primary/10 border-primary' : 'bg-background'
+                          } ${snapshot.isDragging ? 'shadow-lg' : ''}`}
+                          onClick={() => handleSelectStep(step.id)}
                         >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </Draggable>
-              ))
+                          <div className="flex-shrink-0" {...provided.dragHandleProps}>
+                            <GripVertical className="h-4 w-4 text-muted-foreground" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-xs font-bold text-foreground">{step.title}</p>
+                              {index === 0 && (
+                                <Badge variant="secondary" className="text-xs px-1 py-0">
+                                  <Home className="h-3 w-3" />
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {getStepTypeLabel(step.step_type)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {step.is_published && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteStep(step.id, step.title);
+                              }}
+                              className="text-destructive hover:text-destructive h-8 w-8 p-0"
+                              disabled={deleteStepMutation.isPending}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))
+                )}
+                {provided.placeholder}
+              </div>
             )}
-            {provided.placeholder}
-          </div>
-        )}
-      </Droppable>
-    </DragDropContext>
+          </Droppable>
+        </DragDropContext>
+
+        <Button onClick={handleCreateStep} className="w-full mt-4" variant="outline" size="sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Step
+        </Button>
+      </div>
+    </div>
   );
 
   if (isLoading) {
@@ -417,39 +445,22 @@ const FunnelManagement = () => {
           )}
         </div>
 
-        {activeTab === 'steps' && (
-          <div className="flex flex-col md:flex-row">
+        {activeTab === 'steps' && <div className="flex flex-col md:flex-row gap-4">
+            {/* Left Sidebar */}
             {isMobile ? (
-              <div className="w-full p-4 sm:p-6">
+              <div className="w-full">
                 <Accordion type="single" collapsible defaultValue="steps">
                   <AccordionItem value="steps">
-                    <AccordionTrigger className="text-left">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                        <span className="font-medium text-foreground">Funnel Steps</span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-4 space-y-4">
-                      {renderStepsList()}
-                      <Button onClick={handleCreateStep} className="w-full" variant="outline" size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add New Step
-                      </Button>
+                    <AccordionTrigger className="text-base font-medium">Funnel Steps</AccordionTrigger>
+                    <AccordionContent className="bg-muted/20 rounded-lg p-4">
+                      {stepsSidebarContent}
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
               </div>
             ) : (
-              <div className="w-full md:w-80 border-r bg-muted/30 p-4 sm:p-6 space-y-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                  <h3 className="font-medium text-foreground">Funnel Steps</h3>
-                </div>
-                {renderStepsList()}
-                <Button onClick={handleCreateStep} className="w-full" variant="outline" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add New Step
-                </Button>
+              <div className="w-full md:w-80 border-r-0 md:border-r bg-muted/30 p-4 sm:p-6">
+                {stepsSidebarContent}
               </div>
             )}
 
