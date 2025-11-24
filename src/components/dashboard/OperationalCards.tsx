@@ -59,7 +59,7 @@ export function OperationalCards({ stats, loading = false }: OperationalCardsPro
   const data = stats || defaultStats;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
       <OperationalCard
         title="Pending Orders"
         value={data.pendingOrders.toLocaleString()}
