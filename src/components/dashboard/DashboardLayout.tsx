@@ -28,7 +28,7 @@ export function DashboardLayout({ children, title, description }: DashboardLayou
         <SidebarInset className="flex-1">
           <DashboardHeader title={title} description={description} />
           <main className="flex-1 overflow-auto">
-            <div className="container mx-auto p-6 space-y-6">
+            <div className="container mx-auto px-4 py-6 md:p-6 space-y-6">
               {children}
             </div>
           </main>

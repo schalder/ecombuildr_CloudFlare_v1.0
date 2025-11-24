@@ -186,7 +186,7 @@ const Courses = () => {
 
         {/* Search and Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+          <Card className="min-w-0">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-primary" />
@@ -198,7 +198,7 @@ const Courses = () => {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="min-w-0">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-blue-500" />
@@ -212,7 +212,7 @@ const Courses = () => {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="min-w-0">
             <CardContent className="p-4">
               <div className="flex items-center gap-2">
                 <PlayCircle className="h-5 w-5 text-green-500" />
@@ -226,13 +226,13 @@ const Courses = () => {
             </CardContent>
           </Card>
 
-          <div className="relative w-full md:max-w-full lg:max-w-md">
+          <div className="relative w-full min-w-0 md:max-w-full lg:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search courses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 text-foreground"
+              className="pl-10 text-foreground w-full"
             />
           </div>
         </div>
@@ -372,7 +372,7 @@ const Courses = () => {
 
                 <div className="space-y-4 md:hidden">
                   {filteredCourses.map((course) => (
-                    <div key={course.id} className="border rounded-lg p-4 space-y-4">
+                    <div key={course.id} className="border rounded-lg p-4 space-y-4 w-full overflow-hidden">
                       <div className="flex items-center gap-3">
                         {course.thumbnail_url ? (
                           <img 
