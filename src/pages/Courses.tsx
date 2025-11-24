@@ -173,12 +173,12 @@ const Courses = () => {
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
-            <Button onClick={() => navigate('/dashboard/courses/domains')} variant="outline" className="w-full sm:w-auto">
-              <Globe className="mr-2 h-4 w-4" />
+            <Button onClick={() => navigate('/dashboard/courses/domains')} variant="outline" className="w-full sm:w-auto h-9 sm:h-10 text-sm sm:text-base">
+              <Globe className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               Course Domains
             </Button>
-            <Button onClick={() => navigate('/dashboard/courses/create')} className="w-full sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button onClick={() => navigate('/dashboard/courses/create')} className="w-full sm:w-auto h-9 sm:h-10 text-sm sm:text-base">
+              <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               Create Course
             </Button>
           </div>
@@ -187,12 +187,12 @@ const Courses = () => {
         {/* Search Bar - Mobile Full Width */}
         <div className="md:hidden">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
             <Input
               placeholder="Search courses..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 text-foreground w-full"
+              className="pl-9 h-9 text-sm text-foreground w-full"
             />
           </div>
         </div>
