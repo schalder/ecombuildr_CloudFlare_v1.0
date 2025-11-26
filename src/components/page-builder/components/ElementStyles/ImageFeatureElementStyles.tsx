@@ -236,6 +236,54 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
         onToggle={setDescriptionTypographyOpen}
       />
 
+      {/* Image */}
+      <Collapsible open={imageOpen} onOpenChange={setImageOpen}>
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Image</h4>
+          <ChevronDown className={`h-4 w-4 transition-transform ${imageOpen ? 'rotate-180' : ''}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 pt-2">
+          <ResponsiveStyleControl
+            element={element}
+            property="imagePosition"
+            label="Image Position"
+            deviceType={responsiveTab}
+            fallback={(element.content as any)?.imagePosition || 'left'}
+            onStyleUpdate={onStyleUpdate}
+          >
+            {(value, onChange) => (
+              <Select value={value || 'left'} onValueChange={onChange}>
+                <SelectTrigger className="h-8 bg-background">
+                  <SelectValue placeholder="Select position" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="left">Left</SelectItem>
+                  <SelectItem value="top">Top</SelectItem>
+                  <SelectItem value="right">Right</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </ResponsiveStyleControl>
+          
+          <ResponsiveStyleControl
+            element={element}
+            property="imageMaxHeight"
+            label="Max Height"
+            deviceType={responsiveTab}
+            fallback="400px"
+            onStyleUpdate={onStyleUpdate}
+          >
+            {(value, onChange) => (
+              <Input
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder="e.g., 400px"
+              />
+            )}
+          </ResponsiveStyleControl>
+        </CollapsibleContent>
+      </Collapsible>
+
       {/* Background */}
       <Collapsible open={backgroundOpen} onOpenChange={setBackgroundOpen}>
         <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
@@ -314,53 +362,6 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder="e.g., 8px"
-              />
-            )}
-          </ResponsiveStyleControl>
-        </CollapsibleContent>
-      </Collapsible>
-
-      {/* Image */}
-      <Collapsible open={imageOpen} onOpenChange={setImageOpen}>
-        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
-          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Image</h4>
-          <ChevronDown className={`h-4 w-4 transition-transform ${imageOpen ? 'rotate-180' : ''}`} />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-3 pt-2">
-          <ResponsiveStyleControl
-            element={element}
-            property="imagePosition"
-            label="Image Position"
-            deviceType={responsiveTab}
-            fallback={(element.content as any)?.imagePosition || 'left'}
-            onStyleUpdate={onStyleUpdate}
-          >
-            {(value, onChange) => (
-              <Select value={value || 'left'} onValueChange={onChange}>
-                <SelectTrigger className="h-8 bg-background">
-                  <SelectValue placeholder="Select position" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="left">Left</SelectItem>
-                  <SelectItem value="right">Right</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-          </ResponsiveStyleControl>
-          
-          <ResponsiveStyleControl
-            element={element}
-            property="imageMaxHeight"
-            label="Max Height"
-            deviceType={responsiveTab}
-            fallback="400px"
-            onStyleUpdate={onStyleUpdate}
-          >
-            {(value, onChange) => (
-              <Input
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                placeholder="e.g., 400px"
               />
             )}
           </ResponsiveStyleControl>

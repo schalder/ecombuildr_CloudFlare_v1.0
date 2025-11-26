@@ -569,13 +569,29 @@ const ImageFeatureElement: React.FC<{
   // Get responsive image position (moved from content to styles, with backward compatibility)
   const responsiveImagePosition = getResponsiveStyleValue('imagePosition', imagePosition);
   
-  // Determine layout based on device
+  // Determine layout based on device and image position
   const isMobile = deviceType === 'mobile';
-  const flexDirection = isMobile ? 'flex-col' : (responsiveImagePosition === 'right' ? 'flex-row-reverse' : 'flex-row');
+  // If position is 'top', always use flex-col (stacked layout)
+  // On mobile, always use flex-col regardless of position
+  // Otherwise, use flex-row or flex-row-reverse based on position
+  let flexDirection: string;
+  if (responsiveImagePosition === 'top' || isMobile) {
+    flexDirection = 'flex-col';
+  } else if (responsiveImagePosition === 'right') {
+    flexDirection = 'flex-row-reverse';
+  } else {
+    flexDirection = 'flex-row';
+  }
+  
   const textAlign = (currentResponsiveStyles as any).textAlign || (element.styles as any)?.textAlign || 'left';
   
   // Get responsive image max-height
   const imageMaxHeight = getResponsiveStyleValue('imageMaxHeight', '400px');
+  
+  // Use object-contain when max-height is set to resize image instead of cropping
+  // object-contain will resize the image to fit within max-height while maintaining aspect ratio
+  // object-cover would crop the image to fill the space
+  const imageObjectFit = imageMaxHeight ? 'object-contain' : 'object-cover';
 
   return (
     <>
@@ -590,9 +606,9 @@ const ImageFeatureElement: React.FC<{
       >
         {/* Image */}
         <div 
-          className={`${isMobile ? 'w-full' : 'flex-shrink-0'}`}
+          className={`${isMobile || responsiveImagePosition === 'top' ? 'w-full' : 'flex-shrink-0'}`}
           style={{
-            width: isMobile ? '100%' : `${imageWidth}%`
+            width: isMobile || responsiveImagePosition === 'top' ? '100%' : `${imageWidth}%`
           }}
         >
           {imageUrl ? (
@@ -600,7 +616,7 @@ const ImageFeatureElement: React.FC<{
               <img
                 src={imageUrl}
                 alt={altText}
-                className="w-full h-auto rounded-lg object-cover select-none"
+                className={`w-full h-auto rounded-lg ${imageObjectFit} select-none`}
                 draggable={false}
                 onDragStart={(e) => e.preventDefault()}
                 style={{
@@ -611,7 +627,7 @@ const ImageFeatureElement: React.FC<{
               <StorefrontImage
                 src={imageUrl}
                 alt={altText}
-                className="w-full h-auto rounded-lg object-cover"
+                className={`w-full h-auto rounded-lg ${imageObjectFit}`}
                 style={{
                   maxHeight: imageMaxHeight
                 }}
