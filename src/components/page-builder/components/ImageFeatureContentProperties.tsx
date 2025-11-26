@@ -7,6 +7,12 @@ import { Slider } from '@/components/ui/slider';
 import { MediaSelector } from './MediaSelector';
 import { PageBuilderElement, ElementVisibility } from '../types';
 import { VisibilityControl } from './VisibilityControl';
+import { ResponsiveStyleControl, ResponsiveTabs } from '../ElementStyles/_shared/ResponsiveStyleControl';
+import { useDevicePreview } from '../../contexts/DevicePreviewContext';
+import { 
+  getEffectiveResponsiveValue, 
+  setResponsiveOverride
+} from '../../utils/responsiveHelpers';
 
 interface ImageFeatureContentPropertiesProps {
   element: PageBuilderElement;
@@ -17,11 +23,14 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
   element,
   onUpdate
 }) => {
+  const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
   const headline = element.content.headline || 'Feature Headline';
   const description = element.content.description || 'Feature description goes here...';
   const imageUrl = element.content.imageUrl || '';
   const altText = element.content.altText || '';
-  const imagePosition = element.content.imagePosition || 'left';
+  // Get image position from responsive styles, fallback to content for backward compatibility
+  const legacyImagePosition = element.content.imagePosition || 'left';
+  const imagePosition = getEffectiveResponsiveValue(element, 'imagePosition', responsiveTab, legacyImagePosition);
   const imageWidth = element.content.imageWidth || 25;
   
   // Default visibility settings
@@ -35,6 +44,16 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
 
   const handleVisibilityChange = (visibility: ElementVisibility) => {
     onUpdate('visibility', visibility);
+  };
+
+  // Handle style updates for responsive properties
+  const handleStyleUpdate = (property: string, value: any) => {
+    // Update styles object - setResponsiveOverride will call this with 'responsive' and the updated responsive object
+    const currentStyles = element.styles || {};
+    onUpdate('styles', {
+      ...currentStyles,
+      [property]: value
+    });
   };
 
   return (
@@ -84,16 +103,28 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
       </div>
 
       <div>
-        <Label htmlFor="image-position">Image Position</Label>
-        <Select value={imagePosition} onValueChange={(value) => onUpdate('imagePosition', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select position" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="left">Left</SelectItem>
-            <SelectItem value="right">Right</SelectItem>
-          </SelectContent>
-        </Select>
+        <Label>Image Position</Label>
+        <ResponsiveTabs activeTab={responsiveTab} onTabChange={setResponsiveTab} />
+        <ResponsiveStyleControl
+          element={element}
+          property="imagePosition"
+          label=""
+          deviceType={responsiveTab}
+          fallback={legacyImagePosition}
+          onStyleUpdate={handleStyleUpdate}
+        >
+          {(value, onChange) => (
+            <Select value={value || legacyImagePosition} onValueChange={onChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select position" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="left">Left</SelectItem>
+                <SelectItem value="right">Right</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </ResponsiveStyleControl>
       </div>
 
       <div>

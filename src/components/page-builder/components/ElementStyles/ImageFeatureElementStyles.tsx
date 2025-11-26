@@ -29,6 +29,7 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
   // Collapsible state
   const [headlineTypographyOpen, setHeadlineTypographyOpen] = React.useState(true);
   const [descriptionTypographyOpen, setDescriptionTypographyOpen] = React.useState(false);
+  const [imageOpen, setImageOpen] = React.useState(false);
   const [backgroundOpen, setBackgroundOpen] = React.useState(false);
   const [borderOpen, setBorderOpen] = React.useState(false);
   const [spacingOpen, setSpacingOpen] = React.useState(false);
@@ -234,6 +235,32 @@ export const ImageFeatureElementStyles: React.FC<ImageFeatureElementStylesProps>
         isOpen={descriptionTypographyOpen}
         onToggle={setDescriptionTypographyOpen}
       />
+
+      {/* Image */}
+      <Collapsible open={imageOpen} onOpenChange={setImageOpen}>
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Image</h4>
+          <ChevronDown className={`h-4 w-4 transition-transform ${imageOpen ? 'rotate-180' : ''}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 pt-2">
+          <ResponsiveStyleControl
+            element={element}
+            property="imageMaxHeight"
+            label="Max Height"
+            deviceType={responsiveTab}
+            fallback="400px"
+            onStyleUpdate={onStyleUpdate}
+          >
+            {(value, onChange) => (
+              <Input
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder="e.g., 400px, 50vh, 20rem"
+              />
+            )}
+          </ResponsiveStyleControl>
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Background */}
       <Collapsible open={backgroundOpen} onOpenChange={setBackgroundOpen}>

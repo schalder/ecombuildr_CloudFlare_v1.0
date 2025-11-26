@@ -471,7 +471,9 @@ const ImageFeatureElement: React.FC<{
   const description = element.content.description || 'Feature description goes here...';
   const imageUrl = element.content.imageUrl || '';
   const altText = element.content.altText || 'Feature image';
-  const imagePosition = element.content.imagePosition || 'left';
+  // Get image position from responsive styles, fallback to content for backward compatibility
+  const legacyImagePosition = element.content.imagePosition || 'left';
+  const imagePosition = getResponsiveStyleValue('imagePosition', legacyImagePosition);
   const imageWidth = element.content.imageWidth || 25;
 
   const handleUpdate = (property: string, value: any) => {
@@ -501,6 +503,14 @@ const ImageFeatureElement: React.FC<{
   });
   const inlineStyles = renderElementStyles(element, deviceType || 'desktop');
   const { padding, paddingTop, paddingRight, paddingBottom, paddingLeft, ...stylesNoPadding } = (inlineStyles as any);
+  
+  // Extract padding separately to apply to container
+  const containerPadding = {
+    paddingTop: paddingTop || inlineStyles.paddingTop,
+    paddingRight: paddingRight || inlineStyles.paddingRight,
+    paddingBottom: paddingBottom || inlineStyles.paddingBottom,
+    paddingLeft: paddingLeft || inlineStyles.paddingLeft,
+  };
   
   // Get responsive styles for current device
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
@@ -559,6 +569,9 @@ const ImageFeatureElement: React.FC<{
     };
   };
 
+  // Get responsive image max height
+  const imageMaxHeight = getResponsiveStyleValue('imageMaxHeight', '400px');
+  
   // Determine layout based on device
   const isMobile = deviceType === 'mobile';
   const flexDirection = isMobile ? 'flex-col' : (imagePosition === 'right' ? 'flex-row-reverse' : 'flex-row');
@@ -571,6 +584,7 @@ const ImageFeatureElement: React.FC<{
         className={`element-${element.id} flex ${flexDirection} gap-6 items-center ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`} 
         style={{
           ...stylesNoPadding,
+          ...containerPadding,
           textAlign: textAlign as any
         }}
       >
@@ -590,7 +604,7 @@ const ImageFeatureElement: React.FC<{
                 draggable={false}
                 onDragStart={(e) => e.preventDefault()}
                 style={{
-                  maxHeight: '400px'
+                  maxHeight: imageMaxHeight
                 }}
               />
             ) : (
@@ -599,7 +613,7 @@ const ImageFeatureElement: React.FC<{
                 alt={altText}
                 className="w-full h-auto rounded-lg object-cover"
                 style={{
-                  maxHeight: '400px'
+                  maxHeight: imageMaxHeight
                 }}
                 priority={false}
                 preserveOriginal={true}
@@ -613,7 +627,7 @@ const ImageFeatureElement: React.FC<{
         </div>
 
         {/* Content */}
-        <div className={`${isMobile ? 'w-full' : 'flex-1'} space-y-2`}>
+        <div className={`${isMobile ? 'w-full' : 'flex-1'} space-y-1`}>
           <h3 style={getHeadlineStyles()}>
             <InlineEditor
               value={headline}
