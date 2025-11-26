@@ -597,7 +597,7 @@ const ImageFeatureElement: React.FC<{
     <>
       {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
       <div 
-        className={`element-${element.id} flex ${flexDirection} gap-6 items-center ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`} 
+        className={`element-${element.id} flex ${flexDirection} ${isMobile ? 'gap-3' : 'gap-6'} items-center ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`} 
         style={{
           ...stylesNoPadding,
           ...paddingStyles,
@@ -606,7 +606,7 @@ const ImageFeatureElement: React.FC<{
       >
         {/* Image */}
         <div 
-          className={`${isMobile || responsiveImagePosition === 'top' ? 'w-full' : 'flex-shrink-0'}`}
+          className={`${isMobile || responsiveImagePosition === 'top' ? 'w-full flex justify-center' : 'flex-shrink-0'}`}
           style={{
             width: isMobile || responsiveImagePosition === 'top' ? '100%' : `${imageWidth}%`
           }}
