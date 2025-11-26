@@ -164,6 +164,7 @@ export default function CreateWebsite() {
     description: '',
   });
   const [isPublished, setIsPublished] = useState(true);
+  const [createDefaultPages, setCreateDefaultPages] = useState(true);
   
   // Slug validation state
   const [slugStatus, setSlugStatus] = useState<SlugStatus>('idle');
@@ -222,7 +223,7 @@ export default function CreateWebsite() {
   );
 
   const createWebsiteMutation = useMutation({
-    mutationFn: async (data: typeof formData & { isPublished: boolean }) => {
+    mutationFn: async (data: typeof formData & { isPublished: boolean; createDefaultPages: boolean }) => {
       // Ensure store exists, create if necessary
       const currentStore = await getOrCreateStore();
 
@@ -271,17 +272,18 @@ export default function CreateWebsite() {
       }
       return website;
     },
-    onSuccess: async (website) => {
+    onSuccess: async (website, variables) => {
       // Get the current store to invalidate the correct cache
       const currentStore = await getOrCreateStore();
       
-      // ✅ Wait for default system pages to be created before navigating
-      // Ensures pages exist when user lands on management page
-      try {
-        await createDefaultSystemPages(website.id);
-      } catch (error) {
-        console.error('Failed to create default system pages:', error);
-        // Still proceed - pages can be created manually later
+      // ✅ Conditionally create default system pages based on toggle
+      if (variables.createDefaultPages) {
+        try {
+          await createDefaultSystemPages(website.id);
+        } catch (error) {
+          console.error('Failed to create default system pages:', error);
+          // Still proceed - pages can be created manually later
+        }
       }
       
       // Invalidate storeWebsites cache so the new website appears immediately
@@ -292,7 +294,9 @@ export default function CreateWebsite() {
       
       toast({
         title: "Website created",
-        description: "Your website has been created successfully with default e-commerce pages.",
+        description: variables.createDefaultPages 
+          ? "Your website has been created successfully with default e-commerce pages."
+          : "Your website has been created successfully. You can add pages manually from the website management page.",
       });
       navigate(`/dashboard/websites/${website.id}`);
     },
@@ -332,6 +336,7 @@ export default function CreateWebsite() {
       ...formData,
       slug: slugToUse,
       isPublished,
+      createDefaultPages,
     });
   };
 
@@ -509,6 +514,23 @@ export default function CreateWebsite() {
                 />
               </div>
 
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                <div className="space-y-0.5 flex-1">
+                  <Label htmlFor="default-pages-toggle" className="text-base font-medium">
+                    Create Default Pages
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {createDefaultPages
+                      ? "Automatically create Products, Cart, Checkout, Order Confirmation, and Payment Processing pages."
+                      : "Create website without default pages. You can add pages manually from the website management page."}
+                  </p>
+                </div>
+                <Switch
+                  id="default-pages-toggle"
+                  checked={createDefaultPages}
+                  onCheckedChange={setCreateDefaultPages}
+                />
+              </div>
 
               <div className="flex space-x-3 pt-4">
                 <Button
