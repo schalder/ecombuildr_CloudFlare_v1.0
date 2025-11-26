@@ -118,18 +118,86 @@ export const useUserStore = () => {
       throw new Error('User not authenticated');
     }
 
-    if (store) {
-      return store;
+    // ALWAYS check database first (not just cache) to prevent race conditions
+    // This ensures we don't create duplicate stores if multiple requests happen simultaneously
+    const { data: existingStore, error: queryError } = await supabase
+      .from('stores')
+      .select('*')
+      .eq('owner_id', user.id)
+      .maybeSingle();
+
+    if (queryError) {
+      console.error('Error querying store:', queryError);
+      throw queryError;
     }
 
-    // Create default store silently
-    const defaultStore = {
-      name: `${user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}'s Store`,
-      slug: `store-${user.id.slice(0, 8)}`,
-      description: 'My online store'
-    };
+    // If store exists, return it and update cache
+    if (existingStore) {
+      queryClient.setQueryData(['userStore', user.id], existingStore);
+      return existingStore;
+    }
 
-    return await createStore(defaultStore);
+    // Generate unique slug using full UUID (without dashes) to prevent collisions
+    // Using full UUID ensures uniqueness even if multiple users sign up simultaneously
+    const baseSlug = `store-${user.id.replace(/-/g, '')}`;
+    
+    // Check if slug exists and generate unique one if needed (shouldn't happen with full UUID, but safety check)
+    let slug = baseSlug;
+    let attempts = 0;
+    while (attempts < 3) {
+      const { data: existing } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('slug', slug)
+        .maybeSingle();
+      
+      if (!existing) break;
+      
+      // Generate unique suffix if slug exists (should be extremely rare with full UUID)
+      slug = `${baseSlug}-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`;
+      attempts++;
+    }
+
+    try {
+      const newStore = await createStore({
+        name: `${user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}'s Store`,
+        slug: slug,
+        description: 'My online store'
+      });
+      
+      return newStore;
+    } catch (error: any) {
+      // If store was created by another concurrent request, fetch and return it
+      if (error.code === '23505' && error.message.includes('stores_slug_key')) {
+        // Check again if store exists now (might have been created by another request)
+        const { data: store } = await supabase
+          .from('stores')
+          .select('*')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+        
+        if (store) {
+          queryClient.setQueryData(['userStore', user.id], store);
+          return store;
+        }
+      }
+      
+      // If it's a different duplicate error, also check for existing store
+      if (error.code === '23505') {
+        const { data: store } = await supabase
+          .from('stores')
+          .select('*')
+          .eq('owner_id', user.id)
+          .maybeSingle();
+        
+        if (store) {
+          queryClient.setQueryData(['userStore', user.id], store);
+          return store;
+        }
+      }
+      
+      throw error;
+    }
   };
 
   const updateStoreMutation = useMutation({
