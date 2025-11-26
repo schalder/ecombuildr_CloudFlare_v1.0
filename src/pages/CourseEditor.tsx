@@ -1082,7 +1082,7 @@ const CourseEditor = () => {
                     <CardTitle className="flex items-center justify-between text-base font-semibold">
                       Payment Methods
                       <Plus className={`w-4 h-4 transition-transform ${!collapsedSections.payment ? 'rotate-45' : ''}`} />
-                  </CardTitle>
+                    </CardTitle>
                   </CardHeader>
                 </CollapsibleTrigger>
                 <CollapsibleContent>

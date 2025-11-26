@@ -276,21 +276,21 @@ const WebsiteManagement = () => {
               </SelectContent>
             </Select>
           ) : (
-            <div className="flex space-x-1 sm:space-x-8 overflow-x-auto scrollbar-hide">
+          <div className="flex space-x-1 sm:space-x-8 overflow-x-auto scrollbar-hide">
               {tabs.map((tab) => (
-                <button
+            <button 
                   key={tab.id}
-                  className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
+              className={`py-4 px-3 sm:px-1 border-b-2 font-medium transition-colors whitespace-nowrap text-sm sm:text-base min-w-0 flex-shrink-0 ${
                     activeTab === tab.id
-                      ? 'border-primary text-primary'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
+                  ? 'border-primary text-primary' 
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
                   onClick={() => handleTabChange(tab.id)}
-                >
+            >
                   {tab.label}
-                </button>
+            </button>
               ))}
-            </div>
+          </div>
           )}
         </div>
 
@@ -317,26 +317,26 @@ const WebsiteManagement = () => {
                         className="w-full sm:flex-1"
                       />
                       <div className="flex gap-2 sm:flex-none">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCopyUrl}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCopyUrl}
                           className="flex-1 sm:flex-initial"
-                        >
-                          {urlCopied ? (
-                            <CheckIcon className="h-4 w-4" />
-                          ) : (
-                            <Copy className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleVisitSite}
+                      >
+                        {urlCopied ? (
+                          <CheckIcon className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleVisitSite}
                           className="flex-1 sm:flex-initial"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
                       </div>
                     </div>
                   </div>

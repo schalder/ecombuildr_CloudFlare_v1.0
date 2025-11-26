@@ -94,15 +94,15 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
     }
     
     // Check for custom column widths first (applies to all devices)
-    const customWidths = getColumnWidthsForDevice(row, deviceType, COLUMN_LAYOUTS);
+    // Only use custom widths if they actually exist (not just defaults)
+    const hasCustomWidths = row.customColumnWidths && (
+      row.customColumnWidths[deviceType] || 
+      (deviceType !== 'desktop' && row.customColumnWidths.desktop)
+    );
     
-    // If we have custom widths, use them (even on tablet/mobile if user explicitly set them)
-    if (customWidths && customWidths.length > 0 && row.customColumnWidths) {
-      // Check if custom widths exist for this device or desktop
-      const hasCustomForDevice = row.customColumnWidths[deviceType] || 
-                                 (deviceType !== 'desktop' && row.customColumnWidths.desktop);
-      
-      if (hasCustomForDevice) {
+    if (hasCustomWidths) {
+      const customWidths = getColumnWidthsForDevice(row, deviceType, COLUMN_LAYOUTS);
+      if (customWidths && customWidths.length > 0) {
         return {
           display: 'grid',
           gridTemplateColumns: percentagesToGridTemplate(customWidths),

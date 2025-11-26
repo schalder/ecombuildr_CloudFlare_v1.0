@@ -175,13 +175,13 @@ const Courses = () => {
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button onClick={() => navigate('/dashboard/courses/domains')} variant="outline" className="w-full sm:w-auto h-9 sm:h-10 text-sm sm:text-base">
               <Globe className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              Course Domains
-            </Button>
+            Course Domains
+          </Button>
             <Button onClick={() => navigate('/dashboard/courses/create')} className="w-full sm:w-auto h-9 sm:h-10 text-sm sm:text-base">
               <Plus className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              Create Course
-            </Button>
-          </div>
+            Create Course
+          </Button>
+        </div>
         </div>
 
         {/* Search Bar - Mobile Full Width */}
@@ -194,8 +194,8 @@ const Courses = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9 h-9 text-sm text-foreground w-full"
             />
-          </div>
-        </div>
+                </div>
+              </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -217,7 +217,7 @@ const Courses = () => {
             </CardHeader>
             <CardContent>
               <div className="text-xl md:text-2xl font-bold text-foreground">
-                {courses.reduce((total, course) => total + (course._count?.modules || 0), 0)}
+                    {courses.reduce((total, course) => total + (course._count?.modules || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Course modules</p>
             </CardContent>
@@ -230,7 +230,7 @@ const Courses = () => {
             </CardHeader>
             <CardContent>
               <div className="text-xl md:text-2xl font-bold text-foreground">
-                {courses.reduce((total, course) => total + (course._count?.lessons || 0), 0)}
+                    {courses.reduce((total, course) => total + (course._count?.lessons || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">Video lessons</p>
             </CardContent>
@@ -243,15 +243,15 @@ const Courses = () => {
               <Search className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="relative">
-                <Input
-                  placeholder="Search courses..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 text-foreground"
-                />
+          <div className="relative">
+            <Input
+              placeholder="Search courses..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 text-foreground"
+            />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              </div>
+          </div>
             </CardContent>
           </Card>
         </div>
@@ -284,109 +284,109 @@ const Courses = () => {
             ) : (
               <>
                 <div className="hidden md:block">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Course</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead>Content</TableHead>
-                        <TableHead>Students</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead className="w-[70px]">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredCourses.map((course) => (
-                        <TableRow key={course.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              {course.thumbnail_url ? (
-                                <img 
-                                  src={course.thumbnail_url} 
-                                  alt={course.title}
-                                  className="w-12 h-12 rounded object-cover"
-                                />
-                              ) : (
-                                <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
-                                  <GraduationCap className="h-6 w-6 text-muted-foreground" />
-                                </div>
-                              )}
-                              <div>
-                                <div className="font-medium">{course.title}</div>
-                                <div className="text-sm text-muted-foreground line-clamp-1">
-                                  {course.description ? course.description.replace(/<[^>]*>/g, '') : 'No description'}
-                                </div>
-                              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Course</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Content</TableHead>
+                    <TableHead>Students</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="w-[70px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCourses.map((course) => (
+                    <TableRow key={course.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {course.thumbnail_url ? (
+                            <img 
+                              src={course.thumbnail_url} 
+                              alt={course.title}
+                              className="w-12 h-12 rounded object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded bg-muted flex items-center justify-center">
+                              <GraduationCap className="h-6 w-6 text-muted-foreground" />
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              ৳{course.price.toLocaleString()}
-                              {course.compare_price && (
-                                <div className="text-sm text-muted-foreground line-through">
-                                  ৳{course.compare_price.toLocaleString()}
-                                </div>
-                              )}
+                          )}
+                          <div>
+                            <div className="font-medium">{course.title}</div>
+                            <div className="text-sm text-muted-foreground line-clamp-1">
+                              {course.description ? course.description.replace(/<[^>]*>/g, '') : 'No description'}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div>{course._count?.modules || 0} modules</div>
-                              <div className="text-muted-foreground">{course._count?.lessons || 0} lessons</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          ৳{course.price.toLocaleString()}
+                          {course.compare_price && (
+                            <div className="text-sm text-muted-foreground line-through">
+                              ৳{course.compare_price.toLocaleString()}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            {course._count?.enrollments || 0} students
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Badge variant={course.is_published ? "default" : "secondary"}>
-                                {course.is_published ? 'Published' : 'Draft'}
-                              </Badge>
-                              <Badge variant={course.is_active ? "default" : "destructive"}>
-                                {course.is_active ? 'Active' : 'Inactive'}
-                              </Badge>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(course.created_at).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => navigate(`/dashboard/courses/${course.id}`)}>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  View
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate(`/dashboard/courses/${course.id}/edit`)}>
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => toggleCourseStatus(course.id, course.is_active)}
-                                >
-                                  {course.is_active ? 'Deactivate' : 'Activate'}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem 
-                                  className="text-destructive"
-                                  onClick={() => handleDeleteCourse(course.id)}
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div>{course._count?.modules || 0} modules</div>
+                          <div className="text-muted-foreground">{course._count?.lessons || 0} lessons</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {course._count?.enrollments || 0} students
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Badge variant={course.is_published ? "default" : "secondary"}>
+                            {course.is_published ? 'Published' : 'Draft'}
+                          </Badge>
+                          <Badge variant={course.is_active ? "default" : "destructive"}>
+                            {course.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(course.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => navigate(`/dashboard/courses/${course.id}`)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/dashboard/courses/${course.id}/edit`)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => toggleCourseStatus(course.id, course.is_active)}
+                            >
+                              {course.is_active ? 'Deactivate' : 'Activate'}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-destructive"
+                              onClick={() => handleDeleteCourse(course.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
                 </div>
 
                 <div className="space-y-4 md:hidden">
