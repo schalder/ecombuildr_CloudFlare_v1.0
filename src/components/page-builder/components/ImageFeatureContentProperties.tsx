@@ -4,14 +4,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { Monitor, Tablet, Smartphone } from 'lucide-react';
 import { MediaSelector } from './MediaSelector';
 import { PageBuilderElement, ElementVisibility } from '../types';
 import { VisibilityControl } from './VisibilityControl';
-import { ResponsiveStyleControl, ResponsiveTabs } from './ElementStyles/_shared/ResponsiveStyleControl';
 import { useDevicePreview } from '../contexts/DevicePreviewContext';
 import { 
-  getEffectiveResponsiveValue, 
-  setResponsiveOverride
+  getEffectiveResponsiveValue
 } from '../utils/responsiveHelpers';
 
 interface ImageFeatureContentPropertiesProps {
@@ -46,13 +46,23 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
     onUpdate('visibility', visibility);
   };
 
-  // Handle style updates for responsive properties
-  const handleStyleUpdate = (property: string, value: any) => {
-    // Update styles object - setResponsiveOverride will call this with 'responsive' and the updated responsive object
+  // Handle responsive image position update
+  const handleImagePositionChange = (value: string) => {
     const currentStyles = element.styles || {};
+    const currentResponsive = currentStyles.responsive || { desktop: {}, tablet: {}, mobile: {} };
+    
+    // Update the responsive styles for the current device
+    const updatedResponsive = {
+      ...currentResponsive,
+      [responsiveTab]: {
+        ...currentResponsive[responsiveTab],
+        imagePosition: value
+      }
+    };
+    
     onUpdate('styles', {
       ...currentStyles,
-      [property]: value
+      responsive: updatedResponsive
     });
   };
 
@@ -103,28 +113,41 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
       </div>
 
       <div>
-        <Label>Image Position</Label>
-        <ResponsiveTabs activeTab={responsiveTab} onTabChange={setResponsiveTab} />
-        <ResponsiveStyleControl
-          element={element}
-          property="imagePosition"
-          label=""
-          deviceType={responsiveTab}
-          fallback={legacyImagePosition}
-          onStyleUpdate={handleStyleUpdate}
-        >
-          {(value, onChange) => (
-            <Select value={value || legacyImagePosition} onValueChange={onChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select position" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="left">Left</SelectItem>
-                <SelectItem value="right">Right</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        </ResponsiveStyleControl>
+        <div className="flex items-center justify-between mb-2">
+          <Label>Image Position</Label>
+          <div className="flex space-x-1">
+            <Button 
+              size="sm" 
+              variant={responsiveTab === 'desktop' ? 'default' : 'outline'} 
+              onClick={() => setResponsiveTab('desktop')}
+            >
+              <Monitor className="h-3 w-3" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant={responsiveTab === 'tablet' ? 'default' : 'outline'} 
+              onClick={() => setResponsiveTab('tablet')}
+            >
+              <Tablet className="h-3 w-3" />
+            </Button>
+            <Button 
+              size="sm" 
+              variant={responsiveTab === 'mobile' ? 'default' : 'outline'} 
+              onClick={() => setResponsiveTab('mobile')}
+            >
+              <Smartphone className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+        <Select value={imagePosition} onValueChange={handleImagePositionChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select position" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="left">Left</SelectItem>
+            <SelectItem value="right">Right</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div>
