@@ -7,6 +7,7 @@ import { ColumnRenderer } from './ColumnRenderer';
 import { cn } from '@/lib/utils';
 import { renderRowStyles, hasUserBackground, hasUserShadow } from '../utils/styleRenderer';
 import { isElementVisible, getVisibilityStyles } from '../utils/deviceDetection';
+import { getColumnWidthsForDevice, percentagesToGridTemplate } from '../utils/columnWidths';
 
 interface RowRendererProps {
   row: PageBuilderRow;
@@ -92,7 +93,25 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       };
     }
     
-    // Force tablet to stack columns for better responsive behavior
+    // Check for custom column widths first (applies to all devices)
+    const customWidths = getColumnWidthsForDevice(row, deviceType, COLUMN_LAYOUTS);
+    
+    // If we have custom widths, use them (even on tablet/mobile if user explicitly set them)
+    if (customWidths && customWidths.length > 0 && row.customColumnWidths) {
+      // Check if custom widths exist for this device or desktop
+      const hasCustomForDevice = row.customColumnWidths[deviceType] || 
+                                 (deviceType !== 'desktop' && row.customColumnWidths.desktop);
+      
+      if (hasCustomForDevice) {
+        return {
+          display: 'grid',
+          gridTemplateColumns: percentagesToGridTemplate(customWidths),
+          gap: userColumnGap
+        };
+      }
+    }
+    
+    // Force tablet to stack columns for better responsive behavior (unless custom widths are set)
     if (deviceType === 'tablet') {
       if (row.columnLayout === '1') {
         // True single column - center content
@@ -112,7 +131,7 @@ export const RowRenderer: React.FC<RowRendererProps> = ({
       }
     }
     
-    // Desktop - always use the columnLayout configuration, not actual column count
+    // Fallback to default columnLayout configuration
     const fractions = COLUMN_LAYOUTS[row.columnLayout];
     if (fractions) {
       return {

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement, SECTION_WIDTHS, COLUMN_LAYOUTS, BackgroundImageMode, ElementVisibility } from '../types';
+import { calculateProportionalWidths, fractionsToPercentages, normalizeWidths } from '../utils/columnWidths';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -1057,7 +1058,7 @@ interface RowSettingsProps {
 }
 
 export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
-  const { setDeviceType } = useDevicePreview();
+  const { deviceType, setDeviceType } = useDevicePreview();
   const [customWidthMode, setCustomWidthMode] = useState(!!row.customWidth);
   const [openCards, setOpenCards] = useState({
     anchor: false,
@@ -1257,6 +1258,16 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
               value={row.columnLayout}
               onValueChange={(value) => {
                 const columnWidths = COLUMN_LAYOUTS[value as keyof typeof COLUMN_LAYOUTS];
+                const newColumnCount = columnWidths.length;
+                const oldColumnCount = row.columns.length;
+                
+                // If column count changed, clear custom widths for all devices
+                // (since the widths array length won't match)
+                let updatedCustomWidths = row.customColumnWidths;
+                if (newColumnCount !== oldColumnCount && row.customColumnWidths) {
+                  updatedCustomWidths = undefined;
+                }
+                
                 // Preserve existing columns and their content when changing layout
                 const newColumns = columnWidths.map((width, index) => {
                   const existingColumn = row.columns[index];
@@ -1272,7 +1283,8 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
                 });
                 onUpdate({
                   columnLayout: value as any,
-                  columns: newColumns
+                  columns: newColumns,
+                  customColumnWidths: updatedCustomWidths
                 });
               }}
             >
@@ -1290,6 +1302,100 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Custom Column Widths */}
+          {row.columnLayout !== '1' && (
+            <div className="space-y-3 pt-2 border-t">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Label className="text-sm font-medium">Custom Column Widths</Label>
+                  <span className="text-xs text-muted-foreground capitalize">({deviceType})</span>
+                </div>
+                {(row.customColumnWidths?.[deviceType] || 
+                  (deviceType !== 'desktop' && row.customColumnWidths?.desktop)) && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const updated = { ...row.customColumnWidths };
+                      if (updated) {
+                        delete updated[deviceType];
+                        // Also clear desktop if we're clearing desktop
+                        if (deviceType === 'desktop') {
+                          // Clear desktop only
+                        } else if (deviceType === 'tablet' && updated.desktop) {
+                          // Keep desktop, just clear tablet
+                        } else if (deviceType === 'mobile' && updated.desktop) {
+                          // Keep desktop, just clear mobile
+                        }
+                      }
+                      onUpdate({ 
+                        customColumnWidths: updated && Object.keys(updated).length > 0 ? updated : undefined 
+                      });
+                    }}
+                    className="h-7 text-xs"
+                  >
+                    <RotateCcw className="h-3 w-3 mr-1" />
+                    Reset
+                  </Button>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                {row.columns.map((column, index) => {
+                  // Get current widths for this device
+                  const defaultFractions = COLUMN_LAYOUTS[row.columnLayout] || [12];
+                  const defaultPercentages = fractionsToPercentages(defaultFractions);
+                  
+                  const currentCustomWidths = row.customColumnWidths?.[deviceType] || 
+                                            (deviceType !== 'desktop' ? row.customColumnWidths?.desktop : undefined) ||
+                                            undefined;
+                  
+                  const currentWidths = currentCustomWidths || defaultPercentages;
+                  const currentWidth = currentWidths[index] || defaultPercentages[index] || (100 / row.columns.length);
+                  
+                  return (
+                    <div key={column.id} className="flex items-center gap-2">
+                      <Label className="text-xs w-20 flex-shrink-0">
+                        Column {index + 1}
+                      </Label>
+                      <div className="flex-1 flex items-center gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          value={currentWidth.toFixed(1)}
+                          onChange={(e) => {
+                            const newWidth = parseFloat(e.target.value) || 0;
+                            const updatedWidths = calculateProportionalWidths(
+                              currentWidths,
+                              index,
+                              newWidth
+                            );
+                            
+                            onUpdate({
+                              customColumnWidths: {
+                                ...row.customColumnWidths,
+                                [deviceType]: normalizeWidths(updatedWidths)
+                              }
+                            });
+                          }}
+                          className="h-8 text-xs"
+                        />
+                        <span className="text-xs text-muted-foreground w-8">%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                Adjust column widths for <span className="font-medium capitalize">{deviceType}</span>. Other columns will adjust proportionally to maintain 100% total. Switch device tabs in "Responsive Overrides" below to set different widths per device.
+              </p>
+            </div>
+          )}
           
           <div className="space-y-2">
             <Label>Row Width Mode</Label>

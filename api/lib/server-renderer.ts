@@ -85,6 +85,12 @@ export interface ServerPageBuilderRow {
   id: string;
   anchor?: string;
   columns: ServerPageBuilderColumn[];
+  columnLayout?: string;
+  customColumnWidths?: {
+    desktop?: number[];
+    tablet?: number[];
+    mobile?: number[];
+  };
   styles?: {
     padding?: string;
     margin?: string;
@@ -365,18 +371,22 @@ function renderElement(element: ServerPageBuilderElement): string {
 }
 
 // Render column
-function renderColumn(column: ServerPageBuilderColumn): string {
+function renderColumn(column: ServerPageBuilderColumn, useGrid: boolean = false): string {
   const columnStyles = stylesToCSS(column.styles);
   const styleAttr = columnStyles ? ` style="${columnStyles}"` : '';
   const anchorAttr = column.anchor ? ` id="${column.anchor}"` : '';
   
-  // Calculate column width based on grid system
-  const colWidth = column.customWidth || `${(column.width / 12) * 100}%`;
-  const widthStyle = `width: ${colWidth};`;
+  // If using grid, don't set width (grid handles it)
+  let widthStyle = '';
+  if (!useGrid) {
+    // Calculate column width based on grid system
+    const colWidth = column.customWidth || `${(column.width / 12) * 100}%`;
+    widthStyle = `width: ${colWidth};`;
+  }
   
   const elementsHTML = column.elements.map(element => renderElement(element)).join('');
   
-  return `<div${anchorAttr} style="${widthStyle}${columnStyles ? ' ' + columnStyles : ''}">${elementsHTML}</div>`;
+  return `<div${anchorAttr}${widthStyle ? ` style="${widthStyle}${columnStyles ? ' ' + columnStyles : ''}"` : styleAttr}>${elementsHTML}</div>`;
 }
 
 // Render row
@@ -385,9 +395,29 @@ function renderRow(row: ServerPageBuilderRow): string {
   const styleAttr = rowStyles ? ` style="${rowStyles}"` : '';
   const anchorAttr = row.anchor ? ` id="${row.anchor}"` : '';
   
-  const columnsHTML = row.columns.map(column => renderColumn(column)).join('');
+  // Check for custom column widths (use desktop as default for server-side rendering)
+  const customWidths = row.customColumnWidths?.desktop || 
+                      (row.customColumnWidths?.tablet && !row.customColumnWidths.desktop ? row.customColumnWidths.tablet : undefined);
   
-  return `<div${anchorAttr} class="row"${styleAttr}>${columnsHTML}</div>`;
+  let gridStyle = '';
+  if (customWidths && customWidths.length > 0 && customWidths.length === row.columns.length) {
+    // Use CSS Grid with custom widths
+    const gridTemplate = customWidths.map(w => `${w}fr`).join(' ');
+    gridStyle = `display: grid; grid-template-columns: ${gridTemplate}; gap: 1rem;`;
+  }
+  
+  const columnsHTML = row.columns.map(column => {
+    // If using grid, don't set width on individual columns
+    if (gridStyle) {
+      return renderColumn(column, true);
+    }
+    return renderColumn(column, false);
+  }).join('');
+  
+  const finalStyle = gridStyle ? `${gridStyle}${rowStyles ? ' ' + rowStyles : ''}` : rowStyles;
+  const finalStyleAttr = finalStyle ? ` style="${finalStyle}"` : '';
+  
+  return `<div${anchorAttr} class="row"${finalStyleAttr}>${columnsHTML}</div>`;
 }
 
 // Render divider as HTML
@@ -518,6 +548,9 @@ export function convertToServerFormat(data: any): ServerPageBuilderData {
       rows: section.rows?.map((row: any) => ({
         id: row.id,
         anchor: row.anchor,
+        columnLayout: row.columnLayout,
+        customColumnWidths: row.customColumnWidths,
+        styles: row.styles,
         columns: row.columns?.map((column: any) => ({
           id: column.id,
           anchor: column.anchor,

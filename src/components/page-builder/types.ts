@@ -232,6 +232,11 @@ export interface PageBuilderRow {
   columns: PageBuilderColumn[];
   columnLayout: '1' | '1-1' | '1-2' | '2-1' | '1-1-1' | '1-2-1' | '2-1-1' | '1-1-1-1' | '1-1-1-1-1' | '1-1-1-1-1-1';
   customWidth?: string; // Custom width override (px, %, vw, etc.)
+  customColumnWidths?: {
+    desktop?: number[]; // Array of percentages, e.g., [40, 60] for 40%/60%
+    tablet?: number[];
+    mobile?: number[]; // Usually not used since mobile stacks, but available for flexibility
+  };
   visibility?: ElementVisibility;
   styles?: {
     padding?: string;
