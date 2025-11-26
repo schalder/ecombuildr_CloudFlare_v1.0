@@ -7,12 +7,12 @@ import { Slider } from '@/components/ui/slider';
 import { MediaSelector } from './MediaSelector';
 import { PageBuilderElement, ElementVisibility } from '../types';
 import { VisibilityControl } from './VisibilityControl';
-import { ResponsiveStyleControl, ResponsiveTabs } from '../ElementStyles/_shared/ResponsiveStyleControl';
-import { useDevicePreview } from '../../contexts/DevicePreviewContext';
+import { ResponsiveStyleControl, ResponsiveTabs } from './ElementStyles/_shared/ResponsiveStyleControl';
+import { useDevicePreview } from '../contexts/DevicePreviewContext';
 import { 
   getEffectiveResponsiveValue, 
   setResponsiveOverride
-} from '../../utils/responsiveHelpers';
+} from '../utils/responsiveHelpers';
 
 interface ImageFeatureContentPropertiesProps {
   element: PageBuilderElement;
