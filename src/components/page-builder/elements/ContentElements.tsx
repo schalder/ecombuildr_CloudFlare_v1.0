@@ -616,7 +616,7 @@ const ImageFeatureElement: React.FC<{
               <img
                 src={imageUrl}
                 alt={altText}
-                className={`w-full h-auto rounded-lg ${imageObjectFit} select-none`}
+                className={`${isMobile ? 'max-w-full mx-auto block' : 'w-full'} h-auto rounded-lg ${imageObjectFit} select-none`}
                 draggable={false}
                 onDragStart={(e) => e.preventDefault()}
                 style={{
@@ -627,7 +627,7 @@ const ImageFeatureElement: React.FC<{
               <StorefrontImage
                 src={imageUrl}
                 alt={altText}
-                className={`w-full h-auto rounded-lg ${imageObjectFit}`}
+                className={`${isMobile ? 'max-w-full mx-auto block' : 'w-full'} h-auto rounded-lg ${imageObjectFit}`}
                 style={{
                   maxHeight: imageMaxHeight
                 }}

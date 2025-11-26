@@ -84,19 +84,6 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
       </div>
 
       <div>
-        <Label htmlFor="image-position">Image Position</Label>
-        <Select value={imagePosition} onValueChange={(value) => onUpdate('imagePosition', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select position" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="left">Left</SelectItem>
-            <SelectItem value="right">Right</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
         <Label>Image Width (%)</Label>
         <div className="flex items-center space-x-2">
           <Slider
