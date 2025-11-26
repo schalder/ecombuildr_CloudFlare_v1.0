@@ -62,6 +62,7 @@ import {
   RESPONSIVE_LAYOUTS,
   SECTION_WIDTHS 
 } from './types';
+import { getColumnWidthsForDevice, percentagesToGridTemplate } from './utils/columnWidths';
 import { elementRegistry } from './elements';
 import { renderSectionStyles, renderRowStyles, renderColumnStyles, hasUserBackground, hasUserShadow, getDeviceAwareSpacing } from './utils/styleRenderer';
 import { DividerRenderer } from './dividers/DividerRenderer';
@@ -95,6 +96,69 @@ const getResponsiveGridClasses = (columnLayout: string, deviceType: 'desktop' | 
   
   // For desktop, use full responsive layout
   return RESPONSIVE_LAYOUTS[columnLayout] || 'grid-cols-1';
+};
+
+// Get grid style for custom column widths (for editor mode)
+const getRowGridStyle = (row: PageBuilderRow, deviceType: 'desktop' | 'tablet' | 'mobile'): React.CSSProperties | undefined => {
+  // Force mobile to always stack columns vertically
+  if (deviceType === 'mobile') {
+    return {
+      display: 'grid',
+      gridTemplateColumns: '1fr',
+      gap: row.responsive?.[deviceType]?.columnGap || row.responsive?.desktop?.columnGap || '16px',
+      width: '100%'
+    };
+  }
+  
+  // Check for custom column widths
+  const hasCustomWidths = row.customColumnWidths && (
+    row.customColumnWidths[deviceType] || 
+    (deviceType !== 'desktop' && row.customColumnWidths.desktop)
+  );
+  
+  if (hasCustomWidths) {
+    const customWidths = getColumnWidthsForDevice(row, deviceType, COLUMN_LAYOUTS);
+    if (customWidths && customWidths.length > 0) {
+      return {
+        display: 'grid',
+        gridTemplateColumns: percentagesToGridTemplate(customWidths),
+        gap: row.responsive?.[deviceType]?.columnGap || row.responsive?.desktop?.columnGap || '16px'
+      };
+    }
+  }
+  
+  // Force tablet to stack columns for better responsive behavior (unless custom widths are set)
+  if (deviceType === 'tablet' && !hasCustomWidths) {
+    if (row.columnLayout === '1') {
+      return {
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gap: row.responsive?.[deviceType]?.columnGap || row.responsive?.desktop?.columnGap || '16px',
+        justifyItems: 'center'
+      };
+    } else {
+      // Multi-column that should stack on tablet
+      return {
+        display: 'grid',
+        gridTemplateColumns: '1fr',
+        gap: row.responsive?.[deviceType]?.columnGap || row.responsive?.desktop?.columnGap || '16px'
+      };
+    }
+  }
+  
+  // For desktop with custom widths, use inline styles
+  if (deviceType === 'desktop' && hasCustomWidths) {
+    const customWidths = getColumnWidthsForDevice(row, deviceType, COLUMN_LAYOUTS);
+    if (customWidths && customWidths.length > 0) {
+      return {
+        display: 'grid',
+        gridTemplateColumns: percentagesToGridTemplate(customWidths),
+        gap: row.responsive?.[deviceType]?.columnGap || row.responsive?.desktop?.columnGap || '16px'
+      };
+    }
+  }
+  
+  return undefined;
 };
 
 interface ElementorPageBuilderProps {
@@ -1896,10 +1960,16 @@ const RowComponent: React.FC<RowComponentProps> = ({
         </div>
       )}
 
-      <div 
-        className={`grid ${getResponsiveGridClasses(row.columnLayout, deviceType)}`}
-        style={{ gap: '16px' }}
-      >
+      {(() => {
+        const gridStyle = getRowGridStyle(row, deviceType);
+        const gridClasses = gridStyle ? undefined : getResponsiveGridClasses(row.columnLayout, deviceType);
+        const gap = row.responsive?.[deviceType]?.columnGap || row.responsive?.desktop?.columnGap || '16px';
+        
+        return (
+          <div 
+            className={gridStyle ? 'grid' : `grid ${gridClasses}`}
+            style={gridStyle || { gap }}
+          >
         {row.columns.map((column, columnIndex) => (
           <ColumnComponent
             key={column.id}
@@ -1932,7 +2002,9 @@ const RowComponent: React.FC<RowComponentProps> = ({
             onSelectionChange={onSelectionChange}
           />
         ))}
-      </div>
+          </div>
+        );
+      })()}
 
       {/* Add row below button - appears on hover at bottom border */}
       <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 opacity-0 group-hover/row:opacity-100 transition-opacity duration-200 z-20">
