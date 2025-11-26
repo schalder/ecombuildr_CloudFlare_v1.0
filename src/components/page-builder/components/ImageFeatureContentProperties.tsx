@@ -4,15 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
-import { Monitor, Tablet, Smartphone } from 'lucide-react';
 import { MediaSelector } from './MediaSelector';
 import { PageBuilderElement, ElementVisibility } from '../types';
 import { VisibilityControl } from './VisibilityControl';
-import { useDevicePreview } from '../contexts/DevicePreviewContext';
-import { 
-  getEffectiveResponsiveValue
-} from '../utils/responsiveHelpers';
 
 interface ImageFeatureContentPropertiesProps {
   element: PageBuilderElement;
@@ -23,14 +17,11 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
   element,
   onUpdate
 }) => {
-  const { deviceType: responsiveTab, setDeviceType: setResponsiveTab } = useDevicePreview();
   const headline = element.content.headline || 'Feature Headline';
   const description = element.content.description || 'Feature description goes here...';
   const imageUrl = element.content.imageUrl || '';
   const altText = element.content.altText || '';
-  // Get image position from responsive styles, fallback to content for backward compatibility
-  const legacyImagePosition = element.content.imagePosition || 'left';
-  const imagePosition = getEffectiveResponsiveValue(element, 'imagePosition', responsiveTab, legacyImagePosition);
+  const imagePosition = element.content.imagePosition || 'left';
   const imageWidth = element.content.imageWidth || 25;
   
   // Default visibility settings
@@ -44,26 +35,6 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
 
   const handleVisibilityChange = (visibility: ElementVisibility) => {
     onUpdate('visibility', visibility);
-  };
-
-  // Handle responsive image position update
-  const handleImagePositionChange = (value: string) => {
-    const currentStyles = element.styles || {};
-    const currentResponsive = currentStyles.responsive || { desktop: {}, tablet: {}, mobile: {} };
-    
-    // Update the responsive styles for the current device
-    const updatedResponsive = {
-      ...currentResponsive,
-      [responsiveTab]: {
-        ...currentResponsive[responsiveTab],
-        imagePosition: value
-      }
-    };
-    
-    onUpdate('styles', {
-      ...currentStyles,
-      responsive: updatedResponsive
-    });
   };
 
   return (
@@ -113,33 +84,8 @@ export const ImageFeatureContentProperties: React.FC<ImageFeatureContentProperti
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <Label>Image Position</Label>
-          <div className="flex space-x-1">
-            <Button 
-              size="sm" 
-              variant={responsiveTab === 'desktop' ? 'default' : 'outline'} 
-              onClick={() => setResponsiveTab('desktop')}
-            >
-              <Monitor className="h-3 w-3" />
-            </Button>
-            <Button 
-              size="sm" 
-              variant={responsiveTab === 'tablet' ? 'default' : 'outline'} 
-              onClick={() => setResponsiveTab('tablet')}
-            >
-              <Tablet className="h-3 w-3" />
-            </Button>
-            <Button 
-              size="sm" 
-              variant={responsiveTab === 'mobile' ? 'default' : 'outline'} 
-              onClick={() => setResponsiveTab('mobile')}
-            >
-              <Smartphone className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
-        <Select value={imagePosition} onValueChange={handleImagePositionChange}>
+        <Label htmlFor="image-position">Image Position</Label>
+        <Select value={imagePosition} onValueChange={(value) => onUpdate('imagePosition', value)}>
           <SelectTrigger>
             <SelectValue placeholder="Select position" />
           </SelectTrigger>

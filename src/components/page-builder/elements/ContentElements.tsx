@@ -471,9 +471,7 @@ const ImageFeatureElement: React.FC<{
   const description = element.content.description || 'Feature description goes here...';
   const imageUrl = element.content.imageUrl || '';
   const altText = element.content.altText || 'Feature image';
-  // Get image position from responsive styles, fallback to content for backward compatibility
-  const legacyImagePosition = element.content.imagePosition || 'left';
-  const imagePosition = getResponsiveStyleValue('imagePosition', legacyImagePosition);
+  const imagePosition = element.content.imagePosition || 'left';
   const imageWidth = element.content.imageWidth || 25;
 
   const handleUpdate = (property: string, value: any) => {
@@ -504,13 +502,12 @@ const ImageFeatureElement: React.FC<{
   const inlineStyles = renderElementStyles(element, deviceType || 'desktop');
   const { padding, paddingTop, paddingRight, paddingBottom, paddingLeft, ...stylesNoPadding } = (inlineStyles as any);
   
-  // Extract padding separately to apply to container
-  const containerPadding = {
-    paddingTop: paddingTop || inlineStyles.paddingTop,
-    paddingRight: paddingRight || inlineStyles.paddingRight,
-    paddingBottom: paddingBottom || inlineStyles.paddingBottom,
-    paddingLeft: paddingLeft || inlineStyles.paddingLeft,
-  };
+  // Extract padding values for application to container
+  const paddingStyles: React.CSSProperties = {};
+  if (paddingTop) paddingStyles.paddingTop = paddingTop;
+  if (paddingRight) paddingStyles.paddingRight = paddingRight;
+  if (paddingBottom) paddingStyles.paddingBottom = paddingBottom;
+  if (paddingLeft) paddingStyles.paddingLeft = paddingLeft;
   
   // Get responsive styles for current device
   const responsiveStyles = element.styles?.responsive || { desktop: {}, mobile: {} };
@@ -569,13 +566,16 @@ const ImageFeatureElement: React.FC<{
     };
   };
 
-  // Get responsive image max height
-  const imageMaxHeight = getResponsiveStyleValue('imageMaxHeight', '400px');
+  // Get responsive image position (moved from content to styles, with backward compatibility)
+  const responsiveImagePosition = getResponsiveStyleValue('imagePosition', imagePosition);
   
   // Determine layout based on device
   const isMobile = deviceType === 'mobile';
-  const flexDirection = isMobile ? 'flex-col' : (imagePosition === 'right' ? 'flex-row-reverse' : 'flex-row');
+  const flexDirection = isMobile ? 'flex-col' : (responsiveImagePosition === 'right' ? 'flex-row-reverse' : 'flex-row');
   const textAlign = (currentResponsiveStyles as any).textAlign || (element.styles as any)?.textAlign || 'left';
+  
+  // Get responsive image max-height
+  const imageMaxHeight = getResponsiveStyleValue('imageMaxHeight', '400px');
 
   return (
     <>
@@ -584,7 +584,7 @@ const ImageFeatureElement: React.FC<{
         className={`element-${element.id} flex ${flexDirection} gap-6 items-center ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`} 
         style={{
           ...stylesNoPadding,
-          ...containerPadding,
+          ...paddingStyles,
           textAlign: textAlign as any
         }}
       >
