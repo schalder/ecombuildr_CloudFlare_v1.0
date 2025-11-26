@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PageBuilderSection, PageBuilderRow, PageBuilderColumn, PageBuilderElement, SECTION_WIDTHS, COLUMN_LAYOUTS, BackgroundImageMode, ElementVisibility } from '../types';
 import { calculateProportionalWidths, fractionsToPercentages, normalizeWidths } from '../utils/columnWidths';
 import { Button } from '@/components/ui/button';
@@ -1067,6 +1067,13 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
     border: false,
     spacing: false
   });
+  // Local state for column width inputs to allow free typing
+  const [columnWidthInputs, setColumnWidthInputs] = useState<Record<string, string>>({});
+  
+  // Clear local input state when device type changes or row changes
+  useEffect(() => {
+    setColumnWidthInputs({});
+  }, [deviceType, row.id, row.columnLayout]);
 
   // Default visibility settings
   const defaultVisibility: ElementVisibility = {
@@ -1355,6 +1362,77 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
                   const currentWidths = currentCustomWidths || defaultPercentages;
                   const currentWidth = currentWidths[index] || defaultPercentages[index] || (100 / row.columns.length);
                   
+                  // Create a unique key for this input (device + column index)
+                  const inputKey = `${deviceType}-${column.id}-${index}`;
+                  
+                  // Use local state if available, otherwise use the calculated value
+                  const displayValue = columnWidthInputs[inputKey] !== undefined 
+                    ? columnWidthInputs[inputKey]
+                    : currentWidth.toFixed(1);
+                  
+                  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                    const inputValue = e.target.value;
+                    
+                    // Allow empty string while typing
+                    if (inputValue === '') {
+                      setColumnWidthInputs(prev => ({ ...prev, [inputKey]: '' }));
+                      return;
+                    }
+                    
+                    // Update local state immediately for responsive typing
+                    setColumnWidthInputs(prev => ({ ...prev, [inputKey]: inputValue }));
+                    
+                    // Parse the value
+                    const newWidth = parseFloat(inputValue);
+                    
+                    // Only update if it's a valid number
+                    if (!isNaN(newWidth) && newWidth >= 0 && newWidth <= 100) {
+                      const updatedWidths = calculateProportionalWidths(
+                        currentWidths,
+                        index,
+                        newWidth
+                      );
+                      
+                      onUpdate({
+                        customColumnWidths: {
+                          ...row.customColumnWidths,
+                          [deviceType]: normalizeWidths(updatedWidths)
+                        }
+                      });
+                    }
+                  };
+                  
+                  const handleBlur = () => {
+                    // On blur, ensure we have a valid value
+                    const inputValue = columnWidthInputs[inputKey];
+                    
+                    if (inputValue === '' || inputValue === undefined) {
+                      // Reset to current width if empty
+                      setColumnWidthInputs(prev => {
+                        const updated = { ...prev };
+                        delete updated[inputKey];
+                        return updated;
+                      });
+                    } else {
+                      const parsed = parseFloat(inputValue);
+                      if (isNaN(parsed) || parsed < 0 || parsed > 100) {
+                        // Reset to current width if invalid
+                        setColumnWidthInputs(prev => {
+                          const updated = { ...prev };
+                          delete updated[inputKey];
+                          return updated;
+                        });
+                      } else {
+                        // Clear local state after successful update
+                        setColumnWidthInputs(prev => {
+                          const updated = { ...prev };
+                          delete updated[inputKey];
+                          return updated;
+                        });
+                      }
+                    }
+                  };
+                  
                   return (
                     <div key={column.id} className="flex items-center gap-2">
                       <Label className="text-xs w-20 flex-shrink-0">
@@ -1366,22 +1444,9 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
                           min="0"
                           max="100"
                           step="0.1"
-                          value={currentWidth.toFixed(1)}
-                          onChange={(e) => {
-                            const newWidth = parseFloat(e.target.value) || 0;
-                            const updatedWidths = calculateProportionalWidths(
-                              currentWidths,
-                              index,
-                              newWidth
-                            );
-                            
-                            onUpdate({
-                              customColumnWidths: {
-                                ...row.customColumnWidths,
-                                [deviceType]: normalizeWidths(updatedWidths)
-                              }
-                            });
-                          }}
+                          value={displayValue}
+                          onChange={handleChange}
+                          onBlur={handleBlur}
                           className="h-8 text-xs"
                         />
                         <span className="text-xs text-muted-foreground w-8">%</span>
