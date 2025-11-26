@@ -19,6 +19,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   TemplateType,
   TEMPLATE_TYPE_OPTIONS,
@@ -150,8 +151,8 @@ export default function AdminTemplateManagement() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-4">
-          <div className="flex gap-2">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex gap-2 flex-wrap">
             <span className="text-sm font-medium">Category:</span>
             {categories.map(category => (
               <Button
@@ -164,18 +165,20 @@ export default function AdminTemplateManagement() {
               </Button>
             ))}
           </div>
-          <div className="flex gap-2">
-            <span className="text-sm font-medium">Type:</span>
-            {typeFilterOptions.map(type => (
-              <Button
-                key={type.value}
-                variant={selectedType === type.value ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedType(type.value)}
-              >
-                {type.label}
-              </Button>
-            ))}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium whitespace-nowrap">Type:</span>
+            <Select value={selectedType} onValueChange={(value) => setSelectedType(value as 'all' | TemplateType)}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                {typeFilterOptions.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
