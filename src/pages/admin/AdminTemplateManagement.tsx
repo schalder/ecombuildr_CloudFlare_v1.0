@@ -5,29 +5,55 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AdminLayout } from '@/components/admin/AdminLayout';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Edit, Trash2, Plus, Image } from 'lucide-react';
+import { Edit, Trash2, Plus, Image } from 'lucide-react';
 import { toast } from 'sonner';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useNavigate } from 'react-router-dom';
+import {
+  TemplateType,
+  TEMPLATE_TYPE_OPTIONS,
+  TEMPLATE_TYPE_VALUES,
+  humanizeTemplateType,
+} from '@/constants/templateTypes';
 
 interface PageTemplate {
   id: string;
   name: string;
   description: string;
   category: string;
-  template_type?: 'website_page' | 'funnel_step'; // Legacy field
-  template_types?: ('website_page' | 'funnel_step')[]; // New field
+  template_type?: TemplateType; // Legacy field
+  template_types?: TemplateType[]; // New field
   preview_image: string | null;
   is_published: boolean;
   is_premium: boolean;
   created_at: string;
 }
 
+const mapToKnownTemplateTypes = (template: PageTemplate): TemplateType[] => {
+  const types = template.template_types?.length
+    ? template.template_types
+    : template.template_type
+      ? [template.template_type]
+      : [];
+
+  return types.filter((type): type is TemplateType => TEMPLATE_TYPE_VALUES.includes(type));
+};
+
 export default function AdminTemplateManagement() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedType, setSelectedType] = useState<'all' | TemplateType>('all');
 
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['admin-templates'],
@@ -81,20 +107,20 @@ export default function AdminTemplateManagement() {
   const filteredTemplates = templates.filter(template => {
     if (selectedCategory !== 'all' && template.category !== selectedCategory) return false;
     if (selectedType !== 'all') {
-      // Check both legacy template_type and new template_types
-      const templateTypes = template.template_types?.length > 0 
-        ? template.template_types 
-        : (template.template_type ? [template.template_type] : []);
-      if (!templateTypes.includes(selectedType as any)) return false;
+      const templateTypes = mapToKnownTemplateTypes(template);
+      if (!templateTypes.includes(selectedType)) return false;
     }
     return true;
   });
 
   const categories = ['all', ...Array.from(new Set(templates.map(t => t.category)))];
-  const types = [
+  type TypeFilterOption = { value: 'all' | TemplateType; label: string };
+  const typeFilterOptions: TypeFilterOption[] = [
     { value: 'all', label: 'All Types' },
-    { value: 'website_page', label: 'Website Pages' },
-    { value: 'funnel_step', label: 'Funnel Steps' }
+    ...TEMPLATE_TYPE_OPTIONS.map((option) => ({
+      value: option.value,
+      label: option.label,
+    })),
   ];
 
   if (isLoading) {
@@ -140,7 +166,7 @@ export default function AdminTemplateManagement() {
           </div>
           <div className="flex gap-2">
             <span className="text-sm font-medium">Type:</span>
-            {types.map(type => (
+            {typeFilterOptions.map(type => (
               <Button
                 key={type.value}
                 variant={selectedType === type.value ? 'default' : 'outline'}
@@ -187,9 +213,9 @@ export default function AdminTemplateManagement() {
                     {template.category}
                   </Badge>
                   {/* Display template types */}
-                  {(template.template_types?.length > 0 ? template.template_types : [template.template_type]).map((type, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {type === 'website_page' ? 'Website' : 'Funnel'}
+                  {mapToKnownTemplateTypes(template).map((type) => (
+                    <Badge key={type} variant="outline" className="text-xs">
+                      {humanizeTemplateType(type)}
                     </Badge>
                   ))}
                   {template.is_premium && (

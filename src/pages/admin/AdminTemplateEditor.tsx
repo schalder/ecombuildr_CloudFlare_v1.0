@@ -20,12 +20,36 @@ import { toast } from 'sonner';
 import html2canvas from 'html2canvas';
 import { ResponsiveControls } from '@/components/page-builder/components/ResponsiveControls';
 import { getDevicePreviewStyles } from '@/components/page-builder/utils/responsive';
+import {
+  TEMPLATE_TYPE_OPTIONS,
+  TemplateType,
+  CONTEXT_TEMPLATE_TYPES,
+  USE_CASE_TEMPLATE_TYPES,
+  humanizeTemplateType,
+} from '@/constants/templateTypes';
+
+const TEMPLATE_TYPE_GROUPS: {
+  title: string;
+  description: string;
+  options: TemplateType[];
+}[] = [
+  {
+    title: 'Availability Context',
+    description: 'Choose where this template should be offered inside the builder.',
+    options: CONTEXT_TEMPLATE_TYPES,
+  },
+  {
+    title: 'Recommended Use Cases',
+    description: 'Help users filter templates by the specific page they need.',
+    options: USE_CASE_TEMPLATE_TYPES,
+  },
+];
 
 interface TemplateFormData {
   name: string;
   description: string;
   category: string;
-  template_types: ('website_page' | 'funnel_step')[];
+  template_types: TemplateType[];
   auto_generate_preview: boolean;
   manual_preview_image: string;
   is_published: boolean;
@@ -48,7 +72,7 @@ export default function AdminTemplateEditor() {
     name: '',
     description: '',
     category: 'general',
-    template_types: ['website_page'],
+    template_types: ['website_page'] as TemplateType[],
     auto_generate_preview: true,
     manual_preview_image: '',
     is_published: false,
@@ -82,9 +106,9 @@ export default function AdminTemplateEditor() {
   useEffect(() => {
     if (template) {
       // Handle legacy template_type or new template_types
-      const templateTypes = (template as any).template_types?.length > 0 
-        ? (template as any).template_types 
-        : [template.template_type];
+      const templateTypes = ((template as any).template_types?.length > 0
+        ? (template as any).template_types
+        : [template.template_type]) as TemplateType[];
       
       setFormData({
         name: template.name,
@@ -104,12 +128,17 @@ export default function AdminTemplateEditor() {
     mutationFn: async (data: { formData: TemplateFormData; content: PageBuilderData; previewImage?: string }) => {
       const { template_types, auto_generate_preview, manual_preview_image, ...otherFormData } = data.formData;
       
+      const orderedTemplateTypes = [
+        ...template_types.filter((type) => CONTEXT_TEMPLATE_TYPES.includes(type)),
+        ...template_types.filter((type) => !CONTEXT_TEMPLATE_TYPES.includes(type)),
+      ];
+
       const templateData = {
         ...otherFormData,
-        template_types,
+        template_types: orderedTemplateTypes,
         auto_generate_preview,
         // For backward compatibility, set template_type to the first type
-        template_type: template_types[0] || 'website_page',
+        template_type: orderedTemplateTypes[0] || 'website_page',
         content: data.content as any,
         preview_image: auto_generate_preview 
           ? (data.previewImage || null)
@@ -242,7 +271,13 @@ export default function AdminTemplateEditor() {
     const missingFields = [];
     if (!formData.name.trim()) missingFields.push('name');
     if (!formData.category.trim()) missingFields.push('category');
-    if (!formData.template_types.length) missingFields.push('types');
+    if (!formData.template_types.length) missingFields.push('template types');
+    const hasContextType = formData.template_types.some((type) =>
+      CONTEXT_TEMPLATE_TYPES.includes(type)
+    );
+    if (!hasContextType) {
+      missingFields.push('availability context (Website Page or Funnel Step)');
+    }
 
     if (missingFields.length > 0) {
       toast.error(`Please fill in required fields: ${missingFields.join(', ')}`);
@@ -442,47 +477,61 @@ export default function AdminTemplateEditor() {
 
                 <div>
                   <Label>Template Types *</Label>
-                  <div className="space-y-2 mt-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="website_page"
-                        checked={formData.template_types.includes('website_page')}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setFormData({
-                              ...formData,
-                              template_types: [...formData.template_types, 'website_page']
-                            });
-                          } else {
-                            setFormData({
-                              ...formData,
-                              template_types: formData.template_types.filter(t => t !== 'website_page')
-                            });
-                          }
-                        }}
-                      />
-                      <Label htmlFor="website_page">Website Page</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="funnel_step"
-                        checked={formData.template_types.includes('funnel_step')}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setFormData({
-                              ...formData,
-                              template_types: [...formData.template_types, 'funnel_step']
-                            });
-                          } else {
-                            setFormData({
-                              ...formData,
-                              template_types: formData.template_types.filter(t => t !== 'funnel_step')
-                            });
-                          }
-                        }}
-                      />
-                      <Label htmlFor="funnel_step">Funnel Step</Label>
-                    </div>
+                  <div className="space-y-4 mt-2">
+                    {TEMPLATE_TYPE_GROUPS.map((group) => (
+                      <div key={group.title} className="space-y-2">
+                        <p className="text-sm font-medium text-foreground">{group.title}</p>
+                        <p className="text-xs text-muted-foreground">{group.description}</p>
+                        <div className="space-y-2">
+                          {group.options.map((type) => {
+                            const optionMeta = TEMPLATE_TYPE_OPTIONS.find(
+                              (option) => option.value === type
+                            );
+                            const inputId = `template-type-${type}`;
+                            const isChecked = formData.template_types.includes(type);
+
+                            return (
+                              <div key={type} className="flex items-start gap-2">
+                                <Checkbox
+                                  id={inputId}
+                                  checked={isChecked}
+                                  onCheckedChange={(checked) => {
+                                    if (checked === true) {
+                                      setFormData((prev) => {
+                                        if (prev.template_types.includes(type)) {
+                                          return prev;
+                                        }
+                                        return {
+                                          ...prev,
+                                          template_types: [...prev.template_types, type],
+                                        };
+                                      });
+                                    } else {
+                                      setFormData((prev) => ({
+                                        ...prev,
+                                        template_types: prev.template_types.filter(
+                                          (t) => t !== type
+                                        ),
+                                      }));
+                                    }
+                                  }}
+                                />
+                                <div>
+                                  <Label htmlFor={inputId} className="font-medium leading-none">
+                                    {humanizeTemplateType(type)}
+                                  </Label>
+                                  {optionMeta?.description && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {optionMeta.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

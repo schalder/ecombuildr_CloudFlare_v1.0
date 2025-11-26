@@ -9,14 +9,20 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Image, Search, Sparkles, Eye } from 'lucide-react';
 import { PageBuilderData } from '@/components/page-builder/types';
+import {
+  TemplateType,
+  TEMPLATE_TYPE_OPTIONS,
+  TEMPLATE_TYPE_VALUES,
+  humanizeTemplateType,
+} from '@/constants/templateTypes';
 
 interface PageTemplate {
   id: string;
   name: string;
   description: string;
   category: string;
-  template_type?: 'website_page' | 'funnel_step'; // Legacy field
-  template_types?: ('website_page' | 'funnel_step')[]; // New field
+  template_type?: TemplateType; // Legacy field
+  template_types?: TemplateType[]; // New field
   content: PageBuilderData;
   preview_image: string | null;
   is_premium: boolean;
@@ -36,6 +42,7 @@ export function TemplateSelectionModal({
   onSelectTemplate 
 }: TemplateSelectionModalProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedTemplateType, setSelectedTemplateType] = useState<'all' | TemplateType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [previewTemplate, setPreviewTemplate] = useState<PageTemplate | null>(null);
 
@@ -68,6 +75,19 @@ export function TemplateSelectionModal({
   });
 
   const filteredTemplates = templates.filter(template => {
+    if (selectedTemplateType !== 'all') {
+      const templateTypes = template.template_types?.length
+        ? template.template_types
+        : template.template_type
+          ? [template.template_type]
+          : [];
+      const normalizedTypes = templateTypes.filter((type): type is TemplateType =>
+        TEMPLATE_TYPE_VALUES.includes(type)
+      );
+      if (!normalizedTypes.includes(selectedTemplateType)) {
+        return false;
+      }
+    }
     if (selectedCategory !== 'all' && template.category !== selectedCategory) return false;
     if (searchQuery && !template.name.toLowerCase().includes(searchQuery.toLowerCase()) && 
         !template.description?.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -143,8 +163,8 @@ export function TemplateSelectionModal({
         
         <div className="space-y-4">
           {/* Search and Filters */}
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center">
+            <div className="flex-1 relative w-full">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search templates..."
@@ -153,19 +173,34 @@ export function TemplateSelectionModal({
                 className="pl-10"
               />
             </div>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>
-                    {category === 'all' ? 'All Categories' : 
-                     category.charAt(0).toUpperCase() + category.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex flex-1 gap-2">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-full md:w-40">
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category === 'all' ? 'All Categories' : 
+                       category.charAt(0).toUpperCase() + category.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={selectedTemplateType} onValueChange={(value) => setSelectedTemplateType(value as 'all' | TemplateType)}>
+                <SelectTrigger className="w-full md:w-48">
+                  <SelectValue placeholder="Template Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {TEMPLATE_TYPE_OPTIONS.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Templates Grid */}
@@ -244,10 +279,24 @@ export function TemplateSelectionModal({
                           {template.description}
                         </p>
                       )}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-2">
                         <Badge variant="secondary" className="text-xs">
                           {template.category}
                         </Badge>
+                        <div className="flex flex-wrap gap-1">
+                          {(template.template_types?.length
+                            ? template.template_types
+                            : template.template_type
+                              ? [template.template_type]
+                              : []
+                          )
+                            .filter((type): type is TemplateType => TEMPLATE_TYPE_VALUES.includes(type))
+                            .map((type) => (
+                              <Badge key={type} variant="outline" className="text-xs">
+                                {humanizeTemplateType(type)}
+                              </Badge>
+                            ))}
+                        </div>
                         <Button 
                           size="sm" 
                           onClick={() => handleSelectTemplate(template)}

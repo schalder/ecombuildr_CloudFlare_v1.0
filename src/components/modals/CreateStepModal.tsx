@@ -12,6 +12,7 @@ import { debounce } from '@/lib/utils';
 import { validateFunnelStepSlug } from '@/lib/slugUtils';
 import { TemplateSelectionModal } from '@/components/templates/TemplateSelectionModal';
 import type { PageBuilderData } from '@/components/page-builder/types';
+import { TemplateType } from '@/constants/templateTypes';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
@@ -20,7 +21,8 @@ interface PageTemplate {
   name: string;
   description: string;
   category: string;
-  template_type: 'website_page' | 'funnel_step';
+  template_type?: TemplateType;
+  template_types?: TemplateType[];
   content: PageBuilderData;
   preview_image: string | null;
   is_premium: boolean;
