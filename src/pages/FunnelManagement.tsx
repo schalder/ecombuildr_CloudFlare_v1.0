@@ -385,7 +385,7 @@ const FunnelManagement = () => {
       </DashboardLayout>;
   }
   return <DashboardLayout>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background overflow-x-hidden w-full max-w-full">
         {/* Header */}
         <div className="border-b bg-background px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
@@ -421,10 +421,10 @@ const FunnelManagement = () => {
               </SelectContent>
             </Select>
           ) : (
-            <div className="overflow-x-auto scrollbar-hide -mx-1 p-1">
-              <div className="flex space-x-6 whitespace-nowrap">
+          <div className="overflow-x-auto scrollbar-hide -mx-1 p-1">
+            <div className="flex space-x-6 whitespace-nowrap">
                 {tabs.map((tab) => {
-                  const Icon = tab.icon;
+              const Icon = tab.icon;
                   return (
                     <button
                       key={tab.id}
@@ -435,23 +435,23 @@ const FunnelManagement = () => {
                           : 'border-transparent text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
-                      {tab.label}
+                    <Icon className="h-4 w-4" />
+                    {tab.label}
                     </button>
                   );
-                })}
-              </div>
+            })}
             </div>
+          </div>
           )}
         </div>
 
-        {activeTab === 'steps' && <div className="flex flex-col md:flex-row gap-4">
+        {activeTab === 'steps' && <div className="flex flex-col md:flex-row gap-4 w-full min-w-0">
             {/* Left Sidebar */}
             {isMobile ? (
               <div className="w-full">
                 <Accordion type="single" collapsible defaultValue="steps">
                   <AccordionItem value="steps">
-                    <AccordionTrigger className="text-base font-medium">Funnel Steps</AccordionTrigger>
+                    <AccordionTrigger className="text-base font-medium text-foreground">Funnel Steps</AccordionTrigger>
                     <AccordionContent className="bg-muted/20 rounded-lg p-4">
                       {stepsSidebarContent}
                     </AccordionContent>
@@ -459,7 +459,7 @@ const FunnelManagement = () => {
                 </Accordion>
               </div>
             ) : (
-              <div className="w-full md:w-80 border-r-0 md:border-r bg-muted/30 p-4 sm:p-6">
+            <div className="w-full md:w-80 border-r-0 md:border-r bg-muted/30 p-4 sm:p-6">
                 {stepsSidebarContent}
               </div>
             )}
@@ -498,12 +498,12 @@ const FunnelManagement = () => {
                             
                           <div className="bg-muted/30 rounded-lg p-8 text-center">
                               <div className="flex justify-between items-center mb-4">
-                                <div className="text-left flex-1">
+                                <div className="text-left flex-1 min-w-0">
                                   {funnel?.canonical_domain ? (
                                     <div className="mb-2">
                                       <p className="text-foreground mb-1">Live URL:</p>
                                       <div className="flex items-center gap-2">
-                                        <code className="bg-background px-2 py-1 rounded text-sm flex-1 text-foreground">
+                                        <code className="bg-background px-2 py-1 rounded text-sm flex-1 text-foreground min-w-0 overflow-hidden break-all">
                                           {funnel.canonical_domain}/{selectedStep.slug}
                                         </code>
                                         <Button
@@ -524,7 +524,7 @@ const FunnelManagement = () => {
                                     <div className="mb-2">
                                       <p className="text-foreground mb-1">System URL:</p>
                                       <div className="flex items-center gap-2">
-                                        <code className="bg-background px-2 py-1 rounded text-sm flex-1 text-foreground">
+                                        <code className="bg-background px-2 py-1 rounded text-sm flex-1 text-foreground min-w-0 overflow-hidden break-all">
                                           {window.location.origin}/funnel/{id}/{selectedStep.slug}
                                         </code>
                                         <Button
