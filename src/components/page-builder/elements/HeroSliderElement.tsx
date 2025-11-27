@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselApi } from '@/components/ui/carousel';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { generateResponsiveCSS, mergeResponsiveStyles } from '../utils/responsiveStyles';
-import { DeviceType } from '../utils/responsive';
+import { DeviceType, DEVICE_DIMENSIONS } from '../utils/responsive';
 
 interface Slide {
   id: string;
@@ -52,7 +52,9 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
   const isMobile = deviceType === 'mobile';
   const isEditorContext = isEditing || isPreview;
   const shouldUseViewportWidth = isMobile && !isEditorContext;
-  const editorMobileMaxWidth = isEditorContext && isMobile ? '420px' : undefined;
+  const editorMobileMaxWidth = isEditorContext && isMobile
+    ? `${DEVICE_DIMENSIONS.mobile.width}px`
+    : undefined;
 
   const content = element.content as HeroSliderContent;
   const slides = content?.slides || [];
