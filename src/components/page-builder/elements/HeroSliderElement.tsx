@@ -341,7 +341,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
 
         {/* Dots Indicator */}
         {content?.showDots !== false && slides.length > 1 && (
-          <div className="flex justify-center space-x-2 mt-6">
+          <div className="flex justify-center space-x-3 mt-6">
             {slides.map((_, index) => (
               <button
                 key={index}
