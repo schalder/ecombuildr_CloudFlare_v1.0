@@ -341,12 +341,12 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
 
         {/* Dots Indicator */}
         {content?.showDots !== false && slides.length > 1 && (
-          <div className="flex justify-center space-x-3 mt-6">
+          <div className="flex justify-center items-center gap-3 mt-6">
             {slides.map((_, index) => (
               <button
                 key={index}
                 className={cn(
-                  "w-3 h-3 rounded-full transition-all duration-200",
+                  "w-3 h-3 rounded-full transition-all duration-200 flex-shrink-0",
                   current === index + 1
                     ? "bg-primary scale-110"
                     : "bg-primary/30 hover:bg-primary/50"
