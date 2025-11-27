@@ -58,7 +58,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
 
   const content = element.content as HeroSliderContent;
   const slides = content?.slides || [];
-  
+
   // Merge responsive styles with base styles
   const mergedStyles = mergeResponsiveStyles({}, element.styles, deviceType);
 
@@ -70,7 +70,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
 
     setCount(api.scrollSnapList().length);
     setCurrent(api.selectedScrollSnap() + 1);
-    
+
     // Trigger animation on initial load
     setIsAnimating(false);
     setTimeout(() => setIsAnimating(true), 50);
@@ -110,7 +110,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
 
   const getSlideClasses = () => {
     const baseClasses = "relative w-full transition-all duration-500 ease-in-out";
-    
+
     if (isMobile) {
       switch (content?.layout) {
         case 'side-by-side':
@@ -185,19 +185,19 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
 
     const resolvedWidth = shouldUseViewportWidth
       ? '100vw'
-      : editorMobileMaxWidth
-        ? editorMobileMaxWidth
+      : isEditorContext && isMobile
+        ? '100%'
         : isMobile
           ? '100%'
           : mergedStyles.width || '100%';
-    const resolvedMaxWidth = isMobile ? (editorMobileMaxWidth || '100%') : mergedStyles.maxWidth;
+    const resolvedMaxWidth = shouldUseViewportWidth ? '100vw' : (isEditorContext && isMobile ? '100%' : mergedStyles.maxWidth);
     const resolvedMinHeight = isMobile ? '320px' : mergedStyles.minHeight || '500px';
-    const resolvedMarginLeft = isMobile ? 'auto' : mergedStyles.marginLeft;
-    const resolvedMarginRight = isMobile ? 'auto' : mergedStyles.marginRight;
+    const resolvedMarginLeft = shouldUseViewportWidth ? 'calc(50% - 50vw)' : (isMobile ? 'auto' : mergedStyles.marginLeft);
+    const resolvedMarginRight = shouldUseViewportWidth ? 'calc(50% - 50vw)' : (isMobile ? 'auto' : mergedStyles.marginRight);
 
     return (
       <CarouselItem key={slide.id} className="p-0 shadow-none border-none" style={{ boxShadow: 'none' }}>
-        <div 
+        <div
           className={getSlideClasses()}
           style={{
             minHeight: resolvedMinHeight,
@@ -212,13 +212,13 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
         >
           {/* Background Image for Overlay Layout */}
           {isOverlay && slide.image && (
-            <div 
+            <div
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ 
+              style={{
                 backgroundImage: `url(${slide.image})`,
               }}
             >
-              <div 
+              <div
                 className="absolute inset-0 bg-black"
                 style={{ opacity: (content?.overlayOpacity || 50) / 100 }}
               />
@@ -233,7 +233,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
             isTextOnly && "max-w-4xl mx-auto",
             isMobile && "px-4 w-full"
           )}>
-            
+
             {/* Text Content */}
             <div className={cn(
               "space-y-6 w-full",
@@ -242,7 +242,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               isMobile && "flex flex-col items-center text-center"
             )}>
               {slide.subHeadline && (
-                <p 
+                <p
                   className={cn(
                     "font-medium uppercase tracking-wide opacity-80",
                     current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
@@ -257,8 +257,8 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                   {slide.subHeadline}
                 </p>
               )}
-              
-              <h2 
+
+              <h2
                 className={cn(
                   "font-bold leading-tight",
                   current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
@@ -272,9 +272,9 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               >
                 {slide.headline}
               </h2>
-              
+
               {slide.paragraph && (
-                <p 
+                <p
                   className={cn(
                     "opacity-90",
                     isMobile && "text-center mx-auto w-full",
@@ -293,7 +293,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                   {slide.paragraph}
                 </p>
               )}
-              
+
               {slide.buttonText && (
                 <div className={cn(
                   "pt-4",
@@ -302,7 +302,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                   content?.textAlignment === 'right' && "flex justify-end",
                   content?.textAlignment === 'left' && "flex justify-start"
                 )}>
-                  <Button 
+                  <Button
                     size={buttonSize}
                     className={cn(
                       "px-8 py-4",
@@ -349,7 +349,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
   return (
     <>
       {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
-      <style dangerouslySetInnerHTML={{ 
+      <style dangerouslySetInnerHTML={{
         __html: `
           .embla__slide { 
             box-shadow: none !important; 
@@ -371,10 +371,10 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
           .animate-slide-in-up {
             animation: slideInUp 0.6s ease-out forwards;
           }
-        ` 
+        `
       }} />
-      
-      <div 
+
+      <div
         className={cn(
           `element-${element.id} relative overflow-hidden`,
           isMobile && "w-full max-w-full flex flex-col items-center"
@@ -386,14 +386,14 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
           transform: mergedStyles.transform,
           width: shouldUseViewportWidth
             ? '100vw'
-            : editorMobileMaxWidth
-              ? editorMobileMaxWidth
+            : isEditorContext && isMobile
+              ? '100%'
               : isMobile
                 ? '100%'
                 : mergedStyles.width,
-          maxWidth: editorMobileMaxWidth || mergedStyles.maxWidth,
-          marginLeft: isEditorContext && isMobile ? 'auto' : mergedStyles.marginLeft,
-          marginRight: isEditorContext && isMobile ? 'auto' : mergedStyles.marginRight,
+          maxWidth: shouldUseViewportWidth ? '100vw' : (isEditorContext && isMobile ? '100%' : mergedStyles.maxWidth),
+          marginLeft: shouldUseViewportWidth ? 'calc(50% - 50vw)' : (isEditorContext && isMobile ? 'auto' : mergedStyles.marginLeft),
+          marginRight: shouldUseViewportWidth ? 'calc(50% - 50vw)' : (isEditorContext && isMobile ? 'auto' : mergedStyles.marginRight),
         }}
       >
         <Carousel
@@ -424,7 +424,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              
+
               <Button
                 variant="outline"
                 size="icon"
