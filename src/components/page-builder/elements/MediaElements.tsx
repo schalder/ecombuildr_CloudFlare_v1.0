@@ -120,6 +120,8 @@ const ImageCarouselElement: React.FC<{
   const showDots = element.content.showDots !== false;
   const height = element.content.height || 384;
   const imageFit = element.content.imageFit || 'cover';
+  const autoHeight = element.content.autoHeight || false;
+  const maxHeight = element.content.maxHeight || 800;
   
   // Get visibleImages with device-aware support from content
   const visibleImagesByDevice = element.content.visibleImagesByDevice || { desktop: 1, tablet: 1, mobile: 1 };
@@ -187,17 +189,26 @@ const ImageCarouselElement: React.FC<{
                 <div className={`grid gap-1 ${getGridClass(visibleImages)}`}>
                   {slideImages.map((image: string, imageIndex: number) => {
                     if (!image) return null;
+                    const imageStyle: React.CSSProperties = {
+                      objectFit: imageFit as 'cover' | 'contain',
+                      borderRadius: 'inherit'
+                    };
+                    
+                    if (autoHeight) {
+                      imageStyle.height = 'auto';
+                      imageStyle.maxHeight = `${maxHeight}px`;
+                      imageStyle.width = '100%';
+                    } else {
+                      imageStyle.height = `${height}px`;
+                    }
+                    
                     return (
                       <div key={imageIndex} className="p-1">
                         <img
                           src={image}
                           alt={`Carousel image ${slideIndex * visibleImages + imageIndex + 1}`}
                           className="w-full"
-                          style={{
-                            height: `${height}px`,
-                            objectFit: imageFit as 'cover' | 'contain',
-                            borderRadius: 'inherit'
-                          }}
+                          style={imageStyle}
                         />
                       </div>
                     );
@@ -215,11 +226,11 @@ const ImageCarouselElement: React.FC<{
         </Carousel>
         
         {showDots && slides.length > 1 && (
-          <div className="flex justify-center mt-4 space-x-2">
+          <div className="flex justify-center items-center mt-4 gap-3">
             {slides.map((_, slideIndex) => (
               <button
                 key={slideIndex}
-                className={`w-2 h-2 rounded-full transition-colors ${
+                className={`w-2 h-2 rounded-full transition-colors flex-shrink-0 ${
                   slideIndex === currentIndex ? 'bg-primary' : 'bg-primary/30'
                 }`}
                 onClick={() => api?.scrollTo(slideIndex)}

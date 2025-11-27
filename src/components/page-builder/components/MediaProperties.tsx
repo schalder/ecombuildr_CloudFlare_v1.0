@@ -170,6 +170,8 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
   const pauseOnHover = element.content.pauseOnHover !== false;
   const height = element.content.height || 384;
   const imageFit = element.content.imageFit || 'cover';
+  const autoHeight = element.content.autoHeight || false;
+  const maxHeight = element.content.maxHeight || 800;
   
   // Default visibility settings
   const defaultVisibility: ElementVisibility = {
@@ -224,18 +226,48 @@ export const ImageCarouselProperties: React.FC<MediaPropertiesProps> = ({
         visibility={currentVisibility}
         onVisibilityChange={handleVisibilityChange}
       />
-      <div>
-        <Label htmlFor="carousel-height">Carousel Height (px)</Label>
-        <Input
-          id="carousel-height"
-          type="number"
-          value={height}
-          onChange={(e) => onUpdate('height', parseInt(e.target.value) || 384)}
-          min="200"
-          max="800"
-          step="20"
+      
+      <div className="flex items-center space-x-2">
+        <Switch
+          id="auto-height"
+          checked={autoHeight}
+          onCheckedChange={(checked) => onUpdate('autoHeight', checked)}
         />
+        <Label htmlFor="auto-height">Auto Height</Label>
       </div>
+
+      {!autoHeight && (
+        <div>
+          <Label htmlFor="carousel-height">Carousel Height (px)</Label>
+          <Input
+            id="carousel-height"
+            type="number"
+            value={height}
+            onChange={(e) => onUpdate('height', parseInt(e.target.value) || 384)}
+            min="200"
+            max="800"
+            step="20"
+          />
+        </div>
+      )}
+
+      {autoHeight && (
+        <div>
+          <Label htmlFor="max-height">Max Height (px)</Label>
+          <Input
+            id="max-height"
+            type="number"
+            value={maxHeight}
+            onChange={(e) => onUpdate('maxHeight', parseInt(e.target.value) || 800)}
+            min="200"
+            max="1200"
+            step="20"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Maximum height to prevent extremely tall images
+          </p>
+        </div>
+      )}
 
       <div>
         <Label htmlFor="image-fit">Image Fit</Label>
