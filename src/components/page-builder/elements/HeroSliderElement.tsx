@@ -183,7 +183,13 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
       color: getStyleValue('buttonTextColor'),
     };
 
-    const resolvedWidth = shouldUseViewportWidth ? '100vw' : isMobile ? '100%' : mergedStyles.width || '100%';
+    const resolvedWidth = shouldUseViewportWidth
+      ? '100vw'
+      : editorMobileMaxWidth
+        ? editorMobileMaxWidth
+        : isMobile
+          ? '100%'
+          : mergedStyles.width || '100%';
     const resolvedMaxWidth = isMobile ? (editorMobileMaxWidth || '100%') : mergedStyles.maxWidth;
     const resolvedMinHeight = isMobile ? '320px' : mergedStyles.minHeight || '500px';
     const resolvedMarginLeft = isMobile ? 'auto' : mergedStyles.marginLeft;
@@ -378,7 +384,13 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
           opacity: mergedStyles.opacity,
           boxShadow: mergedStyles.boxShadow,
           transform: mergedStyles.transform,
-          width: shouldUseViewportWidth ? '100vw' : isMobile ? '100%' : mergedStyles.width,
+          width: shouldUseViewportWidth
+            ? '100vw'
+            : editorMobileMaxWidth
+              ? editorMobileMaxWidth
+              : isMobile
+                ? '100%'
+                : mergedStyles.width,
           maxWidth: editorMobileMaxWidth || mergedStyles.maxWidth,
         }}
       >
