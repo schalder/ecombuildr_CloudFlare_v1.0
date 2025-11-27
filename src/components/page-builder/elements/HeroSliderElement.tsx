@@ -105,9 +105,9 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
     
     switch (content?.layout) {
       case 'side-by-side':
-        return `${baseClasses} grid grid-cols-1 lg:grid-cols-2 gap-8 items-center px-8 lg:px-16`;
+        return `${baseClasses} grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8 items-center px-4 md:px-8 lg:px-16`;
       case 'text-only':
-        return `${baseClasses} py-20 px-8`;
+        return `${baseClasses} py-12 md:py-20 px-4 md:px-8`;
       case 'overlay':
       default:
         return `${baseClasses} relative flex items-center justify-center min-h-full`;
@@ -115,6 +115,11 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
   };
 
   const getTextAlignment = () => {
+    // Force center alignment on mobile for better UX
+    if (deviceType === 'mobile') {
+      return 'text-center';
+    }
+    
     switch (content?.textAlignment) {
       case 'center':
         return 'text-center';
@@ -190,9 +195,9 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
           {/* Content Container */}
           <div className={cn(
             "relative z-10 w-full",
-            isOverlay && "max-w-4xl mx-auto text-white p-8",
+            isOverlay && "max-w-full md:max-w-4xl mx-auto text-white p-4 md:p-8",
             isSideBySide && "contents",
-            isTextOnly && "max-w-4xl mx-auto"
+            isTextOnly && "max-w-full md:max-w-4xl mx-auto"
           )}>
             
             {/* Text Content */}
@@ -360,7 +365,10 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white border-white/20 shadow-lg"
+                className={cn(
+                  "absolute top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white border-white/20 shadow-lg",
+                  deviceType === 'mobile' ? "left-2" : "left-4"
+                )}
                 onClick={() => api?.scrollPrev()}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -369,7 +377,10 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               <Button
                 variant="outline"
                 size="icon"
-                className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white border-white/20 shadow-lg"
+                className={cn(
+                  "absolute top-1/2 -translate-y-1/2 z-20 bg-white/90 hover:bg-white border-white/20 shadow-lg",
+                  deviceType === 'mobile' ? "right-2" : "right-4"
+                )}
                 onClick={() => api?.scrollNext()}
               >
                 <ChevronRight className="h-4 w-4" />
