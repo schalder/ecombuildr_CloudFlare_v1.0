@@ -52,6 +52,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
   const isMobile = deviceType === 'mobile';
   const isEditorContext = isEditing || isPreview;
   const shouldUseViewportWidth = isMobile && !isEditorContext;
+  const editorMobileMaxWidth = isEditorContext && isMobile ? '420px' : undefined;
 
   const content = element.content as HeroSliderContent;
   const slides = content?.slides || [];
@@ -181,7 +182,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
     };
 
     const resolvedWidth = shouldUseViewportWidth ? '100vw' : isMobile ? '100%' : mergedStyles.width || '100%';
-    const resolvedMaxWidth = isMobile ? '100%' : mergedStyles.maxWidth;
+    const resolvedMaxWidth = isMobile ? (editorMobileMaxWidth || '100%') : mergedStyles.maxWidth;
     const resolvedMinHeight = isMobile ? '320px' : mergedStyles.minHeight || '500px';
     const resolvedMarginLeft = isMobile ? 'auto' : mergedStyles.marginLeft;
     const resolvedMarginRight = isMobile ? 'auto' : mergedStyles.marginRight;
@@ -376,7 +377,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
           boxShadow: mergedStyles.boxShadow,
           transform: mergedStyles.transform,
           width: shouldUseViewportWidth ? '100vw' : isMobile ? '100%' : mergedStyles.width,
-          maxWidth: isMobile ? '100%' : mergedStyles.maxWidth,
+          maxWidth: editorMobileMaxWidth || mergedStyles.maxWidth,
         }}
       >
         <Carousel
