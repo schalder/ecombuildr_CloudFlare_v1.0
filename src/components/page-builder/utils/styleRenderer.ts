@@ -39,7 +39,7 @@ export const getDeviceAwareSpacing = (
       return tabletValue;
     }
   }
-  
+
   if (deviceType === 'mobile' || deviceType === 'tablet') {
     const desktopValue = spacingByDevice.desktop;
     if (desktopValue) {
@@ -67,10 +67,10 @@ const applyDeviceAwareSpacing = (
   if (margin.left > 0) styles.marginLeft = `${margin.left}px`;
 
   // Apply padding
-  if (padding.top > 0) styles.paddingTop = `${padding.top}px`;
-  if (padding.right > 0) styles.paddingRight = `${padding.right}px`;
-  if (padding.bottom > 0) styles.paddingBottom = `${padding.bottom}px`;
-  if (padding.left > 0) styles.paddingLeft = `${padding.left}px`;
+  if (padding.top >= 0) styles.paddingTop = `${padding.top}px`;
+  if (padding.right >= 0) styles.paddingRight = `${padding.right}px`;
+  if (padding.bottom >= 0) styles.paddingBottom = `${padding.bottom}px`;
+  if (padding.left >= 0) styles.paddingLeft = `${padding.left}px`;
 
   return styles;
 };
@@ -78,7 +78,7 @@ const applyDeviceAwareSpacing = (
 // Helper function to get background image properties based on mode
 const getBackgroundImageProperties = (mode: BackgroundImageMode = 'full-center', deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop') => {
   const responsiveMode = deviceType === 'mobile' ? mode : mode;
-  
+
   switch (responsiveMode) {
     case 'full-center':
       return {
@@ -128,27 +128,27 @@ const getBackgroundImageProperties = (mode: BackgroundImageMode = 'full-center',
 // Universal style renderer that creates pure inline styles
 export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop', isEditorMode: boolean = false): React.CSSProperties => {
   const styles: React.CSSProperties = {};
-  
+
   // Device-aware spacing styles - check for new responsive spacing first (moved outside if block for scope)
   const marginByDevice = section.styles?.marginByDevice as ResponsiveSpacing | undefined;
   const paddingByDevice = section.styles?.paddingByDevice as ResponsiveSpacing | undefined;
-  
+
   if (section.styles) {
     // FIXED: No mixing of shorthand and individual properties
-    
+
     // Background styles will be applied after responsive merge
-    
+
     // Box shadow styles
     if (section.styles.boxShadow && section.styles.boxShadow !== 'none') {
       styles.boxShadow = section.styles.boxShadow;
     }
-    
+
     // Border styles
     if (section.styles.borderWidth) styles.borderWidth = section.styles.borderWidth;
     if (section.styles.borderStyle) styles.borderStyle = section.styles.borderStyle;
     if (section.styles.borderColor) styles.borderColor = section.styles.borderColor;
     if (section.styles.borderRadius) styles.borderRadius = section.styles.borderRadius;
-    
+
     if (marginByDevice || paddingByDevice) {
       // Use device-aware spacing
       applyDeviceAwareSpacing(styles, marginByDevice, paddingByDevice, deviceType);
@@ -162,7 +162,7 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       } else if (section.styles.padding) {
         styles.padding = section.styles.padding;
       }
-      
+
       if (section.styles.marginTop || section.styles.marginRight || section.styles.marginBottom || section.styles.marginLeft) {
         if (section.styles.marginTop) styles.marginTop = section.styles.marginTop;
         if (section.styles.marginRight) styles.marginRight = section.styles.marginRight;
@@ -172,12 +172,12 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
         styles.margin = section.styles.margin;
       }
     }
-    
+
     // Width
     if (section.styles.width) styles.width = section.styles.width;
     if (section.styles.maxWidth) styles.maxWidth = section.styles.maxWidth;
     if (section.styles.minWidth) styles.minWidth = section.styles.minWidth;
-    
+
     // Height - mobile defaults to auto if no overrides
     if (deviceType === 'mobile' && !section.styles?.responsive?.mobile?.height && !section.styles.height) {
       styles.height = 'auto';
@@ -186,9 +186,9 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       if (section.styles.minHeight) styles.minHeight = section.styles.minHeight;
       if (section.styles.maxHeight) styles.maxHeight = section.styles.maxHeight;
     }
-    
+
   }
-  
+
   // Merge responsive overrides FIRST, but preserve background styles
   // Exclude legacy spacing properties if device-aware spacing is present to prevent conflicts
   const stylesToMerge = { ...section.styles };
@@ -206,11 +206,11 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     delete stylesToMerge.margin;
   }
   const mergedStyles = mergeResponsiveStyles(styles, stylesToMerge || {}, deviceType);
-  
+
   // Apply sticky positioning AFTER responsive merge to ensure it's not overridden
   if (section.styles?.stickyPosition && section.styles.stickyPosition !== 'none') {
     mergedStyles.zIndex = '45'; // Ensure sticky elements stay above content but below overlays
-    
+
     if (section.styles.stickyPosition === 'top') {
       // Use sticky positioning for top (works reliably)
       mergedStyles.position = 'sticky';
@@ -242,7 +242,7 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       }
     }
   }
-  
+
   // Apply background styles AFTER responsive merge to ensure they're not overwritten
   const backgroundStyles = buildBackgroundStyles({
     backgroundImage: section.styles?.backgroundImage,
@@ -253,10 +253,10 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
     responsive: section.styles?.responsive,
     deviceType
   });
-  
+
   // Merge background styles on top of responsive styles
   Object.assign(mergedStyles, backgroundStyles);
-  
+
   // Custom width - handle tablet/mobile responsively
   if (section.customWidth) {
     if (deviceType === 'tablet' || deviceType === 'mobile') {
@@ -266,16 +266,16 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
       mergedStyles.width = section.customWidth;
     }
   }
-  
+
   // Auto-center sections when width is less than 100% and no explicit horizontal margins
   const hasExplicitHorizontalMargin = mergedStyles.marginLeft || mergedStyles.marginRight;
   const responsiveWidth = section.styles?.responsive?.[deviceType]?.width;
-  
+
   // For tablet/mobile, check the effective width (maxWidth when custom width is applied)
-  const effectiveWidth = (deviceType === 'tablet' || deviceType === 'mobile') && section.customWidth 
-    ? mergedStyles.maxWidth 
+  const effectiveWidth = (deviceType === 'tablet' || deviceType === 'mobile') && section.customWidth
+    ? mergedStyles.maxWidth
     : mergedStyles.width || responsiveWidth || section.customWidth;
-  
+
   if (effectiveWidth && !hasExplicitHorizontalMargin) {
     if (effectiveWidth !== '100%' && !effectiveWidth.includes('100%')) {
       mergedStyles.marginLeft = 'auto';
@@ -294,25 +294,25 @@ export const renderSectionStyles = (section: PageBuilderSection, deviceType: 'de
 
 export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
-  
+
   // Device-aware spacing styles - check for new responsive spacing first (moved outside if block for scope)
   const marginByDevice = row.styles?.marginByDevice as ResponsiveSpacing | undefined;
   const paddingByDevice = row.styles?.paddingByDevice as ResponsiveSpacing | undefined;
-  
+
   if (row.styles) {
     // Background styles will be applied after responsive merge
-    
+
     // Box shadow styles
     if (row.styles.boxShadow && row.styles.boxShadow !== 'none') {
       styles.boxShadow = row.styles.boxShadow;
     }
-    
+
     // Border styles
     if (row.styles.borderWidth) styles.borderWidth = row.styles.borderWidth;
     if (row.styles.borderStyle) styles.borderStyle = row.styles.borderStyle;
     if (row.styles.borderColor) styles.borderColor = row.styles.borderColor;
     if (row.styles.borderRadius) styles.borderRadius = row.styles.borderRadius;
-    
+
     if (marginByDevice || paddingByDevice) {
       // Use device-aware spacing
       applyDeviceAwareSpacing(styles, marginByDevice, paddingByDevice, deviceType);
@@ -326,7 +326,7 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       } else if (row.styles.padding) {
         styles.padding = row.styles.padding;
       }
-      
+
       if (row.styles.marginTop || row.styles.marginRight || row.styles.marginBottom || row.styles.marginLeft) {
         if (row.styles.marginTop) styles.marginTop = row.styles.marginTop;
         if (row.styles.marginRight) styles.marginRight = row.styles.marginRight;
@@ -336,13 +336,13 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
         styles.margin = row.styles.margin;
       }
     }
-    
+
     // Width
     if (row.styles.maxWidth) styles.maxWidth = row.styles.maxWidth;
     if (row.styles.minWidth) styles.minWidth = row.styles.minWidth;
     if (row.styles.width) styles.width = row.styles.width;
   }
-  
+
   // Custom width - handle tablet/mobile responsively
   if (row.customWidth) {
     if (deviceType === 'tablet' || deviceType === 'mobile') {
@@ -352,7 +352,7 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
       styles.width = row.customWidth;
     }
   }
-  
+
   // Merge responsive overrides FIRST
   // Exclude legacy spacing properties if device-aware spacing is present to prevent conflicts
   const stylesToMerge = { ...row.styles };
@@ -370,7 +370,7 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     delete stylesToMerge.margin;
   }
   const merged = mergeResponsiveStyles(styles, stylesToMerge || {}, deviceType);
-  
+
   // Apply background styles AFTER responsive merge
   const backgroundStyles = buildBackgroundStyles({
     backgroundImage: row.styles?.backgroundImage,
@@ -381,19 +381,19 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
     responsive: row.styles?.responsive,
     deviceType
   });
-  
+
   // Merge background styles on top
   Object.assign(merged, backgroundStyles);
-  
+
   // Auto-center rows when width is less than 100% and no explicit horizontal margins  
   const hasExplicitHorizontalMargin = merged.marginLeft || merged.marginRight;
   const responsiveWidth = row.styles?.responsive?.[deviceType]?.width;
-  
+
   // For tablet/mobile, check the effective width (maxWidth when custom width is applied)
-  const effectiveWidth = (deviceType === 'tablet' || deviceType === 'mobile') && row.customWidth 
-    ? merged.maxWidth 
+  const effectiveWidth = (deviceType === 'tablet' || deviceType === 'mobile') && row.customWidth
+    ? merged.maxWidth
     : merged.width || responsiveWidth || row.customWidth;
-  
+
   if (effectiveWidth && !hasExplicitHorizontalMargin) {
     if (effectiveWidth !== '100%' && !effectiveWidth.includes('100%')) {
       merged.marginLeft = 'auto';
@@ -406,47 +406,47 @@ export const renderRowStyles = (row: PageBuilderRow, deviceType: 'desktop' | 'ta
 
 export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
-  
+
   // Device-aware spacing styles - check for new responsive spacing first (moved outside if block for scope)
   const marginByDevice = column.styles?.marginByDevice as ResponsiveSpacing | undefined;
   const paddingByDevice = column.styles?.paddingByDevice as ResponsiveSpacing | undefined;
-  
+
   if (column.styles) {
     // Background styles will be applied after responsive merge
-    
+
     // Box shadow styles
     if (column.styles.boxShadow && column.styles.boxShadow !== 'none') {
       styles.boxShadow = column.styles.boxShadow;
     }
-    
+
     // Border styles
     if (column.styles.borderWidth) styles.borderWidth = column.styles.borderWidth;
     if (column.styles.borderStyle) styles.borderStyle = column.styles.borderStyle;
     if (column.styles.borderColor) styles.borderColor = column.styles.borderColor;
     if (column.styles.borderRadius) styles.borderRadius = column.styles.borderRadius;
-    
+
     // Content alignment styles - enable flexbox when alignment is set
     if (column.styles.contentAlignment || column.styles.contentJustification || column.styles.contentDirection) {
       styles.display = 'flex';
       styles.flexDirection = column.styles.contentDirection || 'column';
-      
+
       if (column.styles.contentAlignment) {
         // For column direction: alignItems controls vertical alignment
         // For row direction: alignItems controls horizontal alignment
         styles.alignItems = column.styles.contentAlignment;
       }
-      
+
       if (column.styles.contentJustification) {
         // For column direction: justifyContent controls horizontal alignment
         // For row direction: justifyContent controls vertical alignment
         styles.justifyContent = column.styles.contentJustification;
       }
-      
+
       if (column.styles.contentGap) {
         styles.gap = column.styles.contentGap;
       }
     }
-    
+
     if (marginByDevice || paddingByDevice) {
       // Use device-aware spacing
       applyDeviceAwareSpacing(styles, marginByDevice, paddingByDevice, deviceType);
@@ -460,7 +460,7 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       } else if (column.styles.padding) {
         styles.padding = column.styles.padding;
       }
-      
+
       if (column.styles.marginTop || column.styles.marginRight || column.styles.marginBottom || column.styles.marginLeft) {
         if (column.styles.marginTop) styles.marginTop = column.styles.marginTop;
         if (column.styles.marginRight) styles.marginRight = column.styles.marginRight;
@@ -470,12 +470,12 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
         styles.margin = column.styles.margin;
       }
     }
-    
+
     // Width - handle horizontal margins by adjusting width
     if (column.styles.maxWidth) styles.maxWidth = column.styles.maxWidth;
     if (column.styles.minWidth) styles.minWidth = column.styles.minWidth;
     if (column.styles.width) styles.width = column.styles.width;
-    
+
     // If column has horizontal margins, calculate width to accommodate them
     const hasHorizontalMargins = column.styles.marginLeft || column.styles.marginRight;
     if (hasHorizontalMargins && !column.styles.width) {
@@ -484,7 +484,7 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
       styles.width = `calc(100% - (${leftMargin} + ${rightMargin}))`;
     }
   }
-  
+
   // Merge responsive overrides FIRST
   // Exclude legacy spacing properties if device-aware spacing is present to prevent conflicts
   const stylesToMerge = { ...column.styles };
@@ -502,7 +502,7 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     delete stylesToMerge.margin;
   }
   const merged = mergeResponsiveStyles(styles, stylesToMerge || {}, deviceType);
-  
+
   // Apply background styles AFTER responsive merge
   const backgroundStyles = buildBackgroundStyles({
     backgroundImage: column.styles?.backgroundImage,
@@ -513,31 +513,31 @@ export const renderColumnStyles = (column: PageBuilderColumn, deviceType: 'deskt
     responsive: column.styles?.responsive,
     deviceType
   });
-  
+
   // Merge background styles on top
   Object.assign(merged, backgroundStyles);
-  
+
   // Auto-center columns when width is set and no explicit horizontal margins
   const hasExplicitHorizontalMargin = merged.marginLeft || merged.marginRight || column.styles?.marginLeft || column.styles?.marginRight;
   const responsiveWidth = column.styles?.responsive?.[deviceType]?.width;
-  
+
   // For tablet/mobile, check the effective width (maxWidth when custom width is applied)  
-  const effectiveWidth = (deviceType === 'tablet' || deviceType === 'mobile') && column.customWidth 
-    ? merged.maxWidth 
+  const effectiveWidth = (deviceType === 'tablet' || deviceType === 'mobile') && column.customWidth
+    ? merged.maxWidth
     : merged.width || responsiveWidth || column.customWidth;
-  
+
   if (effectiveWidth && !hasExplicitHorizontalMargin) {
     if (effectiveWidth !== '100%' && !effectiveWidth.includes('100%')) {
       merged.justifySelf = 'center';
     }
   }
-  
+
   return merged;
 };
 
 export const renderElementStyles = (element: PageBuilderElement, deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop'): React.CSSProperties => {
   const styles: React.CSSProperties = {};
-  
+
   if (element.styles) {
     // Dimensions
     if (element.styles.width) styles.width = element.styles.width;
@@ -546,7 +546,7 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
     if (element.styles.minWidth) styles.minWidth = element.styles.minWidth;
     if (element.styles.maxHeight) styles.maxHeight = element.styles.maxHeight;
     if (element.styles.minHeight) styles.minHeight = element.styles.minHeight;
-    
+
     // Background styles
     if (element.styles.backgroundColor && element.styles.backgroundColor !== 'transparent') {
       styles.backgroundColor = element.styles.backgroundColor;
@@ -557,29 +557,29 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
       styles.backgroundPosition = 'center';
       styles.backgroundRepeat = 'no-repeat';
     }
-    
+
     // Border styles
     if (element.styles.borderWidth) styles.borderWidth = element.styles.borderWidth;
     if (element.styles.borderColor) styles.borderColor = element.styles.borderColor;
     if (element.styles.borderStyle) styles.borderStyle = element.styles.borderStyle;
     if (element.styles.borderRadius) styles.borderRadius = element.styles.borderRadius;
-    
+
     // Effects
     if (element.styles.opacity !== undefined) styles.opacity = element.styles.opacity;
     if (element.styles.boxShadow && element.styles.boxShadow !== 'none') {
       styles.boxShadow = element.styles.boxShadow;
     }
-    
+
     // Device-aware spacing styles - ONLY apply padding, margins are handled by ElementRenderer wrapper
     const paddingByDevice = element.styles?.paddingByDevice as ResponsiveSpacing | undefined;
-    
+
     if (paddingByDevice) {
       // Use device-aware padding
       const padding = getDeviceAwareSpacing(paddingByDevice, deviceType);
-      if (padding.top > 0) styles.paddingTop = `${padding.top}px`;
-      if (padding.right > 0) styles.paddingRight = `${padding.right}px`;
-      if (padding.bottom > 0) styles.paddingBottom = `${padding.bottom}px`;
-      if (padding.left > 0) styles.paddingLeft = `${padding.left}px`;
+      if (padding.top >= 0) styles.paddingTop = `${padding.top}px`;
+      if (padding.right >= 0) styles.paddingRight = `${padding.right}px`;
+      if (padding.bottom >= 0) styles.paddingBottom = `${padding.bottom}px`;
+      if (padding.left >= 0) styles.paddingLeft = `${padding.left}px`;
     } else {
       // Fallback to legacy padding styles
       if (element.styles.paddingTop || element.styles.paddingRight || element.styles.paddingBottom || element.styles.paddingLeft) {
@@ -591,36 +591,36 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
         styles.padding = element.styles.padding;
       }
     }
-    
-  // NOTE: Margins are intentionally excluded here since they're handled by ElementRenderer wrapper
-  // This prevents double application of margins
-  
-  // Typography
-  if (element.styles.color) styles.color = element.styles.color;
+
+    // NOTE: Margins are intentionally excluded here since they're handled by ElementRenderer wrapper
+    // This prevents double application of margins
+
+    // Typography
+    if (element.styles.color) styles.color = element.styles.color;
     if (element.styles.fontSize) styles.fontSize = element.styles.fontSize;
     if (element.styles.lineHeight) styles.lineHeight = element.styles.lineHeight;
     if (element.styles.textAlign) styles.textAlign = element.styles.textAlign;
     if (element.styles.fontWeight) styles.fontWeight = element.styles.fontWeight;
     if (element.styles.fontFamily) styles.fontFamily = element.styles.fontFamily;
-    
+
     // Media-specific properties
     if (element.styles.objectFit) styles.objectFit = element.styles.objectFit;
   }
-  
+
   // Merge responsive overrides but exclude margins to prevent double application
   const merged = mergeResponsiveStyles(styles, element.styles, deviceType);
-  
+
   // CRITICAL: Remove any margins that might have been added by responsive merge or base styles
   // Margins are ONLY handled by ElementRenderer wrapper to prevent double application
   delete merged.marginTop;
-  delete merged.marginRight;  
+  delete merged.marginRight;
   delete merged.marginBottom;
   delete merged.marginLeft;
   delete merged.margin;
-  
+
   // Also remove any shorthand margin that might exist
   if (merged.margin !== undefined) delete merged.margin;
-  
+
   return merged;
 };
 
