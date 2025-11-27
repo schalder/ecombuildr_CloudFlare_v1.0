@@ -570,11 +570,14 @@ const CategoryNavigationElement: React.FC<{
     }
   };
 
+  // Get element styles including padding
+  const elementStyles = renderElementStyles(element, deviceType);
+
   if (loading) {
     const loadingSize = categorySize;
     const borderRadius = layout === 'square' ? '10px' : '50%';
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={elementStyles}>
         <div className={`grid gap-4 ${layout === 'square' ? getSquareGridClasses() : getCircleGridClasses()}`}>
           {[...Array(6)].map((_, i) => (
             <div key={i} className="text-center animate-pulse">
@@ -596,7 +599,7 @@ const CategoryNavigationElement: React.FC<{
 
   if (layout === 'circles') {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={elementStyles}>
         {element.content.title && (
           <h3 className="text-xl font-semibold mb-6 text-center">{element.content.title}</h3>
         )}
@@ -637,7 +640,7 @@ const CategoryNavigationElement: React.FC<{
 
   if (layout === 'square') {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={elementStyles}>
         {element.content.title && (
           <h3 className="text-xl font-semibold mb-6 text-center">{element.content.title}</h3>
         )}
@@ -679,7 +682,7 @@ const CategoryNavigationElement: React.FC<{
   }
 
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`} style={elementStyles}>
       {element.content.title && (
         <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
       )}
@@ -949,8 +952,11 @@ const WeeklyFeaturedElement: React.FC<{
 
   const containerGap = (element.styles as any)?.gap ? parseInt((element.styles as any).gap) : 16;
 
+  // Get element styles including padding
+  const elementStyles = renderElementStyles(element, deviceType);
+
   return (
-    <div className="w-full">
+    <div className="w-full" style={elementStyles}>
       {element.content.showTitle !== false && element.content.title && (
         <h2
           className={applyStyles("text-2xl font-bold mb-2", 'headline').className}
