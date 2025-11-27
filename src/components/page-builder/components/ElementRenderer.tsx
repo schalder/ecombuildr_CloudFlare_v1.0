@@ -350,6 +350,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       <ElementComponent
         element={element}
         isEditing={!isPreviewMode}
+        isPreview={isPreviewMode}
         deviceType={deviceType}
         columnCount={columnCount}
         onUpdate={handleUpdateElement}
