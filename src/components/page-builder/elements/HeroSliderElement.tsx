@@ -224,15 +224,15 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
             <div className={cn(
               "space-y-6 w-full",
               isSideBySide && "order-2 lg:order-1",
-              getTextAlignment(),
-              deviceType === 'mobile' && "flex flex-col items-center text-center px-4"
+          getTextAlignment(),
+          deviceType === 'mobile' && "flex flex-col items-center text-center px-4"
             )}>
               {slide.subHeadline && (
                 <p 
                   className={cn(
                     "font-medium uppercase tracking-wide opacity-80",
-                    deviceType === 'mobile' && "text-center w-full",
-                    current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                deviceType === 'mobile' && "text-center w-full",
+                current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                   )}
                   style={{
                     fontSize: subHeadlineStyles.fontSize,
@@ -248,7 +248,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               <h2 
                 className={cn(
                   "font-bold leading-tight",
-                  deviceType === 'mobile' && "text-center w-full",
+              deviceType === 'mobile' && "text-center w-full",
                   current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                 )}
                 style={{
@@ -265,7 +265,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                 <p 
                   className={cn(
                     "opacity-90",
-                    deviceType === 'mobile' && "text-center mx-auto w-full",
+                deviceType === 'mobile' && "text-center mx-auto w-full",
                     content?.textAlignment === 'center' && "mx-auto max-w-2xl",
                     content?.textAlignment === 'right' && "ml-auto max-w-2xl",
                     content?.textAlignment === 'left' && "mr-auto max-w-2xl",
@@ -285,7 +285,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               {slide.buttonText && (
                 <div className={cn(
                   "pt-4",
-                  deviceType === 'mobile' && "flex justify-center w-full",
+              deviceType === 'mobile' && "flex justify-center w-full",
                   content?.textAlignment === 'center' && "flex justify-center",
                   content?.textAlignment === 'right' && "flex justify-end",
                   content?.textAlignment === 'left' && "flex justify-start"
