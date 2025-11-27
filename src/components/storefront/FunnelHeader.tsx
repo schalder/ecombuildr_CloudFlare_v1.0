@@ -173,7 +173,7 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
             <span className="font-semibold">{funnel.name}</span>
           )}
         </a>
-        <div className="hidden md:flex items-center gap-6 ml-auto">
+        <div className="hidden lg:flex items-center gap-6 ml-auto">
           <nav className="flex items-center gap-6">
             {cfg?.nav_items?.map((item) => (
               <div key={item.id}>{renderLink(item)}</div>
@@ -197,7 +197,7 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
             )}
           </div>
         </div>
-        <div className="md:hidden">
+        <div className="lg:hidden">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Open menu">

@@ -112,7 +112,7 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
             <span className="font-semibold">{website.name}</span>
           )}
         </a>
-        <div className="hidden md:flex items-center gap-6 ml-auto">
+        <div className="hidden lg:flex items-center gap-6 ml-auto">
           <nav className="flex items-center gap-6">
             {cfg?.nav_items?.map((item) => (
               <div key={item.id}>{renderLink(item)}</div>
@@ -136,7 +136,7 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
             )}
           </div>
         </div>
-        <div className="md:hidden">
+        <div className="lg:hidden">
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Open menu">
