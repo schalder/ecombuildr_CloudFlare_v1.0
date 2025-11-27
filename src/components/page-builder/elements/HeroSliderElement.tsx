@@ -165,17 +165,29 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
       color: getStyleValue('buttonTextColor'),
     };
 
+    const resolvedWidth = mergedStyles.width || '100%';
+    const resolvedMaxWidth = mergedStyles.maxWidth || '100%';
+    const resolvedMarginLeft = mergedStyles.marginLeft ?? (deviceType === 'mobile' ? 'auto' : undefined);
+    const resolvedMarginRight = mergedStyles.marginRight ?? (deviceType === 'mobile' ? 'auto' : undefined);
+
     return (
-      <CarouselItem key={slide.id} className="p-0 shadow-none border-none" style={{ boxShadow: 'none' }}>
+      <CarouselItem
+        key={slide.id}
+        className="p-0 shadow-none border-none w-full"
+        style={{ boxShadow: 'none' }}
+      >
         <div 
           className={cn(
             getSlideClasses(),
+            "w-full",
             deviceType === 'mobile' && "flex flex-col items-center justify-center"
           )}
           style={{
             minHeight: mergedStyles.minHeight || (deviceType === 'mobile' ? '300px' : '500px'),
-            maxWidth: mergedStyles.maxWidth || (deviceType === 'mobile' ? '100%' : undefined),
-            width: deviceType === 'mobile' ? '100%' : undefined,
+            maxWidth: resolvedMaxWidth,
+            width: resolvedWidth,
+            marginLeft: resolvedMarginLeft,
+            marginRight: resolvedMarginRight,
             borderWidth: mergedStyles.borderWidth,
             borderColor: mergedStyles.borderColor,
             borderRadius: mergedStyles.borderRadius,
