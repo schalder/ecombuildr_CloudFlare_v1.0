@@ -67,10 +67,10 @@ const applyDeviceAwareSpacing = (
   if (margin.left > 0) styles.marginLeft = `${margin.left}px`;
 
   // Apply padding
-  if (padding.top >= 0) styles.paddingTop = `${padding.top}px`;
-  if (padding.right >= 0) styles.paddingRight = `${padding.right}px`;
-  if (padding.bottom >= 0) styles.paddingBottom = `${padding.bottom}px`;
-  if (padding.left >= 0) styles.paddingLeft = `${padding.left}px`;
+  if (padding.top > 0) styles.paddingTop = `${padding.top}px`;
+  if (padding.right > 0) styles.paddingRight = `${padding.right}px`;
+  if (padding.bottom > 0) styles.paddingBottom = `${padding.bottom}px`;
+  if (padding.left > 0) styles.paddingLeft = `${padding.left}px`;
 
   return styles;
 };
@@ -570,28 +570,6 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
       styles.boxShadow = element.styles.boxShadow;
     }
 
-    // Device-aware spacing styles - ONLY apply padding, margins are handled by ElementRenderer wrapper
-    const paddingByDevice = element.styles?.paddingByDevice as ResponsiveSpacing | undefined;
-
-    if (paddingByDevice) {
-      // Use device-aware padding
-      const padding = getDeviceAwareSpacing(paddingByDevice, deviceType);
-      if (padding.top >= 0) styles.paddingTop = `${padding.top}px`;
-      if (padding.right >= 0) styles.paddingRight = `${padding.right}px`;
-      if (padding.bottom >= 0) styles.paddingBottom = `${padding.bottom}px`;
-      if (padding.left >= 0) styles.paddingLeft = `${padding.left}px`;
-    } else {
-      // Fallback to legacy padding styles
-      if (element.styles.paddingTop || element.styles.paddingRight || element.styles.paddingBottom || element.styles.paddingLeft) {
-        if (element.styles.paddingTop) styles.paddingTop = element.styles.paddingTop;
-        if (element.styles.paddingRight) styles.paddingRight = element.styles.paddingRight;
-        if (element.styles.paddingBottom) styles.paddingBottom = element.styles.paddingBottom;
-        if (element.styles.paddingLeft) styles.paddingLeft = element.styles.paddingLeft;
-      } else if (element.styles.padding) {
-        styles.padding = element.styles.padding;
-      }
-    }
-
     // NOTE: Margins are intentionally excluded here since they're handled by ElementRenderer wrapper
     // This prevents double application of margins
 
@@ -609,6 +587,30 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
 
   // Merge responsive overrides but exclude margins to prevent double application
   const merged = mergeResponsiveStyles(styles, element.styles, deviceType);
+
+  // CRITICAL: Apply padding AFTER merge to ensure it takes precedence over anything in element.styles or responsive
+  // This fixes the issue where custom padding from paddingByDevice was being overwritten by mergeResponsiveStyles
+  // Device-aware spacing styles - ONLY apply padding, margins are handled by ElementRenderer wrapper
+  const paddingByDevice = element.styles?.paddingByDevice as ResponsiveSpacing | undefined;
+  
+  if (paddingByDevice) {
+    // Use device-aware padding - apply even if 0 to allow explicit zero padding
+    const padding = getDeviceAwareSpacing(paddingByDevice, deviceType);
+    merged.paddingTop = `${padding.top}px`;
+    merged.paddingRight = `${padding.right}px`;
+    merged.paddingBottom = `${padding.bottom}px`;
+    merged.paddingLeft = `${padding.left}px`;
+  } else {
+    // Fallback to legacy padding styles only if paddingByDevice doesn't exist
+    // Don't overwrite if paddingByDevice exists (already handled above)
+    if (!merged.paddingTop && element.styles?.paddingTop) merged.paddingTop = element.styles.paddingTop;
+    if (!merged.paddingRight && element.styles?.paddingRight) merged.paddingRight = element.styles.paddingRight;
+    if (!merged.paddingBottom && element.styles?.paddingBottom) merged.paddingBottom = element.styles.paddingBottom;
+    if (!merged.paddingLeft && element.styles?.paddingLeft) merged.paddingLeft = element.styles.paddingLeft;
+    if (!merged.paddingTop && !merged.paddingRight && !merged.paddingBottom && !merged.paddingLeft && element.styles?.padding) {
+      merged.padding = element.styles.padding;
+    }
+  }
 
   // CRITICAL: Remove any margins that might have been added by responsive merge or base styles
   // Margins are ONLY handled by ElementRenderer wrapper to prevent double application

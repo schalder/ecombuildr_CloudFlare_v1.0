@@ -346,15 +346,17 @@ const FeaturedProductsElement: React.FC<{
 
   if (loading) {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'} bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 animate-pulse`}>
-        <div className="grid md:grid-cols-2 gap-6 items-center">
-          <div>
-            <div className="h-6 w-24 bg-muted rounded mb-3"></div>
-            <div className="h-8 w-3/4 bg-muted rounded mb-2"></div>
-            <div className="h-4 w-full bg-muted rounded mb-4"></div>
-            <div className="h-10 w-32 bg-muted rounded"></div>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
+        <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 animate-pulse">
+          <div className="grid md:grid-cols-2 gap-6 items-center">
+            <div>
+              <div className="h-6 w-24 bg-muted rounded mb-3"></div>
+              <div className="h-8 w-3/4 bg-muted rounded mb-2"></div>
+              <div className="h-4 w-full bg-muted rounded mb-4"></div>
+              <div className="h-10 w-32 bg-muted rounded"></div>
+            </div>
+            <div className="h-64 md:h-80 bg-muted rounded-lg"></div>
           </div>
-          <div className="h-64 md:h-80 bg-muted rounded-lg"></div>
         </div>
       </div>
     );
@@ -362,9 +364,11 @@ const FeaturedProductsElement: React.FC<{
 
   if (!product) {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'} bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6`}>
-        <div className="text-center py-8 text-muted-foreground">
-          Please select a product to feature from the properties panel.
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-4xl mx-auto'}`}>
+        <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
+          <div className="text-center py-8 text-muted-foreground">
+            Please select a product to feature from the properties panel.
+          </div>
         </div>
       </div>
     );
@@ -387,16 +391,56 @@ const FeaturedProductsElement: React.FC<{
     : 'w-full h-64 md:h-80 object-cover rounded-lg';
 
   return (
-    <div className={`${containerClass} bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6`} style={renderElementStyles(element, deviceType)}>
-      <div className={layoutClass}>
-        {/* Header section - Badge and Title */}
-        <div className={`${isVerticalLayout ? '' : 'order-1'}`}>
-          <Star className="h-5 w-5 text-primary mb-3" aria-label="Featured" />
-          <h2 className="font-bold mb-4">{product.name}</h2>
+    <div className={containerClass} style={renderElementStyles(element, deviceType)}>
+      <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6">
+        <div className={layoutClass}>
+          {/* Header section - Badge and Title */}
+          <div className={`${isVerticalLayout ? '' : 'order-1'}`}>
+            <Star className="h-5 w-5 text-primary mb-3" aria-label="Featured" />
+            <h2 className="font-bold mb-4">{product.name}</h2>
 
-          {/* Image section - appears right after title on mobile/tablet */}
-          {isMobileOrTablet && (
-            <div className="relative mb-4">
+            {/* Image section - appears right after title on mobile/tablet */}
+            {isMobileOrTablet && (
+              <div className="relative mb-4">
+                <img
+                  src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
+                  alt={product.name}
+                  className={imageClass}
+                />
+                <Badge className="absolute top-4 right-4" variant="secondary">
+                  ⭐ 4.8
+                </Badge>
+              </div>
+            )}
+
+            {/* Content section - Description, Price, Button */}
+            <p className="text-muted-foreground mb-4">
+              {product.short_description || product.description}
+            </p>
+
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-2xl font-bold text-primary">{formatCurrency(product.price)}</span>
+              {product.compare_price && product.compare_price > product.price && (
+                <>
+                  <span className="text-lg text-muted-foreground line-through">
+                    {formatCurrency(product.compare_price)}
+                  </span>
+                  <Badge variant="destructive">
+                    Save {formatCurrency(product.compare_price - product.price)}
+                  </Badge>
+                </>
+              )}
+            </div>
+
+            <Button size="lg" className="w-full md:w-auto" onClick={() => handleAddToCartGeneric(product)} style={buttonStyles as React.CSSProperties}>
+              <ShoppingCart className="h-4 w-4 mr-2" />
+              {ctaText}
+            </Button>
+          </div>
+
+          {/* Image section - for desktop only */}
+          {!isMobileOrTablet && (
+            <div className={`relative ${layout === 'vertical' ? 'order-1' : 'order-2'}`}>
               <img
                 src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
                 alt={product.name}
@@ -407,45 +451,7 @@ const FeaturedProductsElement: React.FC<{
               </Badge>
             </div>
           )}
-
-          {/* Content section - Description, Price, Button */}
-          <p className="text-muted-foreground mb-4">
-            {product.short_description || product.description}
-          </p>
-
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl font-bold text-primary">{formatCurrency(product.price)}</span>
-            {product.compare_price && product.compare_price > product.price && (
-              <>
-                <span className="text-lg text-muted-foreground line-through">
-                  {formatCurrency(product.compare_price)}
-                </span>
-                <Badge variant="destructive">
-                  Save {formatCurrency(product.compare_price - product.price)}
-                </Badge>
-              </>
-            )}
-          </div>
-
-          <Button size="lg" className="w-full md:w-auto" onClick={() => handleAddToCartGeneric(product)} style={buttonStyles as React.CSSProperties}>
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            {ctaText}
-          </Button>
         </div>
-
-        {/* Image section - for desktop only */}
-        {!isMobileOrTablet && (
-          <div className={`relative ${layout === 'vertical' ? 'order-1' : 'order-2'}`}>
-            <img
-              src={(Array.isArray(product.images) ? product.images[0] : product.images) || '/placeholder.svg'}
-              alt={product.name}
-              className={imageClass}
-            />
-            <Badge className="absolute top-4 right-4" variant="secondary">
-              ⭐ 4.8
-            </Badge>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -568,7 +574,7 @@ const CategoryNavigationElement: React.FC<{
     const loadingSize = categorySize;
     const borderRadius = layout === 'square' ? '10px' : '50%';
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'} bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6 animate-pulse`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
         <div className={`grid gap-4 ${layout === 'square' ? getSquareGridClasses() : getCircleGridClasses()}`}>
           {[...Array(6)].map((_, i) => (
             <div key={i} className="text-center animate-pulse">
@@ -590,7 +596,7 @@ const CategoryNavigationElement: React.FC<{
 
   if (layout === 'circles') {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'} bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
         {element.content.title && (
           <h3 className="text-xl font-semibold mb-6 text-center">{element.content.title}</h3>
         )}
@@ -631,7 +637,7 @@ const CategoryNavigationElement: React.FC<{
 
   if (layout === 'square') {
     return (
-      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'} bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6`}>
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
         {element.content.title && (
           <h3 className="text-xl font-semibold mb-6 text-center">{element.content.title}</h3>
         )}
@@ -673,7 +679,7 @@ const CategoryNavigationElement: React.FC<{
   }
 
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'} bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-6`}>
+    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
       {element.content.title && (
         <h3 className="text-xl font-semibold mb-4">{element.content.title}</h3>
       )}
