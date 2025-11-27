@@ -564,7 +564,15 @@ export const ProductCategoriesContentProperties: React.FC<EcommerceContentProper
         <Label className="text-xs">Layout</Label>
         <Select
           value={element.content.layout || 'grid'}
-          onValueChange={(value) => onUpdate('layout', value)}
+          onValueChange={(value) => {
+            onUpdate('layout', value);
+            // Set default size when switching layouts
+            if (value === 'circles' && !element.content.categorySize) {
+              onUpdate('categorySize', 64);
+            } else if (value === 'square' && !element.content.categorySize) {
+              onUpdate('categorySize', 80);
+            }
+          }}
         >
           <SelectTrigger>
             <SelectValue />
@@ -572,9 +580,33 @@ export const ProductCategoriesContentProperties: React.FC<EcommerceContentProper
           <SelectContent>
             <SelectItem value="grid">Grid Cards</SelectItem>
             <SelectItem value="circles">Circles</SelectItem>
+            <SelectItem value="square">Square</SelectItem>
           </SelectContent>
         </Select>
       </div>
+
+      {/* Size Slider - Only show for circles and square layouts */}
+      {(element.content.layout === 'circles' || element.content.layout === 'square') && (
+        <div>
+          <Label className="text-xs">Size</Label>
+          <div className="flex items-center space-x-2">
+            <Slider
+              value={[element.content.categorySize || (element.content.layout === 'circles' ? 64 : 80)]}
+              onValueChange={(value) => onUpdate('categorySize', value[0])}
+              min={40}
+              max={120}
+              step={4}
+              className="flex-1"
+            />
+            <span className="text-xs text-muted-foreground w-12 text-right">
+              {element.content.categorySize || (element.content.layout === 'circles' ? 64 : 80)}px
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Adjust the size of {element.content.layout === 'circles' ? 'circle' : 'square'} category icons
+          </p>
+        </div>
+      )}
 
       <div>
         <Label className="text-xs">Categories to Display</Label>

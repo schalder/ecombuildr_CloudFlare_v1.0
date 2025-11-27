@@ -473,6 +473,8 @@ const CategoryNavigationElement: React.FC<{
   const selectedCategoryIds = element.content.selectedCategoryIds || [];
   const showProductCount = element.content.showProductCount !== false;
   const enableLinks = element.content.enableLinks !== false;
+  // Get category size for circles and square layouts (default: 64px for circles, 80px for square)
+  const categorySize = element.content.categorySize || (layout === 'circles' ? 64 : layout === 'square' ? 80 : 64);
   
   // Filter categories based on selection
   const displayCategories = selectedCategoryIds.length > 0 
@@ -544,6 +546,11 @@ const CategoryNavigationElement: React.FC<{
     }
     return 'grid-cols-6';
   };
+
+  const getSquareGridClasses = () => {
+    // Use same grid logic as circles
+    return getCircleGridClasses();
+  };
   
   const getCardGridClasses = () => {
     if (deviceType === 'mobile') return 'grid-cols-1';
@@ -564,12 +571,21 @@ const CategoryNavigationElement: React.FC<{
   };
 
   if (loading) {
+    const loadingSize = categorySize;
+    const borderRadius = layout === 'square' ? '10px' : '50%';
     return (
       <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
-        <div className={`grid gap-4 ${getCircleGridClasses()}`}>
+        <div className={`grid gap-4 ${layout === 'square' ? getSquareGridClasses() : getCircleGridClasses()}`}>
           {[...Array(6)].map((_, i) => (
             <div key={i} className="text-center animate-pulse">
-              <div className="w-16 h-16 mx-auto bg-muted rounded-full mb-2"></div>
+              <div 
+                className="mx-auto bg-muted mb-2"
+                style={{
+                  width: `${loadingSize}px`,
+                  height: `${loadingSize}px`,
+                  borderRadius: borderRadius,
+                }}
+              ></div>
               <div className="h-4 bg-muted rounded mx-auto w-3/4"></div>
             </div>
           ))}
@@ -591,12 +607,61 @@ const CategoryNavigationElement: React.FC<{
               className="text-center group cursor-pointer"
               onClick={() => handleCategoryClick(category)}
             >
-              <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center text-2xl group-hover:bg-primary/20 transition-colors overflow-hidden">
+              <div 
+                className="mx-auto bg-primary/10 rounded-full flex items-center justify-center text-2xl group-hover:bg-primary/20 transition-colors overflow-hidden"
+                style={{
+                  width: `${categorySize}px`,
+                  height: `${categorySize}px`,
+                }}
+              >
                 {category.image_url ? (
                   <img 
                     src={category.image_url} 
                     alt={category.name}
                     className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Tag className="h-6 w-6" />
+                )}
+              </div>
+              <h4 className="font-medium mt-2 text-sm">{category.name}</h4>
+              {showProductCount && (
+                <p className="text-xs text-muted-foreground">{(counts[category.id] ?? 0)} {(counts[category.id] ?? 0) === 1 ? 'product' : 'products'}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (layout === 'square') {
+    return (
+      <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-6xl mx-auto'}`}>
+        {element.content.title && (
+          <h3 className="text-xl font-semibold mb-6 text-center">{element.content.title}</h3>
+        )}
+        <div className={`grid gap-4 ${getSquareGridClasses()}`}>
+          {displayCategories.map((category) => (
+            <div 
+              key={category.id} 
+              className="text-center group cursor-pointer"
+              onClick={() => handleCategoryClick(category)}
+            >
+              <div 
+                className="mx-auto bg-primary/10 flex items-center justify-center text-2xl group-hover:bg-primary/20 transition-colors overflow-hidden"
+                style={{
+                  width: `${categorySize}px`,
+                  height: `${categorySize}px`,
+                  borderRadius: '10px',
+                }}
+              >
+                {category.image_url ? (
+                  <img 
+                    src={category.image_url} 
+                    alt={category.name}
+                    className="w-full h-full object-cover"
+                    style={{ borderRadius: '10px' }}
                   />
                 ) : (
                   <Tag className="h-6 w-6" />
