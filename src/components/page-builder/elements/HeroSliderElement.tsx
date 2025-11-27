@@ -168,10 +168,14 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
     return (
       <CarouselItem key={slide.id} className="p-0 shadow-none border-none" style={{ boxShadow: 'none' }}>
         <div 
-          className={getSlideClasses()}
+          className={cn(
+            getSlideClasses(),
+            deviceType === 'mobile' && "flex flex-col items-center justify-center"
+          )}
           style={{
             minHeight: mergedStyles.minHeight || (deviceType === 'mobile' ? '300px' : '500px'),
-            maxWidth: mergedStyles.maxWidth,
+            maxWidth: mergedStyles.maxWidth || (deviceType === 'mobile' ? '100%' : undefined),
+            width: deviceType === 'mobile' ? '100%' : undefined,
             borderWidth: mergedStyles.borderWidth,
             borderColor: mergedStyles.borderColor,
             borderRadius: mergedStyles.borderRadius,
