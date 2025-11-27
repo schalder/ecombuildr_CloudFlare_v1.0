@@ -101,31 +101,34 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
     );
   }
 
-  const getSlideClasses = (targetDevice: DeviceType = deviceType) => {
+  const getSlideClasses = () => {
     const baseClasses = "relative w-full transition-all duration-500 ease-in-out";
     
+    if (isMobile) {
+      switch (content?.layout) {
+        case 'side-by-side':
+          return `${baseClasses} flex flex-col items-center justify-center gap-6 px-4 py-10 text-center`;
+        case 'text-only':
+          return `${baseClasses} flex flex-col items-center text-center gap-4 px-4 py-12`;
+        case 'overlay':
+        default:
+          return `${baseClasses} flex flex-col items-center justify-center text-center px-4 py-10 gap-4`;
+      }
+    }
+
     switch (content?.layout) {
       case 'side-by-side':
-        if (targetDevice === 'mobile') {
-          return `${baseClasses} flex flex-col items-center justify-center gap-6 px-4 py-10 text-center`;
-        }
         return `${baseClasses} grid grid-cols-1 lg:grid-cols-2 gap-8 items-center px-8 lg:px-16`;
       case 'text-only':
-        if (targetDevice === 'mobile') {
-          return `${baseClasses} flex flex-col items-center text-center gap-4 px-4 py-12`;
-        }
         return `${baseClasses} py-20 px-8`;
       case 'overlay':
       default:
-        if (targetDevice === 'mobile') {
-          return `${baseClasses} flex flex-col items-center justify-center text-center px-4 py-10 gap-4`;
-        }
         return `${baseClasses} relative flex items-center justify-center min-h-full`;
     }
   };
 
   const getTextAlignment = () => {
-    if (deviceType === 'mobile') {
+    if (isMobile) {
       return 'text-center';
     }
     switch (content?.textAlignment) {
@@ -173,20 +176,16 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
       color: getStyleValue('buttonTextColor'),
     };
 
-    const resolvedWidth = isMobile ? '100%' : mergedStyles.width || '100%';
+    const resolvedWidth = isMobile ? '100vw' : mergedStyles.width || '100%';
     const resolvedMaxWidth = isMobile ? '100%' : mergedStyles.maxWidth;
     const resolvedMinHeight = isMobile ? '320px' : mergedStyles.minHeight || '500px';
     const resolvedMarginLeft = isMobile ? 'auto' : mergedStyles.marginLeft;
     const resolvedMarginRight = isMobile ? 'auto' : mergedStyles.marginRight;
 
     return (
-      <CarouselItem
-        key={slide.id}
-        className="p-0 shadow-none border-none w-full"
-        style={{ boxShadow: 'none' }}
-      >
+      <CarouselItem key={slide.id} className="p-0 shadow-none border-none" style={{ boxShadow: 'none' }}>
         <div 
-          className={getSlideClasses(deviceType)}
+          className={getSlideClasses()}
           style={{
             minHeight: resolvedMinHeight,
             maxWidth: resolvedMaxWidth,
@@ -216,9 +215,10 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
           {/* Content Container */}
           <div className={cn(
             "relative z-10 w-full",
-            isOverlay && (isMobile ? "text-white px-4 py-8 text-center mx-auto" : "max-w-4xl mx-auto text-white p-8"),
-            isSideBySide && !isMobile && "contents",
-            isTextOnly && "max-w-4xl mx-auto"
+            isOverlay && "max-w-4xl mx-auto text-white p-8",
+            isSideBySide && "contents",
+            isTextOnly && "max-w-4xl mx-auto",
+            isMobile && "px-4 w-full"
           )}>
             
             {/* Text Content */}
@@ -226,13 +226,12 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               "space-y-6 w-full",
               isSideBySide && "order-2 lg:order-1",
               getTextAlignment(),
-              isMobile && "flex flex-col items-center text-center px-4"
+              isMobile && "flex flex-col items-center text-center"
             )}>
               {slide.subHeadline && (
                 <p 
                   className={cn(
                     "font-medium uppercase tracking-wide opacity-80",
-                    isMobile && "text-center w-full",
                     current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                   )}
                   style={{
@@ -249,7 +248,6 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               <h2 
                 className={cn(
                   "font-bold leading-tight",
-                  isMobile && "text-center w-full",
                   current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                 )}
                 style={{
@@ -295,6 +293,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                     size={buttonSize}
                     className={cn(
                       "px-8 py-4",
+                      isMobile && "w-full max-w-xs",
                       current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                     )}
                     style={{
@@ -372,7 +371,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
           opacity: mergedStyles.opacity,
           boxShadow: mergedStyles.boxShadow,
           transform: mergedStyles.transform,
-          width: isMobile ? '100%' : mergedStyles.width,
+          width: isMobile ? '100vw' : mergedStyles.width,
         }}
       >
         <Carousel
