@@ -392,6 +392,8 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                 ? '100%'
                 : mergedStyles.width,
           maxWidth: editorMobileMaxWidth || mergedStyles.maxWidth,
+          marginLeft: isEditorContext && isMobile ? 'auto' : mergedStyles.marginLeft,
+          marginRight: isEditorContext && isMobile ? 'auto' : mergedStyles.marginRight,
         }}
       >
         <Carousel
