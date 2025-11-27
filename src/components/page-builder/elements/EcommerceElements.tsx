@@ -58,15 +58,15 @@ const ProductGridElement: React.FC<{
       return map[m] || 'grid-cols-1';
     }
     if (deviceType === 'tablet') {
-      // Respect single column layout
-      if (columnCount === 1) return 'grid-cols-1';
-      // Use explicit tablet columns when provided, fallback to heuristic
+      // Use explicit tablet columns when provided - this takes precedence
       const tCols = element.content.tabletColumns as number | undefined;
       if (typeof tCols === 'number') {
         const t = Math.max(1, Math.min(4, tCols));
         const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
         return map[t];
       }
+      // Only respect single column layout if tabletColumns is not explicitly set
+      if (columnCount === 1) return 'grid-cols-1';
       return (element.content.columns || 2) >= 4 ? 'grid-cols-3' : 'grid-cols-2';
     }
     const col = Math.min(columns, 4);
@@ -260,13 +260,15 @@ const FeaturedProductsElement: React.FC<{
       return map[m] || 'grid-cols-1';
     }
     if (deviceType === 'tablet') {
-      if (columnCount === 1) return 'grid-cols-1';
+      // Use explicit tablet columns when provided - this takes precedence
       const tCols = element.content.tabletColumns as number | undefined;
       if (typeof tCols === 'number') {
         const t = Math.max(1, Math.min(4, tCols));
         const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
         return map[t];
       }
+      // Only respect single column layout if tabletColumns is not explicitly set
+      if (columnCount === 1) return 'grid-cols-1';
       // auto heuristic
       return cols >= 4 ? 'grid-cols-3' : 'grid-cols-2';
     }
