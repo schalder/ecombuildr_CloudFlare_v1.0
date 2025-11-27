@@ -36,18 +36,22 @@ interface HeroSliderElementProps {
   element: PageBuilderElement;
   deviceType?: DeviceType;
   isPreview?: boolean;
+  isEditing?: boolean;
 }
 
 export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
   element,
   deviceType = 'desktop',
   isPreview = false,
+  isEditing = false,
 }) => {
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const isMobile = deviceType === 'mobile';
+  const isEditorContext = isEditing || isPreview;
+  const shouldUseViewportWidth = isMobile && !isEditorContext;
 
   const content = element.content as HeroSliderContent;
   const slides = content?.slides || [];
@@ -176,7 +180,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
       color: getStyleValue('buttonTextColor'),
     };
 
-    const resolvedWidth = isMobile ? '100vw' : mergedStyles.width || '100%';
+    const resolvedWidth = shouldUseViewportWidth ? '100vw' : isMobile ? '100%' : mergedStyles.width || '100%';
     const resolvedMaxWidth = isMobile ? '100%' : mergedStyles.maxWidth;
     const resolvedMinHeight = isMobile ? '320px' : mergedStyles.minHeight || '500px';
     const resolvedMarginLeft = isMobile ? 'auto' : mergedStyles.marginLeft;
@@ -364,14 +368,15 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
       <div 
         className={cn(
           `element-${element.id} relative overflow-hidden`,
-          isMobile && "w-full flex flex-col items-center"
+          isMobile && "w-full max-w-full flex flex-col items-center"
         )}
         style={{
           backgroundColor: mergedStyles.backgroundColor,
           opacity: mergedStyles.opacity,
           boxShadow: mergedStyles.boxShadow,
           transform: mergedStyles.transform,
-          width: isMobile ? '100vw' : mergedStyles.width,
+          width: shouldUseViewportWidth ? '100vw' : isMobile ? '100%' : mergedStyles.width,
+          maxWidth: isMobile ? '100%' : mergedStyles.maxWidth,
         }}
       >
         <Carousel
