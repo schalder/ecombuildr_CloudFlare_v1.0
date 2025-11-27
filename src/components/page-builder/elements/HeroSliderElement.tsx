@@ -195,21 +195,23 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
           {/* Content Container */}
           <div className={cn(
             "relative z-10 w-full",
-            isOverlay && "max-w-full md:max-w-4xl mx-auto text-white p-4 md:p-8",
+            isOverlay && "max-w-full md:max-w-4xl mx-auto text-white p-4 md:p-8 flex flex-col items-center justify-center",
             isSideBySide && "contents",
-            isTextOnly && "max-w-full md:max-w-4xl mx-auto"
+            isTextOnly && "max-w-full md:max-w-4xl mx-auto flex flex-col items-center justify-center"
           )}>
             
             {/* Text Content */}
             <div className={cn(
               "space-y-6 w-full",
               isSideBySide && "order-2 lg:order-1",
-              getTextAlignment()
+              getTextAlignment(),
+              deviceType === 'mobile' && "flex flex-col items-center"
             )}>
               {slide.subHeadline && (
                 <p 
                   className={cn(
                     "font-medium uppercase tracking-wide opacity-80",
+                    deviceType === 'mobile' && "text-center w-full px-4",
                     current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                   )}
                   style={{
@@ -217,6 +219,8 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                     color: subHeadlineStyles.color || (isOverlay ? 'inherit' : 'currentColor'),
                     transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
                     transitionDelay: '0.2s',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
                   }}
                 >
                   {slide.subHeadline}
@@ -226,6 +230,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               <h2 
                 className={cn(
                   "font-bold leading-tight",
+                  deviceType === 'mobile' && "text-center w-full px-4",
                   current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                 )}
                 style={{
@@ -233,6 +238,8 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                   color: headlineStyles.color || (isOverlay ? 'inherit' : 'currentColor'),
                   transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
                   transitionDelay: '0.4s',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word',
                 }}
               >
                 {slide.headline}
@@ -242,7 +249,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                 <p 
                   className={cn(
                     "opacity-90",
-                    deviceType === 'mobile' ? "mx-auto max-w-full px-2" : (
+                    deviceType === 'mobile' ? "text-center mx-auto w-full px-4" : (
                       content?.textAlignment === 'center' && "mx-auto max-w-2xl",
                       content?.textAlignment === 'right' && "ml-auto max-w-2xl",
                       content?.textAlignment === 'left' && "mr-auto max-w-2xl"
@@ -254,6 +261,8 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                     color: paragraphStyles.color || (isOverlay ? 'inherit' : 'currentColor'),
                     transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
                     transitionDelay: '0.6s',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word',
                   }}
                 >
                   {slide.paragraph}
@@ -341,12 +350,16 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
       }} />
       
       <div 
-        className={`element-${element.id} relative overflow-hidden`}
+        className={cn(
+          `element-${element.id} relative overflow-hidden`,
+          deviceType === 'mobile' && "w-full flex flex-col items-center"
+        )}
         style={{
           backgroundColor: mergedStyles.backgroundColor,
           opacity: mergedStyles.opacity,
           boxShadow: mergedStyles.boxShadow,
           transform: mergedStyles.transform,
+          width: deviceType === 'mobile' ? '100%' : undefined,
         }}
       >
         <Carousel
