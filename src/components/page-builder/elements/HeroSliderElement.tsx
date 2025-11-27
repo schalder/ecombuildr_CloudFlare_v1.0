@@ -46,6 +46,7 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
   const [api, setApi] = useState<CarouselApi>();
   const [current, setCurrent] = useState(0);
   const [count, setCount] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const content = element.content as HeroSliderContent;
   const slides = content?.slides || [];
@@ -61,9 +62,16 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
 
     setCount(api.scrollSnapList().length);
     setCurrent(api.selectedScrollSnap() + 1);
+    
+    // Trigger animation on initial load
+    setIsAnimating(false);
+    setTimeout(() => setIsAnimating(true), 50);
 
     api.on("select", () => {
       setCurrent(api.selectedScrollSnap() + 1);
+      // Trigger animation on slide change
+      setIsAnimating(false);
+      setTimeout(() => setIsAnimating(true), 50);
     });
   }, [api]);
 
@@ -195,10 +203,15 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
             )}>
               {slide.subHeadline && (
                 <p 
-                  className="font-medium uppercase tracking-wide opacity-80"
+                  className={cn(
+                    "font-medium uppercase tracking-wide opacity-80",
+                    current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                  )}
                   style={{
                     fontSize: subHeadlineStyles.fontSize,
                     color: subHeadlineStyles.color || (isOverlay ? 'inherit' : 'currentColor'),
+                    transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
+                    transitionDelay: '0.2s',
                   }}
                 >
                   {slide.subHeadline}
@@ -206,10 +219,15 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
               )}
               
               <h2 
-                className="font-bold leading-tight"
+                className={cn(
+                  "font-bold leading-tight",
+                  current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                )}
                 style={{
                   fontSize: headlineStyles.fontSize,
                   color: headlineStyles.color || (isOverlay ? 'inherit' : 'currentColor'),
+                  transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
+                  transitionDelay: '0.4s',
                 }}
               >
                 {slide.headline}
@@ -221,11 +239,14 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                     "opacity-90",
                     content?.textAlignment === 'center' && "mx-auto max-w-2xl",
                     content?.textAlignment === 'right' && "ml-auto max-w-2xl",
-                    content?.textAlignment === 'left' && "mr-auto max-w-2xl"
+                    content?.textAlignment === 'left' && "mr-auto max-w-2xl",
+                    current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
                   )}
                   style={{
                     fontSize: paragraphStyles.fontSize,
                     color: paragraphStyles.color || (isOverlay ? 'inherit' : 'currentColor'),
+                    transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
+                    transitionDelay: '0.6s',
                   }}
                 >
                   {slide.paragraph}
@@ -241,11 +262,16 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
                 )}>
                   <Button 
                     size={buttonSize}
-                    className="px-8 py-4"
+                    className={cn(
+                      "px-8 py-4",
+                      current === index + 1 && isAnimating ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+                    )}
                     style={{
                       fontSize: buttonStyles.fontSize,
                       backgroundColor: buttonStyles.backgroundColor || undefined,
                       color: buttonStyles.color || undefined,
+                      transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
+                      transitionDelay: '0.8s',
                     }}
                     onClick={() => {
                       if (slide.buttonUrl && !isPreview) {
@@ -288,6 +314,19 @@ export const HeroSliderElement: React.FC<HeroSliderElementProps> = ({
           }
           .embla__container { 
             box-shadow: none !important; 
+          }
+          @keyframes slideInUp {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          .animate-slide-in-up {
+            animation: slideInUp 0.6s ease-out forwards;
           }
         ` 
       }} />
