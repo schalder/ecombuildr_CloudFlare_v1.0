@@ -16,6 +16,30 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Plus, Eye, Edit, ExternalLink, ShoppingCart, Store, FileText, Users, BarChart3, Globe, Zap } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
+type CurrencyCode = 'BDT' | 'USD' | 'INR' | 'EUR' | 'GBP';
+
+const SUPPORTED_CURRENCIES: CurrencyCode[] = ['BDT', 'USD', 'INR', 'EUR', 'GBP'];
+
+const currencySymbols: Record<CurrencyCode, string> = {
+  BDT: '৳',
+  USD: '$',
+  INR: '₹',
+  EUR: '€',
+  GBP: '£',
+};
+
+const currencyLocales: Record<CurrencyCode, string> = {
+  BDT: 'en-BD',
+  USD: 'en-US',
+  INR: 'en-IN',
+  EUR: 'en-IE',
+  GBP: 'en-GB',
+};
+
+const isCurrencyCode = (value: unknown): value is CurrencyCode => {
+  return typeof value === 'string' && SUPPORTED_CURRENCIES.includes(value as CurrencyCode);
+};
+
 interface Store {
   id: string;
   name: string;
@@ -73,6 +97,8 @@ export default function DashboardOverview() {
   const [funnels, setFunnels] = useState<Funnel[]>([]);
   const [websiteMap, setWebsiteMap] = useState<Record<string, string>>({});
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
+  const [websiteCurrencyMap, setWebsiteCurrencyMap] = useState<Record<string, CurrencyCode>>({});
+  const [funnelCurrencyMap, setFunnelCurrencyMap] = useState<Record<string, CurrencyCode>>({});
   const [loading, setLoading] = useState(true);
   const [operationalLoading, setOperationalLoading] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -144,7 +170,7 @@ export default function DashboardOverview() {
 
       const { count: customersCount } = await customersQuery;
 
-      // Get websites and funnels
+      // Get websites and funnels with settings for currency
       const [
         { data: websitesData },
         { data: funnelsData },
@@ -152,12 +178,12 @@ export default function DashboardOverview() {
       ] = await Promise.all([
         supabase
           .from('websites')
-          .select('id, name, slug')
+          .select('id, name, slug, settings')
           .eq('store_id', store.id)
           .eq('is_active', true),
         supabase
           .from('funnels')
-          .select('id, name, slug, canonical_domain')
+          .select('id, name, slug, canonical_domain, settings')
           .eq('store_id', store.id)
           .eq('is_active', true),
         supabase
@@ -172,19 +198,31 @@ export default function DashboardOverview() {
       // Create lookup maps
       const websiteNameMap: Record<string, string> = {};
       const funnelNameMap: Record<string, string> = {};
+      const websiteCurrencyLookup: Record<string, CurrencyCode> = {};
+      const funnelCurrencyLookup: Record<string, CurrencyCode> = {};
       
       (websitesData || []).forEach(w => {
         websiteNameMap[w.id] = w.name;
+        const code = (w.settings as any)?.currency?.code || (w.settings as any)?.currency_code;
+        if (isCurrencyCode(code)) {
+          websiteCurrencyLookup[w.id] = code;
+        }
       });
       
       (funnelsData || []).forEach(f => {
         funnelNameMap[f.id] = f.name;
+        const code = (f.settings as any)?.currency_code;
+        if (isCurrencyCode(code)) {
+          funnelCurrencyLookup[f.id] = code;
+        }
       });
 
       setWebsites(websitesData || []);
       setFunnels(funnelsData || []);
       setWebsiteMap(websiteNameMap);
       setFunnelMap(funnelNameMap);
+      setWebsiteCurrencyMap(websiteCurrencyLookup);
+      setFunnelCurrencyMap(funnelCurrencyLookup);
 
       const totalRevenue = ordersData?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
       const totalOrders = ordersData?.length || 0;
@@ -299,6 +337,31 @@ export default function DashboardOverview() {
     }
   };
 
+  const getOrderCurrency = (order: RecentOrder | null | undefined): CurrencyCode => {
+    if (!order) return 'BDT';
+    if (order.funnel_id && funnelCurrencyMap[order.funnel_id]) return funnelCurrencyMap[order.funnel_id];
+    if (order.website_id && websiteCurrencyMap[order.website_id]) return websiteCurrencyMap[order.website_id];
+    return 'BDT';
+  };
+
+  const formatOrderTotal = (order: RecentOrder): string => {
+    const currency = getOrderCurrency(order);
+    const symbol = currencySymbols[currency];
+    const locale = currencyLocales[currency];
+    const amount = Number(order.total);
+    
+    try {
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    } catch {
+      return `${symbol}${amount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    }
+  };
+
   return (
     <DashboardLayout 
       title="Dashboard" 
@@ -372,7 +435,7 @@ export default function DashboardOverview() {
                         <Badge className={getStatusColor(order.status)}>
                           {order.status}
                         </Badge>
-                        <div className="font-medium">৳{Number(order.total).toLocaleString()}</div>
+                        <div className="font-medium">{formatOrderTotal(order)}</div>
                       </div>
                     </div>
                   ))}
