@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { useUserStore } from "@/hooks/useUserStore";
+import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 
 type Props = {
   storeId: string;
@@ -40,6 +41,16 @@ interface PaymentSettings {
     secret_key?: string;
     is_live?: boolean;
   };
+  stripe?: {
+    enabled: boolean;
+    stripe_account_id?: string;
+    access_token?: string; // Encrypted
+    refresh_token?: string; // Encrypted
+    account_email?: string; // For display
+    account_name?: string; // For display
+    publishable_key?: string;
+    is_live?: boolean;
+  };
 }
 
 export default function PaymentSettings({ storeId }: Props) {
@@ -51,7 +62,9 @@ export default function PaymentSettings({ storeId }: Props) {
     nagad: { enabled: false, mode: 'number' },
     eps: { enabled: false, is_live: false },
     ebpay: { enabled: false, is_live: false },
+    stripe: { enabled: false, is_live: false },
   });
+  const [connectingStripe, setConnectingStripe] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -72,6 +85,7 @@ export default function PaymentSettings({ storeId }: Props) {
             nagad: paymentSettings.nagad || { enabled: false, mode: 'number' },
             eps: paymentSettings.eps || { enabled: false, is_live: false },
             ebpay: paymentSettings.ebpay || { enabled: false, is_live: false },
+            stripe: paymentSettings.stripe || { enabled: false, is_live: false },
           });
         }
       } catch (error) {
@@ -115,6 +129,7 @@ export default function PaymentSettings({ storeId }: Props) {
         nagad: settings.nagad,
         eps: settings.eps,
         ebpay: settings.ebpay,
+        stripe: settings.stripe,
       } as any;
 
       const { error } = await supabase
@@ -189,6 +204,113 @@ export default function PaymentSettings({ storeId }: Props) {
         ...updates 
       }
     }));
+  };
+
+  const updateStripeSettings = (updates: Partial<NonNullable<PaymentSettings['stripe']>>) => {
+    setSettings(prev => ({
+      ...prev,
+      stripe: { 
+        enabled: false,
+        is_live: false,
+        ...(prev.stripe || {}), 
+        ...updates 
+      }
+    }));
+  };
+
+  const handleConnectStripe = async () => {
+    try {
+      setConnectingStripe(true);
+      
+      // Call stripe-connect Edge Function to initiate OAuth
+      const { data, error } = await supabase.functions.invoke('stripe-connect', {
+        body: { storeId },
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data?.oauth_url) {
+        // Redirect to Stripe OAuth page
+        window.location.href = data.oauth_url;
+      } else {
+        throw new Error(data?.error || 'Failed to initiate Stripe connection');
+      }
+    } catch (error: any) {
+      console.error('Error connecting Stripe:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to connect Stripe account",
+        variant: "destructive",
+      });
+      setConnectingStripe(false);
+    }
+  };
+
+  const handleDisconnectStripe = async () => {
+    try {
+      setSaving(true);
+      
+      // Get current store settings
+      const { data: currentData, error: fetchError } = await supabase
+        .from('stores')
+        .select('settings')
+        .eq('id', storeId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const currentSettings = (currentData?.settings as Record<string, any>) || {};
+      
+      // Remove Stripe configuration
+      const updatedSettings = {
+        ...currentSettings,
+        payment: {
+          ...(currentSettings.payment || {}),
+          stripe: {
+            enabled: false,
+            is_live: false,
+          },
+        },
+        stripe: {
+          enabled: false,
+          is_live: false,
+        },
+      };
+
+      const { error } = await supabase
+        .from('stores')
+        .update({ settings: updatedSettings })
+        .eq('id', storeId);
+
+      if (error) throw error;
+
+      // Update local state
+      updateStripeSettings({
+        enabled: false,
+        stripe_account_id: undefined,
+        access_token: undefined,
+        refresh_token: undefined,
+        account_email: undefined,
+        account_name: undefined,
+        publishable_key: undefined,
+      });
+
+      await refetch();
+
+      toast({
+        title: "Success",
+        description: "Stripe account disconnected successfully",
+      });
+    } catch (error) {
+      console.error('Error disconnecting Stripe:', error);
+      toast({
+        title: "Error",
+        description: "Failed to disconnect Stripe account",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   if (loading) {
@@ -376,6 +498,91 @@ export default function PaymentSettings({ storeId }: Props) {
             />
             <Label htmlFor="ebpay-live-mode">Live Mode (Uncheck for Sandbox)</Label>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Stripe Payment Gateway Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            Stripe Payment Gateway
+            <Switch
+              checked={settings.stripe?.enabled || false}
+              onCheckedChange={(enabled) => updateStripeSettings({ enabled })}
+              disabled={!settings.stripe?.stripe_account_id}
+            />
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {settings.stripe?.stripe_account_id ? (
+            <>
+              <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-md">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                    Connected to Stripe
+                  </p>
+                  {settings.stripe.account_email && (
+                    <p className="text-xs text-green-700 dark:text-green-300">
+                      {settings.stripe.account_name || settings.stripe.account_email}
+                    </p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="stripe-live-mode"
+                  checked={settings.stripe?.is_live || false}
+                  onCheckedChange={(is_live) => updateStripeSettings({ is_live })}
+                />
+                <Label htmlFor="stripe-live-mode">Live Mode (Uncheck for Test Mode)</Label>
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={handleDisconnectStripe}
+                disabled={saving}
+                className="w-full"
+              >
+                {saving ? "Disconnecting..." : "Disconnect Stripe Account"}
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="p-4 border border-dashed rounded-md">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Connect your Stripe account to accept international payments via credit cards, debit cards, and other payment methods supported by Stripe.
+                </p>
+                <Button
+                  onClick={handleConnectStripe}
+                  disabled={connectingStripe}
+                  className="w-full"
+                >
+                  {connectingStripe ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    "Connect Stripe Account"
+                  )}
+                </Button>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="stripe-live-mode"
+                  checked={settings.stripe?.is_live || false}
+                  onCheckedChange={(is_live) => updateStripeSettings({ is_live })}
+                  disabled={true}
+                />
+                <Label htmlFor="stripe-live-mode" className="text-muted-foreground">
+                  Live Mode (Connect account first)
+                </Label>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

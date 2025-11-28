@@ -12,7 +12,7 @@ const corsHeaders = {
 interface VerifyPaymentRequest {
   orderId: string;
   paymentId: string;
-  method: 'bkash' | 'nagad' | 'eps';
+  method: 'bkash' | 'nagad' | 'eps' | 'stripe';
 }
 
 serve(async (req) => {
@@ -61,6 +61,9 @@ serve(async (req) => {
         }
         break;
       }
+      case 'stripe':
+        paymentStatus = await verifyStripePayment(paymentId, order.store_id, supabase);
+        break;
     }
 
     // ✅ Determine order status based on product types (only for successful payments)
@@ -327,6 +330,104 @@ async function verifyEPSPayment(transactionId: string, storeId: string, supabase
     return verifyResult.Status === 'Success' ? 'success' : 'failed';
   } catch (error) {
     console.error('EPS verification error:', error);
+    return 'failed';
+  }
+}
+
+async function verifyStripePayment(paymentId: string, storeId: string, supabase: any): Promise<string> {
+  try {
+    // Get store settings for Stripe configuration
+    const { data: store, error: storeError } = await supabase
+      .from('stores')
+      .select('settings')
+      .eq('id', storeId)
+      .single();
+
+    if (storeError || !store?.settings?.payment?.stripe) {
+      console.error('Stripe configuration not found for store:', storeId);
+      return 'failed';
+    }
+
+    const stripeConfig = store.settings.payment.stripe;
+
+    if (!stripeConfig.stripe_account_id || !stripeConfig.access_token) {
+      console.error('Stripe account not connected');
+      return 'failed';
+    }
+
+    // Get encryption key
+    const ENCRYPTION_KEY = Deno.env.get('STRIPE_ENCRYPTION_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')?.slice(0, 32) || 'default-key-32-chars-long!!';
+
+    // Decrypt access token
+    const combined = Uint8Array.from(atob(stripeConfig.access_token), c => c.charCodeAt(0));
+    const iv = combined.slice(0, 12);
+    const encrypted = combined.slice(12);
+    
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(ENCRYPTION_KEY);
+    
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'AES-GCM', length: 256 },
+      false,
+      ['decrypt']
+    );
+    
+    const decrypted = await crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      cryptoKey,
+      encrypted
+    );
+    
+    const accessToken = new TextDecoder().decode(decrypted);
+
+    // Import Stripe SDK
+    const Stripe = (await import("https://esm.sh/stripe@14.21.0?target=deno")).default;
+    
+    // Initialize Stripe with store's access token
+    const stripe = new Stripe(accessToken, {
+      apiVersion: '2024-11-20.acacia',
+      httpClient: Stripe.createFetchHttpClient(),
+    });
+
+    // Retrieve PaymentIntent using the payment ID (could be session ID or payment intent ID)
+    // Try as payment intent ID first
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.retrieve(paymentId, {
+        stripeAccount: stripeConfig.stripe_account_id,
+      });
+    } catch (err) {
+      // If not found, try as checkout session ID
+      try {
+        const session = await stripe.checkout.sessions.retrieve(paymentId, {
+          stripeAccount: stripeConfig.stripe_account_id,
+        });
+        if (session.payment_intent) {
+          paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent as string, {
+            stripeAccount: stripeConfig.stripe_account_id,
+          });
+        } else {
+          return 'failed';
+        }
+      } catch (sessionErr) {
+        console.error('Stripe verification error:', sessionErr);
+        return 'failed';
+      }
+    }
+
+    // Check payment intent status
+    if (paymentIntent.status === 'succeeded') {
+      return 'success';
+    } else if (paymentIntent.status === 'requires_payment_method' || paymentIntent.status === 'canceled') {
+      return 'failed';
+    } else {
+      // Other statuses like 'processing', 'requires_confirmation', etc.
+      return 'failed';
+    }
+  } catch (error) {
+    console.error('Stripe verification error:', error);
     return 'failed';
   }
 }

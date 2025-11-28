@@ -1017,7 +1017,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     customer_name: '', customer_email: '', customer_phone: '',
     shipping_address: '', shipping_city: '', shipping_area: '',
     shipping_country: '', shipping_state: '', shipping_postal_code: '',
-    payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay', payment_transaction_number: '', notes: '',
+    payment_method: 'cod' as 'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay' | 'stripe', payment_transaction_number: '', notes: '',
     accept_terms: false,
     custom_fields: {} as Record<string, any>,
     selectedShippingOption: '',
@@ -1041,7 +1041,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     }
   }, [websiteShipping, selectedShippingOption]);
   const [loading, setLoading] = useState(false);
-  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay'>>(['cod','bkash','nagad','eps','ebpay']);
+  const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay' | 'stripe'>>(['cod','bkash','nagad','eps','ebpay','stripe']);
   const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any; product_type?: string }>>(new Map());
   
   // Validation error states
@@ -1080,8 +1080,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         nagad: !!store?.settings?.nagad?.enabled,
         eps: !!store?.settings?.eps?.enabled,
         ebpay: !!store?.settings?.ebpay?.enabled,
+        stripe: !!store?.settings?.payment?.stripe?.enabled && !!store?.settings?.payment?.stripe?.stripe_account_id,
       };
-      let base = ['cod','bkash','nagad','eps','ebpay'].filter((m) => (storeAllowed as any)[m]);
+      let base = ['cod','bkash','nagad','eps','ebpay','stripe'].filter((m) => (storeAllowed as any)[m]);
       if (base.length === 0) base = ['cod'];
       setAllowedMethods(base as any);
       if (!base.includes(form.payment_method)) setForm(prev => ({ ...prev, payment_method: base[0] as any }));
@@ -1093,7 +1094,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         .from('products')
         .select('id, allowed_payment_methods')
         .in('id', ids);
-      let acc: string[] = ['cod','bkash','nagad','eps','ebpay'];
+      let acc: string[] = ['cod','bkash','nagad','eps','ebpay','stripe'];
       (data || []).forEach((p: any) => {
         const arr: string[] | null = p.allowed_payment_methods;
         if (arr && arr.length > 0) {
@@ -1106,6 +1107,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         nagad: !!store?.settings?.nagad?.enabled,
         eps: !!store?.settings?.eps?.enabled,
         ebpay: !!store?.settings?.ebpay?.enabled,
+        stripe: !!store?.settings?.payment?.stripe?.enabled && !!store?.settings?.payment?.stripe?.stripe_account_id,
       };
       acc = acc.filter((m) => (storeAllowed as any)[m]);
       if (acc.length === 0) acc = ['cod'];
@@ -1397,9 +1399,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       if (!orderId) throw new Error('Order was not created');
       const orderResponse = data;
       
-      // For EPS/EB Pay, store checkout data for potential deferred order creation
+      // For EPS/EB Pay/Stripe, store checkout data for potential deferred order creation
       // (though order is already created, this is kept for backward compatibility)
-      const isLivePayment = form.payment_method === 'eps' || form.payment_method === 'ebpay';
+      const isLivePayment = form.payment_method === 'eps' || form.payment_method === 'ebpay' || form.payment_method === 'stripe';
       if (isLivePayment) {
         sessionStorage.setItem('pending_checkout', JSON.stringify({
           orderData,
@@ -1500,6 +1502,60 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
             } 
           });
           break;
+        case 'stripe': {
+          // Get currency from website/funnel settings
+          let currency = 'USD'; // Default to USD for Stripe
+          try {
+            if (funnelId) {
+              const { data: funnel } = await supabase
+                .from('funnels')
+                .select('settings, website_id')
+                .eq('id', funnelId)
+                .single();
+              if (funnel?.settings?.currency_code) {
+                currency = funnel.settings.currency_code;
+              } else if (funnel?.website_id) {
+                const { data: website } = await supabase
+                  .from('websites')
+                  .select('settings')
+                  .eq('id', funnel.website_id)
+                  .maybeSingle();
+                currency = (website?.settings as any)?.currency?.code || (website?.settings as any)?.currency_code || 'USD';
+              }
+            } else if (websiteId) {
+              const { data: website } = await supabase
+                .from('websites')
+                .select('settings')
+                .eq('id', websiteId)
+                .single();
+              currency = (website?.settings as any)?.currency?.code || (website?.settings as any)?.currency_code || 'USD';
+            }
+          } catch (err) {
+            console.error('Error fetching currency:', err);
+            // Use default USD
+          }
+          
+          response = await supabase.functions.invoke('stripe-payment', { 
+            body: { 
+              orderId: orderId, // ✅ Use real orderId (order already created)
+              amount, 
+              storeId: store!.id, 
+              redirectOrigin: window.location.origin,
+              currency,
+              customerData: { 
+                name: form.customer_name, 
+                email: form.customer_email, 
+                phone: form.customer_phone, 
+                address: form.shipping_address, 
+                city: form.shipping_city, 
+                country: form.shipping_country || 'US', 
+                state: form.shipping_state, 
+                postal_code: form.shipping_postal_code 
+              } 
+            } 
+          });
+          break;
+        }
         default:
           throw new Error('Invalid payment method');
       }
@@ -1816,6 +1872,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     {allowedMethods.includes('nagad') && (<SelectItem value="nagad">Nagad</SelectItem>)}
                     {allowedMethods.includes('eps') && (<SelectItem value="eps">Bank/Card/MFS (EPS)</SelectItem>)}
                     {allowedMethods.includes('ebpay') && (<SelectItem value="ebpay">EB Pay</SelectItem>)}
+                    {allowedMethods.includes('stripe') && (<SelectItem value="stripe">Credit/Debit Card (Stripe)</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {form.payment_method === 'bkash' && store?.settings?.bkash?.mode === 'number' && store?.settings?.bkash?.number && (

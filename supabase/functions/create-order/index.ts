@@ -29,7 +29,7 @@ type OrderInput = {
   shipping_country?: string | null;
   shipping_state?: string | null;
   shipping_postal_code?: string | null;
-  payment_method: 'cod' | 'bkash' | 'nagad' | 'sslcommerz';
+  payment_method: 'cod' | 'bkash' | 'nagad' | 'sslcommerz' | 'stripe';
   payment_transaction_number?: string | null;
   notes?: string | null;
   subtotal: number;
@@ -306,13 +306,13 @@ serve(async (req) => {
     const allowedStatuses = new Set(['pending','confirmed','processing','shipped','delivered','cancelled','payment_failed','pending_payment']);
     
     // ✅ Determine default status based on payment method and product types
-    // For EBPay/EPS: Use 'pending_payment' (incomplete orders until payment verified)
+    // For EBPay/EPS/Stripe: Use 'pending_payment' (incomplete orders until payment verified)
     // For COD: Digital products = 'delivered', Physical products = 'pending'
     // For other payment methods: Use 'processing' as default
     let defaultStatus = 'processing';
-    if (order.payment_method === 'eps' || order.payment_method === 'ebpay') {
+    if (order.payment_method === 'eps' || order.payment_method === 'ebpay' || order.payment_method === 'stripe') {
       defaultStatus = 'pending_payment';
-      console.log('EBPay/EPS order: status set to pending_payment (incomplete order)');
+      console.log(`${order.payment_method.toUpperCase()} order: status set to pending_payment (incomplete order)`);
     } else if (order.payment_method === 'cod') {
       defaultStatus = 'pending';
     }
@@ -348,8 +348,8 @@ serve(async (req) => {
     }
     
     const incomingStatus = (order.status || '').toLowerCase();
-    // For EBPay/EPS, always use 'pending_payment' unless explicitly set to a valid status
-    const safeStatus = (order.payment_method === 'eps' || order.payment_method === 'ebpay') && !allowedStatuses.has(incomingStatus)
+    // For EBPay/EPS/Stripe, always use 'pending_payment' unless explicitly set to a valid status
+    const safeStatus = (order.payment_method === 'eps' || order.payment_method === 'ebpay' || order.payment_method === 'stripe') && !allowedStatuses.has(incomingStatus)
       ? 'pending_payment'
       : (allowedStatuses.has(incomingStatus) ? incomingStatus : defaultStatus);
 
