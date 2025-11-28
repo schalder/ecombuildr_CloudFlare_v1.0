@@ -576,7 +576,11 @@ export const renderElementStyles = (element: PageBuilderElement, deviceType: 'de
     // Typography
     if (element.styles.color) styles.color = element.styles.color;
     if (element.styles.fontSize) styles.fontSize = element.styles.fontSize;
-    if (element.styles.lineHeight) styles.lineHeight = element.styles.lineHeight;
+    // Note: lineHeight can be set in base styles OR responsive styles, so we'll let mergeResponsiveStyles handle it
+    // But we still set it here if it exists in base styles for backward compatibility
+    if (element.styles.lineHeight !== undefined && element.styles.lineHeight !== null && element.styles.lineHeight !== '') {
+      styles.lineHeight = element.styles.lineHeight;
+    }
     if (element.styles.textAlign) styles.textAlign = element.styles.textAlign;
     if (element.styles.fontWeight) styles.fontWeight = element.styles.fontWeight;
     if (element.styles.fontFamily) styles.fontFamily = element.styles.fontFamily;

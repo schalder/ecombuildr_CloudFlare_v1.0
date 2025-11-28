@@ -37,14 +37,19 @@ const HeadingElement: React.FC<{
   const elementStyles = renderElementStyles(element, deviceType);
   
   // Apply defaults only if not already set by responsive styles
+  // Note: lineHeight fallback should only apply if truly undefined (not empty string or null)
   const cleanStyles = {
     textAlign: elementStyles.textAlign || 'center',
     color: elementStyles.color || 'inherit',
     fontSize: elementStyles.fontSize || `${3.5 - level * 0.5}rem`,
-    lineHeight: elementStyles.lineHeight || '1.2',
     backgroundColor: elementStyles.backgroundColor || 'transparent',
-    ...elementStyles, // Apply all styles from renderElementStyles
+    ...elementStyles, // Apply all styles from renderElementStyles (includes responsive lineHeight)
   } as React.CSSProperties;
+  
+  // Apply lineHeight fallback only if it's not set after the spread
+  if (!cleanStyles.lineHeight || cleanStyles.lineHeight === '') {
+    cleanStyles.lineHeight = '1.2';
+  }
 
   const className = [`element-${element.id}`, 'outline-none font-bold block rounded'].join(' ');
 
