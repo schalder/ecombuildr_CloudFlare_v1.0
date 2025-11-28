@@ -65,8 +65,15 @@ const HeadingElement: React.FC<{
             placeholder="Enter heading text..."
             disabled={false}
             variant="heading"
-            className="font-inherit leading-tight"
-            style={{ textAlign: cleanStyles.textAlign as any }}
+            className="font-inherit"
+            style={{ 
+              textAlign: cleanStyles.textAlign as any,
+              lineHeight: cleanStyles.lineHeight,
+              fontSize: cleanStyles.fontSize,
+              color: cleanStyles.color,
+              fontFamily: cleanStyles.fontFamily,
+              fontWeight: cleanStyles.fontWeight
+            }}
           />
         ) : (
           <span className="whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: sanitizeHtml(text, 'heading') }} />
