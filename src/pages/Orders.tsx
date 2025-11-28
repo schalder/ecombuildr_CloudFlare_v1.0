@@ -55,6 +55,7 @@ import { toast } from "@/hooks/use-toast";
 import { nameWithVariant, openWhatsApp } from '@/lib/utils';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { normalizePhoneNumber } from "@/utils/authValidation";
+import type { CurrencyCode } from '@/lib/currency';
 
 interface Order {
   id: string;
@@ -88,6 +89,37 @@ const statusColors = {
   delivered: "default",
   cancelled: "destructive",
 } as const;
+
+const SUPPORTED_CURRENCIES: CurrencyCode[] = ['BDT', 'USD', 'INR', 'EUR', 'GBP'];
+
+const currencySymbols: Record<CurrencyCode, string> = {
+  BDT: '৳',
+  USD: '$',
+  INR: '₹',
+  EUR: '€',
+  GBP: '£',
+};
+
+const currencyLocales: Record<CurrencyCode, string> = {
+  BDT: 'en-BD',
+  USD: 'en-US',
+  INR: 'en-IN',
+  EUR: 'en-IE',
+  GBP: 'en-GB',
+};
+
+const isCurrencyCode = (value: unknown): value is CurrencyCode => {
+  return typeof value === 'string' && SUPPORTED_CURRENCIES.includes(value as CurrencyCode);
+};
+
+const formatAmount = (amount: number, code: CurrencyCode) => {
+  const locale = currencyLocales[code] || 'en-US';
+  const symbol = currencySymbols[code] || '';
+  return `${symbol}${(amount ?? 0).toLocaleString(locale, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })}`;
+};
 
 // Normalize IP address (remove port, trim whitespace)
 function normalizeIP(ip: string | null | undefined): string | null {
@@ -156,6 +188,8 @@ export default function Orders() {
   const [pushing, setPushing] = useState(false);
   const [websiteMap, setWebsiteMap] = useState<Record<string, string>>({});
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
+  const [websiteCurrencyMap, setWebsiteCurrencyMap] = useState<Record<string, CurrencyCode>>({});
+  const [funnelCurrencyMap, setFunnelCurrencyMap] = useState<Record<string, CurrencyCode>>({});
   const [isIPBlocked, setIsIPBlocked] = useState<boolean>(false);
   const [blockedIPInfo, setBlockedIPInfo] = useState<any>(null);
   
@@ -170,6 +204,25 @@ export default function Orders() {
   const ordersPerPage = 10;
   
   const isMobile = useIsMobile();
+
+  const getOrderCurrency = (order: Order | null | undefined): CurrencyCode => {
+    if (!order) return 'BDT';
+    if (order.funnel_id && funnelCurrencyMap[order.funnel_id]) {
+      return funnelCurrencyMap[order.funnel_id];
+    }
+    if (order.website_id && websiteCurrencyMap[order.website_id]) {
+      return websiteCurrencyMap[order.website_id];
+    }
+    return 'BDT';
+  };
+
+  const formatOrderTotal = (order: Order) => {
+    return formatAmount(order.total, getOrderCurrency(order));
+  };
+
+  const formatSelectedOrderAmount = (amount: number) => {
+    return formatAmount(amount, getOrderCurrency(selectedOrder));
+  };
   useEffect(() => {
     if (user) {
       if (activeTab === 'fake') {
@@ -421,12 +474,12 @@ export default function Orders() {
             .range(offset, offset + ordersPerPage - 1),
           supabase
             .from('websites')
-            .select('id, name')
+            .select('id, name, settings')
             .in('store_id', storeIds)
             .eq('is_active', true),
           supabase
             .from('funnels')
-            .select('id, name')
+            .select('id, name, settings')
             .in('store_id', storeIds)
             .eq('is_active', true)
         ]);
@@ -434,19 +487,33 @@ export default function Orders() {
         // Create lookup maps
         const websiteNameMap: Record<string, string> = {};
         const funnelNameMap: Record<string, string> = {};
+        const websiteCurrencyLookup: Record<string, CurrencyCode> = {};
+        const funnelCurrencyLookup: Record<string, CurrencyCode> = {};
         
         (websites || []).forEach(w => {
           websiteNameMap[w.id] = w.name;
+          const code = (w.settings as any)?.currency?.code || (w.settings as any)?.currency_code;
+          if (isCurrencyCode(code)) {
+            websiteCurrencyLookup[w.id] = code;
+          }
         });
         
         (funnels || []).forEach(f => {
           funnelNameMap[f.id] = f.name;
+          const code = (f.settings as any)?.currency_code;
+          if (isCurrencyCode(code)) {
+            funnelCurrencyLookup[f.id] = code;
+          }
         });
 
         setWebsiteMap(websiteNameMap);
         setFunnelMap(funnelNameMap);
+        setWebsiteCurrencyMap(websiteCurrencyLookup);
+        setFunnelCurrencyMap(funnelCurrencyLookup);
 
         if (ordersError) throw ordersError;
+        if (websitesError) throw websitesError;
+        if (funnelsError) throw funnelsError;
         setOrders(orders || []);
 
         // Fetch items for these orders to summarize products/variants in list
@@ -1949,7 +2016,7 @@ export default function Orders() {
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <div className="text-right">
-                            <div className="font-semibold">৳{order.total.toLocaleString()}</div>
+                            <div className="font-semibold">{formatOrderTotal(order)}</div>
                             <div className="text-xs text-muted-foreground">
                               <div className="flex items-center gap-1.5">
                                 <span>{order.payment_method.toUpperCase()}</span>
@@ -2253,7 +2320,7 @@ export default function Orders() {
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">
-                        ৳{order.total.toLocaleString()}
+                        {formatOrderTotal(order)}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -2533,7 +2600,7 @@ export default function Orders() {
                         </p>
                       )}
                     </div>
-                    <p>Total: ৳{selectedOrder.total.toLocaleString()}</p>
+                    <p>Total: {formatOrderTotal(selectedOrder)}</p>
                     <p>Payment: {selectedOrder.payment_method}
                       {selectedOrder.payment_transaction_number && ` (TXN: ${selectedOrder.payment_transaction_number})`}
                     </p>
@@ -2614,7 +2681,7 @@ export default function Orders() {
                     {selectedOrderItems.map((it: any, idx: number) => (
                       <div key={idx} className="flex justify-between text-sm">
                         <span>{nameWithVariant(it.product_name, it.variation)} × {it.quantity}</span>
-                        <span>৳{Number(it.total).toFixed(2)}</span>
+                        <span>{formatSelectedOrderAmount(Number(it.total) || 0)}</span>
                       </div>
                     ))}
                   </div>
