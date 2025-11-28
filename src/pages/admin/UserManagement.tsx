@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Search, 
   Filter,
@@ -37,6 +38,7 @@ const UserManagement = () => {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+  const [planLimits, setPlanLimits] = useState<any[]>([]);
 
   // Upgrade form state
   const [upgradeForm, setUpgradeForm] = useState({
@@ -55,6 +57,29 @@ const UserManagement = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, planFilter]);
+
+  // Fetch plan limits from database
+  useEffect(() => {
+    const fetchPlanLimits = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('plan_limits')
+          .select('plan_name, price_bdt')
+          .order('price_bdt', { ascending: true });
+
+        if (error) throw error;
+        setPlanLimits(data || []);
+      } catch (err) {
+        console.error('Error loading plan limits:', err);
+        toast({
+          title: 'Warning',
+          description: 'Failed to load plan prices. Using default values.',
+          variant: 'destructive',
+        });
+      }
+    };
+    fetchPlanLimits();
+  }, []);
 
   const handlePlanUpdate = async (userId: string, newPlan: string) => {
     const success = await updateUserPlan(userId, newPlan);
@@ -139,14 +164,13 @@ const UserManagement = () => {
       durationInDays *= 365;
     }
 
-    // Calculate price based on plan and duration
-    const planPrices = {
-      starter: 500,
-      professional: 1000,
-      enterprise: 2999
-    };
+    // Calculate price based on plan and duration from database
+    const planPrices = planLimits.reduce((acc, plan) => {
+      acc[plan.plan_name] = plan.price_bdt;
+      return acc;
+    }, {} as Record<string, number>);
     
-    let totalPrice = planPrices[upgradeForm.plan as keyof typeof planPrices] || 0;
+    let totalPrice = planPrices[upgradeForm.plan] || 0;
     if (upgradeForm.durationType === 'year') {
       totalPrice *= 10; // 10 months worth for yearly
     } else if (upgradeForm.durationType === 'month') {
@@ -479,9 +503,13 @@ const UserManagement = () => {
                     <SelectValue placeholder="Select plan" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="starter">Starter (৳500/month)</SelectItem>
-                    <SelectItem value="professional">Professional (৳1,000/month)</SelectItem>
-                    <SelectItem value="enterprise">Enterprise (৳2,999/month)</SelectItem>
+                    {planLimits
+                      .filter(plan => plan.plan_name !== 'free')
+                      .map(plan => (
+                        <SelectItem key={plan.plan_name} value={plan.plan_name}>
+                          {plan.plan_name.charAt(0).toUpperCase() + plan.plan_name.slice(1)} (৳{plan.price_bdt.toLocaleString()}/month)
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -559,8 +587,11 @@ const UserManagement = () => {
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Total: ৳{(() => {
-                      const planPrices = { starter: 500, professional: 1000, enterprise: 2999 };
-                      let totalPrice = planPrices[upgradeForm.plan as keyof typeof planPrices] || 0;
+                      const planPrices = planLimits.reduce((acc, plan) => {
+                        acc[plan.plan_name] = plan.price_bdt;
+                        return acc;
+                      }, {} as Record<string, number>);
+                      let totalPrice = planPrices[upgradeForm.plan] || 0;
                       if (upgradeForm.durationType === 'year') {
                         totalPrice *= 10; // 10 months worth for yearly
                       } else if (upgradeForm.durationType === 'month') {
