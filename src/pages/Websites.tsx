@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Globe, Settings, ExternalLink, Eye, Edit, Trash2 } from 'lucide-react';
+import { Plus, Globe, Settings, ExternalLink, Eye, Edit, Trash2, Copy } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUserStore } from '@/hooks/useUserStore';
+import { CloneWebsiteModal } from '@/components/modals/CloneWebsiteModal';
 
 interface Website {
   id: string;
@@ -32,6 +33,7 @@ export default function Websites() {
   const { store } = useUserStore();
   const queryClient = useQueryClient();
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; websiteId: string; websiteName: string }>({ open: false, websiteId: '', websiteName: '' });
+  const [cloneModal, setCloneModal] = useState<{ open: boolean; websiteId: string; websiteName: string }>({ open: false, websiteId: '', websiteName: '' });
 
   const { data: websites, isLoading } = useQuery({
     queryKey: ['websites', store?.id],
@@ -173,6 +175,16 @@ export default function Websites() {
     togglePublishMutation.mutate({ websiteId, isPublished: !currentStatus });
   };
 
+  const handleCloneWebsite = (websiteId: string, websiteName: string) => {
+    setCloneModal({ open: true, websiteId, websiteName });
+  };
+
+  const handleCloneSuccess = (clonedWebsiteId: string) => {
+    queryClient.invalidateQueries({ queryKey: ['websites'] });
+    // Optionally navigate to the cloned website
+    // navigate(`/dashboard/websites/${clonedWebsiteId}`);
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col space-y-6">
@@ -277,6 +289,14 @@ export default function Websites() {
                       <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => handleCloneWebsite(website.id, website.name)}
+                        title="Clone website"
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => handleDeleteWebsite(website.id, website.name)}
                         className="text-destructive hover:text-destructive"
                         disabled={deleteWebsiteMutation.isPending}
@@ -314,6 +334,14 @@ export default function Websites() {
           variant="destructive"
           onConfirm={confirmDelete}
           isLoading={deleteWebsiteMutation.isPending}
+        />
+
+        <CloneWebsiteModal
+          open={cloneModal.open}
+          onOpenChange={(open) => setCloneModal({ open, websiteId: '', websiteName: '' })}
+          websiteId={cloneModal.websiteId}
+          websiteName={cloneModal.websiteName}
+          onSuccess={handleCloneSuccess}
         />
       </div>
     </DashboardLayout>

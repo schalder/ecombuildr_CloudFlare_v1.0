@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign, GripVertical, Home, Trash2, Copy, CheckIcon, Users } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, ArrowUp, ArrowDown, CheckCircle, Mail, BarChart3, DollarSign, GripVertical, Home, Trash2, Copy, CheckIcon, Users, MoreVertical, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -23,6 +23,13 @@ import { FunnelFooterBuilder } from '@/components/funnel/FunnelFooterBuilder';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { CloneMoveStepModal } from '@/components/modals/CloneMoveStepModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Funnel {
   id: string;
@@ -89,6 +96,7 @@ const FunnelManagement = () => {
     stepId: '',
     stepTitle: ''
   });
+  const [cloneMoveModal, setCloneMoveModal] = useState<{ open: boolean; stepId: string; stepTitle: string; mode: 'clone' | 'move' }>({ open: false, stepId: '', stepTitle: '', mode: 'clone' });
   const {
     data: funnel,
     isLoading
@@ -247,6 +255,19 @@ const FunnelManagement = () => {
       stepTitle
     });
   };
+
+  const handleCloneStep = (stepId: string, stepTitle: string) => {
+    setCloneMoveModal({ open: true, stepId, stepTitle, mode: 'clone' });
+  };
+
+  const handleMoveStep = (stepId: string, stepTitle: string) => {
+    setCloneMoveModal({ open: true, stepId, stepTitle, mode: 'move' });
+  };
+
+  const handleCloneMoveSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['funnel-steps', id] });
+    setCloneMoveModal({ open: false, stepId: '', stepTitle: '', mode: 'clone' });
+  };
   const confirmDeleteStep = () => {
     if (deleteConfirm.stepId) {
       deleteStepMutation.mutate(deleteConfirm.stepId);
@@ -338,18 +359,35 @@ const FunnelManagement = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             {step.is_published && <div className="w-2 h-2 bg-green-500 rounded-full"></div>}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteStep(step.id, step.title);
-                              }}
-                              className="text-destructive hover:text-destructive h-8 w-8 p-0"
-                              disabled={deleteStepMutation.isPending}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="h-8 w-8 p-0"
+                                >
+                                  <MoreVertical className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuItem onClick={() => handleCloneStep(step.id, step.title)}>
+                                  <Copy className="mr-2 h-4 w-4" />
+                                  Clone Step
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleMoveStep(step.id, step.title)}>
+                                  <ArrowRight className="mr-2 h-4 w-4" />
+                                  Move Step
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteStep(step.id, step.title)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete Step
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       )}
@@ -660,6 +698,17 @@ const FunnelManagement = () => {
         onConfirm={confirmDeleteStep}
         isLoading={deleteStepMutation.isPending}
         variant="destructive"
+      />
+
+      {/* Clone/Move Step Modal */}
+      <CloneMoveStepModal
+        open={cloneMoveModal.open}
+        onOpenChange={(open) => setCloneMoveModal({ open, stepId: '', stepTitle: '', mode: 'clone' })}
+        stepId={cloneMoveModal.stepId}
+        stepTitle={cloneMoveModal.stepTitle}
+        currentFunnelId={id!}
+        mode={cloneMoveModal.mode}
+        onSuccess={handleCloneMoveSuccess}
       />
     </DashboardLayout>;
 };

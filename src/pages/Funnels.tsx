@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, TrendingUp, Settings, ExternalLink, Eye, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, TrendingUp, Settings, ExternalLink, Eye, Edit, Trash2, Search, Copy } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useUserStore } from '@/hooks/useUserStore';
+import { CloneFunnelModal } from '@/components/modals/CloneFunnelModal';
 
 interface Funnel {
   id: string;
@@ -33,6 +34,7 @@ export default function Funnels() {
   const { store } = useUserStore();
   const queryClient = useQueryClient();
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; funnelId: string; funnelName: string }>({ open: false, funnelId: '', funnelName: '' });
+  const [cloneModal, setCloneModal] = useState<{ open: boolean; funnelId: string; funnelName: string }>({ open: false, funnelId: '', funnelName: '' });
   const [searchQuery, setSearchQuery] = useState('');
 
   const { data: funnels, isLoading } = useQuery({
@@ -193,6 +195,16 @@ export default function Funnels() {
     togglePublishMutation.mutate({ funnelId, isPublished: !currentStatus });
   };
 
+  const handleCloneFunnel = (funnelId: string, funnelName: string) => {
+    setCloneModal({ open: true, funnelId, funnelName });
+  };
+
+  const handleCloneSuccess = (clonedFunnelId: string) => {
+    queryClient.invalidateQueries({ queryKey: ['funnels'] });
+    // Optionally navigate to the cloned funnel
+    // navigate(`/dashboard/funnels/${clonedFunnelId}`);
+  };
+
   // Filter funnels based on search query
   const filteredFunnels = useMemo(() => {
     if (!funnels) return [];
@@ -324,6 +336,15 @@ export default function Funnels() {
                     <Button
                       variant="outline"
                       size="sm"
+                      onClick={() => handleCloneFunnel(funnel.id, funnel.name)}
+                      className="w-full md:w-auto"
+                      title="Clone funnel"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleDeleteFunnel(funnel.id, funnel.name)}
                       className="w-full md:w-auto text-destructive hover:text-destructive"
                       disabled={deleteFunnelMutation.isPending}
@@ -368,6 +389,14 @@ export default function Funnels() {
           variant="destructive"
           onConfirm={confirmDelete}
           isLoading={deleteFunnelMutation.isPending}
+        />
+
+        <CloneFunnelModal
+          open={cloneModal.open}
+          onOpenChange={(open) => setCloneModal({ open, funnelId: '', funnelName: '' })}
+          funnelId={cloneModal.funnelId}
+          funnelName={cloneModal.funnelName}
+          onSuccess={handleCloneSuccess}
         />
       </div>
     </DashboardLayout>

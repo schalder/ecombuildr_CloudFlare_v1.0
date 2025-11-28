@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, Copy, CheckIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, ExternalLink, Settings, Eye, Copy, CheckIcon, MoreVertical, ArrowRight } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,13 @@ import { WebsiteSales } from '@/components/website/WebsiteSales';
 import { WebsiteFOMO } from '@/components/website/WebsiteFOMO';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { CloneMovePageModal } from '@/components/modals/CloneMovePageModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface Website {
   id: string;
@@ -60,6 +67,7 @@ const WebsiteManagement = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedPage, setSelectedPage] = useState<WebsitePage | null>(null);
   const [urlCopied, setUrlCopied] = useState(false);
+  const [cloneMoveModal, setCloneMoveModal] = useState<{ open: boolean; pageId: string; pageTitle: string; mode: 'clone' | 'move' }>({ open: false, pageId: '', pageTitle: '', mode: 'clone' });
   
   const activeTab = searchParams.get('tab') || 'pages';
 
@@ -211,6 +219,19 @@ const WebsiteManagement = () => {
 
   const handleEditPage = (pageId: string) => {
     navigate(`/dashboard/websites/${id}/pages/${pageId}/builder`);
+  };
+
+  const handleClonePage = (pageId: string, pageTitle: string) => {
+    setCloneMoveModal({ open: true, pageId, pageTitle, mode: 'clone' });
+  };
+
+  const handleMovePage = (pageId: string, pageTitle: string) => {
+    setCloneMoveModal({ open: true, pageId, pageTitle, mode: 'move' });
+  };
+
+  const handleCloneMoveSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ['website-pages', id] });
+    setCloneMoveModal({ open: false, pageId: '', pageTitle: '', mode: 'clone' });
   };
 
   const handleTabChange = (tab: string) => {
@@ -464,6 +485,28 @@ const WebsiteManagement = () => {
                             >
                               <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4" />
                             </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="px-1.5 sm:px-3 py-1.5 sm:py-2"
+                                  aria-label="More options"
+                                >
+                                  <MoreVertical className="h-3 w-3 sm:h-4 sm:w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleClonePage(page.id, page.title)}>
+                                  <Copy className="mr-2 h-4 w-4" />
+                                  Clone Page
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleMovePage(page.id, page.title)}>
+                                  <ArrowRight className="mr-2 h-4 w-4" />
+                                  Move Page
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       </div>
@@ -524,6 +567,17 @@ const WebsiteManagement = () => {
         onClose={() => { setIsSettingsOpen(false); setSelectedPage(null); }}
         websiteId={id!}
         page={selectedPage}
+      />
+
+      {/* Clone/Move Page Modal */}
+      <CloneMovePageModal
+        open={cloneMoveModal.open}
+        onOpenChange={(open) => setCloneMoveModal({ open, pageId: '', pageTitle: '', mode: 'clone' })}
+        pageId={cloneMoveModal.pageId}
+        pageTitle={cloneMoveModal.pageTitle}
+        currentWebsiteId={id!}
+        mode={cloneMoveModal.mode}
+        onSuccess={handleCloneMoveSuccess}
       />
     </DashboardLayout>
   );
