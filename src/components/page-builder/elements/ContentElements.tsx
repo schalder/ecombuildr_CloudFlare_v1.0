@@ -221,7 +221,13 @@ const FAQElement: React.FC<{
     <>
       {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
       <div 
-        className={`element-${element.id} ${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} 
+        className={`element-${element.id} ${
+          deviceType === 'mobile' 
+            ? 'w-full px-2' 
+            : deviceType === 'tablet' && columnCount === 1 
+              ? 'w-full' 
+              : 'max-w-2xl mx-auto'
+        }`} 
         style={{
           ...containerStyles,
           gap: faqGap,
@@ -229,13 +235,13 @@ const FAQElement: React.FC<{
           flexDirection: 'column'
         }}
       >
-        <h3 className="text-xl font-semibold mb-4">
+        <h3 className={`${deviceType === 'mobile' ? 'text-lg' : 'text-xl'} font-semibold mb-4`}>
           <InlineEditor
             value={title}
             onChange={(value) => handleUpdate('title', value)}
             placeholder="Frequently Asked Questions"
             disabled={!isEditing}
-            className="text-xl font-semibold"
+            className={`${deviceType === 'mobile' ? 'text-lg' : 'text-xl'} font-semibold`}
           />
         </h3>
         {faqs.map((faq: any, index: number) => (
@@ -243,7 +249,7 @@ const FAQElement: React.FC<{
             <CollapsibleTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="w-full justify-between p-4 border rounded-lg transition-colors duration-200"
+                className={`w-full justify-between ${deviceType === 'mobile' ? 'p-3' : 'p-4'} border rounded-lg transition-colors duration-200`}
                 onMouseEnter={(e) => {
                   if (currentResponsiveStyles.questionHoverBackground) {
                     e.currentTarget.style.backgroundColor = currentResponsiveStyles.questionHoverBackground;
@@ -255,27 +261,40 @@ const FAQElement: React.FC<{
                   e.currentTarget.style.backgroundColor = '';
                 }}
               >
-                <div className="flex-1" style={questionInlineStyles}>
+                <div 
+                  className="flex-1 min-w-0 pr-2" 
+                  style={{
+                    ...questionInlineStyles,
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word'
+                  }}
+                >
                   <InlineEditor
                     value={faq.question}
                     onChange={(value) => updateFAQ(index, 'question', value)}
                     placeholder="Enter question..."
                     disabled={!isEditing}
-                    className="font-medium text-left"
+                    className="font-medium text-left break-words"
                   />
                 </div>
-                <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]>svg]:rotate-180" />
+                <ChevronDown className={`${deviceType === 'mobile' ? 'h-3 w-3' : 'h-4 w-4'} shrink-0 transition-transform duration-200 [&[data-state=open]>svg]:rotate-180`} />
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="p-4 border-x border-b rounded-b-lg bg-muted/20">
-              <div style={answerInlineStyles}>
+            <CollapsibleContent className={`${deviceType === 'mobile' ? 'p-3' : 'p-4'} border-x border-b rounded-b-lg bg-muted/20`}>
+              <div 
+                style={{
+                  ...answerInlineStyles,
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word'
+                }}
+              >
                 <InlineEditor
                   value={faq.answer}
                   onChange={(value) => updateFAQ(index, 'answer', value)}
                   placeholder="Enter answer..."
                   multiline
                   disabled={!isEditing}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground break-words"
                 />
               </div>
             </CollapsibleContent>
