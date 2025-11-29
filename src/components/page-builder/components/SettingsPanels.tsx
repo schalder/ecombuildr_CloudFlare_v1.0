@@ -657,7 +657,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
             <CompactMediaSelector
               value={section.styles?.backgroundImage || ''}
               onChange={(url) => handleStyleUpdate('backgroundImage', url)}
-              label="Select Background Image"
+              label="Image"
               maxSize={4}
               showLabelOnly={true}
             />
@@ -1643,7 +1643,7 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
             <CompactMediaSelector
               value={row.styles?.backgroundImage || ''}
               onChange={(url) => handleStyleUpdate('backgroundImage', url)}
-              label="Select Background Image"
+              label="Image"
               maxSize={4}
               showLabelOnly={true}
             />
@@ -2179,7 +2179,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
             <CompactMediaSelector
               value={column.styles?.backgroundImage || ''}
               onChange={(url) => handleStyleUpdate('backgroundImage', url)}
-              label="Select Background Image"
+              label="Image"
               maxSize={4}
               showLabelOnly={true}
             />
