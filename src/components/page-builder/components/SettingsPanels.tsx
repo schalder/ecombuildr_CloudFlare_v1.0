@@ -659,6 +659,7 @@ export const SectionSettings: React.FC<SectionSettingsProps> = ({ section, onUpd
               onChange={(url) => handleStyleUpdate('backgroundImage', url)}
               label="Select Background Image"
               maxSize={4}
+              showLabelOnly={true}
             />
           </div>
 
@@ -1644,6 +1645,7 @@ export const RowSettings: React.FC<RowSettingsProps> = ({ row, onUpdate }) => {
               onChange={(url) => handleStyleUpdate('backgroundImage', url)}
               label="Select Background Image"
               maxSize={4}
+              showLabelOnly={true}
             />
           </div>
 
@@ -2179,6 +2181,7 @@ export const ColumnSettings: React.FC<ColumnSettingsProps> = ({ column, onUpdate
               onChange={(url) => handleStyleUpdate('backgroundImage', url)}
               label="Select Background Image"
               maxSize={4}
+              showLabelOnly={true}
             />
           </div>
 
