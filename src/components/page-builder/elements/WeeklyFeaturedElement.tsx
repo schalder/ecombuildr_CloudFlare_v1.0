@@ -119,17 +119,11 @@ const WeeklyFeaturedElement: React.FC<{
     const styles = (element as any).styles || {};
     const buttonStyles: React.CSSProperties = {};
     
-    // Apply button background color if set (for all variants)
-    if (styles.buttonBackground) {
-      buttonStyles.backgroundColor = styles.buttonBackground;
-    }
+    // Always apply button background and text color if they exist (regardless of variant)
+    if (styles.buttonBackground) buttonStyles.backgroundColor = styles.buttonBackground;
+    if (styles.buttonTextColor) buttonStyles.color = styles.buttonTextColor;
     
-    // Apply button text color if set (for all variants)
-    if (styles.buttonTextColor) {
-      buttonStyles.color = styles.buttonTextColor;
-    }
-    
-    // Custom button styles (border radius, hover, etc.)
+    // Custom button styles (hover, border radius, etc.)
     if (styles.buttonVariant === 'custom') {
       if (styles.borderRadius) buttonStyles.borderRadius = styles.borderRadius;
     }
@@ -242,8 +236,20 @@ const WeeklyFeaturedElement: React.FC<{
             <Button 
               size="sm"
               variant={getButtonVariant() as any}
-              className="w-full text-sm font-medium px-4 py-2.5 h-auto"
+              className="w-full text-sm font-medium px-4 py-2.5 h-auto transition-colors duration-200"
               style={getButtonStyles()}
+              onMouseEnter={(e) => {
+                const styles = (element as any).styles || {};
+                if (styles.buttonVariant === 'custom' && styles.buttonHoverBackground) {
+                  e.currentTarget.style.backgroundColor = styles.buttonHoverBackground;
+                }
+              }}
+              onMouseLeave={(e) => {
+                const styles = (element as any).styles || {};
+                if (styles.buttonBackground) {
+                  e.currentTarget.style.backgroundColor = styles.buttonBackground;
+                }
+              }}
               onClick={() => handleAddToCart(product)}
             >
               <ShoppingCart className="w-4 h-4 mr-2" />

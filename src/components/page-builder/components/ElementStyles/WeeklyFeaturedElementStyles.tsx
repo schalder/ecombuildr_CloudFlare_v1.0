@@ -277,26 +277,22 @@ export const WeeklyFeaturedElementStyles: React.FC<WeeklyFeaturedElementStylesPr
             </Select>
           </div>
 
+          {/* Button Background Color - Always available */}
           <div>
             <Label className="text-xs">Button Background Color</Label>
             <ColorPicker
-              color={(styles as any).buttonBackground || ''}
+              color={(styles as any).buttonBackground || '#000000'}
               onChange={(color) => onStyleUpdate('buttonBackground', color)}
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Leave empty to use default variant color
-            </p>
           </div>
 
+          {/* Button Text Color - Always available */}
           <div>
             <Label className="text-xs">Button Text Color</Label>
             <ColorPicker
-              color={(styles as any).buttonTextColor || ''}
+              color={(styles as any).buttonTextColor || '#ffffff'}
               onChange={(color) => onStyleUpdate('buttonTextColor', color)}
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Leave empty to use default variant color
-            </p>
           </div>
 
           {(styles as any).buttonVariant === 'custom' && (
