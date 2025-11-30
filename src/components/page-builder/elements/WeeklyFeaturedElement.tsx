@@ -133,7 +133,9 @@ const WeeklyFeaturedElement: React.FC<{
     if (!styles.buttonBackground && !styles.buttonTextColor) return null;
     
     const buttonId = `weekly-featured-btn-${element.id}`;
-    let css = `.${buttonId} {`;
+    // Use data attribute for more reliable targeting
+    // This ensures the styles apply regardless of Tailwind class specificity
+    let css = `[data-weekly-featured-btn="${element.id}"] {`;
     if (styles.buttonBackground) {
       css += `background-color: ${styles.buttonBackground} !important;`;
     }
@@ -141,7 +143,7 @@ const WeeklyFeaturedElement: React.FC<{
       css += `color: ${styles.buttonTextColor} !important;`;
     }
     css += '}';
-    return { css, className: buttonId };
+    return { css, dataAttr: `data-weekly-featured-btn="${element.id}"`, className: buttonId };
   };
 
   // Get card styles
@@ -254,6 +256,7 @@ const WeeklyFeaturedElement: React.FC<{
               size="sm"
               variant={getButtonVariant() as any}
               className={`w-full text-sm font-medium px-4 py-2.5 h-auto transition-colors duration-200 ${buttonCSS?.className || ''}`}
+              data-weekly-featured-btn={buttonCSS ? element.id : undefined}
               style={getButtonStyles()}
               onMouseEnter={(e) => {
                 const styles = (element as any).styles || {};
