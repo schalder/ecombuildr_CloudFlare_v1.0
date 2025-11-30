@@ -119,31 +119,14 @@ const WeeklyFeaturedElement: React.FC<{
     const styles = (element as any).styles || {};
     const buttonStyles: React.CSSProperties = {};
     
-    // Custom button styles (hover, border radius, etc.)
+    // Custom button styles
     if (styles.buttonVariant === 'custom') {
+      if (styles.buttonBackground) buttonStyles.backgroundColor = styles.buttonBackground;
+      if (styles.buttonTextColor) buttonStyles.color = styles.buttonTextColor;
       if (styles.borderRadius) buttonStyles.borderRadius = styles.borderRadius;
     }
     
     return buttonStyles;
-  };
-
-  // Generate CSS for button with !important to override variant classes
-  const getButtonCSS = () => {
-    const styles = (element as any).styles || {};
-    if (!styles.buttonBackground && !styles.buttonTextColor) return null;
-    
-    const buttonId = `weekly-featured-btn-${element.id}`;
-    // Use data attribute for more reliable targeting
-    // This ensures the styles apply regardless of Tailwind class specificity
-    let css = `[data-weekly-featured-btn="${element.id}"] {`;
-    if (styles.buttonBackground) {
-      css += `background-color: ${styles.buttonBackground} !important;`;
-    }
-    if (styles.buttonTextColor) {
-      css += `color: ${styles.buttonTextColor} !important;`;
-    }
-    css += '}';
-    return { css, dataAttr: `data-weekly-featured-btn="${element.id}"`, className: buttonId };
   };
 
   // Get card styles
@@ -188,13 +171,9 @@ const WeeklyFeaturedElement: React.FC<{
     return styles.buttonWidth === 'full' ? 'w-full' : '';
   };
 
-  const renderProductGrid = () => {
-    const buttonCSS = getButtonCSS();
-    return (
-      <>
-        {buttonCSS && <style>{buttonCSS.css}</style>}
-        <div className={`grid ${getGridClasses()} gap-3 sm:gap-4 md:gap-6`}>
-          {products.map((product, index) => (
+  const renderProductGrid = () => (
+    <div className={`grid ${getGridClasses()} gap-3 sm:gap-4 md:gap-6`}>
+      {products.map((product, index) => (
         <Card key={product.id} className="group/card hover:shadow-lg transition-all duration-300 overflow-hidden" style={getCardStyles()}>
           <div className="relative aspect-square overflow-hidden">
             {product.images && Array.isArray(product.images) && product.images[0] ? (
@@ -255,21 +234,8 @@ const WeeklyFeaturedElement: React.FC<{
             <Button 
               size="sm"
               variant={getButtonVariant() as any}
-              className={`w-full text-sm font-medium px-4 py-2.5 h-auto transition-colors duration-200 ${buttonCSS?.className || ''}`}
-              data-weekly-featured-btn={buttonCSS ? element.id : undefined}
+              className="w-full text-sm font-medium px-4 py-2.5 h-auto"
               style={getButtonStyles()}
-              onMouseEnter={(e) => {
-                const styles = (element as any).styles || {};
-                if (styles.buttonVariant === 'custom' && styles.buttonHoverBackground) {
-                  e.currentTarget.style.backgroundColor = styles.buttonHoverBackground;
-                }
-              }}
-              onMouseLeave={(e) => {
-                const styles = (element as any).styles || {};
-                if (styles.buttonBackground) {
-                  e.currentTarget.style.backgroundColor = styles.buttonBackground;
-                }
-              }}
               onClick={() => handleAddToCart(product)}
             >
               <ShoppingCart className="w-4 h-4 mr-2" />
@@ -280,10 +246,8 @@ const WeeklyFeaturedElement: React.FC<{
           </CardContent>
         </Card>
       ))}
-        </div>
-      </>
-    );
-  };
+    </div>
+  );
 
   if (loading || !shouldFetchProducts) {
     return (
