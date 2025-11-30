@@ -244,7 +244,7 @@ const FAQElement: React.FC<{
             <CollapsibleTrigger asChild>
               <Button 
                 variant="ghost" 
-                className="w-full justify-between p-3 sm:p-4 border rounded-lg transition-colors duration-200 overflow-hidden"
+                className="w-full justify-between items-start h-auto min-h-[3rem] py-3 px-3 sm:py-4 sm:px-4 border rounded-lg transition-colors duration-200 overflow-hidden"
                 onMouseEnter={(e) => {
                   if (currentResponsiveStyles.questionHoverBackground) {
                     e.currentTarget.style.backgroundColor = currentResponsiveStyles.questionHoverBackground;
@@ -262,21 +262,21 @@ const FAQElement: React.FC<{
                     onChange={(value) => updateFAQ(index, 'question', value)}
                     placeholder="Enter question..."
                     disabled={!isEditing}
-                    className="font-medium text-left break-words whitespace-normal overflow-wrap-anywhere"
+                    className="font-medium text-left break-words whitespace-normal overflow-wrap-anywhere leading-relaxed"
                   />
                 </div>
-                <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]>svg]:rotate-180 ml-2 flex-shrink-0" />
+                <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]>svg]:rotate-180 ml-2 flex-shrink-0 mt-0.5" />
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent className="p-3 sm:p-4 border-x border-b rounded-b-lg bg-muted/20 overflow-hidden">
-              <div style={answerInlineStyles} className="break-words whitespace-normal overflow-wrap-anywhere max-w-full">
+            <CollapsibleContent className="py-3 px-3 sm:py-4 sm:px-4 border-x border-b rounded-b-lg bg-muted/20 overflow-hidden">
+              <div style={answerInlineStyles} className="break-words whitespace-normal overflow-wrap-anywhere max-w-full leading-relaxed">
                 <InlineEditor
                   value={faq.answer}
                   onChange={(value) => updateFAQ(index, 'answer', value)}
                   placeholder="Enter answer..."
                   multiline
                   disabled={!isEditing}
-                  className="text-muted-foreground break-words whitespace-normal overflow-wrap-anywhere"
+                  className="text-muted-foreground break-words whitespace-normal overflow-wrap-anywhere leading-relaxed"
                 />
               </div>
             </CollapsibleContent>
