@@ -119,16 +119,29 @@ const WeeklyFeaturedElement: React.FC<{
     const styles = (element as any).styles || {};
     const buttonStyles: React.CSSProperties = {};
     
-    // Always apply button background and text color if they exist (regardless of variant)
-    if (styles.buttonBackground) buttonStyles.backgroundColor = styles.buttonBackground;
-    if (styles.buttonTextColor) buttonStyles.color = styles.buttonTextColor;
-    
     // Custom button styles (hover, border radius, etc.)
     if (styles.buttonVariant === 'custom') {
       if (styles.borderRadius) buttonStyles.borderRadius = styles.borderRadius;
     }
     
     return buttonStyles;
+  };
+
+  // Generate CSS for button with !important to override variant classes
+  const getButtonCSS = () => {
+    const styles = (element as any).styles || {};
+    if (!styles.buttonBackground && !styles.buttonTextColor) return null;
+    
+    const buttonId = `weekly-featured-btn-${element.id}`;
+    let css = `.${buttonId} {`;
+    if (styles.buttonBackground) {
+      css += `background-color: ${styles.buttonBackground} !important;`;
+    }
+    if (styles.buttonTextColor) {
+      css += `color: ${styles.buttonTextColor} !important;`;
+    }
+    css += '}';
+    return { css, className: buttonId };
   };
 
   // Get card styles
@@ -173,9 +186,13 @@ const WeeklyFeaturedElement: React.FC<{
     return styles.buttonWidth === 'full' ? 'w-full' : '';
   };
 
-  const renderProductGrid = () => (
-    <div className={`grid ${getGridClasses()} gap-3 sm:gap-4 md:gap-6`}>
-      {products.map((product, index) => (
+  const renderProductGrid = () => {
+    const buttonCSS = getButtonCSS();
+    return (
+      <>
+        {buttonCSS && <style>{buttonCSS.css}</style>}
+        <div className={`grid ${getGridClasses()} gap-3 sm:gap-4 md:gap-6`}>
+          {products.map((product, index) => (
         <Card key={product.id} className="group/card hover:shadow-lg transition-all duration-300 overflow-hidden" style={getCardStyles()}>
           <div className="relative aspect-square overflow-hidden">
             {product.images && Array.isArray(product.images) && product.images[0] ? (
@@ -236,7 +253,7 @@ const WeeklyFeaturedElement: React.FC<{
             <Button 
               size="sm"
               variant={getButtonVariant() as any}
-              className="w-full text-sm font-medium px-4 py-2.5 h-auto transition-colors duration-200"
+              className={`w-full text-sm font-medium px-4 py-2.5 h-auto transition-colors duration-200 ${buttonCSS?.className || ''}`}
               style={getButtonStyles()}
               onMouseEnter={(e) => {
                 const styles = (element as any).styles || {};
@@ -260,8 +277,10 @@ const WeeklyFeaturedElement: React.FC<{
           </CardContent>
         </Card>
       ))}
-    </div>
-  );
+        </div>
+      </>
+    );
+  };
 
   if (loading || !shouldFetchProducts) {
     return (
