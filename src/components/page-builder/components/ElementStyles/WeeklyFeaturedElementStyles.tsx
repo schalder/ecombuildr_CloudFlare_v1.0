@@ -277,30 +277,36 @@ export const WeeklyFeaturedElementStyles: React.FC<WeeklyFeaturedElementStylesPr
             </Select>
           </div>
 
+          <div>
+            <Label className="text-xs">Button Background Color</Label>
+            <ColorPicker
+              color={(styles as any).buttonBackground || ''}
+              onChange={(color) => onStyleUpdate('buttonBackground', color)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Leave empty to use default variant color
+            </p>
+          </div>
+
+          <div>
+            <Label className="text-xs">Button Text Color</Label>
+            <ColorPicker
+              color={(styles as any).buttonTextColor || ''}
+              onChange={(color) => onStyleUpdate('buttonTextColor', color)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Leave empty to use default variant color
+            </p>
+          </div>
+
           {(styles as any).buttonVariant === 'custom' && (
-            <>
-              <div>
-                <Label className="text-xs">Button Background</Label>
-                <ColorPicker
-                  color={(styles as any).buttonBackground || '#000000'}
-                  onChange={(color) => onStyleUpdate('buttonBackground', color)}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Button Text Color</Label>
-                <ColorPicker
-                  color={(styles as any).buttonTextColor || '#ffffff'}
-                  onChange={(color) => onStyleUpdate('buttonTextColor', color)}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Button Hover Background</Label>
-                <ColorPicker
-                  color={(styles as any).buttonHoverBackground || '#333333'}
-                  onChange={(color) => onStyleUpdate('buttonHoverBackground', color)}
-                />
-              </div>
-            </>
+            <div>
+              <Label className="text-xs">Button Hover Background</Label>
+              <ColorPicker
+                color={(styles as any).buttonHoverBackground || '#333333'}
+                onChange={(color) => onStyleUpdate('buttonHoverBackground', color)}
+              />
+            </div>
           )}
 
           <div>

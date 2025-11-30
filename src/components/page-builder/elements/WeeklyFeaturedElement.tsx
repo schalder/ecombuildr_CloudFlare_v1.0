@@ -119,10 +119,18 @@ const WeeklyFeaturedElement: React.FC<{
     const styles = (element as any).styles || {};
     const buttonStyles: React.CSSProperties = {};
     
-    // Custom button styles
+    // Apply button background color if set (for all variants)
+    if (styles.buttonBackground) {
+      buttonStyles.backgroundColor = styles.buttonBackground;
+    }
+    
+    // Apply button text color if set (for all variants)
+    if (styles.buttonTextColor) {
+      buttonStyles.color = styles.buttonTextColor;
+    }
+    
+    // Custom button styles (border radius, hover, etc.)
     if (styles.buttonVariant === 'custom') {
-      if (styles.buttonBackground) buttonStyles.backgroundColor = styles.buttonBackground;
-      if (styles.buttonTextColor) buttonStyles.color = styles.buttonTextColor;
       if (styles.borderRadius) buttonStyles.borderRadius = styles.borderRadius;
     }
     
