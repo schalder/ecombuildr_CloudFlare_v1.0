@@ -180,7 +180,7 @@ serve(async (req) => {
       if (orderId) {
         const { data: order } = await supabase
           .from('orders')
-          .select('id, custom_fields')
+          .select('id, payment_method, custom_fields')
           .eq('id', orderId)
           .single();
 
@@ -195,10 +195,14 @@ serve(async (req) => {
             },
           };
 
+          // For Stripe: Keep failed orders as pending_payment so they show in incomplete orders tab
+          // (matching EPS/EB Pay behavior)
+          const orderStatus = order.payment_method === 'stripe' ? 'pending_payment' : 'payment_failed';
+
           await supabase
             .from('orders')
             .update({
-              status: 'payment_failed',
+              status: orderStatus,
               custom_fields: updatedCustomFields,
               updated_at: new Date().toISOString(),
             })
@@ -213,7 +217,7 @@ serve(async (req) => {
       if (orderId) {
         const { data: order } = await supabase
           .from('orders')
-          .select('id, custom_fields')
+          .select('id, payment_method, custom_fields')
           .eq('id', orderId)
           .single();
 
@@ -228,10 +232,14 @@ serve(async (req) => {
             },
           };
 
+          // For Stripe: Keep cancelled orders as pending_payment so they show in incomplete orders tab
+          // (matching EPS/EB Pay behavior)
+          const orderStatus = order.payment_method === 'stripe' ? 'pending_payment' : 'cancelled';
+
           await supabase
             .from('orders')
             .update({
-              status: 'cancelled',
+              status: orderStatus,
               custom_fields: updatedCustomFields,
               updated_at: new Date().toISOString(),
             })
