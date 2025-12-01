@@ -121,14 +121,9 @@ serve(async (req) => {
     if (req.method === 'GET' && path.includes('/callback')) {
       const params: StripeConnectCallbackQuery = Object.fromEntries(url.searchParams);
       
-      // Helper to get frontend URL for redirects
-      const getFrontendUrl = (path: string = '/dashboard/settings/payments') => {
-        return new URL(path, 'https://ecombuildr.com');
-      };
-
       if (params.error) {
-        // Redirect to frontend with error
-        const frontendUrl = getFrontendUrl();
+        // Redirect to frontend with error - dashboard is always on main domain
+        const frontendUrl = new URL('/dashboard/settings/payments', 'https://ecombuildr.com');
         frontendUrl.searchParams.set('stripe_error', params.error);
         if (params.error_description) frontendUrl.searchParams.set('error_description', params.error_description);
         
@@ -136,8 +131,8 @@ serve(async (req) => {
       }
 
       if (!params.code || !params.state) {
-        // Redirect to frontend with error
-        const frontendUrl = getFrontendUrl();
+        // Redirect to frontend with error - dashboard is always on main domain
+        const frontendUrl = new URL('/dashboard/settings/payments', 'https://ecombuildr.com');
         frontendUrl.searchParams.set('stripe_error', 'missing_params');
         frontendUrl.searchParams.set('error_description', 'Missing authorization code or state');
         
@@ -165,8 +160,8 @@ serve(async (req) => {
         const errorData = await tokenResponse.json();
         console.error('Stripe token exchange error:', errorData);
         
-        // Redirect to frontend with error
-        const frontendUrl = getFrontendUrl();
+        // Redirect to frontend with error - dashboard is always on main domain
+        const frontendUrl = new URL('/dashboard/settings/payments', 'https://ecombuildr.com');
         frontendUrl.searchParams.set('stripe_error', 'token_exchange_failed');
         frontendUrl.searchParams.set('error_description', errorData.error_description || 'Failed to exchange authorization code');
         
@@ -247,57 +242,18 @@ serve(async (req) => {
         throw new Error(`Failed to save Stripe configuration: ${updateError.message}`);
       }
 
-      // Redirect to frontend callback page
-      const frontendUrl = getFrontendUrl();
-      frontendUrl.searchParams.set('stripe_connect', 'success');
-      frontendUrl.searchParams.set('storeId', storeId);
-      if (accountEmail) frontendUrl.searchParams.set('accountEmail', accountEmail);
-      if (accountName) frontendUrl.searchParams.set('accountName', accountName);
+      // Redirect to frontend callback page - dashboard is always on main domain
+      const frontendUrl = new URL('/dashboard/settings/payments', 'https://ecombuildr.com');
+      frontendUrl.searchParams.set('stripe_connected', 'true');
+      frontendUrl.searchParams.set('store_id', storeId);
+      if (accountEmail) frontendUrl.searchParams.set('account_email', accountEmail);
+      if (accountName) frontendUrl.searchParams.set('account_name', accountName);
       
       return Response.redirect(frontendUrl.toString(), 302);
     }
 
     // Handle OAuth initiation
     if (req.method === 'POST') {
-      // Verify JWT token for POST requests (manual verification since verify_jwt is disabled)
-      const authHeader = req.headers.get('Authorization');
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Missing or invalid authorization header' 
-          }),
-          { 
-            status: 401, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-
-      // Create a client with anon key to verify JWT
-      const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
-      const supabaseAnon = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        anonKey
-      );
-
-      // Verify JWT and get user
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
-
-      if (authError || !user) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Invalid or expired token' 
-          }),
-          { 
-            status: 401, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-
       const { storeId }: StripeConnectInitiateRequest = await req.json();
 
       if (!storeId) {
@@ -313,10 +269,10 @@ serve(async (req) => {
         );
       }
 
-      // Verify store exists and belongs to the authenticated user
+      // Verify store exists
       const { data: store, error: storeError } = await supabase
         .from('stores')
-        .select('id, user_id')
+        .select('id')
         .eq('id', storeId)
         .single();
 
@@ -328,20 +284,6 @@ serve(async (req) => {
           }),
           { 
             status: 404, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
-
-      // Verify the store belongs to the authenticated user
-      if (store.user_id !== user.id) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Unauthorized: Store does not belong to user' 
-          }),
-          { 
-            status: 403, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         );
