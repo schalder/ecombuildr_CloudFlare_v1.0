@@ -286,9 +286,7 @@ serve(async (req) => {
         success: true,
         paymentURL: session.url, // Stripe Checkout URL
         sessionId: session.id,
-        clientSecret: session.payment_intent ? (await stripe.paymentIntents.retrieve(session.payment_intent, {
-          stripeAccount: stripeConfig.stripe_account_id,
-        })).client_secret : null,
+        clientSecret: session.payment_intent ? (await stripe.paymentIntents.retrieve(session.payment_intent)).client_secret : null,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
