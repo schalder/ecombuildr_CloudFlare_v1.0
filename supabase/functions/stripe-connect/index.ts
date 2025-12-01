@@ -123,7 +123,7 @@ serve(async (req) => {
       
       if (params.error) {
         // Redirect to frontend with error - dashboard is always on main domain
-        const frontendUrl = new URL('/dashboard/settings/payments', 'https://ecombuildr.com');
+        const frontendUrl = new URL('/dashboard/settings', 'https://ecombuildr.com');
         frontendUrl.searchParams.set('stripe_error', params.error);
         if (params.error_description) frontendUrl.searchParams.set('error_description', params.error_description);
         
@@ -132,7 +132,7 @@ serve(async (req) => {
 
       if (!params.code || !params.state) {
         // Redirect to frontend with error - dashboard is always on main domain
-        const frontendUrl = new URL('/dashboard/settings/payments', 'https://ecombuildr.com');
+        const frontendUrl = new URL('/dashboard/settings', 'https://ecombuildr.com');
         frontendUrl.searchParams.set('stripe_error', 'missing_params');
         frontendUrl.searchParams.set('error_description', 'Missing authorization code or state');
         
@@ -161,7 +161,7 @@ serve(async (req) => {
         console.error('Stripe token exchange error:', errorData);
         
         // Redirect to frontend with error - dashboard is always on main domain
-        const frontendUrl = new URL('/dashboard/settings/payments', 'https://ecombuildr.com');
+        const frontendUrl = new URL('/dashboard/settings', 'https://ecombuildr.com');
         frontendUrl.searchParams.set('stripe_error', 'token_exchange_failed');
         frontendUrl.searchParams.set('error_description', errorData.error_description || 'Failed to exchange authorization code');
         
@@ -243,7 +243,7 @@ serve(async (req) => {
       }
 
       // Redirect to frontend callback page - dashboard is always on main domain
-      const frontendUrl = new URL('/dashboard/settings/payments', 'https://ecombuildr.com');
+      const frontendUrl = new URL('/dashboard/settings', 'https://ecombuildr.com');
       frontendUrl.searchParams.set('stripe_connected', 'true');
       frontendUrl.searchParams.set('store_id', storeId);
       if (accountEmail) frontendUrl.searchParams.set('account_email', accountEmail);
