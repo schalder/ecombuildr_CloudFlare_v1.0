@@ -609,21 +609,21 @@ export const PaymentProcessing: React.FC = () => {
     // This matches Shopify/WooCommerce behavior: update existing order, redirect immediately
     if (paymentMethod === 'stripe' && tempId) {
       try {
-        // Fetch the existing order with items to check product types
-        const { data: existingOrder, error: fetchError } = await supabase
-          .from('orders')
-          .select('*, order_items(product_id)')
-          .eq('id', tempId)
-          .maybeSingle();
+        // Use edge function to fetch order (bypasses RLS)
+        const { data: orderData, error: fetchError } = await supabase.functions.invoke('get-order', {
+          body: { orderId: tempId }
+        });
         
-        if (!fetchError && existingOrder) {
+        if (!fetchError && orderData?.order) {
+          const existingOrder = orderData.order;
+          const orderItems = orderData.items || [];
+          
           console.log('PaymentProcessing: Stripe order exists, updating status immediately');
           
           // Determine status based on product types
           let orderStatus = 'processing'; // Default for physical products
           
           // Check if all products are digital
-          const orderItems = existingOrder.order_items || [];
           if (orderItems.length > 0) {
             const productIds = orderItems.map((item: any) => item.product_id).filter(Boolean);
             if (productIds.length > 0) {
