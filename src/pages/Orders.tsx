@@ -157,7 +157,9 @@ const isPaymentConfirmed = (order: Order): boolean => {
 
 // Helper function to determine if payment failed or was cancelled
 const isPaymentFailed = (order: Order): boolean => {
-  // For EPS/EB Pay/Stripe: show X mark if payment failed or cancelled
+  // For EPS/EB Pay/Stripe: show X icon if payment failed or cancelled
+  // Note: Stripe failed orders are kept as pending_payment, so they won't show X icon
+  // (they'll show in incomplete orders tab instead)
   if (order.payment_method === 'eps' || order.payment_method === 'ebpay' || order.payment_method === 'stripe') {
     return order.status === 'payment_failed' || order.status === 'cancelled';
   }
@@ -393,20 +395,11 @@ export default function Orders() {
         if (activeTab === 'all') {
           ordersQuery = ordersQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
           ordersQuery = ordersQuery.neq('status', 'pending_payment' as any);
-          // Also exclude payment_failed/cancelled orders for EPS/EB Pay/Stripe (these belong in incomplete tab)
-          // Exclude: (eps AND payment_failed) OR (eps AND cancelled) OR (ebpay AND payment_failed) OR (ebpay AND cancelled) OR (stripe AND payment_failed) OR (stripe AND cancelled)
-          ordersQuery = ordersQuery.not(
-            'or',
-            'and(payment_method.eq.eps,status.eq.payment_failed),and(payment_method.eq.eps,status.eq.cancelled),and(payment_method.eq.ebpay,status.eq.payment_failed),and(payment_method.eq.ebpay,status.eq.cancelled),and(payment_method.eq.stripe,status.eq.payment_failed),and(payment_method.eq.stripe,status.eq.cancelled)'
-          );
         }
         
-        // For "Incomplete Orders" tab, show pending_payment for all, and payment_failed/cancelled for EPS/EB Pay/Stripe
+        // For "Incomplete Orders" tab, only show pending_payment status orders
         if (activeTab === 'incomplete') {
-          // Show all pending_payment orders, plus payment_failed/cancelled for EPS/EB Pay/Stripe
-          ordersQuery = ordersQuery.or(
-            'status.eq.pending_payment,and(payment_method.eq.eps,status.eq.payment_failed),and(payment_method.eq.eps,status.eq.cancelled),and(payment_method.eq.ebpay,status.eq.payment_failed),and(payment_method.eq.ebpay,status.eq.cancelled),and(payment_method.eq.stripe,status.eq.payment_failed),and(payment_method.eq.stripe,status.eq.cancelled)'
-          );
+          ordersQuery = ordersQuery.eq('status', 'pending_payment' as any);
         }
 
         // Apply status filter if statusFilter exists
@@ -438,19 +431,11 @@ export default function Orders() {
         if (activeTab === 'all') {
           countQuery = countQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
           countQuery = countQuery.neq('status', 'pending_payment' as any);
-          // Also exclude payment_failed/cancelled orders for EPS/EB Pay/Stripe (these belong in incomplete tab)
-          // Exclude: (eps AND payment_failed) OR (eps AND cancelled) OR (ebpay AND payment_failed) OR (ebpay AND cancelled) OR (stripe AND payment_failed) OR (stripe AND cancelled)
-          countQuery = countQuery.not(
-            'or',
-            'and(payment_method.eq.eps,status.eq.payment_failed),and(payment_method.eq.eps,status.eq.cancelled),and(payment_method.eq.ebpay,status.eq.payment_failed),and(payment_method.eq.ebpay,status.eq.cancelled),and(payment_method.eq.stripe,status.eq.payment_failed),and(payment_method.eq.stripe,status.eq.cancelled)'
-          );
         }
         
-        // For "Incomplete Orders" tab count, count pending_payment, payment_failed, and cancelled orders for EPS/EB Pay/Stripe
+        // For "Incomplete Orders" tab count, only count pending_payment status orders
         if (activeTab === 'incomplete') {
-          countQuery = countQuery.or(
-            'status.eq.pending_payment,and(payment_method.eq.eps,status.eq.payment_failed),and(payment_method.eq.eps,status.eq.cancelled),and(payment_method.eq.ebpay,status.eq.payment_failed),and(payment_method.eq.ebpay,status.eq.cancelled),and(payment_method.eq.stripe,status.eq.payment_failed),and(payment_method.eq.stripe,status.eq.cancelled)'
-          );
+          countQuery = countQuery.eq('status', 'pending_payment' as any);
         }
 
         if (searchTerm.trim()) {

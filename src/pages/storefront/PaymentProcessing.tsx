@@ -41,6 +41,17 @@ export const PaymentProcessing: React.FC = () => {
   const tempId = searchParams.get('tempId') || '';
   const paymentMethod = searchParams.get('pm') || '';
   
+  // Helper function to determine order status for failed/cancelled payments
+  // For Stripe: Keep as pending_payment so it shows in incomplete orders (matching EPS/EB Pay behavior)
+  // For other payment methods: Use payment_failed or cancelled
+  const getFailedOrderStatus = (order: any, urlStatus: string): string => {
+    const isStripe = order?.payment_method === 'stripe';
+    if (isStripe) {
+      return 'pending_payment'; // Keep as pending_payment for Stripe to show in incomplete orders
+    }
+    return urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+  };
+
   // Helper function to get order currency
   const getOrderCurrency = async (order: any): Promise<CurrencyCode> => {
     if (!order) return 'BDT';
@@ -361,8 +372,10 @@ export const PaymentProcessing: React.FC = () => {
         
         if (actualOrder) {
           // Order exists, update its status and fetch currency
-          const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
-          console.log('PaymentProcessing: Order found, updating status to', orderStatus, 'for order', tempId);
+          // For Stripe: Keep failed/cancelled orders as pending_payment so they show in incomplete orders tab
+          // (matching EPS/EB Pay behavior)
+          const orderStatus = getFailedOrderStatus(actualOrder, urlStatus);
+          console.log('PaymentProcessing: Order found, updating status to', orderStatus, 'for order', tempId, `(payment_method: ${actualOrder.payment_method})`);
           
           // Update order status if we have store ID
           if (effectiveStoreId) {
@@ -393,7 +406,24 @@ export const PaymentProcessing: React.FC = () => {
       
       // If order not found or fetch failed, try updating via edge function
       if (effectiveStoreId) {
-        const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+        // Try to fetch order first to get payment method
+        let orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+        try {
+          const { data: orderForStatus } = await supabase
+            .from('orders')
+            .select('payment_method')
+            .eq('id', tempId)
+            .maybeSingle();
+          if (orderForStatus) {
+            orderStatus = getFailedOrderStatus(orderForStatus, urlStatus);
+          }
+        } catch (e) {
+          // Use paymentMethod from URL params as fallback
+          if (paymentMethod === 'stripe') {
+            orderStatus = 'pending_payment';
+          }
+        }
+        
         console.log('PaymentProcessing: Updating order status to', orderStatus, 'for order', tempId);
         
         try {
@@ -451,17 +481,18 @@ export const PaymentProcessing: React.FC = () => {
             .maybeSingle();
           
           if (actualOrder) {
-            const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+            const orderStatus = getFailedOrderStatus(actualOrder, urlStatus);
             const currency = await getOrderCurrency(actualOrder);
             setOrder({ ...actualOrder, status: orderStatus, _currency: currency });
           } else {
             // Order doesn't exist, create mock
+            const mockStatus = paymentMethod === 'stripe' ? 'pending_payment' : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
             const mockOrder = {
               id: tempId,
               order_number: searchParams.get('transactionId') || tempId,
               payment_method: paymentMethod,
               total: parseFloat(searchParams.get('paymentAmount') || '0'),
-              status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+              status: mockStatus,
               customer_name: '',
               created_at: new Date().toISOString(),
               _currency: 'BDT' as CurrencyCode
@@ -471,12 +502,13 @@ export const PaymentProcessing: React.FC = () => {
         } catch (e) {
           console.error('Error fetching order without store ID:', e);
           // Create mock order as last resort
+          const mockStatus = paymentMethod === 'stripe' ? 'pending_payment' : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
           const mockOrder = {
             id: tempId,
             order_number: searchParams.get('transactionId') || tempId,
             payment_method: paymentMethod,
             total: parseFloat(searchParams.get('paymentAmount') || '0'),
-            status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+            status: mockStatus,
             customer_name: '',
             created_at: new Date().toISOString(),
             _currency: 'BDT' as CurrencyCode
@@ -495,7 +527,7 @@ export const PaymentProcessing: React.FC = () => {
             .maybeSingle();
           
           if (orderData) {
-            const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+            const orderStatus = getFailedOrderStatus(orderData, urlStatus);
             // Update order status if we have store_id
             if (orderData.store_id) {
               try {
@@ -515,12 +547,13 @@ export const PaymentProcessing: React.FC = () => {
             setOrder({ ...orderData, status: orderStatus, _currency: currency });
           } else {
             // Create mock order for display (with default currency)
+            const mockStatus = paymentMethod === 'stripe' ? 'pending_payment' : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
             const mockOrder = {
               id: tempId || '',
               order_number: searchParams.get('transactionId') || tempId || '',
               payment_method: paymentMethod,
               total: parseFloat(searchParams.get('paymentAmount') || '0'),
-              status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+              status: mockStatus,
               customer_name: '',
               created_at: new Date().toISOString(),
               _currency: 'BDT' as CurrencyCode
@@ -530,12 +563,13 @@ export const PaymentProcessing: React.FC = () => {
         } catch (e) {
           console.error('Error fetching order:', e);
           // Create mock order for display (with default currency)
+          const mockStatus = paymentMethod === 'stripe' ? 'pending_payment' : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
           const mockOrder = {
             id: tempId || '',
             order_number: searchParams.get('transactionId') || tempId || '',
             payment_method: paymentMethod,
             total: parseFloat(searchParams.get('paymentAmount') || '0'),
-            status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+            status: mockStatus,
             customer_name: '',
             created_at: new Date().toISOString(),
             _currency: 'BDT' as CurrencyCode
@@ -544,12 +578,13 @@ export const PaymentProcessing: React.FC = () => {
         }
       } else {
         // If no tempId or store, create a mock order object for display purposes
+        const mockStatus = paymentMethod === 'stripe' ? 'pending_payment' : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
         const mockOrder = {
           id: tempId || '',
           order_number: searchParams.get('transactionId') || tempId || '',
           payment_method: paymentMethod,
           total: parseFloat(searchParams.get('paymentAmount') || '0'),
-          status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+          status: mockStatus,
           customer_name: '',
           created_at: new Date().toISOString(),
           _currency: 'BDT' as CurrencyCode
@@ -1082,7 +1117,10 @@ export const PaymentProcessing: React.FC = () => {
     }
     
     setStatusUpdated(true);
-    const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+    // For Stripe: Keep as pending_payment, for others use payment_failed/cancelled
+    const orderStatus = order?.payment_method === 'stripe' 
+      ? 'pending_payment' 
+      : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
     
     try {
       // Use edge function instead of direct client update (bypasses RLS)
