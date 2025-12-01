@@ -42,13 +42,9 @@ export const PaymentProcessing: React.FC = () => {
   const paymentMethod = searchParams.get('pm') || '';
   
   // Helper function to determine order status for failed/cancelled payments
-  // For Stripe: Keep as pending_payment so it shows in incomplete orders (matching EPS/EB Pay behavior)
-  // For other payment methods: Use payment_failed or cancelled
+  // Keep actual status - Stripe failed orders stay as payment_failed/cancelled
+  // Filtering logic already handles showing them in incomplete orders tab
   const getFailedOrderStatus = (order: any, urlStatus: string): string => {
-    const isStripe = order?.payment_method === 'stripe';
-    if (isStripe) {
-      return 'pending_payment'; // Keep as pending_payment for Stripe to show in incomplete orders
-    }
     return urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
   };
 
@@ -276,44 +272,14 @@ export const PaymentProcessing: React.FC = () => {
     const pendingCheckout = sessionStorage.getItem('pending_checkout');
     let funnelContextData = null;
     let storeIdForUpdate: string | null = null;
+    let orderDataFromStorage: any = null;
     
-    // ✅ First, try to get store ID from the order itself if store not loaded
-    // This is critical for Stripe payments where order exists but store might not be loaded
-    if (!store && tempId) {
-      try {
-        const { data: orderData } = await supabase
-          .from('orders')
-          .select('store_id, funnel_id')
-          .eq('id', tempId)
-          .maybeSingle();
-        
-        if (orderData?.store_id) {
-          storeIdForUpdate = orderData.store_id;
-          await loadStoreById(orderData.store_id);
-          console.log('PaymentProcessing: ✅ Store loaded from order for failed payment');
-        } else if (orderData?.funnel_id) {
-          // Load store from funnel
-          const { data: funnel } = await supabase
-            .from('funnels')
-            .select('store_id')
-            .eq('id', orderData.funnel_id)
-            .eq('is_active', true)
-            .maybeSingle();
-          
-          if (funnel?.store_id) {
-            storeIdForUpdate = funnel.store_id;
-            await loadStoreById(funnel.store_id);
-            console.log('PaymentProcessing: ✅ Store loaded from funnel for failed payment');
-          }
-        }
-      } catch (e) {
-        console.error('Error loading store from order:', e);
-      }
-    }
-    
+    // ✅ First, try to get store ID and order data from pending_checkout (no database query needed)
     if (pendingCheckout) {
       try {
         const checkoutData = JSON.parse(pendingCheckout);
+        orderDataFromStorage = checkoutData.orderData;
+        
         if (checkoutData.orderData?.isFunnelCheckout) {
           funnelContextData = {
             isFunnelCheckout: true,
@@ -324,17 +290,21 @@ export const PaymentProcessing: React.FC = () => {
           
           // ✅ Load store from funnel if not already loaded
           if (!store && checkoutData.orderData.funnelId) {
-            const { data: funnel } = await supabase
-              .from('funnels')
-              .select('store_id')
-              .eq('id', checkoutData.orderData.funnelId)
-              .eq('is_active', true)
-              .maybeSingle();
-            
-            if (funnel?.store_id) {
-              storeIdForUpdate = funnel.store_id;
-              await loadStoreById(funnel.store_id);
-              console.log('PaymentProcessing: ✅ Store loaded from funnel for failed payment');
+            try {
+              const { data: funnel } = await supabase
+                .from('funnels')
+                .select('store_id')
+                .eq('id', checkoutData.orderData.funnelId)
+                .eq('is_active', true)
+                .maybeSingle();
+              
+              if (funnel?.store_id) {
+                storeIdForUpdate = funnel.store_id;
+                await loadStoreById(funnel.store_id);
+                console.log('PaymentProcessing: ✅ Store loaded from funnel for failed payment');
+              }
+            } catch (e) {
+              console.log('PaymentProcessing: Could not load store from funnel (may be RLS blocked)');
             }
           } else if (store) {
             storeIdForUpdate = store.id;
@@ -351,6 +321,44 @@ export const PaymentProcessing: React.FC = () => {
       }
     }
     
+    // ✅ Only try database query as last resort if we don't have store ID yet
+    if (!storeIdForUpdate && !store && tempId) {
+      try {
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('store_id, funnel_id')
+          .eq('id', tempId)
+          .maybeSingle();
+        
+        if (orderData?.store_id) {
+          storeIdForUpdate = orderData.store_id;
+          await loadStoreById(orderData.store_id);
+          console.log('PaymentProcessing: ✅ Store loaded from order for failed payment');
+        } else if (orderData?.funnel_id) {
+          // Load store from funnel
+          try {
+            const { data: funnel } = await supabase
+              .from('funnels')
+              .select('store_id')
+              .eq('id', orderData.funnel_id)
+              .eq('is_active', true)
+              .maybeSingle();
+            
+            if (funnel?.store_id) {
+              storeIdForUpdate = funnel.store_id;
+              await loadStoreById(funnel.store_id);
+              console.log('PaymentProcessing: ✅ Store loaded from funnel for failed payment');
+            }
+          } catch (e) {
+            console.log('PaymentProcessing: Could not load store from funnel (may be RLS blocked)');
+          }
+        }
+      } catch (e) {
+        // Silently fail - we'll use data from sessionStorage/URL params instead
+        console.log('PaymentProcessing: Could not fetch order from database (RLS may block), using sessionStorage/URL params');
+      }
+    }
+    
     // Store funnel context for UI
     setFunnelContext(funnelContextData);
     
@@ -362,69 +370,98 @@ export const PaymentProcessing: React.FC = () => {
     // For funnel checkout: tempId was already the real orderId
     const effectiveStoreId = store?.id || storeIdForUpdate;
     if (tempId) {
-      // First, try to fetch the actual order to get real total and currency
-      try {
-        const { data: actualOrder } = await supabase
-          .from('orders')
-          .select('*')
-          .eq('id', tempId)
-          .maybeSingle();
-        
-        if (actualOrder) {
-          // Order exists, update its status and fetch currency
-          // For Stripe: Keep failed/cancelled orders as pending_payment so they show in incomplete orders tab
-          // (matching EPS/EB Pay behavior)
-          const orderStatus = getFailedOrderStatus(actualOrder, urlStatus);
-          console.log('PaymentProcessing: Order found, updating status to', orderStatus, 'for order', tempId, `(payment_method: ${actualOrder.payment_method})`);
+      // First, try to construct order data from sessionStorage (no database query)
+      let actualOrder: any = null;
+      
+      if (orderDataFromStorage) {
+        // Use order data from sessionStorage (no 401 errors)
+        actualOrder = {
+          id: tempId,
+          payment_method: orderDataFromStorage.payment_method || paymentMethod,
+          store_id: orderDataFromStorage.store_id || storeIdForUpdate,
+          funnel_id: orderDataFromStorage.funnelId,
+          website_id: orderDataFromStorage.website_id,
+          total: orderDataFromStorage.total || parseFloat(searchParams.get('paymentAmount') || '0'),
+          customer_name: orderDataFromStorage.customer_name || '',
+          customer_email: orderDataFromStorage.customer_email,
+          customer_phone: orderDataFromStorage.customer_phone || '',
+          created_at: new Date().toISOString(),
+        };
+        console.log('PaymentProcessing: Using order data from sessionStorage (no database query)');
+      }
+      
+      // Only try database query if we don't have data from sessionStorage
+      if (!actualOrder) {
+        try {
+          const { data: fetchedOrder } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('id', tempId)
+            .maybeSingle();
           
-          // Update order status if we have store ID
-          if (effectiveStoreId) {
-            try {
-              await supabase.functions.invoke('update-order-status', {
-                body: {
-                  orderId: tempId,
-                  status: orderStatus,
-                  storeId: effectiveStoreId
-                }
-              });
-            } catch (updateErr) {
-              console.error('PaymentProcessing: Error updating order status:', updateErr);
-              // Continue anyway, we'll display the order with updated status locally
-            }
+          if (fetchedOrder) {
+            actualOrder = fetchedOrder;
+            console.log('PaymentProcessing: Order fetched from database');
           }
-          
-          // Fetch currency for the order
-          const currency = await getOrderCurrency(actualOrder);
-          setOrder({ ...actualOrder, status: orderStatus, _currency: currency });
-          setLoading(false);
-          return; // Exit early, order fetched and displayed successfully
+        } catch (fetchErr) {
+          // Database query failed (401 or other) - create minimal order from available data
+          console.log('PaymentProcessing: Could not fetch order from database, using URL params and available data');
+          actualOrder = {
+            id: tempId,
+            payment_method: paymentMethod,
+            store_id: storeIdForUpdate,
+            total: parseFloat(searchParams.get('paymentAmount') || '0'),
+            customer_name: '',
+            customer_email: '',
+            customer_phone: '',
+            created_at: new Date().toISOString(),
+          };
         }
-      } catch (fetchErr) {
-        console.error('Error fetching order:', fetchErr);
-        // Continue to try updating via edge function
+      }
+      
+      if (actualOrder) {
+        // Determine order status - keep Stripe failed orders as payment_failed/cancelled (actual status)
+        // Filtering logic already handles showing them in incomplete orders tab
+        const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+        console.log('PaymentProcessing: Updating order status to', orderStatus, 'for order', tempId, `(payment_method: ${actualOrder.payment_method || paymentMethod})`);
+        
+        // Update order status if we have store ID
+        if (effectiveStoreId) {
+          try {
+            await supabase.functions.invoke('update-order-status', {
+              body: {
+                orderId: tempId,
+                status: orderStatus,
+                storeId: effectiveStoreId
+              }
+            });
+          } catch (updateErr) {
+            console.error('PaymentProcessing: Error updating order status:', updateErr);
+            // Continue anyway, we'll display the order with updated status locally
+          }
+        }
+        
+        // Fetch currency for the order (this might fail, but it's not critical)
+        let currency: CurrencyCode = 'BDT';
+        try {
+          currency = await getOrderCurrency(actualOrder);
+        } catch (e) {
+          console.log('PaymentProcessing: Could not fetch currency, using default');
+        }
+        
+        setOrder({ ...actualOrder, status: orderStatus, _currency: currency });
+        setLoading(false);
+        return; // Exit early, order data ready
       }
       
       // If order not found or fetch failed, try updating via edge function
       if (effectiveStoreId) {
-        // Try to fetch order first to get payment method
-        let orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
-        try {
-          const { data: orderForStatus } = await supabase
-            .from('orders')
-            .select('payment_method')
-            .eq('id', tempId)
-            .maybeSingle();
-          if (orderForStatus) {
-            orderStatus = getFailedOrderStatus(orderForStatus, urlStatus);
-          }
-        } catch (e) {
-          // Use paymentMethod from URL params as fallback
-          if (paymentMethod === 'stripe') {
-            orderStatus = 'pending_payment';
-          }
-        }
+        // Use paymentMethod from URL params (no database query needed)
+        // Keep Stripe failed orders as payment_failed/cancelled (actual status)
+        // Filtering logic already handles showing them in incomplete orders tab
+        const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
         
-        console.log('PaymentProcessing: Updating order status to', orderStatus, 'for order', tempId);
+        console.log('PaymentProcessing: Updating order status to', orderStatus, 'for order', tempId, `(payment_method from URL: ${paymentMethod})`);
         
         try {
           // Use edge function instead of direct client update (bypasses RLS)
@@ -472,110 +509,37 @@ export const PaymentProcessing: React.FC = () => {
           setOrder(mockOrder);
         }
       } else {
-        // No store ID, try to fetch order anyway
-        try {
-          const { data: actualOrder } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('id', tempId)
-            .maybeSingle();
-          
-          if (actualOrder) {
-            const orderStatus = getFailedOrderStatus(actualOrder, urlStatus);
-            const currency = await getOrderCurrency(actualOrder);
-            setOrder({ ...actualOrder, status: orderStatus, _currency: currency });
-          } else {
-            // Order doesn't exist, create mock
-            const mockStatus = paymentMethod === 'stripe' ? 'pending_payment' : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
-            const mockOrder = {
-              id: tempId,
-              order_number: searchParams.get('transactionId') || tempId,
-              payment_method: paymentMethod,
-              total: parseFloat(searchParams.get('paymentAmount') || '0'),
-              status: mockStatus,
-              customer_name: '',
-              created_at: new Date().toISOString(),
-              _currency: 'BDT' as CurrencyCode
-            };
-            setOrder(mockOrder);
-          }
-        } catch (e) {
-          console.error('Error fetching order without store ID:', e);
-          // Create mock order as last resort
-          const mockStatus = paymentMethod === 'stripe' ? 'pending_payment' : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
-          const mockOrder = {
-            id: tempId,
-            order_number: searchParams.get('transactionId') || tempId,
-            payment_method: paymentMethod,
-            total: parseFloat(searchParams.get('paymentAmount') || '0'),
-            status: mockStatus,
-            customer_name: '',
-            created_at: new Date().toISOString(),
-            _currency: 'BDT' as CurrencyCode
-          };
-          setOrder(mockOrder);
-        }
+        // No store ID, create mock order from available data (no database query to avoid 401)
+        const mockStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+        const mockOrder = {
+          id: tempId,
+          order_number: searchParams.get('transactionId') || tempId,
+          payment_method: paymentMethod,
+          total: parseFloat(searchParams.get('paymentAmount') || '0'),
+          status: mockStatus,
+          customer_name: '',
+          created_at: new Date().toISOString(),
+          _currency: 'BDT' as CurrencyCode
+        };
+        setOrder(mockOrder);
+        setLoading(false);
       }
     } else {
-      // If no tempId or store, try to fetch order to display it
+      // If no tempId or store, create mock order from available data (no database query to avoid 401)
       if (tempId) {
-        try {
-          const { data: orderData } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('id', tempId)
-            .maybeSingle();
-          
-          if (orderData) {
-            const orderStatus = getFailedOrderStatus(orderData, urlStatus);
-            // Update order status if we have store_id
-            if (orderData.store_id) {
-              try {
-                await supabase.functions.invoke('update-order-status', {
-                  body: {
-                    orderId: tempId,
-                    status: orderStatus,
-                    storeId: orderData.store_id
-                  }
-                });
-              } catch (updateErr) {
-                console.error('Error updating order status:', updateErr);
-              }
-            }
-            // Fetch currency for the order
-            const currency = await getOrderCurrency(orderData);
-            setOrder({ ...orderData, status: orderStatus, _currency: currency });
-          } else {
-            // Create mock order for display (with default currency)
-            const mockStatus = paymentMethod === 'stripe' ? 'pending_payment' : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
-            const mockOrder = {
-              id: tempId || '',
-              order_number: searchParams.get('transactionId') || tempId || '',
-              payment_method: paymentMethod,
-              total: parseFloat(searchParams.get('paymentAmount') || '0'),
-              status: mockStatus,
-              customer_name: '',
-              created_at: new Date().toISOString(),
-              _currency: 'BDT' as CurrencyCode
-            };
-            setOrder(mockOrder);
-          }
-        } catch (e) {
-          console.error('Error fetching order:', e);
-          // Create mock order for display (with default currency)
-          const mockStatus = paymentMethod === 'stripe' ? 'pending_payment' : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
-          const mockOrder = {
-            id: tempId || '',
-            order_number: searchParams.get('transactionId') || tempId || '',
-            payment_method: paymentMethod,
-            total: parseFloat(searchParams.get('paymentAmount') || '0'),
-            status: mockStatus,
-            customer_name: '',
-            created_at: new Date().toISOString(),
-            _currency: 'BDT' as CurrencyCode
-          };
-          setOrder(mockOrder);
-        }
+        const mockStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+        const mockOrder = {
+          id: tempId || '',
+          order_number: searchParams.get('transactionId') || tempId || '',
+          payment_method: paymentMethod,
+          total: parseFloat(searchParams.get('paymentAmount') || '0'),
+          status: mockStatus,
+          customer_name: '',
+          created_at: new Date().toISOString(),
+          _currency: 'BDT' as CurrencyCode
+        };
+        setOrder(mockOrder);
+        setLoading(false);
       } else {
         // If no tempId or store, create a mock order object for display purposes
         const mockStatus = paymentMethod === 'stripe' ? 'pending_payment' : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
@@ -1117,10 +1081,9 @@ export const PaymentProcessing: React.FC = () => {
     }
     
     setStatusUpdated(true);
-    // For Stripe: Keep as pending_payment, for others use payment_failed/cancelled
-    const orderStatus = order?.payment_method === 'stripe' 
-      ? 'pending_payment' 
-      : (urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed');
+    // Keep actual status - Stripe failed orders stay as payment_failed/cancelled
+    // Filtering logic already handles showing them in incomplete orders tab
+    const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
     
     try {
       // Use edge function instead of direct client update (bypasses RLS)
@@ -1147,33 +1110,68 @@ export const PaymentProcessing: React.FC = () => {
     if (!orderId) return;
     
     // ✅ For funnel checkouts, ensure store is loaded if not already
+    // Try to get store from pending_checkout first (no database query)
     if (!store) {
-      // Try to get store from order itself
-      try {
-        const { data: orderData } = await supabase
-          .from('orders')
-          .select('store_id, funnel_id')
-          .eq('id', orderId)
-          .maybeSingle();
-        
-        if (orderData?.store_id) {
-          await loadStoreById(orderData.store_id);
-        } else if (orderData?.funnel_id) {
-          // Load store from funnel
-          const { data: funnel } = await supabase
-            .from('funnels')
-            .select('store_id')
-            .eq('id', orderData.funnel_id)
-            .eq('is_active', true)
+      const pendingCheckout = sessionStorage.getItem('pending_checkout');
+      if (pendingCheckout) {
+        try {
+          const checkoutData = JSON.parse(pendingCheckout);
+          if (checkoutData.orderData?.funnelId) {
+            // Try to load store from funnel
+            try {
+              const { data: funnel } = await supabase
+                .from('funnels')
+                .select('store_id')
+                .eq('id', checkoutData.orderData.funnelId)
+                .eq('is_active', true)
+                .maybeSingle();
+              
+              if (funnel?.store_id) {
+                await loadStoreById(funnel.store_id);
+              }
+            } catch (e) {
+              console.log('PaymentProcessing: Could not load store from funnel (may be RLS blocked)');
+            }
+          } else if (checkoutData.storeId) {
+            await loadStoreById(checkoutData.storeId);
+          }
+        } catch (e) {
+          console.error('PaymentProcessing: Error parsing pending_checkout:', e);
+        }
+      }
+      
+      // Only try database query as last resort
+      if (!store) {
+        try {
+          const { data: orderData } = await supabase
+            .from('orders')
+            .select('store_id, funnel_id')
+            .eq('id', orderId)
             .maybeSingle();
           
-          if (funnel?.store_id) {
-            await loadStoreById(funnel.store_id);
+          if (orderData?.store_id) {
+            await loadStoreById(orderData.store_id);
+          } else if (orderData?.funnel_id) {
+            // Load store from funnel
+            try {
+              const { data: funnel } = await supabase
+                .from('funnels')
+                .select('store_id')
+                .eq('id', orderData.funnel_id)
+                .eq('is_active', true)
+                .maybeSingle();
+              
+              if (funnel?.store_id) {
+                await loadStoreById(funnel.store_id);
+              }
+            } catch (e) {
+              console.log('PaymentProcessing: Could not load store from funnel (may be RLS blocked)');
+            }
           }
+        } catch (e) {
+          console.log('PaymentProcessing: Could not fetch order from database (RLS may block), will try edge function');
+          // Continue anyway - order fetch via edge function might work
         }
-      } catch (e) {
-        console.error('PaymentProcessing: Error loading store for order fetch:', e);
-        // Continue anyway - order fetch might work without store
       }
     }
 
