@@ -78,8 +78,25 @@ useEffect(() => {
         await loadStoreById(website.store_id);
       }
     })();
+  } else if (orderId && !store) {
+    // ✅ For custom domains or when store context is missing, load store from order
+    // This happens when redirecting from payment processing on custom domains
+    (async () => {
+      try {
+        // Use get-order edge function to fetch order (bypasses RLS)
+        const { data: orderData, error: orderError } = await supabase.functions.invoke('get-order', {
+          body: { orderId }
+        });
+        
+        if (!orderError && orderData?.order?.store_id) {
+          await loadStoreById(orderData.order.store_id);
+        }
+      } catch (error) {
+        console.error('OrderConfirmation: Error loading store from order:', error);
+      }
+    })();
   }
-}, [slug, websiteId, loadStore, loadStoreById]);
+}, [slug, websiteId, orderId, store, loadStore, loadStoreById]);
 
 
   useEffect(() => {
