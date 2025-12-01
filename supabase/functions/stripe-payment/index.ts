@@ -57,7 +57,7 @@ async function decryptToken(encryptedToken: string, key: string): Promise<string
     return new TextDecoder().decode(decrypted);
   } catch (error) {
     console.error('Decryption error:', error);
-    throw new Error('Failed to decrypt token');
+    throw new Error(`Failed to decrypt token: ${error.message || error}`);
   }
 }
 
@@ -246,9 +246,9 @@ serve(async (req) => {
     }
 
     // Create checkout session on the connected account
-    const session = await stripe.checkout.sessions.create(sessionParams, {
-      stripeAccount: stripeConfig.stripe_account_id,
-    });
+    // Note: When using Stripe Connect with access token, we don't need stripeAccount parameter
+    // The access token already scopes requests to the connected account
+    const session = await stripe.checkout.sessions.create(sessionParams);
 
     console.log('Stripe Checkout Session created:', { 
       sessionId: session.id,
@@ -294,11 +294,19 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('Stripe payment error:', error);
+    console.error('Stripe payment error:', {
+      message: error?.message,
+      stack: error?.stack,
+      type: error?.type,
+      code: error?.code,
+      statusCode: error?.statusCode,
+      raw: error?.raw
+    });
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error?.message || 'Payment initiation failed' 
+        error: error?.message || 'Payment initiation failed',
+        details: process.env.NODE_ENV === 'development' ? error?.stack : undefined
       }),
       { 
         status: 500,
