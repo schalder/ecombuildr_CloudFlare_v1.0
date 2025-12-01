@@ -1372,12 +1372,10 @@ export const PaymentProcessing: React.FC = () => {
   // This prevents "Order Processing" flash before redirect
   if (paymentMethod === 'stripe' && tempId && (urlStatus === 'success' || urlStatus === 'completed') && loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p>Redirecting to order confirmation...</p>
-          </div>
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Redirecting to order confirmation...</p>
         </div>
       </div>
     );
@@ -1385,12 +1383,10 @@ export const PaymentProcessing: React.FC = () => {
 
   if (loading || isCoursePayment === null) {
     const loadingContent = (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p>Loading order details...</p>
-          </div>
+      <div className="fixed inset-0 flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p>Loading order details...</p>
         </div>
       </div>
     );
@@ -1400,13 +1396,10 @@ export const PaymentProcessing: React.FC = () => {
 
   if (!order) {
     const notFoundContent = (
-      <div className="container mx-auto px-4 py-8">
+      <div className="fixed inset-0 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-destructive mb-2">Order Processing</h1>
-          <p className="text-muted-foreground mb-4">Please wait while we process your order...</p>
-          <Button onClick={() => navigate(paths.home)}>
-            Continue Shopping
-          </Button>
+          <h1 className="text-2xl font-bold mb-2">Order Processing</h1>
+          <p className="text-muted-foreground">Please wait while we process your order...</p>
         </div>
       </div>
     );
