@@ -171,13 +171,17 @@ export const PaymentProcessing: React.FC = () => {
   useEffect(() => {
     // ✅ For funnel checkouts, proceed even if store is not loaded yet (it will load from funnel)
     // For site checkouts, wait for store to be loaded
+    // BUT: For failed/cancelled payments, proceed immediately (store will load from order if needed)
     const isFunnelCheckout = sessionStorage.getItem('pending_checkout') 
       ? JSON.parse(sessionStorage.getItem('pending_checkout') || '{}')?.orderData?.isFunnelCheckout 
       : false;
     
-    // If it's a funnel checkout, we can proceed without store (store will load from funnel)
+    // For failed/cancelled payments, proceed immediately (store will be loaded from order)
+    const isFailedPayment = tempId && (urlStatus === 'failed' || urlStatus === 'cancelled');
+    
+    // If it's a funnel checkout or failed payment, we can proceed without store
     // If it's a site checkout, we need store to be loaded
-    const canProceed = isFunnelCheckout || store;
+    const canProceed = isFunnelCheckout || isFailedPayment || store;
     
     if (canProceed && isCoursePayment === false) {
       if (tempId && (urlStatus === 'success' || urlStatus === 'completed')) {
@@ -186,6 +190,7 @@ export const PaymentProcessing: React.FC = () => {
         handleDeferredOrderCreation();
       } else if (tempId && (urlStatus === 'failed' || urlStatus === 'cancelled')) {
         // Handle failed/cancelled deferred payments immediately
+        // This will load store from order if needed
         handleFailedDeferredPayment();
       } else if (orderId) {
         fetchOrder();
@@ -208,6 +213,40 @@ export const PaymentProcessing: React.FC = () => {
     const pendingCheckout = sessionStorage.getItem('pending_checkout');
     let funnelContextData = null;
     let storeIdForUpdate: string | null = null;
+    
+    // ✅ First, try to get store ID from the order itself if store not loaded
+    // This is critical for Stripe payments where order exists but store might not be loaded
+    if (!store && tempId) {
+      try {
+        const { data: orderData } = await supabase
+          .from('orders')
+          .select('store_id, funnel_id')
+          .eq('id', tempId)
+          .maybeSingle();
+        
+        if (orderData?.store_id) {
+          storeIdForUpdate = orderData.store_id;
+          await loadStoreById(orderData.store_id);
+          console.log('PaymentProcessing: ✅ Store loaded from order for failed payment');
+        } else if (orderData?.funnel_id) {
+          // Load store from funnel
+          const { data: funnel } = await supabase
+            .from('funnels')
+            .select('store_id')
+            .eq('id', orderData.funnel_id)
+            .eq('is_active', true)
+            .maybeSingle();
+          
+          if (funnel?.store_id) {
+            storeIdForUpdate = funnel.store_id;
+            await loadStoreById(funnel.store_id);
+            console.log('PaymentProcessing: ✅ Store loaded from funnel for failed payment');
+          }
+        }
+      } catch (e) {
+        console.error('Error loading store from order:', e);
+      }
+    }
     
     if (pendingCheckout) {
       try {
@@ -305,17 +344,72 @@ export const PaymentProcessing: React.FC = () => {
         setOrder(mockOrder);
       }
     } else {
-      // If no tempId or store, create a mock order object for display purposes
-      const mockOrder = {
-        id: tempId || '',
-        order_number: searchParams.get('transactionId') || tempId || '',
-        payment_method: paymentMethod,
-        total: parseFloat(searchParams.get('paymentAmount') || '0'),
-        status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
-        customer_name: '',
-        created_at: new Date().toISOString()
-      };
-      setOrder(mockOrder);
+      // If no tempId or store, try to fetch order to display it
+      if (tempId) {
+        try {
+          const { data: orderData } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('id', tempId)
+            .maybeSingle();
+          
+          if (orderData) {
+            const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+            // Update order status if we have store_id
+            if (orderData.store_id) {
+              try {
+                await supabase.functions.invoke('update-order-status', {
+                  body: {
+                    orderId: tempId,
+                    status: orderStatus,
+                    storeId: orderData.store_id
+                  }
+                });
+              } catch (updateErr) {
+                console.error('Error updating order status:', updateErr);
+              }
+            }
+            setOrder({ ...orderData, status: orderStatus });
+          } else {
+            // Create mock order for display
+            const mockOrder = {
+              id: tempId || '',
+              order_number: searchParams.get('transactionId') || tempId || '',
+              payment_method: paymentMethod,
+              total: parseFloat(searchParams.get('paymentAmount') || '0'),
+              status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+              customer_name: '',
+              created_at: new Date().toISOString()
+            };
+            setOrder(mockOrder);
+          }
+        } catch (e) {
+          console.error('Error fetching order:', e);
+          // Create mock order for display
+          const mockOrder = {
+            id: tempId || '',
+            order_number: searchParams.get('transactionId') || tempId || '',
+            payment_method: paymentMethod,
+            total: parseFloat(searchParams.get('paymentAmount') || '0'),
+            status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+            customer_name: '',
+            created_at: new Date().toISOString()
+          };
+          setOrder(mockOrder);
+        }
+      } else {
+        // If no tempId or store, create a mock order object for display purposes
+        const mockOrder = {
+          id: tempId || '',
+          order_number: searchParams.get('transactionId') || tempId || '',
+          payment_method: paymentMethod,
+          total: parseFloat(searchParams.get('paymentAmount') || '0'),
+          status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+          customer_name: '',
+          created_at: new Date().toISOString()
+        };
+        setOrder(mockOrder);
+      }
     }
     
     setLoading(false);
