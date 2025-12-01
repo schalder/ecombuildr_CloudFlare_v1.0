@@ -198,11 +198,25 @@ serve(async (req) => {
       : `${originBase}/payment-processing?tempId=${trackingId}&status=failed&pm=stripe`;
 
     // Create Stripe Checkout Session
+    // Note: Checkout Sessions require line_items, not amount directly
     const sessionParams: any = {
       payment_method_types: ['card'],
       mode: 'payment',
-      amount: amountInCents,
-      currency: paymentCurrency,
+      line_items: [
+        {
+          price_data: {
+            currency: paymentCurrency,
+            product_data: {
+              name: orderData?.items?.[0]?.product?.name || 'Order',
+              description: orderData?.items?.length > 1 
+                ? `${orderData.items.length} items` 
+                : orderData?.items?.[0]?.product?.name || 'Order',
+            },
+            unit_amount: amountInCents,
+          },
+          quantity: 1,
+        },
+      ],
       success_url: successUrl,
       cancel_url: cancelUrl,
       customer_email: customerData.email,
