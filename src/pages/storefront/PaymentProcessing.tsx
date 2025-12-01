@@ -605,72 +605,69 @@ export const PaymentProcessing: React.FC = () => {
       }
     }
 
-    // ✅ For Stripe payments, check if order already exists first (webhook may have created it)
+    // ✅ For Stripe payments, order already exists - just update status and redirect immediately
+    // This matches Shopify/WooCommerce behavior: update existing order, redirect immediately
     if (paymentMethod === 'stripe' && tempId) {
       try {
+        // Fetch the existing order with items to check product types
         const { data: existingOrder, error: fetchError } = await supabase
           .from('orders')
-          .select('*')
+          .select('*, order_items(product_id)')
           .eq('id', tempId)
           .maybeSingle();
         
         if (!fetchError && existingOrder) {
-          console.log('PaymentProcessing: Order already exists for Stripe payment, fetching it');
+          console.log('PaymentProcessing: Stripe order exists, updating status immediately');
           
-          // Order exists, check if webhook already processed it
-          const orderStatus = existingOrder.status as string;
-          if (orderStatus === 'processing' || orderStatus === 'delivered') {
-            // Webhook already processed it, redirect to confirmation
-            const customFields = existingOrder.custom_fields as any;
-            const orderToken = customFields?.order_access_token || crypto.randomUUID().replace(/-/g, '');
-            setOrder(existingOrder);
-            setLoading(false);
-            setCreatingOrder(false);
-            
-            // Clear checkout data
-            sessionStorage.removeItem('pending_checkout');
-            clearCart();
-            
-            // Redirect to order confirmation
-            window.location.href = paths.orderConfirmation(existingOrder.id, orderToken);
-            return;
-          } else if (orderStatus === 'pending_payment' || orderStatus === 'pending') {
-            // Order exists but webhook hasn't processed it yet
-            // Wait a moment for webhook, then check again
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            const { data: recheckOrder } = await supabase
-              .from('orders')
-              .select('*')
-              .eq('id', tempId)
-              .maybeSingle();
-            
-            if (recheckOrder) {
-              const recheckStatus = recheckOrder.status as string;
-              if (recheckStatus === 'processing' || recheckStatus === 'delivered') {
-                // Webhook processed it, redirect to confirmation
-                const recheckCustomFields = recheckOrder.custom_fields as any;
-                const orderToken = recheckCustomFields?.order_access_token || crypto.randomUUID().replace(/-/g, '');
-                setOrder(recheckOrder);
-                setLoading(false);
-                setCreatingOrder(false);
-                
-                // Clear checkout data
-                sessionStorage.removeItem('pending_checkout');
-                clearCart();
-                
-                // Redirect to order confirmation
-                window.location.href = paths.orderConfirmation(recheckOrder.id, orderToken);
-                return;
+          // Determine status based on product types
+          let orderStatus = 'processing'; // Default for physical products
+          
+          // Check if all products are digital
+          const orderItems = existingOrder.order_items || [];
+          if (orderItems.length > 0) {
+            const productIds = orderItems.map((item: any) => item.product_id).filter(Boolean);
+            if (productIds.length > 0) {
+              const { data: products } = await supabase
+                .from('products')
+                .select('product_type')
+                .in('id', productIds);
+              
+              const hasPhysical = products?.some((p: any) => p.product_type !== 'digital');
+              const hasDigital = products?.some((p: any) => p.product_type === 'digital');
+              
+              // If all digital, set to delivered (instant delivery)
+              if (hasDigital && !hasPhysical) {
+                orderStatus = 'delivered';
               }
             }
-            // If still pending, continue with order creation/update below
           }
-          // If order exists but in unexpected status, continue with normal flow
+          
+          // Update order status immediately (webhook will verify later as backup)
+          await supabase.functions.invoke('update-order-status', {
+            body: {
+              orderId: tempId,
+              status: orderStatus,
+              storeId: existingOrder.store_id
+            }
+          });
+          
+          // Get order token from custom_fields (or generate if missing)
+          const customFields = existingOrder.custom_fields as any;
+          const orderToken = customFields?.order_access_token || crypto.randomUUID().replace(/-/g, '');
+          
+          // Clear checkout data
+          sessionStorage.removeItem('pending_checkout');
+          clearCart();
+          
+          // Redirect immediately to order confirmation
+          // OrderConfirmation page will fetch the actual order from database
+          console.log('PaymentProcessing: Stripe order updated, redirecting to confirmation');
+          window.location.href = paths.orderConfirmation(existingOrder.id, orderToken);
+          return; // Exit early - don't call create-order-on-payment-success
         }
       } catch (error) {
-        console.error('PaymentProcessing: Error checking for existing Stripe order:', error);
-        // Continue with order creation if check fails
+        console.error('PaymentProcessing: Error updating Stripe order:', error);
+        // Continue with normal flow if update fails (shouldn't happen, but fallback)
       }
     }
 
