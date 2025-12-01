@@ -1167,15 +1167,17 @@ export const PaymentProcessing: React.FC = () => {
                           }
                         } else {
                           console.error('PaymentProcessing: Step not found, falling back to checkout');
-                          navigate(paths.checkout);
+                          // Use window.location.href to preserve custom domain
+                          window.location.href = `${window.location.origin}${paths.checkout}`;
                         }
                       } catch (error) {
                         console.error('PaymentProcessing: Error redirecting to funnel step:', error);
-                        navigate(paths.checkout);
+                        // Use window.location.href to preserve custom domain
+                        window.location.href = `${window.location.origin}${paths.checkout}`;
                       }
                     } else {
-                      // Site checkout: existing behavior
-                      navigate(paths.checkout);
+                      // Site checkout: use window.location.href to preserve custom domain
+                      window.location.href = `${window.location.origin}${paths.checkout}`;
                     }
                   }}
                   className="w-full"
@@ -1188,7 +1190,10 @@ export const PaymentProcessing: React.FC = () => {
               {!funnelContext?.isFunnelCheckout && (
               <Button 
                 variant="outline" 
-                onClick={() => navigate(paths.home)}
+                onClick={() => {
+                  // Use window.location.href to preserve custom domain
+                  window.location.href = `${window.location.origin}${paths.home}`;
+                }}
                 className="w-full"
               >
                 Continue Shopping

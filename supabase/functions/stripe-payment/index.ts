@@ -135,7 +135,7 @@ serve(async (req) => {
       httpClient: Stripe.createFetchHttpClient(),
     });
 
-    // Determine origin for redirects
+    // Determine origin for redirects - prioritize redirectOrigin parameter
     const ref = req.headers.get('referer') || '';
     let originBase = redirectOrigin || req.headers.get('origin') || '';
     
@@ -171,6 +171,13 @@ serve(async (req) => {
     if (!originBase) {
       originBase = 'https://ecombuildr.com';
     }
+
+    console.log('Stripe Payment - Origin detection:', {
+      redirectOrigin,
+      detectedOrigin: originBase,
+      referer: ref,
+      requestOrigin: req.headers.get('origin')
+    });
 
     // Determine currency (default to USD if not provided)
     const paymentCurrency = (currency || 'USD').toLowerCase();
