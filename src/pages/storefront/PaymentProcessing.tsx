@@ -605,71 +605,10 @@ export const PaymentProcessing: React.FC = () => {
       }
     }
 
-    // ✅ For Stripe payments, order already exists - just update status and redirect immediately
-    // This matches Shopify/WooCommerce behavior: update existing order, redirect immediately
-    if (paymentMethod === 'stripe' && tempId) {
-      try {
-        // Use edge function to fetch order (bypasses RLS)
-        const { data: orderData, error: fetchError } = await supabase.functions.invoke('get-order', {
-          body: { orderId: tempId }
-        });
-        
-        if (!fetchError && orderData?.order) {
-          const existingOrder = orderData.order;
-          const orderItems = orderData.items || [];
-          
-          console.log('PaymentProcessing: Stripe order exists, updating status immediately');
-          
-          // Determine status based on product types
-          let orderStatus = 'processing'; // Default for physical products
-          
-          // Check if all products are digital
-          if (orderItems.length > 0) {
-            const productIds = orderItems.map((item: any) => item.product_id).filter(Boolean);
-            if (productIds.length > 0) {
-              const { data: products } = await supabase
-                .from('products')
-                .select('product_type')
-                .in('id', productIds);
-              
-              const hasPhysical = products?.some((p: any) => p.product_type !== 'digital');
-              const hasDigital = products?.some((p: any) => p.product_type === 'digital');
-              
-              // If all digital, set to delivered (instant delivery)
-              if (hasDigital && !hasPhysical) {
-                orderStatus = 'delivered';
-              }
-            }
-          }
-          
-          // Update order status immediately (webhook will verify later as backup)
-          await supabase.functions.invoke('update-order-status', {
-            body: {
-              orderId: tempId,
-              status: orderStatus,
-              storeId: existingOrder.store_id
-            }
-          });
-          
-          // Get order token from custom_fields (or generate if missing)
-          const customFields = existingOrder.custom_fields as any;
-          const orderToken = customFields?.order_access_token || crypto.randomUUID().replace(/-/g, '');
-          
-          // Clear checkout data
-          sessionStorage.removeItem('pending_checkout');
-          clearCart();
-          
-          // Redirect immediately to order confirmation
-          // OrderConfirmation page will fetch the actual order from database
-          console.log('PaymentProcessing: Stripe order updated, redirecting to confirmation');
-          window.location.href = paths.orderConfirmation(existingOrder.id, orderToken);
-          return; // Exit early - don't call create-order-on-payment-success
-        }
-      } catch (error) {
-        console.error('PaymentProcessing: Error updating Stripe order:', error);
-        // Continue with normal flow if update fails (shouldn't happen, but fallback)
-      }
-    }
+    // ✅ For Stripe payments, use the same flow as EPS/EB Pay
+    // create-order-on-payment-success already handles existing orders by checking idempotency_key
+    // It will return the existing order and update its status based on product types
+    // No special handling needed - consistency with EPS/EB Pay flow
 
     setCreatingOrder(true);
     try {
