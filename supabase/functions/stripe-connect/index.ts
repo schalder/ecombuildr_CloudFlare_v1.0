@@ -254,6 +254,45 @@ serve(async (req) => {
 
     // Handle OAuth initiation
     if (req.method === 'POST') {
+      // Verify JWT token for POST requests (manual verification since verify_jwt is disabled)
+      const authHeader = req.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Missing or invalid authorization header' 
+          }),
+          { 
+            status: 401, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      // Create a client with anon key to verify JWT
+      const anonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+      const supabaseAnon = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        anonKey
+      );
+
+      // Verify JWT and get user
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error: authError } = await supabaseAnon.auth.getUser(token);
+
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Invalid or expired token' 
+          }),
+          { 
+            status: 401, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
       const { storeId }: StripeConnectInitiateRequest = await req.json();
 
       if (!storeId) {
@@ -269,10 +308,10 @@ serve(async (req) => {
         );
       }
 
-      // Verify store exists
+      // Verify store exists and belongs to the authenticated user
       const { data: store, error: storeError } = await supabase
         .from('stores')
-        .select('id')
+        .select('id, user_id')
         .eq('id', storeId)
         .single();
 
@@ -284,6 +323,20 @@ serve(async (req) => {
           }),
           { 
             status: 404, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      // Verify the store belongs to the authenticated user
+      if (store.user_id !== user.id) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Unauthorized: Store does not belong to user' 
+          }),
+          { 
+            status: 403, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         );
