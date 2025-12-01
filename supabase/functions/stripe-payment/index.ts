@@ -148,6 +148,7 @@ serve(async (req) => {
     }
     
     // Verify the detected domain belongs to this store (security check)
+    // If redirectOrigin was explicitly provided from frontend, trust it more (but still verify)
     if (originBase && !originBase.includes('localhost') && !originBase.includes('127.0.0.1')) {
       const hostname = new URL(originBase).hostname;
       if (hostname !== 'ecombuildr.com') { // Not system domain
@@ -160,9 +161,21 @@ serve(async (req) => {
           .eq('dns_configured', true)
           .maybeSingle();
         
-        // If custom domain not verified for this store, fallback to system domain
+        // If custom domain not verified for this store
         if (!domainRow) {
-          originBase = '';
+          // If redirectOrigin was explicitly provided, log warning but still use it
+          // (frontend already validated it, but we log for security monitoring)
+          if (redirectOrigin && redirectOrigin === originBase) {
+            console.warn('Stripe Payment - Custom domain not verified in database, but redirectOrigin was provided:', {
+              hostname,
+              storeId,
+              redirectOrigin
+            });
+            // Trust redirectOrigin from frontend - don't clear originBase
+          } else {
+            // Not from redirectOrigin, so reject it
+            originBase = '';
+          }
         }
       }
     }

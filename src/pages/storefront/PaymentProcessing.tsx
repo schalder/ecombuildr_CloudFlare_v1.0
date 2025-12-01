@@ -47,6 +47,25 @@ export const PaymentProcessing: React.FC = () => {
   const urlStatus = searchParams.get('status');
   const [statusUpdated, setStatusUpdated] = useState(false);
 
+  // ✅ Check if we're on the wrong domain and redirect to custom domain if needed
+  useEffect(() => {
+    // Check if we're on the wrong domain (system domain when we should be on custom domain)
+    const storedOrigin = sessionStorage.getItem('payment_origin');
+    const currentOrigin = window.location.origin;
+    
+    // If we have a stored origin (custom domain) but we're on the system domain
+    if (storedOrigin && storedOrigin !== currentOrigin && 
+        currentOrigin.includes('ecombuildr.com') && 
+        !storedOrigin.includes('ecombuildr.com')) {
+      // Redirect to the custom domain version of this page
+      const currentUrl = new URL(window.location.href);
+      const customUrl = new URL(currentUrl.pathname + currentUrl.search, storedOrigin);
+      console.log('PaymentProcessing: Redirecting to custom domain:', customUrl.toString());
+      window.location.href = customUrl.toString();
+      return;
+    }
+  }, []); // Run once on mount
+
   // ✅ Load store with priority: Funnel context > Website > Slug
   // This ensures funnel payment processing works independently of website status
   useEffect(() => {
@@ -1167,17 +1186,20 @@ export const PaymentProcessing: React.FC = () => {
                           }
                         } else {
                           console.error('PaymentProcessing: Step not found, falling back to checkout');
-                          // Use window.location.href to preserve custom domain
-                          window.location.href = `${window.location.origin}${paths.checkout}`;
+                          // Get stored origin or use current origin to preserve custom domain
+                          const storedOrigin = sessionStorage.getItem('payment_origin') || window.location.origin;
+                          window.location.href = `${storedOrigin}${paths.checkout}`;
                         }
                       } catch (error) {
                         console.error('PaymentProcessing: Error redirecting to funnel step:', error);
-                        // Use window.location.href to preserve custom domain
-                        window.location.href = `${window.location.origin}${paths.checkout}`;
+                        // Get stored origin or use current origin to preserve custom domain
+                        const storedOrigin = sessionStorage.getItem('payment_origin') || window.location.origin;
+                        window.location.href = `${storedOrigin}${paths.checkout}`;
                       }
                     } else {
-                      // Site checkout: use window.location.href to preserve custom domain
-                      window.location.href = `${window.location.origin}${paths.checkout}`;
+                      // Site checkout: use stored origin or current origin to preserve custom domain
+                      const storedOrigin = sessionStorage.getItem('payment_origin') || window.location.origin;
+                      window.location.href = `${storedOrigin}${paths.checkout}`;
                     }
                   }}
                   className="w-full"
@@ -1191,8 +1213,9 @@ export const PaymentProcessing: React.FC = () => {
               <Button 
                 variant="outline" 
                 onClick={() => {
-                  // Use window.location.href to preserve custom domain
-                  window.location.href = `${window.location.origin}${paths.home}`;
+                  // Get stored origin or use current origin to preserve custom domain
+                  const storedOrigin = sessionStorage.getItem('payment_origin') || window.location.origin;
+                  window.location.href = `${storedOrigin}${paths.home}`;
                 }}
                 className="w-full"
               >

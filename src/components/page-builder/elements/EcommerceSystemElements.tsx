@@ -1535,6 +1535,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
             // Use default USD
           }
           
+          // Store original origin for redirects (preserves custom domain)
+          sessionStorage.setItem('payment_origin', window.location.origin);
+          
           response = await supabase.functions.invoke('stripe-payment', { 
             body: { 
               orderId: orderId, // ✅ Use real orderId (order already created)

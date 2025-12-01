@@ -233,6 +233,9 @@ const CourseCheckout = () => {
           throw new Error('Payment gateway error. Please try again.');
         }
       } else if (paymentMethod === 'stripe') {
+        // Store original origin for redirects (preserves custom domain)
+        sessionStorage.setItem('payment_origin', window.location.origin);
+        
         // Call Stripe payment edge function
         const { data: stripeResponse, error: stripeError } = await supabase.functions.invoke('stripe-payment', {
           body: {
