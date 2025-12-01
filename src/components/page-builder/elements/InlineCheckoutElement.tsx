@@ -1375,18 +1375,39 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
                 {/* Shipping Options */}
                 {(() => {
-                  const productShippingConfig = (selectedProduct as any)?.shipping_config;
-                  const hasCustomOptions = productShippingConfig?.type === 'custom_options' && productShippingConfig?.customOptions?.length > 0;
-                  const isFreeShipping = productShippingConfig?.type === 'free';
+                  // Check ALL products (selectedProduct + bumpProduct if checked)
+                  const productsToCheck = [selectedProduct];
+                  if (orderBump.enabled && bumpChecked && bumpProduct) {
+                    productsToCheck.push(bumpProduct);
+                  }
                   
-                  // Don't show shipping options if product has free shipping
-                  if (isFreeShipping) {
+                  // Check if ALL products have free shipping
+                  const allProductsHaveFreeShipping = productsToCheck.every((product) => {
+                    if (!product) return false;
+                    const shippingConfig = (product as any)?.shipping_config;
+                    return shippingConfig?.type === 'free';
+                  });
+                  
+                  // If ALL products have free shipping, don't show shipping options
+                  if (allProductsHaveFreeShipping) {
                     return null;
                   }
                   
+                  // Check if ANY product has custom shipping options
+                  let productWithCustomOptions: any = null;
+                  for (const product of productsToCheck) {
+                    if (product) {
+                      const shippingConfig = (product as any)?.shipping_config;
+                      if (shippingConfig?.type === 'custom_options' && shippingConfig?.customOptions?.length > 0) {
+                        productWithCustomOptions = shippingConfig;
+                        break; // Use first product with custom options
+                      }
+                    }
+                  }
+                  
                   // Show custom product options if available
-                  if (hasCustomOptions) {
-                    const customOptions = productShippingConfig.customOptions;
+                  if (productWithCustomOptions) {
+                    const customOptions = productWithCustomOptions.customOptions;
                     
                     return (
                       <div className="space-y-3">

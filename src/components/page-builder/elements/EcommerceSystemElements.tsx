@@ -1813,16 +1813,35 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                      )}
                     </div>
 
-                   {/* Show website shipping options if enabled */}
-                   {websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout && (
-                     <ShippingOptionsPicker
-                       settings={websiteShipping}
-                       selectedOptionId={selectedShippingOption?.id}
-                       onOptionSelect={(option) => setSelectedShippingOption(option)}
-                       setForm={setForm}
-                       className="mt-4"
-                     />
-                   )}
+                   {/* Show website shipping options if enabled and not all products have free shipping */}
+                   {(() => {
+                     // Check if ALL cart items have free shipping
+                     const allItemsHaveFreeShipping = items.length > 0 && items.every((item) => {
+                       const productData = productShippingData.get(item.productId);
+                       const shippingConfig = productData?.shipping_config;
+                       return shippingConfig?.type === 'free';
+                     });
+                     
+                     // If ALL items have free shipping, don't show shipping options
+                     if (allItemsHaveFreeShipping) {
+                       return null;
+                     }
+                     
+                     // Show shipping options if enabled
+                     if (websiteShipping?.enabled && (websiteShipping as any)?.showOptionsAtCheckout) {
+                       return (
+                         <ShippingOptionsPicker
+                           settings={websiteShipping}
+                           selectedOptionId={selectedShippingOption?.id}
+                           onOptionSelect={(option) => setSelectedShippingOption(option)}
+                           setForm={setForm}
+                           className="mt-4"
+                         />
+                       );
+                     }
+                     
+                     return null;
+                   })()}
 
                 </section>
               )}

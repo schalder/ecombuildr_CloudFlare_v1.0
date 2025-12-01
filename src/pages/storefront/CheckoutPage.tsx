@@ -22,6 +22,7 @@ import { nameWithVariant } from '@/lib/utils';
 import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
 import { useChannelContext } from '@/hooks/useChannelContext';
+import { isValidInternationalPhone } from '@/utils/phoneValidation';
 
 interface CheckoutForm {
   customer_name: string;
@@ -196,37 +197,12 @@ useEffect(() => {
     setForm(prev => ({ ...prev, [field]: value }));
   };
 
-  // Helper function to normalize Bangladesh phone numbers
-  const normalizeBdPhone = (phone: string): string => {
-    if (!phone) return '';
-    // Remove all non-digits except +
-    let cleaned = phone.replace(/[^\d+]/g, '');
-    // If starts with +88, keep it
-    if (cleaned.startsWith('+88')) {
-      return cleaned;
-    }
-    // If starts with 88, add +
-    if (cleaned.startsWith('88')) {
-      return '+' + cleaned;
-    }
-    // If starts with 01 (local format), add +88
-    if (cleaned.startsWith('01')) {
-      return '+88' + cleaned;
-    }
-    // If it's 11 digits starting with 1, assume it's missing the 0
-    if (cleaned.length === 11 && cleaned.startsWith('1')) {
-      return '+880' + cleaned;
-    }
-    return cleaned;
-  };
-
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
         if (!form.customer_name || !form.customer_email || !form.customer_phone) return false;
-        // Validate phone format
-        const normalizedPhone = normalizeBdPhone(form.customer_phone);
-        return normalizedPhone.length >= 11;
+        // Validate phone format using international validation
+        return isValidInternationalPhone(form.customer_phone);
       case 2:
         // Skip shipping validation for digital-only orders
         if (hasDigitalProducts && !hasPhysicalProducts) return true;

@@ -115,7 +115,25 @@ function getClientIP(req: Request): string | null {
   return null;
 }
 
-// Validate Bangladeshi phone number format (11 digits, starts with 01)
+// Validate international phone number format
+// Supports formats like: +1234567890, +1-234-567-8900, +44 20 1234 5678, etc.
+function isValidInternationalPhone(phone: string): boolean {
+  if (!phone) return false;
+  
+  // Remove spaces, dashes, parentheses, and dots (keep + and digits)
+  const cleaned = phone.replace(/[\s\-().]/g, '');
+  
+  // International phone number regex:
+  // - Must start with + followed by country code (1-3 digits)
+  // - Then 4-14 more digits (total 7-15 digits after +)
+  // OR
+  // - Can be 7-15 digits without + (for backward compatibility with local formats)
+  const internationalRegex = /^(\+[1-9]\d{6,14}|\d{7,15})$/;
+  
+  return internationalRegex.test(cleaned);
+}
+
+// Legacy function for backward compatibility (deprecated, use isValidInternationalPhone)
 function isValidBangladeshiPhone(phone: string): boolean {
   if (!phone) return false;
   
@@ -249,7 +267,7 @@ serve(async (req) => {
     
     // Fake order detection for COD orders only
     if (order.payment_method === 'cod') {
-      const isValidPhone = isValidBangladeshiPhone(order.customer_phone);
+      const isValidPhone = isValidInternationalPhone(order.customer_phone);
       
       // Block invalid phone numbers
       if (!isValidPhone) {
@@ -257,7 +275,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'Invalid phone number format. Please enter a valid 11-digit Bangladeshi mobile number starting with 01.' 
+            error: 'Invalid phone number format. Please enter a valid international phone number (e.g., +1234567890, +44 20 1234 5678).' 
           }), 
           { 
             status: 400, 
