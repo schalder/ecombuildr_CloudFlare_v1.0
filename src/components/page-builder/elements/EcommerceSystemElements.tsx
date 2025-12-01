@@ -1813,17 +1813,28 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                      )}
                     </div>
 
-                   {/* Show website shipping options if enabled and not all products have free shipping */}
+                   {/* Show website shipping options if enabled and not all physical products have free shipping */}
                    {(() => {
-                     // Check if ALL cart items have free shipping
-                     const allItemsHaveFreeShipping = items.length > 0 && items.every((item) => {
+                     // Filter to only physical products (exclude digital products)
+                     const physicalItems = items.filter((item) => {
+                       const productData = productShippingData.get(item.productId);
+                       return productData?.product_type !== 'digital';
+                     });
+                     
+                     // If no physical products, don't show shipping options
+                     if (physicalItems.length === 0) {
+                       return null;
+                     }
+                     
+                     // Check if ALL physical products have free shipping
+                     const allPhysicalProductsHaveFreeShipping = physicalItems.every((item) => {
                        const productData = productShippingData.get(item.productId);
                        const shippingConfig = productData?.shipping_config;
                        return shippingConfig?.type === 'free';
                      });
                      
-                     // If ALL items have free shipping, don't show shipping options
-                     if (allItemsHaveFreeShipping) {
+                     // If ALL physical products have free shipping, don't show shipping options
+                     if (allPhysicalProductsHaveFreeShipping) {
                        return null;
                      }
                      

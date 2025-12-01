@@ -1381,21 +1381,32 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     productsToCheck.push(bumpProduct);
                   }
                   
-                  // Check if ALL products have free shipping
-                  const allProductsHaveFreeShipping = productsToCheck.every((product) => {
+                  // Filter to only physical products (exclude digital products)
+                  const physicalProducts = productsToCheck.filter((product) => {
+                    if (!product) return false;
+                    return (product as any)?.product_type !== 'digital';
+                  });
+                  
+                  // If no physical products, don't show shipping options
+                  if (physicalProducts.length === 0) {
+                    return null;
+                  }
+                  
+                  // Check if ALL physical products have free shipping
+                  const allPhysicalProductsHaveFreeShipping = physicalProducts.every((product) => {
                     if (!product) return false;
                     const shippingConfig = (product as any)?.shipping_config;
                     return shippingConfig?.type === 'free';
                   });
                   
-                  // If ALL products have free shipping, don't show shipping options
-                  if (allProductsHaveFreeShipping) {
+                  // If ALL physical products have free shipping, don't show shipping options
+                  if (allPhysicalProductsHaveFreeShipping) {
                     return null;
                   }
                   
-                  // Check if ANY product has custom shipping options
+                  // Check if ANY physical product has custom shipping options
                   let productWithCustomOptions: any = null;
-                  for (const product of productsToCheck) {
+                  for (const product of physicalProducts) {
                     if (product) {
                       const shippingConfig = (product as any)?.shipping_config;
                       if (shippingConfig?.type === 'custom_options' && shippingConfig?.customOptions?.length > 0) {
