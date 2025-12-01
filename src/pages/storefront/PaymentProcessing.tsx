@@ -1396,9 +1396,22 @@ export const PaymentProcessing: React.FC = () => {
 
   if (!order) {
     const notFoundContent = (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Order Processing</h1>
+      <div 
+        style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          zIndex: 9999,
+          backgroundColor: 'white'
+        }}
+      >
+        <div className="text-center px-4">
+          <h1 className="text-2xl font-bold mb-2" style={{ color: '#1f2937' }}>Order Processing</h1>
           <p className="text-muted-foreground">Please wait while we process your order...</p>
         </div>
       </div>
