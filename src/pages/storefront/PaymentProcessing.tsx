@@ -238,9 +238,13 @@ export const PaymentProcessing: React.FC = () => {
     // For failed/cancelled payments, proceed immediately (store will be loaded from order)
     const isFailedPayment = tempId && (urlStatus === 'failed' || urlStatus === 'cancelled');
     
-    // If it's a funnel checkout or failed payment, we can proceed without store
-    // If it's a site checkout, we need store to be loaded
-    const canProceed = isFunnelCheckout || isFailedPayment || store;
+    // ✅ For Stripe success payments, also proceed immediately (order already exists, no store needed)
+    // Stripe orders are created BEFORE payment, so we can handle them without store/checkout data
+    const isStripeSuccess = paymentMethod === 'stripe' && tempId && (urlStatus === 'success' || urlStatus === 'completed');
+    
+    // If it's a funnel checkout, failed payment, or Stripe success, we can proceed without store
+    // If it's a site checkout with other payment methods, we need store to be loaded
+    const canProceed = isFunnelCheckout || isFailedPayment || isStripeSuccess || store;
     
     if (canProceed && isCoursePayment === false) {
       if (tempId && (urlStatus === 'success' || urlStatus === 'completed')) {
