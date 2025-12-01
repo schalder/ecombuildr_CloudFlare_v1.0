@@ -936,13 +936,18 @@ export default function AddProduct() {
                         <p className="text-sm text-muted-foreground mt-1">Select which payment methods customers can use for this product</p>
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                        {['cod','bkash','nagad','eps','ebpay'].map((method) => (
+                        {['cod','bkash','nagad','eps','ebpay','stripe'].map((method) => (
                           <label key={method} className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors">
                             <Checkbox
                               checked={allowedPayments.includes(method)}
                               onCheckedChange={(v) => setAllowedPayments(prev => v ? [...prev, method] : prev.filter(x => x !== method))}
                             />
-                            <span className="capitalize text-sm font-medium">{method === 'eps' ? 'EPS' : method === 'ebpay' ? 'EB Pay' : method}</span>
+                            <span className="capitalize text-sm font-medium">
+                              {method === 'eps' ? 'EPS' : 
+                               method === 'ebpay' ? 'EB Pay' : 
+                               method === 'stripe' ? 'Stripe' : 
+                               method}
+                            </span>
                           </label>
                         ))}
                       </div>
