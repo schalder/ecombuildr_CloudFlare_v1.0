@@ -121,9 +121,14 @@ serve(async (req) => {
     if (req.method === 'GET' && path.includes('/callback')) {
       const params: StripeConnectCallbackQuery = Object.fromEntries(url.searchParams);
       
+      // Helper to get frontend URL for redirects
+      const getFrontendUrl = (path: string = '/dashboard/settings/payments') => {
+        return new URL(path, 'https://ecombuildr.com');
+      };
+
       if (params.error) {
         // Redirect to frontend with error
-        const frontendUrl = new URL('/dashboard/settings/payments', url.origin);
+        const frontendUrl = getFrontendUrl();
         frontendUrl.searchParams.set('stripe_error', params.error);
         if (params.error_description) frontendUrl.searchParams.set('error_description', params.error_description);
         
@@ -132,7 +137,7 @@ serve(async (req) => {
 
       if (!params.code || !params.state) {
         // Redirect to frontend with error
-        const frontendUrl = new URL('/dashboard/settings/payments', url.origin);
+        const frontendUrl = getFrontendUrl();
         frontendUrl.searchParams.set('stripe_error', 'missing_params');
         frontendUrl.searchParams.set('error_description', 'Missing authorization code or state');
         
@@ -161,7 +166,7 @@ serve(async (req) => {
         console.error('Stripe token exchange error:', errorData);
         
         // Redirect to frontend with error
-        const frontendUrl = new URL('/dashboard/settings/payments', url.origin);
+        const frontendUrl = getFrontendUrl();
         frontendUrl.searchParams.set('stripe_error', 'token_exchange_failed');
         frontendUrl.searchParams.set('error_description', errorData.error_description || 'Failed to exchange authorization code');
         
@@ -243,11 +248,11 @@ serve(async (req) => {
       }
 
       // Redirect to frontend callback page
-      const frontendUrl = new URL('/dashboard/settings/payments', url.origin);
-      frontendUrl.searchParams.set('stripe_connected', 'true');
-      frontendUrl.searchParams.set('store_id', storeId);
-      if (accountEmail) frontendUrl.searchParams.set('account_email', accountEmail);
-      if (accountName) frontendUrl.searchParams.set('account_name', accountName);
+      const frontendUrl = getFrontendUrl();
+      frontendUrl.searchParams.set('stripe_connect', 'success');
+      frontendUrl.searchParams.set('storeId', storeId);
+      if (accountEmail) frontendUrl.searchParams.set('accountEmail', accountEmail);
+      if (accountName) frontendUrl.searchParams.set('accountName', accountName);
       
       return Response.redirect(frontendUrl.toString(), 302);
     }
