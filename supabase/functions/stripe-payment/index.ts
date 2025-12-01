@@ -251,11 +251,20 @@ serve(async (req) => {
       },
     };
 
-    // Add shipping address if provided
-    if (customerData.address) {
+    // Only collect shipping address in Stripe if we DON'T already have it
+    // This prevents customers from entering shipping info twice (better UX like Shopify/WooCommerce)
+    const hasShippingInfo = customerData.address && customerData.city;
+    
+    if (!hasShippingInfo) {
+      // We don't have shipping info yet, let Stripe collect it
       sessionParams.shipping_address_collection = {
         allowed_countries: ['US', 'CA', 'GB', 'AU', 'BD', 'IN', 'DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'CH', 'SE', 'NO', 'DK', 'FI', 'PL', 'CZ', 'IE', 'PT', 'GR', 'RO', 'HU', 'BG', 'HR', 'SK', 'SI', 'LT', 'LV', 'EE', 'LU', 'MT', 'CY'],
       };
+      console.log('Stripe Payment - Shipping address collection enabled (not provided in checkout form)');
+    } else {
+      // We already have shipping info, don't ask for it again in Stripe
+      // The shipping address will be used from customerData when creating the order
+      console.log('Stripe Payment - Shipping address already collected, skipping Stripe collection');
     }
 
     // Create checkout session on the connected account
