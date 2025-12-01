@@ -144,8 +144,8 @@ const isPaymentConfirmed = (order: Order): boolean => {
   if (order.status === 'pending_payment') {
     return false;
   }
-  // For EPS/EB Pay: only show checkmark if payment succeeded (not failed/cancelled)
-  if (order.payment_method === 'eps' || order.payment_method === 'ebpay') {
+  // For EPS/EB Pay/Stripe: only show checkmark if payment succeeded (not failed/cancelled)
+  if (order.payment_method === 'eps' || order.payment_method === 'ebpay' || order.payment_method === 'stripe') {
     return order.status !== 'payment_failed' && order.status !== 'cancelled';
   }
   // For COD: payment is collected only when order is delivered
@@ -157,8 +157,8 @@ const isPaymentConfirmed = (order: Order): boolean => {
 
 // Helper function to determine if payment failed or was cancelled
 const isPaymentFailed = (order: Order): boolean => {
-  // Only for EPS/EB Pay (COD doesn't have payment_failed status)
-  if (order.payment_method === 'eps' || order.payment_method === 'ebpay') {
+  // For EPS/EB Pay/Stripe: show X mark if payment failed or cancelled
+  if (order.payment_method === 'eps' || order.payment_method === 'ebpay' || order.payment_method === 'stripe') {
     return order.status === 'payment_failed' || order.status === 'cancelled';
   }
   return false;
@@ -395,9 +395,12 @@ export default function Orders() {
           ordersQuery = ordersQuery.neq('status', 'pending_payment' as any);
         }
         
-        // For "Incomplete Orders" tab, only show pending_payment status orders
+        // For "Incomplete Orders" tab, show pending_payment for all, and payment_failed/cancelled for EPS/EB Pay/Stripe
         if (activeTab === 'incomplete') {
-          ordersQuery = ordersQuery.eq('status', 'pending_payment' as any);
+          // Show all pending_payment orders, plus payment_failed/cancelled for EPS/EB Pay/Stripe
+          ordersQuery = ordersQuery.or(
+            'status.eq.pending_payment,and(payment_method.eq.eps,status.eq.payment_failed),and(payment_method.eq.eps,status.eq.cancelled),and(payment_method.eq.ebpay,status.eq.payment_failed),and(payment_method.eq.ebpay,status.eq.cancelled),and(payment_method.eq.stripe,status.eq.payment_failed),and(payment_method.eq.stripe,status.eq.cancelled)'
+          );
         }
 
         // Apply status filter if statusFilter exists
@@ -431,9 +434,11 @@ export default function Orders() {
           countQuery = countQuery.neq('status', 'pending_payment' as any);
         }
         
-        // For "Incomplete Orders" tab count, only count pending_payment status orders
+        // For "Incomplete Orders" tab count, count pending_payment, payment_failed, and cancelled orders for EPS/EB Pay/Stripe
         if (activeTab === 'incomplete') {
-          countQuery = countQuery.eq('status', 'pending_payment' as any);
+          countQuery = countQuery.or(
+            'status.eq.pending_payment,and(payment_method.eq.eps,status.eq.payment_failed),and(payment_method.eq.eps,status.eq.cancelled),and(payment_method.eq.ebpay,status.eq.payment_failed),and(payment_method.eq.ebpay,status.eq.cancelled),and(payment_method.eq.stripe,status.eq.payment_failed),and(payment_method.eq.stripe,status.eq.cancelled)'
+          );
         }
 
         if (searchTerm.trim()) {
