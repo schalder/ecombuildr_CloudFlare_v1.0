@@ -1368,6 +1368,21 @@ export const PaymentProcessing: React.FC = () => {
     return <CoursePaymentProcessing />;
   }
 
+  // ✅ For Stripe success payments, show minimal loading while redirecting
+  // This prevents "Order Processing" flash before redirect
+  if (paymentMethod === 'stripe' && tempId && (urlStatus === 'success' || urlStatus === 'completed') && loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <p>Redirecting to order confirmation...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (loading || isCoursePayment === null) {
     const loadingContent = (
       <div className="container mx-auto px-4 py-8">

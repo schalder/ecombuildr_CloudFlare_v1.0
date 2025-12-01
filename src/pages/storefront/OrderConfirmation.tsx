@@ -56,6 +56,7 @@ export const OrderConfirmation: React.FC = () => {
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingStore, setLoadingStore] = useState(false);
   const [isCourseOrder, setIsCourseOrder] = useState(false);
   const [funnelId, setFunnelId] = useState<string | undefined>(urlFunnelId);
   const paths = useEcomPaths();
@@ -81,6 +82,7 @@ useEffect(() => {
   } else if (orderId && !store) {
     // ✅ For custom domains or when store context is missing, load store from order
     // This happens when redirecting from payment processing on custom domains
+    setLoadingStore(true);
     (async () => {
       try {
         // Use get-order edge function to fetch order (bypasses RLS)
@@ -93,6 +95,8 @@ useEffect(() => {
         }
       } catch (error) {
         console.error('OrderConfirmation: Error loading store from order:', error);
+      } finally {
+        setLoadingStore(false);
       }
     })();
   }
@@ -373,7 +377,7 @@ useEffect(() => {
     pdf.save(`order-${order?.order_number}.pdf`);
   };
 
-  if (!store && !loading) {
+  if (!store && !loading && !loadingStore) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">Store not found</div>
@@ -381,7 +385,7 @@ useEffect(() => {
     );
   }
 
-  if (loading) {
+  if (loading || loadingStore) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
