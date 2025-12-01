@@ -289,8 +289,16 @@ serve(async (req) => {
         );
       }
 
-      // Generate OAuth URL
-      const redirectUri = `${url.origin}/functions/v1/stripe-connect/callback`;
+      // Generate OAuth URL - Use SUPABASE_URL to ensure HTTPS
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') || url.origin;
+      // Ensure HTTPS protocol
+      const baseUrl = supabaseUrl.startsWith('http://') 
+        ? supabaseUrl.replace('http://', 'https://')
+        : supabaseUrl.startsWith('https://')
+        ? supabaseUrl
+        : `https://${supabaseUrl}`;
+      
+      const redirectUri = `${baseUrl}/functions/v1/stripe-connect/callback`;
       const state = storeId; // Use storeId as state for verification
       
       const oauthUrl = new URL('https://connect.stripe.com/oauth/authorize');
