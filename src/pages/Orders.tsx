@@ -393,6 +393,12 @@ export default function Orders() {
         if (activeTab === 'all') {
           ordersQuery = ordersQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
           ordersQuery = ordersQuery.neq('status', 'pending_payment' as any);
+          // Also exclude payment_failed/cancelled orders for EPS/EB Pay/Stripe (these belong in incomplete tab)
+          // Exclude: (eps AND payment_failed) OR (eps AND cancelled) OR (ebpay AND payment_failed) OR (ebpay AND cancelled) OR (stripe AND payment_failed) OR (stripe AND cancelled)
+          ordersQuery = ordersQuery.not(
+            'or',
+            'and(payment_method.eq.eps,status.eq.payment_failed),and(payment_method.eq.eps,status.eq.cancelled),and(payment_method.eq.ebpay,status.eq.payment_failed),and(payment_method.eq.ebpay,status.eq.cancelled),and(payment_method.eq.stripe,status.eq.payment_failed),and(payment_method.eq.stripe,status.eq.cancelled)'
+          );
         }
         
         // For "Incomplete Orders" tab, show pending_payment for all, and payment_failed/cancelled for EPS/EB Pay/Stripe
@@ -432,6 +438,12 @@ export default function Orders() {
         if (activeTab === 'all') {
           countQuery = countQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
           countQuery = countQuery.neq('status', 'pending_payment' as any);
+          // Also exclude payment_failed/cancelled orders for EPS/EB Pay/Stripe (these belong in incomplete tab)
+          // Exclude: (eps AND payment_failed) OR (eps AND cancelled) OR (ebpay AND payment_failed) OR (ebpay AND cancelled) OR (stripe AND payment_failed) OR (stripe AND cancelled)
+          countQuery = countQuery.not(
+            'or',
+            'and(payment_method.eq.eps,status.eq.payment_failed),and(payment_method.eq.eps,status.eq.cancelled),and(payment_method.eq.ebpay,status.eq.payment_failed),and(payment_method.eq.ebpay,status.eq.cancelled),and(payment_method.eq.stripe,status.eq.payment_failed),and(payment_method.eq.stripe,status.eq.cancelled)'
+          );
         }
         
         // For "Incomplete Orders" tab count, count pending_payment, payment_failed, and cancelled orders for EPS/EB Pay/Stripe
