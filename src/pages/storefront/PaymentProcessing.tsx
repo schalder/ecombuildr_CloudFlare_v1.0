@@ -605,10 +605,89 @@ export const PaymentProcessing: React.FC = () => {
       }
     }
 
-    // ✅ For Stripe payments, use the same flow as EPS/EB Pay
-    // create-order-on-payment-success already handles existing orders by checking idempotency_key
-    // It will return the existing order and update its status based on product types
-    // No special handling needed - consistency with EPS/EB Pay flow
+    // ✅ For Stripe payments, order already exists - fetch it directly and update status
+    // This is different from EPS/EB Pay where orders are created AFTER payment
+    // For Stripe, the order is created BEFORE payment, so tempId is actually the real order ID
+    if (paymentMethod === 'stripe' && tempId) {
+      try {
+        console.log('PaymentProcessing: Stripe payment - fetching existing order:', tempId);
+        
+        // Fetch existing order using edge function (bypasses RLS)
+        const { data: orderData, error: fetchError } = await supabase.functions.invoke('get-order', {
+          body: { orderId: tempId }
+        });
+        
+        if (fetchError || !orderData?.order) {
+          console.error('PaymentProcessing: Failed to fetch Stripe order:', fetchError);
+          // Fallback: continue with normal flow
+        } else {
+          const existingOrder = orderData.order;
+          const orderItems = orderData.items || [];
+          
+          console.log('PaymentProcessing: Stripe order found, updating status');
+          
+          // Determine status based on product types
+          let orderStatus = 'processing'; // Default for physical products
+          
+          // Check if all products are digital (optional - if query fails, use default)
+          if (orderItems.length > 0) {
+            const productIds = orderItems.map((item: any) => item.product_id).filter(Boolean);
+            if (productIds.length > 0) {
+              try {
+                const { data: products } = await supabase
+                  .from('products')
+                  .select('product_type')
+                  .in('id', productIds);
+                
+                if (products && products.length > 0) {
+                  const hasPhysical = products.some((p: any) => p.product_type !== 'digital');
+                  const hasDigital = products.some((p: any) => p.product_type === 'digital');
+                  
+                  // If all digital, set to delivered (instant delivery)
+                  if (hasDigital && !hasPhysical) {
+                    orderStatus = 'delivered';
+                  }
+                }
+              } catch (productError) {
+                console.warn('PaymentProcessing: Could not check product types, using default status:', productError);
+                // Continue with default 'processing' status
+              }
+            }
+          }
+          
+          // Update order status
+          try {
+            await supabase.functions.invoke('update-order-status', {
+              body: {
+                orderId: tempId,
+                status: orderStatus,
+                storeId: existingOrder.store_id
+              }
+            });
+            console.log('PaymentProcessing: Stripe order status updated to:', orderStatus);
+          } catch (updateError) {
+            console.error('PaymentProcessing: Failed to update order status:', updateError);
+            // Continue anyway - redirect will still work
+          }
+          
+          // Get order token from custom_fields (or generate if missing)
+          const customFields = existingOrder.custom_fields as any;
+          const orderToken = customFields?.order_access_token || crypto.randomUUID().replace(/-/g, '');
+          
+          // Clear checkout data
+          sessionStorage.removeItem('pending_checkout');
+          clearCart();
+          
+          // Redirect immediately to order confirmation
+          console.log('PaymentProcessing: Stripe order updated, redirecting to confirmation');
+          window.location.href = paths.orderConfirmation(existingOrder.id, orderToken);
+          return; // Exit early - don't call create-order-on-payment-success
+        }
+      } catch (error) {
+        console.error('PaymentProcessing: Error processing Stripe order:', error);
+        // Fallback: continue with normal flow if something goes wrong
+      }
+    }
 
     setCreatingOrder(true);
     try {
