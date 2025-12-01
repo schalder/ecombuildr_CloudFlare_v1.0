@@ -347,6 +347,75 @@ export const PaymentProcessing: React.FC = () => {
       }
     }
 
+    // ✅ For Stripe payments, check if order already exists first (webhook may have created it)
+    if (paymentMethod === 'stripe' && tempId) {
+      try {
+        const { data: existingOrder, error: fetchError } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', tempId)
+          .maybeSingle();
+        
+        if (!fetchError && existingOrder) {
+          console.log('PaymentProcessing: Order already exists for Stripe payment, fetching it');
+          
+          // Order exists, check if webhook already processed it
+          const orderStatus = existingOrder.status as string;
+          if (orderStatus === 'processing' || orderStatus === 'delivered') {
+            // Webhook already processed it, redirect to confirmation
+            const customFields = existingOrder.custom_fields as any;
+            const orderToken = customFields?.order_access_token || crypto.randomUUID().replace(/-/g, '');
+            setOrder(existingOrder);
+            setLoading(false);
+            setCreatingOrder(false);
+            
+            // Clear checkout data
+            sessionStorage.removeItem('pending_checkout');
+            clearCart();
+            
+            // Redirect to order confirmation
+            window.location.href = paths.orderConfirmation(existingOrder.id, orderToken);
+            return;
+          } else if (orderStatus === 'pending_payment' || orderStatus === 'pending') {
+            // Order exists but webhook hasn't processed it yet
+            // Wait a moment for webhook, then check again
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const { data: recheckOrder } = await supabase
+              .from('orders')
+              .select('*')
+              .eq('id', tempId)
+              .maybeSingle();
+            
+            if (recheckOrder) {
+              const recheckStatus = recheckOrder.status as string;
+              if (recheckStatus === 'processing' || recheckStatus === 'delivered') {
+                // Webhook processed it, redirect to confirmation
+                const recheckCustomFields = recheckOrder.custom_fields as any;
+                const orderToken = recheckCustomFields?.order_access_token || crypto.randomUUID().replace(/-/g, '');
+                setOrder(recheckOrder);
+                setLoading(false);
+                setCreatingOrder(false);
+                
+                // Clear checkout data
+                sessionStorage.removeItem('pending_checkout');
+                clearCart();
+                
+                // Redirect to order confirmation
+                window.location.href = paths.orderConfirmation(recheckOrder.id, orderToken);
+                return;
+              }
+            }
+            // If still pending, continue with order creation/update below
+          }
+          // If order exists but in unexpected status, continue with normal flow
+        }
+      } catch (error) {
+        console.error('PaymentProcessing: Error checking for existing Stripe order:', error);
+        // Continue with order creation if check fails
+      }
+    }
+
     setCreatingOrder(true);
     try {
       // Get stored checkout data
