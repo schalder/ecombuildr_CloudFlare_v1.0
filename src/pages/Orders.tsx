@@ -406,13 +406,13 @@ export default function Orders() {
           ordersQuery = ordersQuery.in('status', ['pending_payment', 'payment_failed', 'cancelled'] as any);
         }
 
-        // Apply status filter if statusFilter exists
-        if (statusFilter) {
+        // Apply status filter if statusFilter exists (but not for incomplete tab to avoid overriding the query)
+        if (statusFilter && activeTab !== 'incomplete') {
           ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
         }
 
-        // Apply payment status filter if paymentStatusFilter exists
-        if (paymentStatusFilter) {
+        // Apply payment status filter if paymentStatusFilter exists (but not for incomplete tab to avoid overriding the query)
+        if (paymentStatusFilter && activeTab !== 'incomplete') {
           if (paymentStatusFilter === 'success') {
             // Exclude payment_failed and cancelled orders
             ordersQuery = ordersQuery.neq('status', 'cancelled');
@@ -449,12 +449,13 @@ export default function Orders() {
           countQuery = countQuery.or(`order_number.ilike.%${searchTerm}%,customer_name.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%,ip_address.ilike.%${searchTerm}%`);
         }
 
-        if (statusFilter) {
+        // Apply status filter to count query (but not for incomplete tab to avoid overriding the query)
+        if (statusFilter && activeTab !== 'incomplete') {
           countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
         }
 
-        // Apply payment status filter to count query
-        if (paymentStatusFilter) {
+        // Apply payment status filter to count query (but not for incomplete tab to avoid overriding the query)
+        if (paymentStatusFilter && activeTab !== 'incomplete') {
           if (paymentStatusFilter === 'success') {
             countQuery = countQuery.neq('status', 'cancelled');
             countQuery = countQuery.neq('status', 'payment_failed' as any); // TypeScript types need regeneration
@@ -535,7 +536,9 @@ export default function Orders() {
               return false;
             }
             // Exclude Stripe orders with payment_failed or cancelled status
-            if (order.payment_method === 'stripe' && 
+            // Check payment_method case-insensitively to handle any variations
+            const paymentMethod = (order.payment_method || '').toLowerCase();
+            if (paymentMethod === 'stripe' && 
                 (order.status === 'payment_failed' || order.status === 'cancelled')) {
               return false;
             }
@@ -549,7 +552,9 @@ export default function Orders() {
               return true;
             }
             // Also include Stripe orders with payment_failed or cancelled status
-            if (order.payment_method === 'stripe' && 
+            // Check payment_method case-insensitively to handle any variations
+            const paymentMethod = (order.payment_method || '').toLowerCase();
+            if (paymentMethod === 'stripe' && 
                 (order.status === 'payment_failed' || order.status === 'cancelled')) {
               return true;
             }
