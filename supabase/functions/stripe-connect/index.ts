@@ -122,29 +122,21 @@ serve(async (req) => {
       const params: StripeConnectCallbackQuery = Object.fromEntries(url.searchParams);
       
       if (params.error) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: params.error_description || params.error 
-          }),
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
+        // Redirect to frontend with error
+        const frontendUrl = new URL('/dashboard/settings/payments', url.origin);
+        frontendUrl.searchParams.set('stripe_error', params.error);
+        if (params.error_description) frontendUrl.searchParams.set('error_description', params.error_description);
+        
+        return Response.redirect(frontendUrl.toString(), 302);
       }
 
       if (!params.code || !params.state) {
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Missing authorization code or state' 
-          }),
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
+        // Redirect to frontend with error
+        const frontendUrl = new URL('/dashboard/settings/payments', url.origin);
+        frontendUrl.searchParams.set('stripe_error', 'missing_params');
+        frontendUrl.searchParams.set('error_description', 'Missing authorization code or state');
+        
+        return Response.redirect(frontendUrl.toString(), 302);
       }
 
       // Extract storeId from state
@@ -167,16 +159,13 @@ serve(async (req) => {
       if (!tokenResponse.ok) {
         const errorData = await tokenResponse.json();
         console.error('Stripe token exchange error:', errorData);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: errorData.error_description || 'Failed to exchange authorization code' 
-          }),
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
+        
+        // Redirect to frontend with error
+        const frontendUrl = new URL('/dashboard/settings/payments', url.origin);
+        frontendUrl.searchParams.set('stripe_error', 'token_exchange_failed');
+        frontendUrl.searchParams.set('error_description', errorData.error_description || 'Failed to exchange authorization code');
+        
+        return Response.redirect(frontendUrl.toString(), 302);
       }
 
       const tokenData = await tokenResponse.json();
@@ -253,19 +242,14 @@ serve(async (req) => {
         throw new Error(`Failed to save Stripe configuration: ${updateError.message}`);
       }
 
-      // Redirect to success page (frontend will handle this)
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: 'Stripe account connected successfully',
-          account_email: accountEmail,
-          account_name: accountName,
-        }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
+      // Redirect to frontend callback page
+      const frontendUrl = new URL('/dashboard/settings/payments', url.origin);
+      frontendUrl.searchParams.set('stripe_connected', 'true');
+      frontendUrl.searchParams.set('store_id', storeId);
+      if (accountEmail) frontendUrl.searchParams.set('account_email', accountEmail);
+      if (accountName) frontendUrl.searchParams.set('account_name', accountName);
+      
+      return Response.redirect(frontendUrl.toString(), 302);
     }
 
     // Handle OAuth initiation

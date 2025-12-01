@@ -156,7 +156,6 @@ export const WeeklyFeaturedElementStyles: React.FC<WeeklyFeaturedElementStylesPr
             <ColorPicker
               color={(styles as any).cardBackground || '#ffffff'}
               onChange={(color) => onStyleUpdate('cardBackground', color)}
-              inline={true}
             />
           </div>
 
@@ -198,7 +197,6 @@ export const WeeklyFeaturedElementStyles: React.FC<WeeklyFeaturedElementStylesPr
               <ColorPicker
                 color={styles.borderColor || '#e5e7eb'}
                 onChange={(color) => onStyleUpdate('borderColor', color)}
-                inline={true}
               />
             </div>
           )}
@@ -286,7 +284,6 @@ export const WeeklyFeaturedElementStyles: React.FC<WeeklyFeaturedElementStylesPr
                 <ColorPicker
                   color={(styles as any).buttonBackground || '#000000'}
                   onChange={(color) => onStyleUpdate('buttonBackground', color)}
-                  inline={true}
                 />
               </div>
               <div>
@@ -294,7 +291,6 @@ export const WeeklyFeaturedElementStyles: React.FC<WeeklyFeaturedElementStylesPr
                 <ColorPicker
                   color={(styles as any).buttonTextColor || '#ffffff'}
                   onChange={(color) => onStyleUpdate('buttonTextColor', color)}
-                  inline={true}
                 />
               </div>
               <div>
@@ -302,7 +298,6 @@ export const WeeklyFeaturedElementStyles: React.FC<WeeklyFeaturedElementStylesPr
                 <ColorPicker
                   color={(styles as any).buttonHoverBackground || '#333333'}
                   onChange={(color) => onStyleUpdate('buttonHoverBackground', color)}
-                  inline={true}
                 />
               </div>
             </>

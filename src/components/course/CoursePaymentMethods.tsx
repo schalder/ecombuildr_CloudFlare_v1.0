@@ -10,6 +10,7 @@ interface PaymentMethodSettings {
   nagad: boolean;
   eps: boolean;
   ebpay: boolean;
+  stripe: boolean;
 }
 
 interface CoursePaymentMethodsProps {
@@ -24,6 +25,7 @@ interface StorePaymentSettings {
     nagad?: { enabled: boolean };
     eps?: { enabled: boolean };
     ebpay?: { enabled: boolean };
+    stripe?: { enabled: boolean; stripe_account_id?: string };
   };
 }
 
@@ -37,7 +39,8 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
     bkash: false,
     nagad: false,
     eps: false,
-    ebpay: false
+    ebpay: false,
+    stripe: false
   });
 
   useEffect(() => {
@@ -61,7 +64,8 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
           bkash: paymentSettings.bkash?.enabled || false,
           nagad: paymentSettings.nagad?.enabled || false,
           eps: paymentSettings.eps?.enabled || false,
-          ebpay: paymentSettings.ebpay?.enabled || false
+          ebpay: paymentSettings.ebpay?.enabled || false,
+          stripe: (paymentSettings.stripe?.enabled && !!paymentSettings.stripe?.stripe_account_id) || false
         });
       } catch (error) {
         console.error('Error fetching payment settings:', error);
@@ -96,6 +100,8 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
         return <Building2 className="h-4 w-4 text-blue-500" />;
       case 'ebpay':
         return <CreditCard className="h-4 w-4 text-green-500" />;
+      case 'stripe':
+        return <CreditCard className="h-4 w-4 text-blue-500" />;
       default:
         return <CreditCard className="h-4 w-4" />;
     }
@@ -111,6 +117,8 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
         return 'EPS Payment Gateway';
       case 'ebpay':
         return 'EB Pay Gateway';
+      case 'stripe':
+        return 'Credit/Debit Card (Stripe)';
       default:
         return method;
     }
@@ -125,6 +133,8 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
       case 'eps':
         return 'Instant access after payment';
       case 'ebpay':
+        return 'Instant access after payment';
+      case 'stripe':
         return 'Instant access after payment';
       default:
         return '';
@@ -167,7 +177,7 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
               You need to set up payment methods in your store settings first.
             </p>
             <p className="text-xs text-muted-foreground">
-              Go to Store Settings → Payment to configure bKash, Nagad, EPS, or EB Pay
+              Go to Store Settings → Payment to configure bKash, Nagad, EPS, EB Pay, or Stripe
             </p>
           </div>
         ) : (
@@ -205,7 +215,7 @@ export const CoursePaymentMethods: React.FC<CoursePaymentMethodsProps> = ({
             <div className="pt-2 border-t">
               <p className="text-xs text-muted-foreground">
                 <strong>Note:</strong> Manual payment methods (bKash, Nagad) require you to 
-                approve enrollments manually. EPS and EB Pay provide instant access after successful payment.
+                approve enrollments manually. EPS, EB Pay, and Stripe provide instant access after successful payment.
               </p>
             </div>
           </div>

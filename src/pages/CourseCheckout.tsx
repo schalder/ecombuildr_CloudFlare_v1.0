@@ -37,6 +37,7 @@ interface CourseCheckoutData {
     nagad: boolean;
     eps: boolean;
     ebpay: boolean;
+    stripe: boolean;
   };
 }
 
@@ -108,6 +109,12 @@ const CourseCheckout = () => {
           name: 'EB Pay Gateway',
           icon: <CreditCard className="h-5 w-5 text-green-500" />,
           description: 'Secure payment via EB Pay'
+        };
+      case 'stripe':
+        return {
+          name: 'Credit/Debit Card (Stripe)',
+          icon: <CreditCard className="h-5 w-5 text-blue-500" />,
+          description: 'Secure payment via Stripe'
         };
       default:
         return {
@@ -224,6 +231,33 @@ const CourseCheckout = () => {
           return;
         } else {
           throw new Error('Payment gateway error. Please try again.');
+        }
+      } else if (paymentMethod === 'stripe') {
+        // Call Stripe payment edge function
+        const { data: stripeResponse, error: stripeError } = await supabase.functions.invoke('stripe-payment', {
+          body: {
+            orderId: orderData.id,
+            amount: course.price,
+            storeId: store.id,
+            redirectOrigin: window.location.origin,
+            currency: 'USD', // Default to USD for courses, can be made configurable
+            customerData: {
+              name: form.customer_name.trim(),
+              email: form.customer_email.trim(),
+              phone: form.customer_phone.trim(),
+              address: '',
+              city: ''
+            }
+          }
+        });
+
+        if (stripeError) throw stripeError;
+
+        if (stripeResponse.paymentURL) {
+          window.location.href = stripeResponse.paymentURL;
+          return;
+        } else {
+          throw new Error('Stripe payment error. Please try again.');
         }
       } else if (paymentMethod === 'bkash') {
         // Call bKash payment edge function
@@ -472,7 +506,7 @@ const CourseCheckout = () => {
                 <p>Secure payment • 30-day money-back guarantee</p>
               </div>
 
-              {paymentMethod !== 'eps' && paymentMethod !== 'ebpay' && (
+              {paymentMethod !== 'eps' && paymentMethod !== 'ebpay' && paymentMethod !== 'stripe' && (
                 <div className="p-3 bg-muted rounded-lg">
                   <p className="text-sm text-center">
                     <strong>Note:</strong> Manual payment methods require approval. 

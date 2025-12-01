@@ -32,6 +32,7 @@ interface Course {
     nagad: boolean;
     eps: boolean;
     ebpay: boolean;
+    stripe: boolean;
   };
 }
 
@@ -127,6 +128,16 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
             name: 'EB Pay',
             icon: <Smartphone className="h-4 w-4 text-blue-600" />,
             description: 'Secure payment via EB Pay',
+            enabled: true
+          });
+        }
+
+        if (paymentSettings.stripe?.enabled && paymentSettings.stripe?.stripe_account_id && course.payment_methods.stripe) {
+          methods.push({
+            id: 'stripe',
+            name: 'Credit/Debit Card (Stripe)',
+            icon: <CreditCard className="h-4 w-4 text-blue-500" />,
+            description: 'Secure payment via Stripe',
             enabled: true
           });
         }

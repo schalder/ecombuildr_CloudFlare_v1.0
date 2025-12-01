@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -55,6 +56,7 @@ interface PaymentSettings {
 
 export default function PaymentSettings({ storeId }: Props) {
   const { refetch } = useUserStore();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<PaymentSettings>({
@@ -65,6 +67,37 @@ export default function PaymentSettings({ storeId }: Props) {
     stripe: { enabled: false, is_live: false },
   });
   const [connectingStripe, setConnectingStripe] = useState(false);
+
+  // Handle Stripe OAuth callback
+  useEffect(() => {
+    const stripeConnected = searchParams.get('stripe_connected');
+    const stripeError = searchParams.get('stripe_error');
+    const errorDescription = searchParams.get('error_description');
+    const accountEmail = searchParams.get('account_email');
+    const accountName = searchParams.get('account_name');
+
+    if (stripeConnected === 'true') {
+      toast({
+        title: "Success",
+        description: accountName || accountEmail 
+          ? `Stripe account connected: ${accountName || accountEmail}`
+          : "Stripe account connected successfully",
+      });
+      // Remove query params
+      setSearchParams({});
+      // Refetch settings to get updated Stripe connection
+      refetch();
+    } else if (stripeError) {
+      toast({
+        title: "Stripe Connection Error",
+        description: errorDescription || "Failed to connect Stripe account",
+        variant: "destructive",
+      });
+      // Remove query params
+      setSearchParams({});
+      setConnectingStripe(false);
+    }
+  }, [searchParams, setSearchParams, refetch]);
 
   useEffect(() => {
     const fetchSettings = async () => {

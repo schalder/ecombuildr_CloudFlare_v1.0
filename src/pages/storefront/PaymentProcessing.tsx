@@ -162,6 +162,71 @@ export const PaymentProcessing: React.FC = () => {
     
     if (canProceed && isCoursePayment === false) {
       if (tempId && (urlStatus === 'success' || urlStatus === 'completed')) {
+        // For Stripe, webhook should have already updated the order, but verify if needed
+        if (paymentMethod === 'stripe') {
+          // Check if order exists and has been updated by webhook
+          const { data: existingOrder } = await supabase
+            .from('orders')
+            .select('id, status, custom_fields')
+            .eq('id', tempId)
+            .maybeSingle();
+          
+          if (existingOrder) {
+            // If webhook already processed, order should be in processing/delivered status
+            if (existingOrder.status === 'processing' || existingOrder.status === 'delivered') {
+              setOrder(existingOrder);
+              setLoading(false);
+              return; // Webhook already handled it
+            }
+            // If still pending, wait a moment for webhook, then verify manually
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Re-check order status
+            const { data: recheckOrder } = await supabase
+              .from('orders')
+              .select('id, status, custom_fields')
+              .eq('id', tempId)
+              .maybeSingle();
+            
+            if (recheckOrder && (recheckOrder.status === 'processing' || recheckOrder.status === 'delivered')) {
+              setOrder(recheckOrder);
+              setLoading(false);
+              return; // Webhook processed it
+            }
+            
+            // If still pending, verify payment manually
+            const stripeSessionId = recheckOrder?.custom_fields?.stripe?.session_id;
+            if (stripeSessionId) {
+              try {
+                const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-payment', {
+                  body: {
+                    orderId: tempId,
+                    paymentId: stripeSessionId,
+                    method: 'stripe',
+                  }
+                });
+                
+                if (!verifyError && verifyData?.paymentStatus === 'success') {
+                  // Payment verified, order should be updated by verify-payment function
+                  const { data: updatedOrder } = await supabase
+                    .from('orders')
+                    .select('*')
+                    .eq('id', tempId)
+                    .single();
+                  
+                  if (updatedOrder) {
+                    setOrder(updatedOrder);
+                    setLoading(false);
+                    return;
+                  }
+                }
+              } catch (error) {
+                console.error('Error verifying Stripe payment:', error);
+                // Fall through to deferred order creation
+              }
+            }
+          }
+        }
         handleDeferredOrderCreation();
       } else if (tempId && (urlStatus === 'failed' || urlStatus === 'cancelled')) {
         // Handle failed/cancelled deferred payments immediately
@@ -849,15 +914,20 @@ export const PaymentProcessing: React.FC = () => {
       // Determine correct payment reference for provider
       const epsMerchantTxnId = order?.custom_fields?.eps?.merchantTransactionId || order?.custom_fields?.eps?.merchant_transaction_id;
       const ebpayTransactionId = order?.custom_fields?.ebpay?.transaction_id;
+      const stripeSessionId = order?.custom_fields?.stripe?.session_id || order?.custom_fields?.stripe?.payment_intent_id;
       let paymentRef = order.id;
       
       if (order.payment_method === 'eps') {
         paymentRef = epsMerchantTxnId;
       } else if (order.payment_method === 'ebpay') {
         paymentRef = ebpayTransactionId;
+      } else if (order.payment_method === 'stripe') {
+        paymentRef = stripeSessionId || order.id;
       }
 
-      if ((order.payment_method === 'eps' && !epsMerchantTxnId) || (order.payment_method === 'ebpay' && !ebpayTransactionId)) {
+      if ((order.payment_method === 'eps' && !epsMerchantTxnId) || 
+          (order.payment_method === 'ebpay' && !ebpayTransactionId) ||
+          (order.payment_method === 'stripe' && !stripeSessionId)) {
         toast.error(`Missing ${order.payment_method.toUpperCase()} transaction reference. Please try again.`);
         setVerifying(false);
         return;
@@ -1018,6 +1088,7 @@ export const PaymentProcessing: React.FC = () => {
                     {order.payment_method === 'nagad' && 'Nagad'}
                     {order.payment_method === 'eps' && 'Bank/Card/MFS'}
                     {order.payment_method === 'ebpay' && 'EB Pay'}
+                    {order.payment_method === 'stripe' && 'Credit/Debit Card (Stripe)'}
                   </span>
                 </div>
                 <div className="flex justify-between">
