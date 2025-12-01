@@ -10,6 +10,7 @@ interface ColorPickerProps {
   onChange: (color: string) => void;
   label?: string;
   compact?: boolean;
+  inline?: boolean; // If true, renders inline without popover
 }
 
 const presetColors = [
@@ -30,9 +31,70 @@ const presetColors = [
   'hsl(0, 84%, 60%)', 'hsl(0, 62%, 31%)'
 ];
 
-export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label, compact }) => {
+export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label, compact, inline = false }) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  // Inline rendering (no popover)
+  if (inline) {
+    return (
+      <div className="space-y-2">
+        {label && <Label>{label}</Label>}
+        <div className="space-y-4 p-0">
+          <div>
+            <Label htmlFor="color-input" className="text-xs">Custom Color</Label>
+            <div className="flex gap-2 mt-1">
+              <Input
+                id="color-input"
+                type="color"
+                value={color || '#000000'}
+                onChange={(e) => onChange(e.target.value)}
+                className="w-12 h-10 p-1"
+              />
+              <Input
+                value={color}
+                onChange={(e) => onChange(e.target.value)}
+                placeholder="#000000"
+                className="flex-1"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <Label className="text-xs">Preset Colors</Label>
+            <div className="grid grid-cols-6 gap-2 mt-2">
+              {presetColors.map((presetColor) => (
+                <button
+                  key={presetColor}
+                  className="w-8 h-8 rounded border-2 border-transparent hover:border-foreground transition-colors"
+                  style={{ backgroundColor: presetColor }}
+                  onClick={() => onChange(presetColor)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-2 pt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onChange('')}
+            >
+              Reset
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange('transparent')}
+            >
+              Transparent
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Popover rendering (original behavior)
   return (
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
