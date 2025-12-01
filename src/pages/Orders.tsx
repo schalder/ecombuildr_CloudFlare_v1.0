@@ -395,6 +395,13 @@ export default function Orders() {
         if (activeTab === 'all') {
           ordersQuery = ordersQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
           ordersQuery = ordersQuery.neq('status', 'pending_payment' as any);
+          // Exclude Stripe failed/cancelled orders (they should be pending_payment, but exclude as safety)
+          // Using OR condition: exclude if (payment_method = 'stripe' AND status in ['payment_failed', 'cancelled'])
+          // Since Supabase doesn't support complex AND/OR easily, we'll filter these out after fetching
+          // For now, exclude all payment_failed and cancelled orders from all orders tab
+          // (These are incomplete/failed payments and shouldn't be in "all orders")
+          ordersQuery = ordersQuery.neq('status', 'payment_failed' as any);
+          ordersQuery = ordersQuery.neq('status', 'cancelled' as any);
         }
         
         // For "Incomplete Orders" tab, only show pending_payment status orders
@@ -431,6 +438,9 @@ export default function Orders() {
         if (activeTab === 'all') {
           countQuery = countQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
           countQuery = countQuery.neq('status', 'pending_payment' as any);
+          // Exclude payment_failed and cancelled orders from all orders tab count
+          countQuery = countQuery.neq('status', 'payment_failed' as any);
+          countQuery = countQuery.neq('status', 'cancelled' as any);
         }
         
         // For "Incomplete Orders" tab count, only count pending_payment status orders
