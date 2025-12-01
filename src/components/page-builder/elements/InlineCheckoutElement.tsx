@@ -1377,6 +1377,12 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                 {(() => {
                   const productShippingConfig = (selectedProduct as any)?.shipping_config;
                   const hasCustomOptions = productShippingConfig?.type === 'custom_options' && productShippingConfig?.customOptions?.length > 0;
+                  const isFreeShipping = productShippingConfig?.type === 'free';
+                  
+                  // Don't show shipping options if product has free shipping
+                  if (isFreeShipping) {
+                    return null;
+                  }
                   
                   // Show custom product options if available
                   if (hasCustomOptions) {

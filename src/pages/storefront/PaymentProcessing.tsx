@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useEcomPaths } from '@/lib/pathResolver';
 import { CoursePaymentProcessing } from '@/components/course/CoursePaymentProcessing';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { formatCurrency, type CurrencyCode } from '@/lib/currency';
 
 export const PaymentProcessing: React.FC = () => {
   const { slug, websiteId, websiteSlug, orderId: orderIdParam } = useParams<{ slug?: string; websiteId?: string; websiteSlug?: string; orderId?: string }>();
@@ -39,6 +40,57 @@ export const PaymentProcessing: React.FC = () => {
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const tempId = searchParams.get('tempId') || '';
   const paymentMethod = searchParams.get('pm') || '';
+  
+  // Helper function to get order currency
+  const getOrderCurrency = async (order: any): Promise<CurrencyCode> => {
+    if (!order) return 'BDT';
+    
+    // Try to get currency from order's website or funnel
+    try {
+      if (order.funnel_id) {
+        const { data: funnel } = await supabase
+          .from('funnels')
+          .select('settings, website_id')
+          .eq('id', order.funnel_id)
+          .maybeSingle();
+        
+        if (funnel?.settings) {
+          const settings = funnel.settings as any;
+          if (settings.currency_code) {
+            return (settings.currency_code as CurrencyCode) || 'BDT';
+          }
+        }
+        
+        if (funnel?.website_id) {
+          const { data: website } = await supabase
+            .from('websites')
+            .select('settings')
+            .eq('id', funnel.website_id)
+            .maybeSingle();
+          if (website?.settings) {
+            const settings = website.settings as any;
+            const code = settings?.currency?.code || settings?.currency_code;
+            return (code as CurrencyCode) || 'BDT';
+          }
+        }
+      } else if (order.website_id) {
+        const { data: website } = await supabase
+          .from('websites')
+          .select('settings')
+          .eq('id', order.website_id)
+          .maybeSingle();
+        if (website?.settings) {
+          const settings = website.settings as any;
+          const code = settings?.currency?.code || settings?.currency_code;
+          return (code as CurrencyCode) || 'BDT';
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching currency:', e);
+    }
+    
+    return 'BDT'; // Default fallback
+  };
   
   // Improved website context detection - check URL params or if we're on a custom domain route
   const isWebsiteContext = Boolean(websiteId || websiteSlug || (window.location.hostname !== 'localhost' && window.location.hostname !== 'ecombuildr.com'));
@@ -298,23 +350,85 @@ export const PaymentProcessing: React.FC = () => {
     // For checkout-full: tempId is now the real orderId (order created immediately)
     // For funnel checkout: tempId was already the real orderId
     const effectiveStoreId = store?.id || storeIdForUpdate;
-    if (tempId && effectiveStoreId) {
-      const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
-      console.log('PaymentProcessing: Updating order status to', orderStatus, 'for order', tempId);
-      
+    if (tempId) {
+      // First, try to fetch the actual order to get real total and currency
       try {
-        // Use edge function instead of direct client update (bypasses RLS)
-        const { data, error: updateError } = await supabase.functions.invoke('update-order-status', {
-          body: {
-            orderId: tempId,
-            status: orderStatus,
-            storeId: effectiveStoreId
-          }
-        });
+        const { data: actualOrder } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', tempId)
+          .maybeSingle();
         
-        if (updateError) {
-          console.error('PaymentProcessing: Error updating order status:', updateError);
-          // Fall back to mock order if update fails
+        if (actualOrder) {
+          // Order exists, update its status and fetch currency
+          const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+          console.log('PaymentProcessing: Order found, updating status to', orderStatus, 'for order', tempId);
+          
+          // Update order status if we have store ID
+          if (effectiveStoreId) {
+            try {
+              await supabase.functions.invoke('update-order-status', {
+                body: {
+                  orderId: tempId,
+                  status: orderStatus,
+                  storeId: effectiveStoreId
+                }
+              });
+            } catch (updateErr) {
+              console.error('PaymentProcessing: Error updating order status:', updateErr);
+              // Continue anyway, we'll display the order with updated status locally
+            }
+          }
+          
+          // Fetch currency for the order
+          const currency = await getOrderCurrency(actualOrder);
+          setOrder({ ...actualOrder, status: orderStatus, _currency: currency });
+          setLoading(false);
+          return; // Exit early, order fetched and displayed successfully
+        }
+      } catch (fetchErr) {
+        console.error('Error fetching order:', fetchErr);
+        // Continue to try updating via edge function
+      }
+      
+      // If order not found or fetch failed, try updating via edge function
+      if (effectiveStoreId) {
+        const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+        console.log('PaymentProcessing: Updating order status to', orderStatus, 'for order', tempId);
+        
+        try {
+          // Use edge function instead of direct client update (bypasses RLS)
+          const { data, error: updateError } = await supabase.functions.invoke('update-order-status', {
+            body: {
+              orderId: tempId,
+              status: orderStatus,
+              storeId: effectiveStoreId
+            }
+          });
+          
+          if (!updateError && data?.order) {
+            console.log('PaymentProcessing: ✅ Order status updated successfully:', data.order);
+            // Fetch currency for the order
+            const currency = await getOrderCurrency(data.order);
+            setOrder({ ...data.order, _currency: currency });
+          } else {
+            // Update failed, create mock order with default values
+            console.error('PaymentProcessing: Error updating order status:', updateError);
+            const mockOrder = {
+              id: tempId,
+              order_number: searchParams.get('transactionId') || tempId,
+              payment_method: paymentMethod,
+              total: parseFloat(searchParams.get('paymentAmount') || '0'),
+              status: orderStatus,
+              customer_name: '',
+              created_at: new Date().toISOString(),
+              _currency: 'BDT' as CurrencyCode
+            };
+            setOrder(mockOrder);
+          }
+        } catch (error) {
+          console.error('PaymentProcessing: Exception updating order status:', error);
+          // Create mock order as last resort
           const mockOrder = {
             id: tempId,
             order_number: searchParams.get('transactionId') || tempId,
@@ -322,26 +436,53 @@ export const PaymentProcessing: React.FC = () => {
             total: parseFloat(searchParams.get('paymentAmount') || '0'),
             status: orderStatus,
             customer_name: '',
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            _currency: 'BDT' as CurrencyCode
           };
           setOrder(mockOrder);
-        } else if (data?.order) {
-          console.log('PaymentProcessing: ✅ Order status updated successfully:', data.order);
-          setOrder(data.order);
         }
-      } catch (error) {
-        console.error('PaymentProcessing: Exception updating order status:', error);
-        // Fall back to mock order if update fails
-        const mockOrder = {
-          id: tempId,
-          order_number: searchParams.get('transactionId') || tempId,
-          payment_method: paymentMethod,
-          total: parseFloat(searchParams.get('paymentAmount') || '0'),
-          status: orderStatus,
-          customer_name: '',
-          created_at: new Date().toISOString()
-        };
-        setOrder(mockOrder);
+      } else {
+        // No store ID, try to fetch order anyway
+        try {
+          const { data: actualOrder } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('id', tempId)
+            .maybeSingle();
+          
+          if (actualOrder) {
+            const orderStatus = urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed';
+            const currency = await getOrderCurrency(actualOrder);
+            setOrder({ ...actualOrder, status: orderStatus, _currency: currency });
+          } else {
+            // Order doesn't exist, create mock
+            const mockOrder = {
+              id: tempId,
+              order_number: searchParams.get('transactionId') || tempId,
+              payment_method: paymentMethod,
+              total: parseFloat(searchParams.get('paymentAmount') || '0'),
+              status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+              customer_name: '',
+              created_at: new Date().toISOString(),
+              _currency: 'BDT' as CurrencyCode
+            };
+            setOrder(mockOrder);
+          }
+        } catch (e) {
+          console.error('Error fetching order without store ID:', e);
+          // Create mock order as last resort
+          const mockOrder = {
+            id: tempId,
+            order_number: searchParams.get('transactionId') || tempId,
+            payment_method: paymentMethod,
+            total: parseFloat(searchParams.get('paymentAmount') || '0'),
+            status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
+            customer_name: '',
+            created_at: new Date().toISOString(),
+            _currency: 'BDT' as CurrencyCode
+          };
+          setOrder(mockOrder);
+        }
       }
     } else {
       // If no tempId or store, try to fetch order to display it
@@ -369,9 +510,11 @@ export const PaymentProcessing: React.FC = () => {
                 console.error('Error updating order status:', updateErr);
               }
             }
-            setOrder({ ...orderData, status: orderStatus });
+            // Fetch currency for the order
+            const currency = await getOrderCurrency(orderData);
+            setOrder({ ...orderData, status: orderStatus, _currency: currency });
           } else {
-            // Create mock order for display
+            // Create mock order for display (with default currency)
             const mockOrder = {
               id: tempId || '',
               order_number: searchParams.get('transactionId') || tempId || '',
@@ -379,13 +522,14 @@ export const PaymentProcessing: React.FC = () => {
               total: parseFloat(searchParams.get('paymentAmount') || '0'),
               status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
               customer_name: '',
-              created_at: new Date().toISOString()
+              created_at: new Date().toISOString(),
+              _currency: 'BDT' as CurrencyCode
             };
             setOrder(mockOrder);
           }
         } catch (e) {
           console.error('Error fetching order:', e);
-          // Create mock order for display
+          // Create mock order for display (with default currency)
           const mockOrder = {
             id: tempId || '',
             order_number: searchParams.get('transactionId') || tempId || '',
@@ -393,7 +537,8 @@ export const PaymentProcessing: React.FC = () => {
             total: parseFloat(searchParams.get('paymentAmount') || '0'),
             status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
             customer_name: '',
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            _currency: 'BDT' as CurrencyCode
           };
           setOrder(mockOrder);
         }
@@ -406,7 +551,8 @@ export const PaymentProcessing: React.FC = () => {
           total: parseFloat(searchParams.get('paymentAmount') || '0'),
           status: urlStatus === 'cancelled' ? 'cancelled' : 'payment_failed',
           customer_name: '',
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          _currency: 'BDT' as CurrencyCode
         };
         setOrder(mockOrder);
       }
@@ -1008,7 +1154,13 @@ export const PaymentProcessing: React.FC = () => {
         });
 
         if (error) throw error;
-        setOrder(data?.order || null);
+        if (data?.order) {
+          // Fetch currency for the order
+          const currency = await getOrderCurrency(data.order);
+          setOrder({ ...data.order, _currency: currency });
+        } else {
+          setOrder(null);
+        }
         return;
       }
 
@@ -1212,7 +1364,11 @@ export const PaymentProcessing: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>Total Amount:</span>
-                  <span className="font-medium">৳{order.total.toFixed(2)}</span>
+                  <span className="font-medium">
+                    {order._currency 
+                      ? formatCurrency(order.total, { code: order._currency })
+                      : formatCurrency(order.total)}
+                  </span>
                 </div>
               </div>
             </div>
