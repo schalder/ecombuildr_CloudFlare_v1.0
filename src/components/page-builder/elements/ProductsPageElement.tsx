@@ -609,11 +609,11 @@ export const ProductsPageElement: React.FC<{
                     )}
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-80">
-                  <SheetHeader>
+                <SheetContent side="left" className="w-80 flex flex-col overflow-hidden">
+                  <SheetHeader className="flex-shrink-0">
                     <SheetTitle>Filters</SheetTitle>
                   </SheetHeader>
-                  <div className="mt-6">
+                  <div className="mt-6 flex-1 overflow-y-auto pb-6 -mx-6 px-6">
                     <ProductFilters categories={categories} collections={collections} filters={filters} onFiltersChange={setFilters} onClearFilters={handleClearFilters} />
                   </div>
                 </SheetContent>
