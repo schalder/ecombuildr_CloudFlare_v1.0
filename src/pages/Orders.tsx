@@ -2630,9 +2630,40 @@ export default function Orders() {
                   <div>
                     <h4 className="font-medium">Additional Information</h4>
                     <div className="mt-2 space-y-1">
-                      {Object.entries((selectedOrder as any).custom_fields).map(([key, val]: any) => (
-                        <p key={key} className="text-sm"><strong>{key}:</strong> {String(val)}</p>
-                      ))}
+                      {Object.entries((selectedOrder as any).custom_fields).map(([key, val]: any) => {
+                        // Skip internal/technical fields
+                        if (key === 'order_access_token' || key === 'funnelId' || key === 'currentStepId' || key === 'isFunnelCheckout') {
+                          return null;
+                        }
+                        
+                        // Handle Stripe object specially - only show payment status (not technical IDs)
+                        if (key === 'stripe' && typeof val === 'object' && val !== null) {
+                          const stripeData = val as any;
+                          // Only show payment status if it exists
+                          if (stripeData.payment_status) {
+                            return (
+                              <p key={key} className="text-sm">
+                                <strong>Payment Status:</strong> {stripeData.payment_status}
+                              </p>
+                            );
+                          }
+                          return null; // Don't show Stripe object if no payment_status
+                        }
+                        
+                        // For other objects, use JSON.stringify
+                        let displayValue: string;
+                        if (val === null || val === undefined) {
+                          return null;
+                        } else if (typeof val === 'object') {
+                          displayValue = JSON.stringify(val, null, 2);
+                        } else {
+                          displayValue = String(val);
+                        }
+                        
+                        return (
+                          <p key={key} className="text-sm"><strong>{key}:</strong> {displayValue}</p>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
