@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Package } from "lucide-react";
 import { DateFilterOption } from "./DateFilter";
+import { formatCurrency, type CurrencyCode } from '@/lib/currency';
 
 interface StatCardProps {
   title: string;
@@ -61,6 +62,7 @@ function StatCard({ title, value, description, icon: Icon, trend, loading }: Sta
 interface StatsCardsProps {
   stats?: {
     totalRevenue: number;
+    revenueByCurrency?: Record<string, number>; // New: currency breakdown
     totalOrders: number;
     totalCustomers: number;
     totalProducts: number;
@@ -72,12 +74,66 @@ interface StatsCardsProps {
 export function StatsCards({ stats, loading = false, dateFilter = 'allTime' }: StatsCardsProps) {
   const defaultStats = {
     totalRevenue: 0,
+    revenueByCurrency: {},
     totalOrders: 0,
     totalCustomers: 0,
     totalProducts: 0,
   };
 
   const data = stats || defaultStats;
+
+  // Currency symbols mapping
+  const currencySymbols: Record<CurrencyCode, string> = {
+    BDT: '৳',
+    USD: '$',
+    INR: '₹',
+    EUR: '€',
+    GBP: '£',
+  };
+
+  // Format multi-currency revenue display
+  const formatMultiCurrencyRevenue = (revenueByCurrency?: Record<string, number>): string => {
+    if (!revenueByCurrency || Object.keys(revenueByCurrency).length === 0) {
+      // Fallback to totalRevenue with BDT if revenueByCurrency is not available
+      return formatCurrency(data.totalRevenue, { code: 'BDT' });
+    }
+    
+    // Filter out currencies with zero revenue and sort by amount (descending)
+    const currencies = Object.entries(revenueByCurrency)
+      .filter(([_, amount]) => amount > 0)
+      .sort(([_, a], [__, b]) => b - a) as [CurrencyCode, number][];
+    
+    if (currencies.length === 0) {
+      return formatCurrency(0, { code: 'BDT' });
+    }
+    
+    if (currencies.length === 1) {
+      // Single currency: show formatted amount
+      const [code, amount] = currencies[0];
+      return formatCurrency(amount, { code });
+    }
+    
+    // Multiple currencies: show up to 3, then "and X more" if needed
+    const displayCurrencies = currencies.slice(0, 3);
+    const remaining = currencies.length - 3;
+    
+    const formatted = displayCurrencies
+      .map(([code, amount]) => {
+        const symbol = currencySymbols[code];
+        const formatted = new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(amount);
+        return `${symbol}${formatted} ${code}`;
+      })
+      .join(' + ');
+    
+    if (remaining > 0) {
+      return `${formatted} + ${remaining} more`;
+    }
+    
+    return formatted;
+  };
 
   const getFilterDescription = (filter: DateFilterOption) => {
     switch (filter) {
@@ -103,7 +159,7 @@ export function StatsCards({ stats, loading = false, dateFilter = 'allTime' }: S
     <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
         title="Total Revenue"
-        value={`৳${data.totalRevenue.toLocaleString()}`}
+        value={formatMultiCurrencyRevenue(data.revenueByCurrency)}
         description={filterDescription}
         icon={DollarSign}
         loading={loading}

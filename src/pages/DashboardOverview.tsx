@@ -50,7 +50,8 @@ interface Store {
 }
 
 interface DashboardStats {
-  totalRevenue: number;
+  totalRevenue: number; // Keep for backward compatibility
+  revenueByCurrency?: Record<CurrencyCode, number>; // New: revenue grouped by currency
   totalOrders: number;
   totalCustomers: number;
   totalProducts: number;
@@ -141,7 +142,7 @@ export default function DashboardOverview() {
       // Exclude incomplete orders (pending_payment status) from stats calculations
       let ordersQuery = supabase
         .from('orders')
-        .select('total, created_at')
+        .select('total, created_at, website_id, funnel_id')
         .eq('store_id', store.id)
         .neq('status', 'pending_payment' as any);
 
@@ -224,11 +225,38 @@ export default function DashboardOverview() {
       setWebsiteCurrencyMap(websiteCurrencyLookup);
       setFunnelCurrencyMap(funnelCurrencyLookup);
 
-      const totalRevenue = ordersData?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
+      // Helper function to determine currency for an order
+      const getOrderCurrencyFromData = (order: { website_id?: string; funnel_id?: string }): CurrencyCode => {
+        if (order.funnel_id && funnelCurrencyLookup[order.funnel_id]) {
+          return funnelCurrencyLookup[order.funnel_id];
+        }
+        if (order.website_id && websiteCurrencyLookup[order.website_id]) {
+          return websiteCurrencyLookup[order.website_id];
+        }
+        return 'BDT'; // Default fallback
+      };
+
+      // Calculate revenue grouped by currency
+      const revenueByCurrency: Record<CurrencyCode, number> = {
+        BDT: 0,
+        USD: 0,
+        INR: 0,
+        EUR: 0,
+        GBP: 0,
+      };
+
+      ordersData?.forEach(order => {
+        const currency = getOrderCurrencyFromData(order);
+        revenueByCurrency[currency] += Number(order.total);
+      });
+
+      // Calculate total revenue (sum of all currencies) for backward compatibility
+      const totalRevenue = Object.values(revenueByCurrency).reduce((sum, amount) => sum + amount, 0);
       const totalOrders = ordersData?.length || 0;
 
       setStats({
         totalRevenue,
+        revenueByCurrency,
         totalOrders,
         totalCustomers: customersCount || 0,
         totalProducts: productsCount || 0,
