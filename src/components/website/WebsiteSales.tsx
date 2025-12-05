@@ -88,7 +88,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Today's Sales</p>
-                <p className="text-2xl font-bold">{formatCurrency(sales.todayRevenue)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(sales.todayRevenue, { code: sales.currencyCode as any })}</p>
                 <p className="text-xs text-muted-foreground">Revenue today</p>
               </div>
               <DollarSign className="h-8 w-8 text-muted-foreground" />
@@ -102,7 +102,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Yesterday's Sales</p>
-                <p className="text-2xl font-bold">{formatCurrency(sales.yesterdayRevenue)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(sales.yesterdayRevenue, { code: sales.currencyCode as any })}</p>
                 <p className="text-xs text-muted-foreground">Revenue yesterday</p>
               </div>
               <DollarSign className="h-8 w-8 text-muted-foreground" />
@@ -116,7 +116,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Period Revenue</p>
-                <p className="text-2xl font-bold">{formatCurrency(sales.totalRevenue)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(sales.totalRevenue, { code: sales.currencyCode as any })}</p>
                 <div className="flex items-center gap-1">
                   {sales.comparison.changes.revenue.percentage !== 0 && (
                     <Badge variant={sales.comparison.changes.revenue.percentage > 0 ? "default" : "destructive"} className="text-xs">
@@ -182,7 +182,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Average Order Value</p>
-                <p className="text-2xl font-bold">{formatCurrency(sales.averageOrderValue)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(sales.averageOrderValue, { code: sales.currencyCode as any })}</p>
                 <p className="text-xs text-muted-foreground">Per order average</p>
               </div>
               <DollarSign className="h-8 w-8 text-muted-foreground" />
@@ -212,7 +212,7 @@ export function WebsiteSales({ websiteId, websiteName }: WebsiteSalesProps) {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-sm">{formatCurrency(product.total_revenue)}</p>
+                    <p className="font-medium text-sm">{formatCurrency(product.total_revenue, { code: sales.currencyCode as any })}</p>
                     <p className="text-xs text-muted-foreground">{product.total_orders} orders</p>
                   </div>
                 </div>

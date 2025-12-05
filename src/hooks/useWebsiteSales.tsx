@@ -48,6 +48,9 @@ interface WebsiteSales {
   totalCustomers: number;
   averageOrderValue: number;
   
+  // Currency code for this website
+  currencyCode: string;
+  
   // Advanced analytics
   analytics: SalesAnalytics;
   
@@ -111,6 +114,21 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
         .single();
 
       if (websiteError) throw websiteError;
+
+      // Extract currency from website settings
+      // Priority: settings.currency.code > settings.currency_code > default BDT
+      let currencyCode: 'BDT' | 'USD' | 'INR' | 'EUR' | 'GBP' = 'BDT';
+      if ((website.settings as any)?.currency?.code) {
+        const code = (website.settings as any).currency.code;
+        if (['BDT', 'USD', 'INR', 'EUR', 'GBP'].includes(code)) {
+          currencyCode = code;
+        }
+      } else if ((website.settings as any)?.currency_code) {
+        const code = (website.settings as any).currency_code;
+        if (['BDT', 'USD', 'INR', 'EUR', 'GBP'].includes(code)) {
+          currencyCode = code;
+        }
+      }
 
       // Get store info for domain construction
       const { data: store } = await supabase
@@ -354,6 +372,7 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
         totalOrders,
         totalCustomers,
         averageOrderValue,
+        currencyCode,
         comparison,
         todayRevenue,
         yesterdayRevenue,

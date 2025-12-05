@@ -1547,7 +1547,6 @@ export const PaymentProcessing: React.FC = () => {
                   Try Again
                 </Button>
               )}
-
               {/* Only show Continue Shopping for site checkout */}
               {!funnelContext?.isFunnelCheckout && (
               <Button 
