@@ -58,55 +58,20 @@ export function SimpleCategorySelect({
 
   // Separate main categories and subcategories
   useEffect(() => {
-    // ✅ FIX: Use flatCategories as fallback when filteredCategories is empty
-    // This ensures categories are available even when websiteId is not set yet
-    // This is critical for edit product page where category_id is set before websiteId
-    const categoriesToUse = filteredCategories.length > 0 
-      ? filteredCategories 
-      : (flatCategories.length > 0 ? flatCategories : []);
-
-    if (!categoriesToUse.length) {
+    if (!filteredCategories.length) {
       setMainCategories([]);
       setSubCategories([]);
       return;
     }
 
-    const main = categoriesToUse.filter(cat => !cat.parent_category_id);
-    const sub = categoriesToUse.filter(cat => cat.parent_category_id);
-
-    // ✅ CRITICAL FIX: Ensure the selected category is always in the lists
-    // This handles the case where the category exists in flatCategories but
-    // isn't in filteredCategories (e.g., when websiteId is not set yet, or
-    // category was removed from website visibility but product still references it)
-    if (value && flatCategories.length > 0) {
-      const selectedCategory = flatCategories.find(cat => cat.id === value);
-      if (selectedCategory) {
-        if (selectedCategory.parent_category_id) {
-          // It's a subcategory - ensure parent is in main, and this is in sub
-          const parentId = selectedCategory.parent_category_id;
-          if (!main.some(c => c.id === parentId)) {
-            const parent = flatCategories.find(c => c.id === parentId);
-            if (parent) {
-              main.push(parent);
-            }
-          }
-          if (!sub.some(c => c.id === value)) {
-            sub.push(selectedCategory);
-          }
-        } else {
-          // It's a main category - ensure it's in main
-          if (!main.some(c => c.id === value)) {
-            main.push(selectedCategory);
-          }
-        }
-      }
-    }
+    const main = filteredCategories.filter(cat => !cat.parent_category_id);
+    const sub = filteredCategories.filter(cat => cat.parent_category_id);
 
     setMainCategories(main);
     setSubCategories(sub);
-  }, [filteredCategories, flatCategories, value]); // ✅ Added value to ensure selected category is included
+  }, [filteredCategories]);
 
-  // Update selected categories when value changes OR when websiteId becomes available
+  // Update selected categories when value changes
   useEffect(() => {
     // Wait for categories to load before processing value
     if (!flatCategories.length) {
@@ -119,12 +84,15 @@ export function SimpleCategorySelect({
       return;
     }
 
-    // Use flatCategories instead of filteredCategories to avoid timing issues
-    // flatCategories contains all categories for the store, so we can find the category
-    // even if websiteId is not set yet (it will be validated when websiteId is available)
+    // Use flatCategories to find the category (includes all categories for the store)
+    // This ensures we can find the category even if it's not yet filtered by website
+    // This is important for preserving the selection when editing a product
     const selectedCategory = flatCategories.find(cat => cat.id === value);
     if (!selectedCategory) {
-      console.log('Category not found:', value, 'Available categories:', flatCategories.length);
+      console.log('Category not found in flatCategories:', value, {
+        availableCategoryIds: flatCategories.map(c => c.id),
+        totalCategories: flatCategories.length
+      });
       return;
     }
 
@@ -137,7 +105,7 @@ export function SimpleCategorySelect({
       setSelectedMainCategory(value);
       setSelectedSubCategory('');
     }
-  }, [value, flatCategories, websiteId]); // ✅ Added websiteId to re-process when website becomes available
+  }, [value, flatCategories]); // Keep dependencies minimal - flatCategories should include all store categories
 
   const handleMainCategoryChange = (categoryId: string) => {
     if (categoryId === 'none') {
