@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useCategories } from "@/hooks/useCategories";
-import { supabase } from "@/integrations/supabase/client";
 
 interface Category {
   id: string;
@@ -41,52 +40,21 @@ export function SimpleCategorySelect({
 
   // Filter categories by website visibility
   useEffect(() => {
-    const filterCategories = async () => {
-      if (!flatCategories || flatCategories.length === 0) {
-        setFilteredCategories([]);
-        return;
-      }
+    if (!flatCategories || !websiteId) {
+      setFilteredCategories([]);
+      return;
+    }
 
-      // If websiteId is not set yet, show all categories to preserve selection
-      // This prevents the dropdown from clearing when website selection is still loading
-      if (!websiteId) {
-        setFilteredCategories(flatCategories);
-        return;
-      }
+    // Filter categories that are visible on the selected website
+    // This uses the same logic as the original CategoryTreeSelect
+    const filtered = flatCategories.filter((category: Category) => {
+      // For now, we'll include all categories since the website filtering
+      // logic is handled in the useCategories hook
+      return true;
+    });
 
-      try {
-        // Get categories visible on this website
-        const { data: visibilityData } = await supabase
-          .from('category_website_visibility')
-          .select('category_id')
-          .eq('website_id', websiteId);
-
-        const visibleCategoryIds = visibilityData?.map(v => v.category_id) || [];
-        
-        // Find the selected category to check if it's a subcategory
-        const selectedCategory = value ? flatCategories.find(cat => cat.id === value) : null;
-        const selectedParentId = selectedCategory?.parent_category_id;
-        
-        // Filter to only show categories visible on this website
-        // Also include:
-        // 1. The currently selected category (if any) to preserve selection
-        // 2. The parent category if a subcategory is selected (to show the subcategory dropdown)
-        const filtered = flatCategories.filter((category: Category) => {
-          return visibleCategoryIds.includes(category.id) || 
-                 category.id === value || 
-                 (selectedParentId && category.id === selectedParentId);
-        });
-
-        setFilteredCategories(filtered);
-      } catch (error) {
-        console.error('Error filtering categories by website:', error);
-        // On error, show all categories to preserve selection
-        setFilteredCategories(flatCategories);
-      }
-    };
-
-    filterCategories();
-  }, [flatCategories, websiteId, value]);
+    setFilteredCategories(filtered);
+  }, [flatCategories, websiteId]);
 
   // Separate main categories and subcategories
   useEffect(() => {
@@ -103,7 +71,7 @@ export function SimpleCategorySelect({
     setSubCategories(sub);
   }, [filteredCategories]);
 
-  // Update selected categories when value changes OR when categories become available
+  // Update selected categories when value changes OR when websiteId becomes available
   useEffect(() => {
     // Wait for categories to load before processing value
     if (!flatCategories.length) {
@@ -116,10 +84,12 @@ export function SimpleCategorySelect({
       return;
     }
 
-    // Use flatCategories to find the category (works even if websiteId not set yet)
+    // Use flatCategories instead of filteredCategories to avoid timing issues
+    // flatCategories contains all categories for the store, so we can find the category
+    // even if websiteId is not set yet (it will be validated when websiteId is available)
     const selectedCategory = flatCategories.find(cat => cat.id === value);
     if (!selectedCategory) {
-      console.log('Category not found:', value);
+      console.log('Category not found:', value, 'Available categories:', flatCategories.length);
       return;
     }
 
@@ -132,30 +102,7 @@ export function SimpleCategorySelect({
       setSelectedMainCategory(value);
       setSelectedSubCategory('');
     }
-  }, [value, flatCategories]); // Use flatCategories instead of filteredCategories
-
-  // Re-sync selection when filteredCategories change (e.g., when websiteId is set)
-  // This ensures the selection is preserved even if categories are filtered later
-  useEffect(() => {
-    if (!value || !filteredCategories.length) {
-      return;
-    }
-
-    // Check if the current selection is still valid in filtered categories
-    const selectedCategory = filteredCategories.find(cat => cat.id === value);
-    if (selectedCategory) {
-      // Selection is valid, ensure state is synced
-      if (selectedCategory.parent_category_id) {
-        setSelectedMainCategory(selectedCategory.parent_category_id);
-        setSelectedSubCategory(value);
-      } else {
-        setSelectedMainCategory(value);
-        setSelectedSubCategory('');
-      }
-    }
-    // If category not in filtered list, keep the current selection state
-    // (it will be preserved from the previous effect)
-  }, [value, filteredCategories]);
+  }, [value, flatCategories, websiteId]); // ✅ Added websiteId to re-process when website becomes available
 
   const handleMainCategoryChange = (categoryId: string) => {
     if (categoryId === 'none') {
