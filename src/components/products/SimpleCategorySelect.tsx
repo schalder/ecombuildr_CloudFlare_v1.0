@@ -74,9 +74,37 @@ export function SimpleCategorySelect({
     const main = categoriesToUse.filter(cat => !cat.parent_category_id);
     const sub = categoriesToUse.filter(cat => cat.parent_category_id);
 
+    // ✅ CRITICAL FIX: Ensure the selected category is always in the lists
+    // This handles the case where the category exists in flatCategories but
+    // isn't in filteredCategories (e.g., when websiteId is not set yet, or
+    // category was removed from website visibility but product still references it)
+    if (value && flatCategories.length > 0) {
+      const selectedCategory = flatCategories.find(cat => cat.id === value);
+      if (selectedCategory) {
+        if (selectedCategory.parent_category_id) {
+          // It's a subcategory - ensure parent is in main, and this is in sub
+          const parentId = selectedCategory.parent_category_id;
+          if (!main.some(c => c.id === parentId)) {
+            const parent = flatCategories.find(c => c.id === parentId);
+            if (parent) {
+              main.push(parent);
+            }
+          }
+          if (!sub.some(c => c.id === value)) {
+            sub.push(selectedCategory);
+          }
+        } else {
+          // It's a main category - ensure it's in main
+          if (!main.some(c => c.id === value)) {
+            main.push(selectedCategory);
+          }
+        }
+      }
+    }
+
     setMainCategories(main);
     setSubCategories(sub);
-  }, [filteredCategories, flatCategories]); // ✅ Added flatCategories to dependencies
+  }, [filteredCategories, flatCategories, value]); // ✅ Added value to ensure selected category is included
 
   // Update selected categories when value changes OR when websiteId becomes available
   useEffect(() => {
