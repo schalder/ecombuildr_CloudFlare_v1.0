@@ -58,18 +58,25 @@ export function SimpleCategorySelect({
 
   // Separate main categories and subcategories
   useEffect(() => {
-    if (!filteredCategories.length) {
+    // ✅ FIX: Use flatCategories as fallback when filteredCategories is empty
+    // This ensures categories are available even when websiteId is not set yet
+    // This is critical for edit product page where category_id is set before websiteId
+    const categoriesToUse = filteredCategories.length > 0 
+      ? filteredCategories 
+      : (flatCategories.length > 0 ? flatCategories : []);
+
+    if (!categoriesToUse.length) {
       setMainCategories([]);
       setSubCategories([]);
       return;
     }
 
-    const main = filteredCategories.filter(cat => !cat.parent_category_id);
-    const sub = filteredCategories.filter(cat => cat.parent_category_id);
+    const main = categoriesToUse.filter(cat => !cat.parent_category_id);
+    const sub = categoriesToUse.filter(cat => cat.parent_category_id);
 
     setMainCategories(main);
     setSubCategories(sub);
-  }, [filteredCategories]);
+  }, [filteredCategories, flatCategories]); // ✅ Added flatCategories to dependencies
 
   // Update selected categories when value changes OR when websiteId becomes available
   useEffect(() => {
