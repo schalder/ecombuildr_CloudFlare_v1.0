@@ -1600,8 +1600,8 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         />
         </form>
 
-        {/* Fixed Sidebar Navigation - always visible on scroll */}
-        <aside className="hidden lg:block fixed right-6 top-24 w-64 z-40 h-fit max-h-[calc(100vh-6rem)] overflow-auto">
+        {/* Fixed Sidebar Navigation - always visible on scroll, vertically centered */}
+        <aside className="hidden lg:block fixed right-6 top-1/2 -translate-y-1/2 w-64 z-40 h-fit max-h-[calc(100vh-6rem)] overflow-auto">
           <Card className="border shadow-lg">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold">Navigation</CardTitle>
