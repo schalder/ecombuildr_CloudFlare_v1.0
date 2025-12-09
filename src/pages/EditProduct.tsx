@@ -591,9 +591,9 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           </div>
         </div>
 
-        <div className="flex gap-6 items-start relative">
+        <div className="flex flex-wrap gap-6 items-start relative">
           {/* Main Form */}
-          <form ref={formRef} onSubmit={handleSubmit} className="flex-1 space-y-6 max-w-5xl">
+          <form ref={formRef} onSubmit={handleSubmit} className="w-full lg:flex-1 lg:max-w-5xl space-y-6">
           <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full space-y-4">
             {/* Selling Website & Category - Moved to Top */}
             <AccordionItem value="channel-category" id="channel-category" className="border rounded-lg">
@@ -1599,9 +1599,6 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           onSave={setDescriptionBuilder}
         />
         </form>
-
-        {/* Spacer for sidebar on desktop - maintains layout spacing */}
-        <div className="hidden lg:block w-64 shrink-0" aria-hidden="true" />
 
         {/* Sticky Sidebar Navigation - aligned with content and below header */}
         <aside className="hidden lg:block sticky top-28 w-64 z-30 self-start h-fit max-h-[calc(100vh-7rem)] overflow-auto">
