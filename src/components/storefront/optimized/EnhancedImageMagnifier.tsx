@@ -230,7 +230,7 @@ export const EnhancedImageMagnifier: React.FC<EnhancedImageMagnifierProps> = ({
     <>
       <div
         ref={containerRef}
-        className={`relative overflow-hidden group ${className}`}
+        className={`relative overflow-hidden group ${className || ''}`}
         style={style}
         onMouseMove={handleMouseMove}
         onMouseEnter={handleMouseEnter}
@@ -242,7 +242,7 @@ export const EnhancedImageMagnifier: React.FC<EnhancedImageMagnifierProps> = ({
           alt={alt}
           width={width}
           height={height}
-          className="w-full h-full object-cover transition-all duration-300"
+          className={`w-full h-full object-contain transition-all duration-300`}
           style={{ 
             cursor: supportsHover && imageLoaded ? 'zoom-in' : 'default',
             filter: isHovered ? 'brightness(1.05)' : 'brightness(1)',
