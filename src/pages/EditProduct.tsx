@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,6 +62,7 @@ export default function EditProduct() {
   const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('');
   const [storeId, setStoreId] = useState<string>('');
+  const formRef = useRef<HTMLFormElement>(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -555,28 +556,44 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
             <ArrowLeft className="h-4 w-4" />
             Back to Products
           </Button>
-          <Button
-            variant="outline"
-            onClick={toggleAllSections}
-            className="gap-2"
-          >
-            {allSectionsExpanded ? (
-              <>
-                <ChevronUp className="h-4 w-4" />
-                Collapse All
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4" />
-                Expand All
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={() => formRef.current?.requestSubmit()}
+              disabled={saving}
+            >
+              {saving ? (
+                <>Saving...</>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Update Product
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={toggleAllSections}
+              className="gap-2"
+            >
+              {allSectionsExpanded ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  Collapse All
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  Expand All
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         <div className="flex gap-6 items-start relative">
           {/* Main Form */}
-          <form onSubmit={handleSubmit} className="flex-1 space-y-6">
+          <form ref={formRef} onSubmit={handleSubmit} className="flex-1 space-y-6">
           <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full space-y-4">
             {/* Selling Website & Category - Moved to Top */}
             <AccordionItem value="channel-category" id="channel-category" className="border rounded-lg">

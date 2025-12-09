@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,6 +36,7 @@ export default function AddProduct() {
   const [loading, setLoading] = useState(false);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('');
   const [storeId, setStoreId] = useState<string>('');
+  const formRef = React.useRef<HTMLFormElement>(null);
 
   // Collapsible sections state
   const [allSectionsExpanded, setAllSectionsExpanded] = useState(true);
@@ -397,28 +398,47 @@ export default function AddProduct() {
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Add Product</h1>
             <p className="text-muted-foreground">Create a new product for your store</p>
           </div>
-          <Button
-            variant="outline"
-            onClick={toggleAllSections}
-            className="gap-2"
-          >
-            {allSectionsExpanded ? (
-              <>
-                <ChevronUp className="h-4 w-4" />
-                Collapse All
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4" />
-                Expand All
-              </>
-            )}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={() => formRef.current?.requestSubmit()}
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <Save className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Package className="w-4 h-4 mr-2" />
+                  Create Product
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={toggleAllSections}
+              className="gap-2"
+            >
+              {allSectionsExpanded ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  Collapse All
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  Expand All
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         <div className="flex gap-6 items-start relative">
           {/* Main Form */}
-          <form onSubmit={handleSubmit} className="flex-1 space-y-6">
+          <form ref={formRef} onSubmit={handleSubmit} className="flex-1 space-y-6">
           <Accordion 
             type="multiple" 
             value={expandedSections} 
