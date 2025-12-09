@@ -591,7 +591,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-6 items-start relative">
+        <div className="flex flex-wrap gap-6 items-start relative lg:pr-72">
           {/* Main Form */}
           <form ref={formRef} onSubmit={handleSubmit} className="w-full lg:flex-1 lg:max-w-5xl space-y-6">
           <Accordion type="multiple" value={expandedSections} onValueChange={setExpandedSections} className="w-full space-y-4">
@@ -1600,8 +1600,8 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         />
         </form>
 
-        {/* Sticky Sidebar Navigation - aligned with content and below header */}
-        <aside className="hidden lg:block sticky top-28 w-64 z-30 self-start h-fit max-h-[calc(100vh-7rem)] overflow-auto">
+        {/* Fixed Sidebar Navigation - always visible on scroll */}
+        <aside className="hidden lg:block fixed right-6 top-24 w-64 z-40 h-fit max-h-[calc(100vh-6rem)] overflow-auto">
           <Card className="border shadow-lg">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold">Navigation</CardTitle>
