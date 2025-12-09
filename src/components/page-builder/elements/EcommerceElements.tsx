@@ -69,8 +69,15 @@ const ProductGridElement: React.FC<{
       if (columnCount === 1) return 'grid-cols-1';
       return (element.content.columns || 2) >= 4 ? 'grid-cols-3' : 'grid-cols-2';
     }
-    const col = Math.min(columns, 4);
-    const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
+    const col = Math.max(1, Math.min(6, columns));
+    const map: Record<number, string> = { 
+      1: 'grid-cols-1', 
+      2: 'grid-cols-2', 
+      3: 'grid-cols-3', 
+      4: 'grid-cols-4',
+      5: 'grid-cols-5',
+      6: 'grid-cols-6'
+    };
     return map[col] || 'grid-cols-2';
   };
   const { products, loading } = useStoreProducts({
