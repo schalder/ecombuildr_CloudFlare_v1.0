@@ -191,21 +191,48 @@ export const ProductDetail: React.FC = () => {
   const effectivePrice = (selectedVariant?.price ?? product?.price) || 0;
   const effectiveComparePrice = selectedVariant?.compare_price ?? product?.compare_price;
 
-  // Calculate all available images (product + variant images)
-  const allAvailableImages = React.useMemo(() => {
+  // Build media list with clear priority and uniqueness
+  const mediaItems: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = React.useMemo(() => {
+    const items: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = [];
+    if (videoInfo && videoInfo.type !== 'unknown' && videoInfo.embedUrl) {
+      items.push({ kind: 'video', src: videoInfo.embedUrl, thumb: videoInfo.thumbnailUrl });
+    }
+
     const defaultImages = product?.images || [];
     const variantImages = variantList
-      .filter(variant => variant.image && !defaultImages.includes(variant.image))
-      .map(variant => variant.image);
-    
-    // If a variant is selected and has an image, put it first
-    if (selectedVariant && selectedVariant.image) {
-      const otherImages = [...defaultImages, ...variantImages].filter(img => img !== selectedVariant.image);
-      return [selectedVariant.image, ...otherImages];
+      .filter((variant) => variant.image && !defaultImages.includes(variant.image))
+      .map((variant) => variant.image as string);
+
+    const images: string[] = [];
+
+    // 1) Exact selected variant image
+    if (selectedVariant?.image) {
+      images.push(selectedVariant.image);
     }
-    
-    return [...defaultImages, ...variantImages];
-  }, [selectedVariant, product?.images, variantList]);
+
+    // 2) Fallback: primary option image (e.g., Color) if no exact image
+    if (!images.length && options[0]) {
+      const primaryName = options[0].name;
+      const primaryVal = selectedOptions[primaryName];
+      const primaryVariant = variantList.find(
+        (v) => v.options?.[primaryName] === primaryVal && v.image
+      );
+      if (primaryVariant?.image) {
+        images.push(primaryVariant.image);
+      }
+    }
+
+    // 3) Defaults + all variant images
+    images.push(...defaultImages);
+    images.push(...variantImages);
+
+    // Deduplicate and push into items
+    Array.from(new Set(images.filter(Boolean))).forEach((src) =>
+      items.push({ kind: 'image', src })
+    );
+
+    return items;
+  }, [videoInfo, product?.images, variantList, selectedVariant, options, selectedOptions]);
 
   // Create mapping between images and their corresponding variants
   const imageToVariantMap = React.useMemo(() => {
@@ -229,6 +256,11 @@ export const ProductDetail: React.FC = () => {
       setSelectedOptions(correspondingVariant.options || {});
     }
   };
+
+  // Reset selected image when media list changes (prevents disappearing thumbnails)
+  useEffect(() => {
+    setSelectedImage(0);
+  }, [mediaItems.length]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -346,7 +378,7 @@ export const ProductDetail: React.FC = () => {
             
             {/* Main Media */}
             <div className="order-1 lg:order-2 flex-1">
-              <div className="aspect-square relative overflow-hidden rounded-lg border bg-muted">
+              <div className="aspect-[4/5] md:aspect-[4/5] relative overflow-hidden rounded-lg border bg-muted">
                 {mediaItems[selectedImage]?.kind === 'video' && videoInfo && videoInfo.embedUrl ? (
                   videoInfo.type === 'hosted' ? (
                     <video src={videoInfo.embedUrl} controls className="w-full h-full" />
@@ -363,7 +395,7 @@ export const ProductDetail: React.FC = () => {
                   <StorefrontImage
                     src={mediaItems[selectedImage]?.src || '/placeholder.svg'}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-opacity duration-300"
+                    className="w-full h-full object-contain transition-opacity duration-300"
                     enableMagnifier={true}
                     zoomLevel={8}
                     magnifierSize={350}
