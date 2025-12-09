@@ -1363,8 +1363,8 @@ export default function AddProduct() {
         {/* Spacer for sidebar on desktop - maintains layout spacing */}
         <div className="hidden lg:block w-64 shrink-0" aria-hidden="true" />
 
-        {/* Fixed Sidebar Navigation - Positioned relative to viewport */}
-        <aside className="hidden lg:block fixed right-6 top-24 w-64 z-30">
+        {/* Sticky Sidebar Navigation - stays aligned without overlapping header or form */}
+        <aside className="hidden lg:block sticky top-24 w-64 z-30 self-start">
           <Card className="border shadow-lg">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold">Navigation</CardTitle>
