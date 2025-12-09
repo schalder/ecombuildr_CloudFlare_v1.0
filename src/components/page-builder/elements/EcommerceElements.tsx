@@ -179,7 +179,7 @@ const ProductGridElement: React.FC<{
               )}
 
               {showPrice && (
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className={columns >= 6 ? "flex flex-col gap-2" : "flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"}>
                   <div className="flex flex-col">
                     <span style={{ color: elementStyles.color, fontSize: elementStyles.fontSize, fontWeight: elementStyles.fontWeight }} className="font-bold text-base md:text-lg">{formatCurrency(product.price)}</span>
                     {product.compare_price && product.compare_price > product.price && (
@@ -193,7 +193,7 @@ const ProductGridElement: React.FC<{
                       size="sm"
                       onClick={() => handleAddToCart(product)}
                       style={buttonStyles as React.CSSProperties}
-                      className="w-full sm:w-auto"
+                      className={columns >= 6 ? "w-full" : "w-full sm:w-auto"}
                     >
                       {ctaBehavior === 'buy_now' ? 'Buy Now' : 'Add to Cart'}
                     </Button>
