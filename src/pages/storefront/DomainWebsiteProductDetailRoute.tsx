@@ -49,7 +49,7 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
         if (!websiteMeta) {
           const { data: websiteData, error: wErr } = await supabase
             .from('websites')
-            .select('id, name, settings, domain, seo_title, seo_description, og_image, meta_robots, canonical_domain')
+            .select('id, name, settings, domain')
             .eq('id', websiteId)
             .maybeSingle();
           if (wErr || !websiteData) {
@@ -102,16 +102,19 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
   React.useEffect(() => {
     const currentWebsite = websiteMeta || website;
     if (!currentWebsite) return;
-    const canonical = buildCanonical(undefined, currentWebsite?.canonical_domain || currentWebsite?.domain);
+    const settings: any = (currentWebsite as any)?.settings || {};
+    const seoSettings = settings?.seo || {};
+    const canonicalDomain = settings?.canonical_domain || (currentWebsite as any)?.domain;
+    const canonical = buildCanonical(undefined, canonicalDomain);
     setSEO({
-      title: currentWebsite?.seo_title || currentWebsite?.name,
-      description: currentWebsite?.seo_description,
-      image: currentWebsite?.og_image,
+      title: seoSettings?.title || currentWebsite?.name,
+      description: seoSettings?.description,
+      image: seoSettings?.og_image || seoSettings?.social_image_url,
       canonical,
-      robots: isPreview ? 'noindex, nofollow' : (currentWebsite?.meta_robots || 'index, follow'),
+      robots: isPreview ? 'noindex, nofollow' : (seoSettings?.meta_robots || 'index, follow'),
       siteName: currentWebsite?.name,
       ogType: 'website',
-      favicon: currentWebsite?.settings?.favicon_url,
+      favicon: settings?.favicon_url,
     });
   }, [websiteMeta, website, isPreview]);
 
@@ -119,21 +122,24 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
   React.useEffect(() => {
     if (!page) return;
     const currentWebsite = websiteMeta || website;
+    const settings: any = (currentWebsite as any)?.settings || {};
+    const seoSettings = settings?.seo || {};
+    const canonicalDomain = settings?.canonical_domain || (currentWebsite as any)?.domain;
 
-    const title = page.seo_title || currentWebsite?.seo_title || page.title;
-    const description = page.seo_description || currentWebsite?.seo_description;
-    const image = page.og_image || currentWebsite?.og_image;
-    const canonical = buildCanonical(undefined, currentWebsite?.canonical_domain || currentWebsite?.domain);
+    const title = page.seo_title || seoSettings?.title || page.title;
+    const description = page.seo_description || seoSettings?.description;
+    const image = page.og_image || seoSettings?.og_image || seoSettings?.social_image_url;
+    const canonical = buildCanonical(undefined, canonicalDomain);
 
     setSEO({
       title,
       description,
       image,
       canonical,
-      robots: isPreview ? 'noindex, nofollow' : (page.meta_robots || currentWebsite?.meta_robots || 'index, follow'),
+      robots: isPreview ? 'noindex, nofollow' : (page.meta_robots || seoSettings?.meta_robots || 'index, follow'),
       siteName: currentWebsite?.name,
       ogType: 'product',
-      favicon: currentWebsite?.settings?.favicon_url,
+      favicon: settings?.favicon_url,
       keywords: page.keywords ? page.keywords.split(',').map(k => k.trim()) : undefined,
       author: page.author,
       languageCode: page.language_code,
@@ -163,13 +169,17 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
 
   // Generate enhanced meta tags
   const currentWebsite = websiteMeta || website;
+  const settings: any = (currentWebsite as any)?.settings || {};
+  const seoSettings = settings?.seo || {};
+  const canonicalDomain = settings?.canonical_domain || (currentWebsite as any)?.domain;
+  
   const enhancedTitle = page?.seo_title || page?.title || currentWebsite?.name || 'EcomBuildr Store';
   const enhancedDescription = page?.seo_description || 
     generateDescriptionFromContent(page?.content) || 
-    currentWebsite?.seo_description || 
+    seoSettings?.description || 
     'Professional e-commerce store built with EcomBuildr';
-  const enhancedImage = page?.og_image || currentWebsite?.og_image;
-  const enhancedUrl = buildCanonical(undefined, currentWebsite?.canonical_domain || currentWebsite?.domain);
+  const enhancedImage = page?.og_image || seoSettings?.og_image || seoSettings?.social_image_url;
+  const enhancedUrl = buildCanonical(undefined, canonicalDomain);
 
   return (
     <>
@@ -180,7 +190,7 @@ export const DomainWebsiteProductDetailRoute: React.FC<DomainWebsiteProductDetai
         url={enhancedUrl}
         type="product"
         siteName={currentWebsite?.name || 'EcomBuildr Store'}
-        robots={isPreview ? 'noindex, nofollow' : (page?.meta_robots || currentWebsite?.meta_robots || 'index, follow')}
+        robots={isPreview ? 'noindex, nofollow' : (page?.meta_robots || seoSettings?.meta_robots || 'index, follow')}
         canonical={enhancedUrl}
         favicon={currentWebsite?.settings?.favicon_url}
         keywords={page?.keywords ? page.keywords.split(',').map(k => k.trim()) : []}

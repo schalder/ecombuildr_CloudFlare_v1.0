@@ -71,7 +71,7 @@ export const WebsiteProductDetailRoute: React.FC = () => {
       try {
         const { data: website, error: wErr } = await supabase
           .from('websites')
-          .select('id, name, settings, domain, seo_title, seo_description, og_image, meta_robots, canonical_domain')
+          .select('id, name, settings, domain')
           .eq('id', resolvedWebsiteId)
           .maybeSingle();
         if (wErr || !website) {
@@ -122,16 +122,19 @@ export const WebsiteProductDetailRoute: React.FC = () => {
   // Provisional website-level SEO (runs as soon as website meta loads)
   React.useEffect(() => {
     if (!websiteMeta) return;
-    const canonical = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
-  setSEO({
-      title: websiteMeta?.seo_title || websiteMeta?.name,
-      description: websiteMeta?.seo_description,
-      image: websiteMeta?.og_image,
+    const settings: any = (websiteMeta as any)?.settings || {};
+    const seoSettings = settings?.seo || {};
+    const canonicalDomain = settings?.canonical_domain || (websiteMeta as any)?.domain;
+    const canonical = buildCanonical(undefined, canonicalDomain);
+    setSEO({
+      title: seoSettings?.title || websiteMeta?.name,
+      description: seoSettings?.description,
+      image: seoSettings?.og_image || seoSettings?.social_image_url,
       canonical,
-      robots: isPreview ? 'noindex, nofollow' : (websiteMeta?.meta_robots || 'index, follow'),
+      robots: isPreview ? 'noindex, nofollow' : (seoSettings?.meta_robots || 'index, follow'),
       siteName: websiteMeta?.name,
       ogType: 'website',
-      favicon: websiteMeta?.settings?.favicon_url,
+      favicon: settings?.favicon_url,
     });
   }, [websiteMeta, isPreview]);
 
@@ -139,20 +142,24 @@ export const WebsiteProductDetailRoute: React.FC = () => {
   React.useEffect(() => {
     if (!page) return;
 
-    const title = page.seo_title || websiteMeta?.seo_title || page.title;
-    const description = page.seo_description || websiteMeta?.seo_description;
-    const image = page.og_image || websiteMeta?.og_image;
-    const canonical = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
+    const settings: any = (websiteMeta as any)?.settings || {};
+    const seoSettings = settings?.seo || {};
+    const canonicalDomain = settings?.canonical_domain || (websiteMeta as any)?.domain;
+    
+    const title = page.seo_title || seoSettings?.title || page.title;
+    const description = page.seo_description || seoSettings?.description;
+    const image = page.og_image || seoSettings?.og_image || seoSettings?.social_image_url;
+    const canonical = buildCanonical(undefined, canonicalDomain);
 
     setSEO({
       title,
       description,
       image,
       canonical,
-      robots: websiteMeta?.meta_robots || 'index, follow',
+      robots: seoSettings?.meta_robots || 'index, follow',
       siteName: websiteMeta?.name,
       ogType: 'product',
-      favicon: websiteMeta?.settings?.favicon_url,
+      favicon: settings?.favicon_url,
     });
 
     if (page.custom_scripts) {
@@ -176,13 +183,17 @@ export const WebsiteProductDetailRoute: React.FC = () => {
   if (!page) return <ProductDetail />;
 
   // Generate enhanced meta tags
+  const settings: any = (websiteMeta as any)?.settings || {};
+  const seoSettings = settings?.seo || {};
+  const canonicalDomain = settings?.canonical_domain || (websiteMeta as any)?.domain;
+  
   const enhancedTitle = page?.seo_title || page?.title || websiteMeta?.name || 'EcomBuildr Store';
   const enhancedDescription = page?.seo_description || 
     generateDescriptionFromContent(page?.content) || 
-    websiteMeta?.seo_description || 
+    seoSettings?.description || 
     'Professional e-commerce store built with EcomBuildr';
-  const enhancedImage = page?.og_image || websiteMeta?.og_image;
-  const enhancedUrl = buildCanonical(undefined, websiteMeta?.canonical_domain || websiteMeta?.domain);
+  const enhancedImage = page?.og_image || seoSettings?.og_image || seoSettings?.social_image_url;
+  const enhancedUrl = buildCanonical(undefined, canonicalDomain);
 
   return (
     <>

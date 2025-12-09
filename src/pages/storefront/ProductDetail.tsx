@@ -362,9 +362,9 @@ export const ProductDetail: React.FC = () => {
                     }`}
                   >
                     {item.kind === 'image' ? (
-                      <img src={item.src!} alt={`${product.name} ${index + 1}`} className="w-full h-full object-cover" />
+                      <img src={item.src!} alt={`${product.name} ${index + 1}`} className="w-full h-full object-contain" />
                     ) : (
-                      <img src={item.thumb || '/placeholder.svg'} alt={`${product.name} video`} className="w-full h-full object-cover" />
+                      <img src={item.thumb || '/placeholder.svg'} alt={`${product.name} video`} className="w-full h-full object-contain" />
                     )}
                   </button>
                 ))}
@@ -373,7 +373,7 @@ export const ProductDetail: React.FC = () => {
             
             {/* Main Media */}
             <div className="order-1 lg:order-2 flex-1">
-              <div className="aspect-[4/5] md:aspect-[4/5] relative overflow-hidden rounded-lg border bg-muted">
+              <div className="aspect-square relative overflow-hidden rounded-lg border bg-muted">
                 {mediaItems[selectedImage]?.kind === 'video' && videoInfo && videoInfo.embedUrl ? (
                   videoInfo.type === 'hosted' ? (
                     <video src={videoInfo.embedUrl} controls className="w-full h-full" />
