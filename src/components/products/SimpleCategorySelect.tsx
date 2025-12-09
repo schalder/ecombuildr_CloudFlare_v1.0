@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useCategories } from "@/hooks/useCategories";
@@ -37,22 +37,29 @@ export function SimpleCategorySelect({
   const [subCategories, setSubCategories] = useState<Category[]>([]);
   const [selectedMainCategory, setSelectedMainCategory] = useState<string>('');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
+  
+  // Stabilize flatCategories length to prevent infinite loops
+  const flatCategoriesLength = useMemo(() => flatCategories?.length || 0, [flatCategories?.length]);
+  
+  // Track if we've already processed the current value to prevent loops
+  const processedValueRef = useRef<string>('');
+  const processedCategoriesRef = useRef<number>(0);
 
-  // Debug logging
+  // Debug logging - only log when meaningful values change
   useEffect(() => {
     console.log('📂 SimpleCategorySelect - Props changed:', {
       value,
       storeId,
       websiteId,
-      flatCategoriesCount: flatCategories?.length || 0,
+      flatCategoriesCount: flatCategoriesLength,
       selectedMainCategory,
       selectedSubCategory
     });
-  }, [value, storeId, websiteId, flatCategories?.length, selectedMainCategory, selectedSubCategory]);
+  }, [value, storeId, websiteId, flatCategoriesLength, selectedMainCategory, selectedSubCategory]);
 
   // Filter categories by website visibility
   useEffect(() => {
-    if (!flatCategories || !websiteId) {
+    if (!flatCategories || flatCategories.length === 0 || !websiteId) {
       setFilteredCategories([]);
       return;
     }
@@ -78,9 +85,14 @@ export function SimpleCategorySelect({
       return;
     }
 
-    if (!filteredCategories.length && !value) {
-      setMainCategories([]);
-      setSubCategories([]);
+    // Wait for categories to load
+    if (!flatCategories || flatCategories.length === 0) {
+      if (!value) {
+        // No value and no categories - clear everything
+        setMainCategories([]);
+        setSubCategories([]);
+      }
+      // If we have a value but no categories yet, wait (don't clear)
       return;
     }
 
@@ -112,18 +124,10 @@ export function SimpleCategorySelect({
   }, [filteredCategories, value, flatCategories, storeId]);
 
   // Update selected categories when value changes
+  // Use refs to prevent processing the same value/categories combination multiple times
   useEffect(() => {
-    console.log('📂 SimpleCategorySelect - Processing value change:', {
-      value,
-      flatCategoriesCount: flatCategories?.length || 0,
-      storeId,
-      websiteId,
-      hasStoreId: !!storeId
-    });
-
     // Wait for storeId to be available (required for useCategories to work)
     if (!storeId) {
-      console.log('📂 SimpleCategorySelect - Waiting for storeId');
       return;
     }
 
@@ -132,17 +136,36 @@ export function SimpleCategorySelect({
       // Categories not loaded yet
       if (value) {
         // Value exists but categories not loaded - wait for them
-        console.log('📂 SimpleCategorySelect - Waiting for categories to load, value exists:', value);
         return;
       }
-      console.log('📂 SimpleCategorySelect - No value and no categories, clearing selections');
-      setSelectedMainCategory('');
-      setSelectedSubCategory('');
+      // No value and no categories - clear selections only once
+      if (processedValueRef.current !== '' || processedCategoriesRef.current !== 0) {
+        processedValueRef.current = '';
+        processedCategoriesRef.current = 0;
+        setSelectedMainCategory('');
+        setSelectedSubCategory('');
+      }
       return;
     }
 
+    // Check if we've already processed this exact combination
+    const categoriesHash = flatCategories.length;
+    if (processedValueRef.current === value && processedCategoriesRef.current === categoriesHash) {
+      // Already processed this combination - skip
+      return;
+    }
+
+    console.log('📂 SimpleCategorySelect - Processing value change:', {
+      value,
+      flatCategoriesCount: flatCategories.length,
+      storeId,
+      hasStoreId: !!storeId
+    });
+
     if (!value) {
       console.log('📂 SimpleCategorySelect - No value provided, clearing selections');
+      processedValueRef.current = '';
+      processedCategoriesRef.current = categoriesHash;
       setSelectedMainCategory('');
       setSelectedSubCategory('');
       return;
@@ -169,6 +192,10 @@ export function SimpleCategorySelect({
       parentCategoryId: selectedCategory.parent_category_id
     });
 
+    // Mark as processed
+    processedValueRef.current = value;
+    processedCategoriesRef.current = categoriesHash;
+
     // Determine if this is a main category or subcategory
     if (selectedCategory.parent_category_id) {
       // This is a subcategory - set both main and sub
@@ -184,7 +211,7 @@ export function SimpleCategorySelect({
       setSelectedMainCategory(value);
       setSelectedSubCategory('');
     }
-  }, [value, flatCategories, storeId, websiteId]); // Depend on storeId to ensure it's available
+  }, [value, flatCategories, storeId]); // Removed websiteId - not used in effect body
 
   const handleMainCategoryChange = (categoryId: string) => {
     if (categoryId === 'none') {
