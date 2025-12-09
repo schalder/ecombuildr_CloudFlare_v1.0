@@ -227,14 +227,14 @@ const ProductDetailElement: React.FC<{ element: PageBuilderElement }> = ({ eleme
             <div className="order-2 lg:order-1 flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-x-visible lg:w-20">
                {product.images.map((img: string, i: number) => (
                  <button key={i} onClick={() => setSelectedImage(i)} className={`flex-shrink-0 aspect-square w-16 lg:w-full rounded border-2 overflow-hidden transition-all ${selectedImage===i?'border-primary ring-2 ring-primary/20':'border-border hover:border-primary/50'}`}>
-                   <StorefrontImage src={img} alt={`${product.name} ${i+1}`} className="w-full h-full object-cover" aspectRatio="1" />
+                   <StorefrontImage src={img} alt={`${product.name} ${i+1}`} className="w-full h-full object-contain" aspectRatio="1" />
                  </button>
                ))}
             </div>
           )}
            <div className="order-1 lg:order-2 flex-1">
              <div className="aspect-square relative overflow-hidden rounded-lg border bg-muted">
-               <StorefrontImage src={product.images?.[selectedImage] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-cover" aspectRatio="1" priority={true} />
+               <StorefrontImage src={product.images?.[selectedImage] || '/placeholder.svg'} alt={product.name} className="w-full h-full object-contain" aspectRatio="1" priority={true} />
                {discount>0 && (<Badge variant="destructive" className="absolute top-4 left-4 text-xs">-{discount}%</Badge>)}
              </div>
           </div>
