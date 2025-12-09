@@ -38,6 +38,18 @@ export function SimpleCategorySelect({
   const [selectedMainCategory, setSelectedMainCategory] = useState<string>('');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
 
+  // Debug logging
+  useEffect(() => {
+    console.log('📂 SimpleCategorySelect - Props changed:', {
+      value,
+      storeId,
+      websiteId,
+      flatCategoriesCount: flatCategories?.length || 0,
+      selectedMainCategory,
+      selectedSubCategory
+    });
+  }, [value, storeId, websiteId, flatCategories?.length, selectedMainCategory, selectedSubCategory]);
+
   // Filter categories by website visibility
   useEffect(() => {
     if (!flatCategories || !websiteId) {
@@ -59,6 +71,13 @@ export function SimpleCategorySelect({
   // Separate main categories and subcategories
   // Always include the selected category even if it's not in filteredCategories
   useEffect(() => {
+    // Wait for storeId to be available
+    if (!storeId) {
+      setMainCategories([]);
+      setSubCategories([]);
+      return;
+    }
+
     if (!filteredCategories.length && !value) {
       setMainCategories([]);
       setSubCategories([]);
@@ -90,23 +109,40 @@ export function SimpleCategorySelect({
 
     setMainCategories(main);
     setSubCategories(sub);
-  }, [filteredCategories, value, flatCategories]);
+  }, [filteredCategories, value, flatCategories, storeId]);
 
   // Update selected categories when value changes
   useEffect(() => {
+    console.log('📂 SimpleCategorySelect - Processing value change:', {
+      value,
+      flatCategoriesCount: flatCategories?.length || 0,
+      storeId,
+      websiteId,
+      hasStoreId: !!storeId
+    });
+
+    // Wait for storeId to be available (required for useCategories to work)
+    if (!storeId) {
+      console.log('📂 SimpleCategorySelect - Waiting for storeId');
+      return;
+    }
+
     // Wait for categories to load before processing value
     if (!flatCategories || flatCategories.length === 0) {
-      // Categories not loaded yet, clear selections
+      // Categories not loaded yet
       if (value) {
         // Value exists but categories not loaded - wait for them
+        console.log('📂 SimpleCategorySelect - Waiting for categories to load, value exists:', value);
         return;
       }
+      console.log('📂 SimpleCategorySelect - No value and no categories, clearing selections');
       setSelectedMainCategory('');
       setSelectedSubCategory('');
       return;
     }
 
     if (!value) {
+      console.log('📂 SimpleCategorySelect - No value provided, clearing selections');
       setSelectedMainCategory('');
       setSelectedSubCategory('');
       return;
@@ -116,27 +152,39 @@ export function SimpleCategorySelect({
     const selectedCategory = flatCategories.find(cat => cat.id === value);
     
     if (!selectedCategory) {
-      console.warn('SimpleCategorySelect: Category not found in flatCategories:', {
+      console.warn('📂 SimpleCategorySelect - Category not found in flatCategories:', {
         categoryId: value,
         availableCategories: flatCategories.length,
-        categoryIds: flatCategories.map(c => c.id).slice(0, 5)
+        categoryIds: flatCategories.map(c => c.id).slice(0, 10),
+        categoryNames: flatCategories.map(c => c.name).slice(0, 10)
       });
       // Don't clear selections if category not found - might be a timing issue
       // The category might exist but not be in the filtered list yet
       return;
     }
 
+    console.log('📂 SimpleCategorySelect - Category found:', {
+      categoryId: selectedCategory.id,
+      categoryName: selectedCategory.name,
+      parentCategoryId: selectedCategory.parent_category_id
+    });
+
     // Determine if this is a main category or subcategory
     if (selectedCategory.parent_category_id) {
       // This is a subcategory - set both main and sub
+      console.log('📂 SimpleCategorySelect - Setting subcategory:', {
+        mainCategory: selectedCategory.parent_category_id,
+        subCategory: value
+      });
       setSelectedMainCategory(selectedCategory.parent_category_id);
       setSelectedSubCategory(value);
     } else {
       // This is a main category
+      console.log('📂 SimpleCategorySelect - Setting main category:', value);
       setSelectedMainCategory(value);
       setSelectedSubCategory('');
     }
-  }, [value, flatCategories]); // Depend on flatCategories to ensure we have all categories
+  }, [value, flatCategories, storeId, websiteId]); // Depend on storeId to ensure it's available
 
   const handleMainCategoryChange = (categoryId: string) => {
     if (categoryId === 'none') {
