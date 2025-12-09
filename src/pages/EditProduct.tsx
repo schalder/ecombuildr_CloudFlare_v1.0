@@ -249,11 +249,21 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         console.log('📦 EditProduct - Product fetched:', {
           productId: product.id,
           productName: product.name,
-          storeId: product.store_id
+          storeId: product.store_id,
+          category_id: product.category_id,
+          category_id_type: typeof product.category_id,
+          category_id_value: product.category_id || 'EMPTY/NULL'
         });
         
         // Set store ID for filtering
         setStoreId(product.store_id);
+        
+        const categoryIdValue = product.category_id || '';
+        console.log('📦 EditProduct - Setting formData.category_id:', {
+          product_category_id: product.category_id,
+          categoryIdValue: categoryIdValue,
+          will_be_empty: !categoryIdValue
+        });
         
         setFormData({
           name: product.name || '',
@@ -265,7 +275,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           sku: product.sku || '',
           track_inventory: !!product.track_inventory,
           inventory_quantity: product.inventory_quantity?.toString() || '',
-          category_id: product.category_id || '',
+          category_id: categoryIdValue,
           is_active: product.is_active,
           show_on_website: (product as any).show_on_website !== undefined ? (product as any).show_on_website : true,
           images: Array.isArray(product.images) ? product.images.filter((i: any) => typeof i === 'string') : [],
@@ -669,12 +679,21 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
                       <SimpleCategorySelect
                         value={formData.category_id}
-                        onValueChange={(value) => handleInputChange('category_id', value)}
+                        onValueChange={(value) => {
+                          console.log('📦 EditProduct - Category changed:', value);
+                          handleInputChange('category_id', value);
+                        }}
                         storeId={storeId}
                         websiteId={selectedWebsiteId}
                         disabled={!selectedWebsiteId}
                         placeholder={selectedWebsiteId ? "Select a category" : "Select a website first"}
                       />
+                      {/* Debug: Show current formData.category_id */}
+                      {process.env.NODE_ENV === 'development' && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Debug: formData.category_id = "{formData.category_id}" | selectedWebsiteId = "{selectedWebsiteId}" | storeId = "{storeId}"
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </AccordionContent>

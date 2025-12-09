@@ -44,6 +44,9 @@ export function SimpleCategorySelect({
   // Track if we've already processed the current value to prevent loops
   const processedValueRef = useRef<string>('');
   const processedCategoriesRef = useRef<number>(0);
+  
+  // Track previous value to detect when it changes from empty to non-empty
+  const previousValueRef = useRef<string>('');
 
   // Debug logging - only log when meaningful values change
   useEffect(() => {
@@ -150,8 +153,19 @@ export function SimpleCategorySelect({
 
     // Check if we've already processed this exact combination
     const categoriesHash = flatCategories.length;
-    if (processedValueRef.current === value && processedCategoriesRef.current === categoriesHash) {
-      // Already processed this combination - skip
+    
+    // IMPORTANT: If value changed from empty to non-empty, or vice versa, we need to re-process
+    // Also re-process if categories count changed (categories were reloaded)
+    const valueChanged = previousValueRef.current !== value;
+    const categoriesChanged = processedCategoriesRef.current !== categoriesHash;
+    const wasEmptyNowHasValue = !previousValueRef.current && value;
+    
+    // Update previous value ref
+    previousValueRef.current = value;
+    
+    // If value changed from empty to non-empty, we MUST re-process even if we processed empty before
+    if (!wasEmptyNowHasValue && !valueChanged && !categoriesChanged && processedValueRef.current === value && processedCategoriesRef.current === categoriesHash) {
+      // Already processed this exact combination - skip
       return;
     }
 
@@ -159,15 +173,23 @@ export function SimpleCategorySelect({
       value,
       flatCategoriesCount: flatCategories.length,
       storeId,
-      hasStoreId: !!storeId
+      hasStoreId: !!storeId,
+      previousValue: previousValueRef.current,
+      processedValue: processedValueRef.current,
+      valueChanged,
+      categoriesChanged,
+      wasEmptyNowHasValue
     });
 
     if (!value) {
-      console.log('📂 SimpleCategorySelect - No value provided, clearing selections');
-      processedValueRef.current = '';
-      processedCategoriesRef.current = categoriesHash;
-      setSelectedMainCategory('');
-      setSelectedSubCategory('');
+      // Only clear if we haven't already cleared, or if we had a value before
+      if (processedValueRef.current !== '' || processedCategoriesRef.current !== categoriesHash) {
+        console.log('📂 SimpleCategorySelect - No value provided, clearing selections');
+        processedValueRef.current = '';
+        processedCategoriesRef.current = categoriesHash;
+        setSelectedMainCategory('');
+        setSelectedSubCategory('');
+      }
       return;
     }
 
