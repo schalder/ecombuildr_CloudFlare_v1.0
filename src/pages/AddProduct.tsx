@@ -1364,7 +1364,7 @@ export default function AddProduct() {
         <div className="hidden lg:block w-64 shrink-0" aria-hidden="true" />
 
         {/* Fixed Sidebar Navigation - Positioned relative to viewport */}
-        <aside className="hidden lg:block fixed right-6 top-[136px] w-64 z-40">
+        <aside className="hidden lg:block fixed right-6 top-24 w-64 z-30">
           <Card className="border shadow-lg">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold">Navigation</CardTitle>
