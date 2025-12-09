@@ -151,7 +151,7 @@ export const ProductDetail: React.FC = () => {
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('products')
         .select('*')
         .eq('store_id', store.id)
@@ -190,6 +190,12 @@ export const ProductDetail: React.FC = () => {
   // Calculate effective price and compare price based on selected variant
   const effectivePrice = (selectedVariant?.price ?? product?.price) || 0;
   const effectiveComparePrice = selectedVariant?.compare_price ?? product?.compare_price;
+
+  // Parse video info once
+  const videoInfo = React.useMemo(
+    () => parseVideoUrl(((product as any)?.video_url) || ''),
+    [product?.id, (product as any)?.video_url]
+  );
 
   // Build media list with clear priority and uniqueness
   const mediaItems: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = React.useMemo(() => {
@@ -338,17 +344,6 @@ export const ProductDetail: React.FC = () => {
     const discountPercentage = effectiveComparePrice && effectiveComparePrice > effectivePrice 
       ? Math.round(((effectiveComparePrice - effectivePrice) / effectiveComparePrice) * 100)
       : 0;
-
-    // Build media list (video first if available)
-    const videoInfo = parseVideoUrl(((product as any)?.video_url) || '');
-    const mediaItems: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = (() => {
-      const items: Array<{ kind: 'video' | 'image'; src?: string; thumb?: string }> = [];
-      if (videoInfo && videoInfo.type !== 'unknown' && videoInfo.embedUrl) {
-        items.push({ kind: 'video', src: videoInfo.embedUrl, thumb: videoInfo.thumbnailUrl });
-      }
-      allAvailableImages.forEach((img) => items.push({ kind: 'image', src: img }));
-      return items;
-    })();
 
     return (
       <div className="container mx-auto px-4 py-8">
