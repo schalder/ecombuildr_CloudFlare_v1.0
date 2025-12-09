@@ -36,7 +36,7 @@ export default function AddProduct() {
   const [loading, setLoading] = useState(false);
   const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>('');
   const [storeId, setStoreId] = useState<string>('');
-  const formRef = React.useRef<HTMLFormElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Collapsible sections state
   const [allSectionsExpanded, setAllSectionsExpanded] = useState(true);
