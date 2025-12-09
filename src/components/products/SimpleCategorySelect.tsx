@@ -51,17 +51,6 @@ export function SimpleCategorySelect({
   // Track if we're setting value programmatically (from props) vs user interaction
   const isSettingProgrammaticallyRef = useRef<boolean>(false);
 
-  // Debug logging - only log when meaningful values change
-  useEffect(() => {
-    console.log('📂 SimpleCategorySelect - Props changed:', {
-      value,
-      storeId,
-      websiteId,
-      flatCategoriesCount: flatCategoriesLength,
-      selectedMainCategory,
-      selectedSubCategory
-    });
-  }, [value, storeId, websiteId, flatCategoriesLength, selectedMainCategory, selectedSubCategory]);
 
   // Filter categories by website visibility
   useEffect(() => {
@@ -172,22 +161,9 @@ export function SimpleCategorySelect({
       return;
     }
 
-    console.log('📂 SimpleCategorySelect - Processing value change:', {
-      value,
-      flatCategoriesCount: flatCategories.length,
-      storeId,
-      hasStoreId: !!storeId,
-      previousValue: previousValueRef.current,
-      processedValue: processedValueRef.current,
-      valueChanged,
-      categoriesChanged,
-      wasEmptyNowHasValue
-    });
-
     if (!value) {
       // Only clear if we haven't already cleared, or if we had a value before
       if (processedValueRef.current !== '' || processedCategoriesRef.current !== categoriesHash) {
-        console.log('📂 SimpleCategorySelect - No value provided, clearing selections');
         processedValueRef.current = '';
         processedCategoriesRef.current = categoriesHash;
         setSelectedMainCategory('');
@@ -200,12 +176,6 @@ export function SimpleCategorySelect({
     const selectedCategory = flatCategories.find(cat => cat.id === value);
     
     if (!selectedCategory) {
-      console.warn('📂 SimpleCategorySelect - Category not found in flatCategories:', {
-        categoryId: value,
-        availableCategories: flatCategories.length,
-        categoryIds: flatCategories.map(c => c.id).slice(0, 10),
-        categoryNames: flatCategories.map(c => c.name).slice(0, 10)
-      });
       // Don't clear selections if category not found - might be a timing issue
       // The category might exist but not be in the filtered list yet
       return;
@@ -215,21 +185,10 @@ export function SimpleCategorySelect({
     // This ensures the Select component can find the value
     const targetMainCategoryId = selectedCategory.parent_category_id || selectedCategory.id;
     const categoryExistsInMain = mainCategories.some(cat => cat.id === targetMainCategoryId);
-    
-    console.log('📂 SimpleCategorySelect - Category found:', {
-      categoryId: selectedCategory.id,
-      categoryName: selectedCategory.name,
-      parentCategoryId: selectedCategory.parent_category_id,
-      mainCategoriesCount: mainCategories.length,
-      targetMainCategoryId: targetMainCategoryId,
-      categoryExistsInMain: categoryExistsInMain,
-      mainCategoryIds: mainCategories.map(c => c.id)
-    });
 
     // If mainCategories is not populated yet, wait for it
     // This prevents the Select from not finding the value and triggering onValueChange('')
     if (mainCategories.length === 0 || !categoryExistsInMain) {
-      console.log('📂 SimpleCategorySelect - Waiting for mainCategories to be populated or category to be added');
       return;
     }
 
@@ -241,21 +200,15 @@ export function SimpleCategorySelect({
     // Mark that we're setting programmatically to prevent Select from triggering onValueChange
     // Set the flag BEFORE any state updates to ensure it's active when Select re-renders
     isSettingProgrammaticallyRef.current = true;
-    console.log('📂 SimpleCategorySelect - Setting programmatic flag to true');
     
     // Use requestAnimationFrame to ensure the flag is set before React processes the state update
     requestAnimationFrame(() => {
       if (selectedCategory.parent_category_id) {
         // This is a subcategory - set both main and sub
-        console.log('📂 SimpleCategorySelect - Setting subcategory:', {
-          mainCategory: selectedCategory.parent_category_id,
-          subCategory: value
-        });
         setSelectedMainCategory(selectedCategory.parent_category_id);
         setSelectedSubCategory(value);
       } else {
         // This is a main category
-        console.log('📂 SimpleCategorySelect - Setting main category:', value);
         setSelectedMainCategory(value);
         setSelectedSubCategory('');
       }
@@ -263,7 +216,6 @@ export function SimpleCategorySelect({
       // Reset the flag after Select has updated (longer timeout to ensure Select has processed)
       setTimeout(() => {
         isSettingProgrammaticallyRef.current = false;
-        console.log('📂 SimpleCategorySelect - Programmatic update flag reset');
       }, 300);
     });
   }, [value, flatCategories, storeId, mainCategories]); // Added mainCategories to ensure it's populated before setting selectedMainCategory
@@ -272,11 +224,8 @@ export function SimpleCategorySelect({
     // If we're setting the value programmatically, don't trigger onValueChange
     // This prevents clearing the value when Select updates due to programmatic value change
     if (isSettingProgrammaticallyRef.current) {
-      console.log('📂 SimpleCategorySelect - Ignoring Select change (programmatic update):', categoryId);
       return;
     }
-    
-    console.log('📂 SimpleCategorySelect - User selected main category:', categoryId);
     
     if (categoryId === 'none') {
       // No category selected
@@ -304,7 +253,6 @@ export function SimpleCategorySelect({
   const handleSubCategoryChange = (categoryId: string) => {
     // If we're setting the value programmatically, don't trigger onValueChange
     if (isSettingProgrammaticallyRef.current) {
-      console.log('📂 SimpleCategorySelect - Ignoring Select change (programmatic update):', categoryId);
       return;
     }
     
@@ -337,8 +285,6 @@ export function SimpleCategorySelect({
             // Only handle if not setting programmatically
             if (!isSettingProgrammaticallyRef.current) {
               handleMainCategoryChange(newValue);
-            } else {
-              console.log('📂 SimpleCategorySelect - Ignoring Select onValueChange (programmatic):', newValue);
             }
           }}
           disabled={disabled || !websiteId}

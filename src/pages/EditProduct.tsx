@@ -144,21 +144,11 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
   // Set selected website from visibility data or default to first website (only on initial load)
   useEffect(() => {
-    console.log('🌐 EditProduct - Website selection logic:', {
-      visibleWebsites: visibleWebsites.length,
-      visibleWebsiteIds: visibleWebsites,
-      storeWebsites: storeWebsites.length,
-      storeWebsiteData: storeWebsites.map(w => ({ id: w.id, name: w.name })),
-      currentSelectedWebsiteId: selectedWebsiteId
-    });
-
     // Only set initial website selection, don't override user changes
     if (!selectedWebsiteId) {
       if (visibleWebsites.length > 0) {
-        console.log('🌐 EditProduct - Setting from visible websites:', visibleWebsites[0]);
         setSelectedWebsiteId(visibleWebsites[0]);
       } else if (storeWebsites.length > 0) {
-        console.log('🌐 EditProduct - Setting from store websites:', storeWebsites[0]);
         setSelectedWebsiteId(storeWebsites[0].id);
       }
     }
@@ -167,15 +157,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
   // Filter categories based on selected website (strict filtering)
   useEffect(() => {
     const filterCategories = async () => {
-      console.log('📂 EditProduct - Category filtering started:', {
-        selectedWebsiteId,
-        totalCategories: categories.length,
-        categoryNames: categories.map(c => c.name),
-        currentCategoryId: formData.category_id
-      });
-
       if (!selectedWebsiteId) {
-        console.log('📂 EditProduct - No website selected, clearing categories');
         setFilteredCategories([]);
         return;
       }
@@ -186,33 +168,15 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
           .select('category_id')
           .eq('website_id', selectedWebsiteId);
 
-        console.log('📂 EditProduct - Visibility data from DB:', visibilityData);
-
         const visibleCategoryIds = visibilityData?.map(v => v.category_id) || [];
-        
-        console.log('📂 EditProduct - Visible category IDs for website:', {
-          websiteId: selectedWebsiteId,
-          visibleCategoryIds
-        });
 
         // Only show categories assigned to this specific website
         const filtered = categories.filter(cat => visibleCategoryIds.includes(cat.id));
-        
-        console.log('📂 EditProduct - Filtered categories result:', {
-          filteredCount: filtered.length,
-          filteredNames: filtered.map(c => c.name),
-          originalCount: categories.length
-        });
 
         setFilteredCategories(filtered);
 
         // Don't clear category_id - let user see their original selection
         // This preserves the product's original category on edit page load
-        console.log('📂 EditProduct - Keeping original category selection:', {
-          currentCategoryId: formData.category_id,
-          validCategoryIds: visibleCategoryIds,
-          categoryVisible: visibleCategoryIds.includes(formData.category_id)
-        });
       } catch (error) {
         console.error('📂 EditProduct - Error filtering categories:', error);
         setFilteredCategories([]);
@@ -223,8 +187,6 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
   }, [selectedWebsiteId, categories, formData.category_id]);
 
   const fetchProduct = async () => {
-    console.log('📦 EditProduct - Fetching product:', id);
-    
     try {
       // First get user's stores
       const { data: stores, error: storesError } = await supabase
@@ -233,8 +195,6 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         .eq('owner_id', user?.id);
 
       if (storesError) throw storesError;
-
-      console.log('🏪 EditProduct - User stores:', stores);
 
       if (stores && stores.length > 0) {
         const { data: product, error: productError } = await supabase
@@ -246,24 +206,10 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
         if (productError) throw productError;
         
-        console.log('📦 EditProduct - Product fetched:', {
-          productId: product.id,
-          productName: product.name,
-          storeId: product.store_id,
-          category_id: product.category_id,
-          category_id_type: typeof product.category_id,
-          category_id_value: product.category_id || 'EMPTY/NULL'
-        });
-        
         // Set store ID for filtering
         setStoreId(product.store_id);
         
         const categoryIdValue = product.category_id || '';
-        console.log('📦 EditProduct - Setting formData.category_id:', {
-          product_category_id: product.category_id,
-          categoryIdValue: categoryIdValue,
-          will_be_empty: !categoryIdValue
-        });
         
         setFormData({
           name: product.name || '',
@@ -444,14 +390,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
 
       // Always update website visibility to ensure product is visible on selected website
       // This handles moving products between websites within the same store
-      console.log('🔗 EditProduct - Updating website visibility:', {
-        selectedWebsiteId,
-        currentVisibleWebsites: visibleWebsites
-      });
-      
       await updateVisibility([selectedWebsiteId]);
-      
-      console.log('✅ EditProduct - Website visibility updated successfully');
 
       toast({
         title: "Success",
@@ -653,12 +592,6 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                       <div className="space-y-2">
                         <Label htmlFor="website_id">Selling Website *</Label>
                         <Select value={selectedWebsiteId} onValueChange={(value) => {
-                          console.log('🌐 EditProduct - Website selection changed:', {
-                            from: selectedWebsiteId,
-                            to: value,
-                            websiteName: storeWebsites.find(w => w.id === value)?.name,
-                            availableWebsites: storeWebsites.map(w => ({ id: w.id, name: w.name }))
-                          });
                           setSelectedWebsiteId(value);
                         }}>
                           <SelectTrigger>
@@ -680,7 +613,6 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
                       <SimpleCategorySelect
                         value={formData.category_id}
                         onValueChange={(value) => {
-                          console.log('📦 EditProduct - Category changed:', value);
                           handleInputChange('category_id', value);
                         }}
                         storeId={storeId}
