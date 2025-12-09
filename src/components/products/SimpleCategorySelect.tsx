@@ -57,24 +57,52 @@ export function SimpleCategorySelect({
   }, [flatCategories, websiteId]);
 
   // Separate main categories and subcategories
+  // Always include the selected category even if it's not in filteredCategories
   useEffect(() => {
-    if (!filteredCategories.length) {
+    if (!filteredCategories.length && !value) {
       setMainCategories([]);
       setSubCategories([]);
       return;
     }
 
-    const main = filteredCategories.filter(cat => !cat.parent_category_id);
-    const sub = filteredCategories.filter(cat => cat.parent_category_id);
+    // Start with filtered categories
+    let categoriesToUse = [...filteredCategories];
+    
+    // If we have a value (selected category), ensure it's included even if filtered out
+    if (value && flatCategories.length > 0) {
+      const selectedCategory = flatCategories.find(cat => cat.id === value);
+      if (selectedCategory && !categoriesToUse.find(cat => cat.id === value)) {
+        // Selected category not in filtered list, add it
+        categoriesToUse.push(selectedCategory);
+        
+        // If it's a subcategory, also ensure its parent is included
+        if (selectedCategory.parent_category_id) {
+          const parentCategory = flatCategories.find(cat => cat.id === selectedCategory.parent_category_id);
+          if (parentCategory && !categoriesToUse.find(cat => cat.id === parentCategory.id)) {
+            categoriesToUse.push(parentCategory);
+          }
+        }
+      }
+    }
+
+    const main = categoriesToUse.filter(cat => !cat.parent_category_id);
+    const sub = categoriesToUse.filter(cat => cat.parent_category_id);
 
     setMainCategories(main);
     setSubCategories(sub);
-  }, [filteredCategories]);
+  }, [filteredCategories, value, flatCategories]);
 
   // Update selected categories when value changes
   useEffect(() => {
     // Wait for categories to load before processing value
-    if (!flatCategories.length) {
+    if (!flatCategories || flatCategories.length === 0) {
+      // Categories not loaded yet, clear selections
+      if (value) {
+        // Value exists but categories not loaded - wait for them
+        return;
+      }
+      setSelectedMainCategory('');
+      setSelectedSubCategory('');
       return;
     }
 
@@ -84,20 +112,23 @@ export function SimpleCategorySelect({
       return;
     }
 
-    // Use flatCategories to find the category (includes all categories for the store)
-    // This ensures we can find the category even if it's not yet filtered by website
-    // This is important for preserving the selection when editing a product
+    // Use flatCategories to find the category (includes all categories, not just filtered)
     const selectedCategory = flatCategories.find(cat => cat.id === value);
+    
     if (!selectedCategory) {
-      console.log('Category not found in flatCategories:', value, {
-        availableCategoryIds: flatCategories.map(c => c.id),
-        totalCategories: flatCategories.length
+      console.warn('SimpleCategorySelect: Category not found in flatCategories:', {
+        categoryId: value,
+        availableCategories: flatCategories.length,
+        categoryIds: flatCategories.map(c => c.id).slice(0, 5)
       });
+      // Don't clear selections if category not found - might be a timing issue
+      // The category might exist but not be in the filtered list yet
       return;
     }
 
+    // Determine if this is a main category or subcategory
     if (selectedCategory.parent_category_id) {
-      // This is a subcategory
+      // This is a subcategory - set both main and sub
       setSelectedMainCategory(selectedCategory.parent_category_id);
       setSelectedSubCategory(value);
     } else {
@@ -105,7 +136,7 @@ export function SimpleCategorySelect({
       setSelectedMainCategory(value);
       setSelectedSubCategory('');
     }
-  }, [value, flatCategories]); // Keep dependencies minimal - flatCategories should include all store categories
+  }, [value, flatCategories]); // Depend on flatCategories to ensure we have all categories
 
   const handleMainCategoryChange = (categoryId: string) => {
     if (categoryId === 'none') {
