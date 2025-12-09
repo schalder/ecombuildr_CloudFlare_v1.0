@@ -1604,7 +1604,7 @@ const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
         <div className="hidden lg:block w-64 shrink-0" aria-hidden="true" />
 
         {/* Sticky Sidebar Navigation - aligned with content and below header */}
-        <aside className="hidden lg:block sticky top-28 w-64 z-30 self-start">
+        <aside className="hidden lg:block sticky top-28 w-64 z-30 self-start h-fit max-h-[calc(100vh-7rem)] overflow-auto">
           <Card className="border shadow-lg">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-semibold">Navigation</CardTitle>
