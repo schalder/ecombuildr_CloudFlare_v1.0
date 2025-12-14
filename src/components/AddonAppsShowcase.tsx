@@ -106,6 +106,7 @@ const convertYouTubeUrl = (url: string): string => {
 export const AddonAppsShowcase = () => {
   const [selectedVideo, setSelectedVideo] = useState<{ appId: string; url: string; title: string } | null>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isScrollingRef = useRef(false);
@@ -242,12 +243,21 @@ export const AddonAppsShowcase = () => {
 
                 {/* Image Preview */}
                 <div className="relative rounded-lg overflow-hidden bg-muted cursor-pointer group" style={{ aspectRatio: '16/9' }} onClick={() => handleWatchDemo(app)}>
-                  <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                    <div className="text-center p-4">
-                      <IconComponent className={`h-12 w-12 ${app.color} mx-auto mb-2 opacity-50`} />
-                      <p className="text-muted-foreground text-xs">App Preview</p>
+                  {imageErrors.has(app.id) ? (
+                    <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                      <div className="text-center p-4">
+                        <IconComponent className={`h-12 w-12 ${app.color} mx-auto mb-2 opacity-50`} />
+                        <p className="text-muted-foreground text-xs">App Preview</p>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <img 
+                      src={app.image} 
+                      alt={app.title}
+                      className="w-full h-full object-cover"
+                      onError={() => setImageErrors(prev => new Set(prev).add(app.id))}
+                    />
+                  )}
                   <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
                     <div className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
                       <Play className="h-6 w-6 text-foreground" />
@@ -305,12 +315,21 @@ export const AddonAppsShowcase = () => {
 
                   {/* Image Preview */}
                   <div className="relative rounded-lg overflow-hidden bg-muted cursor-pointer group" style={{ aspectRatio: '16/9' }} onClick={() => handleWatchDemo(app)}>
-                    <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                      <div className="text-center p-8">
-                        <IconComponent className={`h-16 w-16 ${app.color} mx-auto mb-4 opacity-50`} />
-                        <p className="text-muted-foreground text-sm">App Preview Image</p>
+                    {imageErrors.has(app.id) ? (
+                      <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                        <div className="text-center p-8">
+                          <IconComponent className={`h-16 w-16 ${app.color} mx-auto mb-4 opacity-50`} />
+                          <p className="text-muted-foreground text-sm">App Preview Image</p>
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <img 
+                        src={app.image} 
+                        alt={app.title}
+                        className="w-full h-full object-cover"
+                        onError={() => setImageErrors(prev => new Set(prev).add(app.id))}
+                      />
+                    )}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
                       <div className="w-16 h-16 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Play className="h-8 w-8 text-foreground" />
