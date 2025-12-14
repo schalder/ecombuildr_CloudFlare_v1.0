@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
   Palette, 
@@ -242,29 +241,19 @@ export const AddonAppsShowcase = () => {
                 </ul>
 
                 {/* Image Preview */}
-                <div className="relative mb-4 rounded-lg overflow-hidden bg-muted" style={{ aspectRatio: '16/9' }}>
+                <div className="relative rounded-lg overflow-hidden bg-muted cursor-pointer group" style={{ aspectRatio: '16/9' }} onClick={() => handleWatchDemo(app)}>
                   <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
                     <div className="text-center p-4">
                       <IconComponent className={`h-12 w-12 ${app.color} mx-auto mb-2 opacity-50`} />
                       <p className="text-muted-foreground text-xs">App Preview</p>
                     </div>
                   </div>
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/10 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
                       <Play className="h-6 w-6 text-foreground" />
                     </div>
                   </div>
                 </div>
-
-                {/* Watch Demo Button */}
-                <Button
-                  variant="accent"
-                  className="w-full"
-                  onClick={() => handleWatchDemo(app)}
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  Watch Demo
-                </Button>
               </Card>
             );
           })}
@@ -315,29 +304,19 @@ export const AddonAppsShowcase = () => {
                   </ul>
 
                   {/* Image Preview */}
-                  <div className="relative mb-4 rounded-lg overflow-hidden bg-muted" style={{ aspectRatio: '16/9' }}>
+                  <div className="relative rounded-lg overflow-hidden bg-muted cursor-pointer group" style={{ aspectRatio: '16/9' }} onClick={() => handleWatchDemo(app)}>
                     <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
                       <div className="text-center p-8">
                         <IconComponent className={`h-16 w-16 ${app.color} mx-auto mb-4 opacity-50`} />
                         <p className="text-muted-foreground text-sm">App Preview Image</p>
                       </div>
                     </div>
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/10 transition-colors">
-                      <div className="w-16 h-16 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+                      <div className="w-16 h-16 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
                         <Play className="h-8 w-8 text-foreground" />
                       </div>
                     </div>
                   </div>
-
-                  {/* Watch Demo Button */}
-                  <Button
-                    variant="accent"
-                    className="w-full"
-                    onClick={() => handleWatchDemo(app)}
-                  >
-                    <Play className="h-4 w-4 mr-2" />
-                    Watch Demo
-                  </Button>
                 </Card>
               );
             })}
