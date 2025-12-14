@@ -45,11 +45,11 @@ const Index = () => {
       <div id="addon-apps">
         <AddonAppsShowcase />
       </div>
-      <div id="testimonials">
-        <Testimonials />
-      </div>
       <div id="pricing">
         <Pricing />
+      </div>
+      <div id="testimonials">
+        <Testimonials />
       </div>
       <div id="support">
         <FAQ />
