@@ -15,6 +15,7 @@ import { Footer } from "@/components/Footer";
 import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 import { ScrollToHash } from "@/components/ScrollToHash";
 import { FAQ } from "@/components/FAQ";
+import { PlatformPixelLoader } from "@/components/pixel/PlatformPixelLoader";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -23,41 +24,43 @@ const Index = () => {
   // Don't redirect authenticated users - let them see the home page
 
   return (
-    <div className="min-h-screen">
-      <ScrollToHash />
-      <MetaTags
-        title={seoData?.title || 'EcomBuildr - Build Your E-commerce Empire in Minutes'}
-        description={seoData?.description || 'Create professional e-commerce stores with our no-code platform. Build websites, funnels, and conversion systems that turn visitors into customers.'}
-        image={seoData?.og_image || 'https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-og-image_default.jpg'}
-        keywords={seoData?.keywords || ['ecommerce builder', 'online store', 'no code', 'bangladesh ecommerce']}
-        type="website"
-        siteName="EcomBuildr"
-      />
-      <Navbar />
-      <Hero />
-      <div id="features">
-        <Features />
+    <PlatformPixelLoader>
+      <div className="min-h-screen">
+        <ScrollToHash />
+        <MetaTags
+          title={seoData?.title || 'EcomBuildr - Build Your E-commerce Empire in Minutes'}
+          description={seoData?.description || 'Create professional e-commerce stores with our no-code platform. Build websites, funnels, and conversion systems that turn visitors into customers.'}
+          image={seoData?.og_image || 'https://res.cloudinary.com/funnelsninja/image/upload/v1755206321/ecombuildr-og-image_default.jpg'}
+          keywords={seoData?.keywords || ['ecommerce builder', 'online store', 'no code', 'bangladesh ecommerce']}
+          type="website"
+          siteName="EcomBuildr"
+        />
+        <Navbar />
+        <Hero />
+        <div id="features">
+          <Features />
+        </div>
+        <ProcessSteps />
+        <div id="tools">
+          <ToolsShowcase />
+        </div>
+        <div id="addon-apps">
+          <AddonAppsShowcase />
+        </div>
+        <div id="pricing">
+          <Pricing />
+        </div>
+        <div id="testimonials">
+          <Testimonials />
+        </div>
+        <div id="support">
+          <FAQ />
+        </div>
+        <Footer />
+        <WhatsAppWidget />
+        <SocialDebugger />
       </div>
-      <ProcessSteps />
-      <div id="tools">
-        <ToolsShowcase />
-      </div>
-      <div id="addon-apps">
-        <AddonAppsShowcase />
-      </div>
-      <div id="pricing">
-        <Pricing />
-      </div>
-      <div id="testimonials">
-        <Testimonials />
-      </div>
-      <div id="support">
-        <FAQ />
-      </div>
-      <Footer />
-      <WhatsAppWidget />
-      <SocialDebugger />
-    </div>
+    </PlatformPixelLoader>
   );
 };
 

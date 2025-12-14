@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useMarketingContent } from '@/hooks/useMarketingContent';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { PlatformNavigationManager } from '@/components/admin/PlatformNavigationManager';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   AlertCircle, 
   Settings, 
@@ -35,6 +36,14 @@ const AdminSystemSettings = () => {
   const [localYoutubeUrl, setLocalYoutubeUrl] = useState('');
   const [localIframeCode, setLocalIframeCode] = useState('');
   const [localHeroImageUrl, setLocalHeroImageUrl] = useState('');
+  
+  // Local state for tracking settings
+  const [trackingSettings, setTrackingSettings] = useState({
+    facebook_pixel_id: '',
+    google_analytics_id: '',
+    google_ads_id: ''
+  });
+  const [trackingLoading, setTrackingLoading] = useState(true);
 
   // Initialize local state when marketingContent loads
   React.useEffect(() => {
@@ -52,6 +61,70 @@ const AdminSystemSettings = () => {
       setLocalHeroImageUrl(marketingContent.hero_image_url || '');
     }
   }, [marketingContent]);
+
+  // Load tracking settings
+  React.useEffect(() => {
+    const loadTrackingSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('platform_tracking_settings')
+          .select('*')
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          setTrackingSettings({
+            facebook_pixel_id: data.facebook_pixel_id || '',
+            google_analytics_id: data.google_analytics_id || '',
+            google_ads_id: data.google_ads_id || ''
+          });
+        }
+      } catch (error: any) {
+        console.error('Error loading tracking settings:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load tracking settings",
+          variant: "destructive",
+        });
+      } finally {
+        setTrackingLoading(false);
+      }
+    };
+
+    if (isAdmin) {
+      loadTrackingSettings();
+    }
+  }, [isAdmin, toast]);
+
+  // Save tracking settings
+  const handleSaveTrackingSettings = async () => {
+    try {
+      const { error } = await supabase
+        .from('platform_tracking_settings')
+        .upsert({
+          facebook_pixel_id: trackingSettings.facebook_pixel_id || null,
+          google_analytics_id: trackingSettings.google_analytics_id || null,
+          google_ads_id: trackingSettings.google_ads_id || null,
+        }, {
+          onConflict: 'id'
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Tracking settings saved successfully",
+      });
+    } catch (error: any) {
+      console.error('Error saving tracking settings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save tracking settings: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   // Save marketing content function
   const handleSaveMarketingContent = async () => {
@@ -578,6 +651,76 @@ const AdminSystemSettings = () => {
                     Save Marketing Content
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Tracking & Analytics Settings */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Monitor className="h-5 w-5" />
+                  Tracking & Analytics
+                </CardTitle>
+                <CardDescription>
+                  Configure tracking pixels for the platform landing page
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {trackingLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="facebook_pixel_id">Facebook Pixel ID</Label>
+                        <Input
+                          id="facebook_pixel_id"
+                          value={trackingSettings.facebook_pixel_id}
+                          onChange={(e) => setTrackingSettings(prev => ({ ...prev, facebook_pixel_id: e.target.value }))}
+                          placeholder="Enter your Facebook Pixel ID (e.g., 123456789012345)"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Your Facebook Pixel ID for tracking landing page visitors. Find it in your Facebook Events Manager.
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="google_analytics_id">Google Analytics ID (Optional)</Label>
+                        <Input
+                          id="google_analytics_id"
+                          value={trackingSettings.google_analytics_id}
+                          onChange={(e) => setTrackingSettings(prev => ({ ...prev, google_analytics_id: e.target.value }))}
+                          placeholder="G-XXXXXXXXXX"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Your Google Analytics 4 Measurement ID (optional).
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="google_ads_id">Google Ads ID (Optional)</Label>
+                        <Input
+                          id="google_ads_id"
+                          value={trackingSettings.google_ads_id}
+                          onChange={(e) => setTrackingSettings(prev => ({ ...prev, google_ads_id: e.target.value }))}
+                          placeholder="AW-XXXXXXXXXX"
+                        />
+                        <p className="text-sm text-muted-foreground">
+                          Your Google Ads Conversion ID (optional).
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <Button onClick={handleSaveTrackingSettings} className="flex items-center gap-2">
+                        <Save className="h-4 w-4" />
+                        Save Tracking Settings
+                      </Button>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
