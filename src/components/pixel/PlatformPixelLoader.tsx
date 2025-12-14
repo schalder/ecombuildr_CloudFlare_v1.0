@@ -14,9 +14,12 @@ export const PlatformPixelLoader: React.FC<PlatformPixelLoaderProps> = ({ childr
     // Fetch platform tracking settings
     const fetchPixelSettings = async () => {
       try {
+        // Get the first row (most recent) to handle multiple rows
         const { data, error } = await supabase
           .from('platform_tracking_settings')
           .select('facebook_pixel_id')
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (error) {

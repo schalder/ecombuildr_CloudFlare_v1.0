@@ -66,9 +66,12 @@ const AdminSystemSettings = () => {
   React.useEffect(() => {
     const loadTrackingSettings = async () => {
       try {
+        // Get the first row (most recent) to handle multiple rows
         const { data, error } = await supabase
           .from('platform_tracking_settings')
           .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (error) throw error;
@@ -100,9 +103,18 @@ const AdminSystemSettings = () => {
   // Save tracking settings
   const handleSaveTrackingSettings = async () => {
     try {
+      // First, get the existing row ID (most recent) to update it
+      const { data: existingData } = await supabase
+        .from('platform_tracking_settings')
+        .select('id')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
       const { error } = await supabase
         .from('platform_tracking_settings')
         .upsert({
+          id: existingData?.id, // Use existing ID if available, otherwise create new
           facebook_pixel_id: trackingSettings.facebook_pixel_id || null,
           google_analytics_id: trackingSettings.google_analytics_id || null,
           google_ads_id: trackingSettings.google_ads_id || null,
@@ -116,6 +128,22 @@ const AdminSystemSettings = () => {
         title: "Success",
         description: "Tracking settings saved successfully",
       });
+
+      // Reload settings after save to reflect changes
+      const { data: updatedData } = await supabase
+        .from('platform_tracking_settings')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (updatedData) {
+        setTrackingSettings({
+          facebook_pixel_id: updatedData.facebook_pixel_id || '',
+          google_analytics_id: updatedData.google_analytics_id || '',
+          google_ads_id: updatedData.google_ads_id || ''
+        });
+      }
     } catch (error: any) {
       console.error('Error saving tracking settings:', error);
       toast({
