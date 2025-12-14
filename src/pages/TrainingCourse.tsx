@@ -108,6 +108,28 @@ export default function TrainingCourse() {
     return sortedLessons[0];
   };
 
+  const getModuleIdForLesson = (lessonId: string): string | null => {
+    if (!course) return null;
+    
+    for (const module of course.modules) {
+      if (module.lessons.some(lesson => lesson.id === lessonId)) {
+        return module.id;
+      }
+    }
+    return null;
+  };
+
+  const handleGetStarted = () => {
+    const firstLesson = getFirstLesson();
+    if (firstLesson) {
+      const moduleId = getModuleIdForLesson(firstLesson.id);
+      if (moduleId && !expandedModules.includes(moduleId)) {
+        setExpandedModules(prev => [...prev, moduleId]);
+      }
+      setSelectedLesson(firstLesson);
+    }
+  };
+
   const renderLessonContent = (lesson: TrainingLesson) => {
     const contentBlocks: JSX.Element[] = [];
 
@@ -390,15 +412,26 @@ export default function TrainingCourse() {
           {selectedLesson ? (
             <Card>
               <CardHeader>
-                <CardTitle>{selectedLesson.title}</CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{selectedLesson.content_type}</Badge>
-                  {selectedLesson.duration_minutes && (
-                    <Badge variant="outline">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {selectedLesson.duration_minutes} min
-                    </Badge>
-                  )}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>{selectedLesson.title}</CardTitle>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Badge variant="outline">{selectedLesson.content_type}</Badge>
+                      {selectedLesson.duration_minutes && (
+                        <Badge variant="outline">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {selectedLesson.duration_minutes} min
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/dashboard/training')}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Course Library
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -452,7 +485,7 @@ export default function TrainingCourse() {
                       </p>
                       <Button
                         size="lg"
-                        onClick={() => setSelectedLesson(getFirstLesson()!)}
+                        onClick={handleGetStarted}
                       >
                         <Play className="h-4 w-4 mr-2" />
                         Get Started
