@@ -37,7 +37,7 @@ const addonApps: AddonApp[] = [
     icon: Palette,
     color: "text-primary",
     bgColor: "bg-primary-light",
-    image: "/placeholder-design-studio.jpg",
+    image: "https://fhqwacmokbtbspkxjixf.supabase.co/storage/v1/object/public/images/ae0dc92e-a218-406a-b0b1-b3beecdfe1df/1765705535373-duasku0gt4.webp",
     videoUrl: "https://www.youtube.com/watch?v=Nl6_li1IGSk"
   },
   {
@@ -53,8 +53,8 @@ const addonApps: AddonApp[] = [
     icon: Zap,
     color: "text-accent",
     bgColor: "bg-accent-light",
-    image: "/placeholder-ads-funnel.jpg",
-    videoUrl: "https://www.youtube.com/watch?v=Nl6_li1IGSk"
+    image: "https://fhqwacmokbtbspkxjixf.supabase.co/storage/v1/object/public/images/ae0dc92e-a218-406a-b0b1-b3beecdfe1df/1765705535372-ixegve1o5mi.webp",
+    videoUrl: "https://www.youtube.com/watch?v=tRqc0Na1G7Q"
   },
   {
     id: "layerblend",
@@ -69,7 +69,7 @@ const addonApps: AddonApp[] = [
     icon: ImageIcon,
     color: "text-success",
     bgColor: "bg-success-light",
-    image: "/placeholder-layerblend.jpg",
+    image: "https://fhqwacmokbtbspkxjixf.supabase.co/storage/v1/object/public/images/ae0dc92e-a218-406a-b0b1-b3beecdfe1df/1765705535373-764t6i2nkh5.webp",
     videoUrl: "https://www.youtube.com/watch?v=Nl6_li1IGSk"
   },
   {
@@ -85,7 +85,7 @@ const addonApps: AddonApp[] = [
     icon: Sparkles,
     color: "text-primary",
     bgColor: "bg-primary-light",
-    image: "/placeholder-ai-magic.jpg",
+    image: "https://fhqwacmokbtbspkxjixf.supabase.co/storage/v1/object/public/images/ae0dc92e-a218-406a-b0b1-b3beecdfe1df/1765705535373-3utdow3fgao.webp",
     videoUrl: "https://www.youtube.com/watch?v=Nl6_li1IGSk"
   }
 ];
