@@ -1,15 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
   Palette, 
   Zap, 
   Image as ImageIcon, 
   Sparkles,
   Play,
-  X,
-  ChevronLeft,
-  ChevronRight
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -106,15 +105,17 @@ const convertYouTubeUrl = (url: string): string => {
 };
 
 export const AddonAppsShowcase = () => {
-  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [selectedVideo, setSelectedVideo] = useState<{ appId: string; url: string; title: string } | null>(null);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isScrollingRef = useRef(false);
 
-  // Auto-scroll functionality
+  // Auto-scroll functionality for mobile only
   useEffect(() => {
-    if (!autoScrollEnabled || expandedCard || isScrollingRef.current) {
+    // Only enable auto-scroll on mobile
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile || !autoScrollEnabled || selectedVideo || isScrollingRef.current) {
       if (autoScrollIntervalRef.current) {
         clearInterval(autoScrollIntervalRef.current);
         autoScrollIntervalRef.current = null;
@@ -150,23 +151,31 @@ export const AddonAppsShowcase = () => {
         clearInterval(autoScrollIntervalRef.current);
       }
     };
-  }, [autoScrollEnabled, expandedCard]);
+  }, [autoScrollEnabled, selectedVideo]);
 
-  // Pause auto-scroll when card is expanded
+  // Pause auto-scroll when video dialog is open
   useEffect(() => {
-    if (expandedCard) {
+    if (selectedVideo) {
       setAutoScrollEnabled(false);
     } else {
-      // Resume auto-scroll after a delay when collapsed
+      // Resume auto-scroll after a delay when closed
       const timer = setTimeout(() => {
         setAutoScrollEnabled(true);
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [expandedCard]);
+  }, [selectedVideo]);
 
-  const handleWatchDemo = (appId: string) => {
-    setExpandedCard(expandedCard === appId ? null : appId);
+  const handleWatchDemo = (app: AddonApp) => {
+    setSelectedVideo({
+      appId: app.id,
+      url: convertYouTubeUrl(app.videoUrl),
+      title: app.title
+    });
+  };
+
+  const handleCloseVideo = () => {
+    setSelectedVideo(null);
   };
 
   const handleManualScroll = () => {
@@ -177,28 +186,10 @@ export const AddonAppsShowcase = () => {
     clearTimeout(autoScrollIntervalRef.current as any);
     setTimeout(() => {
       isScrollingRef.current = false;
-      if (!expandedCard) {
+      if (!selectedVideo) {
         setAutoScrollEnabled(true);
       }
     }, 3000);
-  };
-
-  const scrollLeft = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      const scrollAmount = container.clientWidth;
-      container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-      handleManualScroll();
-    }
-  };
-
-  const scrollRight = () => {
-    const container = scrollContainerRef.current;
-    if (container) {
-      const scrollAmount = container.clientWidth;
-      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-      handleManualScroll();
-    }
   };
 
   return (
@@ -215,31 +206,72 @@ export const AddonAppsShowcase = () => {
           </p>
         </div>
 
-        {/* Cards Container */}
-        <div className="relative">
-          {/* Navigation Buttons - Desktop Only */}
-          <div className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full bg-background/80 backdrop-blur-sm shadow-lg hover:bg-background"
-              onClick={scrollLeft}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-          </div>
-          <div className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full bg-background/80 backdrop-blur-sm shadow-lg hover:bg-background"
-              onClick={scrollRight}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </Button>
-          </div>
+        {/* Desktop Grid Layout - 4 columns */}
+        <div className="hidden lg:grid lg:grid-cols-4 gap-8 mb-12">
+          {addonApps.map((app) => {
+            const IconComponent = app.icon;
 
-          {/* Scrollable Cards */}
+            return (
+              <Card 
+                key={app.id}
+                className="p-6 hover:shadow-medium transition-all duration-300 border-border/50 hover:border-accent/30 bg-gradient-card"
+              >
+                {/* App Icon */}
+                <div className={`w-16 h-16 rounded-lg ${app.bgColor} flex items-center justify-center mb-4`}>
+                  <IconComponent className={`h-8 w-8 ${app.color}`} />
+                </div>
+                
+                {/* Title */}
+                <h3 className="text-xl font-semibold text-foreground mb-3">
+                  {app.title}
+                </h3>
+                
+                {/* Description */}
+                <p className="text-muted-foreground leading-relaxed mb-4 text-sm">
+                  {app.description}
+                </p>
+                
+                {/* Features List */}
+                <ul className="space-y-2 mb-6">
+                  {app.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-foreground">
+                      <Zap className="h-3 w-3 text-accent flex-shrink-0" />
+                      <span className="text-xs">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Image Preview */}
+                <div className="relative mb-4 rounded-lg overflow-hidden bg-muted" style={{ aspectRatio: '16/9' }}>
+                  <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                    <div className="text-center p-4">
+                      <IconComponent className={`h-12 w-12 ${app.color} mx-auto mb-2 opacity-50`} />
+                      <p className="text-muted-foreground text-xs">App Preview</p>
+                    </div>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/10 transition-colors">
+                    <div className="w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                      <Play className="h-6 w-6 text-foreground" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Watch Demo Button */}
+                <Button
+                  variant="accent"
+                  className="w-full"
+                  onClick={() => handleWatchDemo(app)}
+                >
+                  <Play className="h-4 w-4 mr-2" />
+                  Watch Demo
+                </Button>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Mobile/Tablet Horizontal Scroll Layout */}
+        <div className="lg:hidden relative">
           <div
             ref={scrollContainerRef}
             onScroll={handleManualScroll}
@@ -251,102 +283,61 @@ export const AddonAppsShowcase = () => {
           >
             {addonApps.map((app) => {
               const IconComponent = app.icon;
-              const isExpanded = expandedCard === app.id;
-              const videoEmbedUrl = convertYouTubeUrl(app.videoUrl);
 
               return (
                 <Card
                   key={app.id}
-                  className={cn(
-                    "flex-shrink-0 w-full md:w-[500px] lg:w-[600px] transition-all duration-300 border-border/50 hover:border-accent/30 bg-gradient-card",
-                    isExpanded && "md:w-[800px] lg:w-[900px]"
-                  )}
+                  className="flex-shrink-0 w-[85vw] sm:w-[400px] p-6 hover:shadow-medium transition-all duration-300 border-border/50 hover:border-accent/30 bg-gradient-card"
                 >
-                  <div className="p-6 md:p-8">
-                    {/* App Header */}
-                    <div className="flex items-start gap-4 mb-6">
-                      <div className={`w-16 h-16 rounded-lg ${app.bgColor} flex items-center justify-center flex-shrink-0`}>
-                        <IconComponent className={`h-8 w-8 ${app.color}`} />
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="text-2xl font-semibold text-foreground mb-2">
-                          {app.title}
-                        </h3>
-                        <p className="text-muted-foreground leading-relaxed">
-                          {app.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Features List - Only show when not expanded */}
-                    {!isExpanded && (
-                      <ul className="space-y-2 mb-6">
-                        {app.features.map((feature, index) => (
-                          <li key={index} className="flex items-center gap-3 text-foreground">
-                            <Zap className="h-4 w-4 text-accent flex-shrink-0" />
-                            <span className="text-sm">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {/* Image/Video Section */}
-                    <div className="relative mb-6 rounded-lg overflow-hidden bg-muted">
-                      {isExpanded ? (
-                        <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
-                          <iframe
-                            src={videoEmbedUrl}
-                            className="w-full h-full"
-                            allowFullScreen
-                            title={`${app.title} Demo`}
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2 bg-background/80 backdrop-blur-sm hover:bg-background"
-                            onClick={() => handleWatchDemo(app.id)}
-                          >
-                            <X className="h-5 w-5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
-                          {/* Placeholder image - you can replace with actual images */}
-                          <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                            <div className="text-center p-8">
-                              <IconComponent className={`h-16 w-16 ${app.color} mx-auto mb-4 opacity-50`} />
-                              <p className="text-muted-foreground text-sm">App Preview Image</p>
-                            </div>
-                          </div>
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/10 transition-colors">
-                            <Button
-                              variant="accent"
-                              size="lg"
-                              className="group"
-                              onClick={() => handleWatchDemo(app.id)}
-                            >
-                              <Play className="h-5 w-5 mr-2 group-hover:scale-110 transition-transform" />
-                              Watch Demo
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Watch Demo Button - Only show when not expanded */}
-                    {!isExpanded && (
-                      <Button
-                        variant="accent"
-                        className="w-full"
-                        onClick={() => handleWatchDemo(app.id)}
-                      >
-                        <Play className="h-4 w-4 mr-2" />
-                        Watch Demo
-                      </Button>
-                    )}
+                  {/* App Icon */}
+                  <div className={`w-16 h-16 rounded-lg ${app.bgColor} flex items-center justify-center mb-4`}>
+                    <IconComponent className={`h-8 w-8 ${app.color}`} />
                   </div>
+                  
+                  {/* Title */}
+                  <h3 className="text-xl font-semibold text-foreground mb-3">
+                    {app.title}
+                  </h3>
+                  
+                  {/* Description */}
+                  <p className="text-muted-foreground leading-relaxed mb-4">
+                    {app.description}
+                  </p>
+                  
+                  {/* Features List */}
+                  <ul className="space-y-2 mb-6">
+                    {app.features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-3 text-foreground">
+                        <Zap className="h-4 w-4 text-accent flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Image Preview */}
+                  <div className="relative mb-4 rounded-lg overflow-hidden bg-muted" style={{ aspectRatio: '16/9' }}>
+                    <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                      <div className="text-center p-8">
+                        <IconComponent className={`h-16 w-16 ${app.color} mx-auto mb-4 opacity-50`} />
+                        <p className="text-muted-foreground text-sm">App Preview Image</p>
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/10 transition-colors">
+                      <div className="w-16 h-16 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                        <Play className="h-8 w-8 text-foreground" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Watch Demo Button */}
+                  <Button
+                    variant="accent"
+                    className="w-full"
+                    onClick={() => handleWatchDemo(app)}
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Watch Demo
+                  </Button>
                 </Card>
               );
             })}
@@ -361,7 +352,26 @@ export const AddonAppsShowcase = () => {
         </div>
 
       </div>
+
+      {/* Video Dialog - Centered Modal */}
+      <Dialog open={!!selectedVideo} onOpenChange={handleCloseVideo}>
+        <DialogContent 
+          className="max-w-4xl w-full p-0 gap-0"
+          hideClose={false}
+        >
+          {selectedVideo && (
+            <div className="relative w-full" style={{ aspectRatio: '16/9' }}>
+              <iframe
+                src={selectedVideo.url}
+                className="w-full h-full rounded-t-lg"
+                allowFullScreen
+                title={`${selectedVideo.title} Demo`}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };
-
