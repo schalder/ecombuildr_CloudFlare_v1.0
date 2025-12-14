@@ -19,6 +19,7 @@ interface SitePricingPlan {
   display_name: string;
   display_name_en: string;
   price_bdt: number;
+  price_yearly_bdt: number | null;
   period: string;
   description: string;
   description_en: string;
@@ -101,6 +102,7 @@ export default function SitePricingManagement() {
           display_name: plan.display_name,
           display_name_en: plan.display_name_en,
           price_bdt: plan.price_bdt,
+          price_yearly_bdt: plan.price_yearly_bdt,
           period: plan.period,
           description: plan.description,
           description_en: plan.description_en,
@@ -166,6 +168,7 @@ export default function SitePricingManagement() {
       display_name: '',
       display_name_en: '',
       price_bdt: 0,
+      price_yearly_bdt: null,
       period: 'month',
       description: '',
       description_en: '',
@@ -306,21 +309,34 @@ export default function SitePricingManagement() {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label>Price (BDT)</Label>
+                        <Label>Monthly Price (BDT)</Label>
                         <Input
                           type="number"
                           value={plan.price_bdt}
                           onChange={(e) => updatePlanField(plan.id, 'price_bdt', parseFloat(e.target.value) || 0)}
+                          placeholder="0"
                         />
                       </div>
                       <div>
-                        <Label>Sort Order</Label>
+                        <Label>Yearly Price (BDT)</Label>
                         <Input
                           type="number"
-                          value={plan.sort_order}
-                          onChange={(e) => updatePlanField(plan.id, 'sort_order', parseInt(e.target.value) || 0)}
+                          value={plan.price_yearly_bdt || ''}
+                          onChange={(e) => updatePlanField(plan.id, 'price_yearly_bdt', e.target.value === '' ? null : parseFloat(e.target.value) || null)}
+                          placeholder="Optional - leave empty if not available"
                         />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Leave empty if yearly pricing is not available for this plan
+                        </p>
                       </div>
+                    </div>
+                    <div>
+                      <Label>Sort Order</Label>
+                      <Input
+                        type="number"
+                        value={plan.sort_order}
+                        onChange={(e) => updatePlanField(plan.id, 'sort_order', parseInt(e.target.value) || 0)}
+                      />
                     </div>
 
                     <div>
