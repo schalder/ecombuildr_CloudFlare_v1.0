@@ -1,15 +1,16 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronRight, Play, FileText, Download, ExternalLink, Clock } from "lucide-react";
+import { ChevronDown, ChevronRight, Play, FileText, Download, ExternalLink, Clock, ArrowLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface TrainingLesson {
   id: string;
@@ -49,6 +50,7 @@ export default function TrainingCourse() {
   const { courseSlug } = useParams();
   const [selectedLesson, setSelectedLesson] = useState<TrainingLesson | null>(null);
   const [expandedModules, setExpandedModules] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   const { data: course, isLoading } = useQuery({
     queryKey: ["training-course", courseSlug],
@@ -92,6 +94,18 @@ export default function TrainingCourse() {
         ? prev.filter(id => id !== moduleId)
         : [...prev, moduleId]
     );
+  };
+
+  const getFirstLesson = (): TrainingLesson | null => {
+    if (!course || course.modules.length === 0) return null;
+    
+    const sortedModules = [...course.modules].sort((a, b) => a.sort_order - b.sort_order);
+    const firstModule = sortedModules[0];
+    
+    if (!firstModule || firstModule.lessons.length === 0) return null;
+    
+    const sortedLessons = [...firstModule.lessons].sort((a, b) => a.sort_order - b.sort_order);
+    return sortedLessons[0];
   };
 
   const renderLessonContent = (lesson: TrainingLesson) => {
@@ -308,7 +322,7 @@ export default function TrainingCourse() {
   }
 
   return (
-    <DashboardLayout title={course.title} description={course.description || ""}>
+    <DashboardLayout title={course.title} description="">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar - Course Navigation */}
         <div className="space-y-4">
@@ -394,10 +408,21 @@ export default function TrainingCourse() {
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Welcome to {course.title}</CardTitle>
-                {course.category && (
-                  <Badge className="w-fit">{course.category}</Badge>
-                )}
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Welcome to {course.title}</CardTitle>
+                    {course.category && (
+                      <Badge className="w-fit mt-2">{course.category}</Badge>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/dashboard/training')}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back to Course Library
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 {course.description && (
@@ -420,9 +445,24 @@ export default function TrainingCourse() {
                 <Separator />
                 
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground">
-                    Select a lesson from the sidebar to get started
-                  </p>
+                  {getFirstLesson() ? (
+                    <div className="space-y-4">
+                      <p className="text-muted-foreground mb-4">
+                        Ready to start learning?
+                      </p>
+                      <Button
+                        size="lg"
+                        onClick={() => setSelectedLesson(getFirstLesson()!)}
+                      >
+                        <Play className="h-4 w-4 mr-2" />
+                        Get Started
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">
+                      No lessons available in this course.
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
