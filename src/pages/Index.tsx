@@ -8,6 +8,7 @@ import { Hero } from "@/components/Hero";
 import { Features } from "@/components/Features";
 import { ProcessSteps } from "@/components/ProcessSteps";
 import { ToolsShowcase } from "@/components/ToolsShowcase";
+import { AddonAppsShowcase } from "@/components/AddonAppsShowcase";
 import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
 import { Footer } from "@/components/Footer";
@@ -40,6 +41,9 @@ const Index = () => {
       <ProcessSteps />
       <div id="tools">
         <ToolsShowcase />
+      </div>
+      <div id="addon-apps">
+        <AddonAppsShowcase />
       </div>
       <div id="testimonials">
         <Testimonials />
