@@ -1100,7 +1100,12 @@ useEffect(() => {
                   </div>
                 )}
                 <Button
-                  onClick={handleSubmitOrder}
+                  onClick={(e) => {
+                    console.log('🖱️ BUTTON CLICKED!', { loading, disabled: loading });
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSubmitOrder();
+                  }}
                   disabled={loading}
                   className="w-full"
                 >
