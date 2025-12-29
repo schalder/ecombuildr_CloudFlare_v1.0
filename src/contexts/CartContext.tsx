@@ -270,6 +270,9 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
 
   const clearCart = () => {
     dispatch({ type: 'CLEAR_CART' });
+    // Also clear from localStorage immediately to ensure it persists across page reloads
+    const cartKey = getCartKey(storeId);
+    localStorage.removeItem(cartKey);
   };
 
   const applyDiscount = (code: string, amount: number) => {

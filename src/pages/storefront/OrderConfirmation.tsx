@@ -528,10 +528,23 @@ useEffect(() => {
                 <span>Subtotal:</span>
                 <span>${order.subtotal.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span>Shipping:</span>
-                <span>${order.shipping_cost.toFixed(2)}</span>
-              </div>
+              
+              {/* Shipping Fee Display */}
+              {order.shipping_cost > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Shipping:</span>
+                  <span className="flex items-center gap-2">
+                    ${order.shipping_cost.toFixed(2)}
+                    {order.custom_fields && typeof order.custom_fields === 'object' && 
+                     (order.custom_fields as any).upfront_payment_amount && 
+                     (order.custom_fields as any).upfront_payment_amount > 0 &&
+                     (order.custom_fields as any).upfront_payment_amount >= order.shipping_cost && (
+                      <span className="text-xs text-green-600 font-medium">(Paid)</span>
+                    )}
+                  </span>
+                </div>
+              )}
+              
               {(order.discount_amount ?? 0) > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Discount:</span>
@@ -539,10 +552,33 @@ useEffect(() => {
                 </div>
               )}
               <Separator />
-              <div className="flex justify-between font-bold">
-                <span>Total:</span>
-                <span>${order.total.toFixed(2)}</span>
-              </div>
+              
+              {/* Total Calculation: When upfront shipping collected, show subtotal - shipping = total */}
+              {order.custom_fields && typeof order.custom_fields === 'object' && 
+               (order.custom_fields as any).upfront_payment_amount && 
+               (order.custom_fields as any).upfront_payment_amount > 0 &&
+               (order.custom_fields as any).upfront_payment_amount >= order.shipping_cost ? (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span>Subtotal:</span>
+                    <span>${order.subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Shipping (Paid Upfront):</span>
+                    <span>-${order.shipping_cost.toFixed(2)}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-bold">
+                    <span>Total:</span>
+                    <span>${(order.subtotal - order.shipping_cost + ((order.discount_amount ?? 0) > 0 ? -(order.discount_amount ?? 0) : 0)).toFixed(2)}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex justify-between font-bold">
+                  <span>Total:</span>
+                  <span>${order.total.toFixed(2)}</span>
+                </div>
+              )}
               
               {/* Upfront Payment Breakdown */}
               {order.custom_fields && typeof order.custom_fields === 'object' && (order.custom_fields as any).upfront_payment_amount && (order.custom_fields as any).upfront_payment_amount > 0 && (
@@ -594,15 +630,10 @@ useEffect(() => {
 
         {/* Action Buttons */}
         <div className="flex space-x-2">
-          <Link to={paths.home} className="flex-1">
-            <Button variant="outline" className="w-full">
-              Continue Shopping
-            </Button>
-          </Link>
           <Button
             onClick={downloadPDF}
             variant="outline"
-            className="flex-1"
+            className="w-full"
           >
             <Download className="h-4 w-4 mr-2" />
             Download PDF

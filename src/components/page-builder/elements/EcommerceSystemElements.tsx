@@ -2762,9 +2762,11 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                 {formatCurrency(shipping)}
                 {order.custom_fields && typeof order.custom_fields === 'object' && 
                  (order.custom_fields as any).upfront_payment_amount && 
-                 (order.custom_fields as any).upfront_payment_amount > 0 &&
-                 shipping <= (order.custom_fields as any).upfront_payment_amount && (
-                  <span className="text-xs text-green-600 font-medium">(Paid)</span>
+                 (order.custom_fields as any).upfront_payment_amount > 0 && (
+                  // Check if shipping was part of upfront payment (upfront amount >= shipping)
+                  (order.custom_fields as any).upfront_payment_amount >= shipping ? (
+                    <span className="text-xs text-green-600 font-medium">(Paid)</span>
+                  ) : null
                 )}
               </span>
             </div>
