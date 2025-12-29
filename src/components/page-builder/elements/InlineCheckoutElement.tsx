@@ -715,6 +715,13 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       
       // Filter by store settings
       recalculatedAllowedMethods = recalculatedAllowedMethods.filter((m) => (storeAllowed as any)[m]) as any;
+      
+      // If any product has upfront shipping enabled, remove 'cod' from allowed methods
+      if (hasUpfrontShipping) {
+        recalculatedAllowedMethods = recalculatedAllowedMethods.filter(m => m !== 'cod');
+        console.log('🚫 Removed COD payment method because product has upfront shipping enabled');
+      }
+      
       if (recalculatedAllowedMethods.length === 0) recalculatedAllowedMethods = ['cod'];
       
       console.log('🔍 Recalculated allowedMethods in handleSubmit (InlineCheckoutElement):', {
