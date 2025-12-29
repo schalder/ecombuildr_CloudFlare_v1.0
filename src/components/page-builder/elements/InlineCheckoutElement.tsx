@@ -1733,13 +1733,18 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(subtotal + shippingCost)}</span></div>
 
                   {/* Payment Breakdown Message */}
-                  {paymentBreakdown && paymentBreakdown.hasUpfrontPayment && (
-                    <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-                      <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
-                        {getPaymentBreakdownMessage(paymentBreakdown, '৳')}
-                      </p>
-                    </div>
-                  )}
+                  {(() => {
+                    const message = paymentBreakdown && paymentBreakdown.hasUpfrontPayment 
+                      ? getPaymentBreakdownMessage(paymentBreakdown, '৳') 
+                      : null;
+                    return message && (
+                      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
+                          {message}
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   <Button 
                     size={buttonSize as any} 

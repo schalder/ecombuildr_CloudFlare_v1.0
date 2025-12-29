@@ -1203,7 +1203,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       
       const { data, error } = await supabase
         .from('products')
-        .select('id, weight_grams, shipping_config, product_type')
+        .select('id, weight_grams, shipping_config, product_type, collect_shipping_upfront, upfront_shipping_payment_method')
         .in('id', productIds);
         
       if (error) {
@@ -1211,6 +1211,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       }
       
       const dataMap = new Map();
+      const productDataMapForCalc = new Map<string, ProductData>();
       let hasPhysical = false;
       let hasDigital = false;
       
@@ -1227,9 +1228,18 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
           shipping_config: product.shipping_config,
           product_type: product.product_type
         });
+        
+        // Populate productDataMap for upfront payment calculations
+        productDataMapForCalc.set(product.id, {
+          id: product.id,
+          product_type: product.product_type || 'physical',
+          collect_shipping_upfront: product.collect_shipping_upfront || false,
+          upfront_shipping_payment_method: product.upfront_shipping_payment_method || null,
+        });
       });
       
       setProductShippingData(dataMap);
+      setProductDataMap(productDataMapForCalc);
       setProductTypes({ hasPhysical, hasDigital });
     };
     
@@ -2045,13 +2055,18 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                     </div>
 
                     {/* Payment Breakdown Message */}
-                    {paymentBreakdown && paymentBreakdown.hasUpfrontPayment && (
-                      <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
-                        <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
-                          {getPaymentBreakdownMessage(paymentBreakdown, '৳')}
-                        </p>
-                      </div>
-                    )}
+                    {(() => {
+                      const message = paymentBreakdown && paymentBreakdown.hasUpfrontPayment 
+                        ? getPaymentBreakdownMessage(paymentBreakdown, '৳') 
+                        : null;
+                      return message && (
+                        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
+                            {message}
+                          </p>
+                        </div>
+                      );
+                    })()}
 
                     <Button 
                       size={buttonSize as any} 
