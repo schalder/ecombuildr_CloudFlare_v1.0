@@ -716,7 +716,6 @@ export const PaymentProcessing: React.FC = () => {
               await loadStoreById(funnel.store_id);
             } else {
               console.error('PaymentProcessing: Cannot load store from funnel');
-              toast.error('Failed to load store information');
               setLoading(false);
               return;
             }
@@ -726,19 +725,16 @@ export const PaymentProcessing: React.FC = () => {
             await loadStoreById(checkoutData.storeId);
           } else {
             console.error('PaymentProcessing: Store not loaded and no storeId in checkout data');
-            toast.error('Store information not available');
             setLoading(false);
             return;
           }
         } catch (e) {
           console.error('PaymentProcessing: Error loading store from pending_checkout:', e);
-          toast.error('Failed to load store information');
           setLoading(false);
           return;
         }
       } else {
         console.error('PaymentProcessing: Store not loaded and no checkout data');
-        toast.error('Store information not available');
         setLoading(false);
         return;
       }
@@ -751,7 +747,6 @@ export const PaymentProcessing: React.FC = () => {
       // Get stored checkout data
       const pendingCheckout = sessionStorage.getItem('pending_checkout');
       if (!pendingCheckout) {
-        toast.error('Checkout data not found. Please try again.');
         setLoading(false);
         return;
       }
@@ -1157,10 +1152,6 @@ export const PaymentProcessing: React.FC = () => {
           error: data?.error,
           message: data?.message
         });
-        // Only show error if order was NOT created and we haven't redirected
-        if (!orderCreated && !orderId) {
-          toast.error(data?.error || data?.message || 'Failed to create order. Please contact support.');
-        }
         setCreatingOrder(false);
         setLoading(false);
         return;
@@ -1175,8 +1166,6 @@ export const PaymentProcessing: React.FC = () => {
         return;
       }
       
-      // Only show error if order was NOT created
-      toast.error('Failed to create order. Please contact support.');
       setCreatingOrder(false);
       setLoading(false);
     }
@@ -1371,7 +1360,6 @@ export const PaymentProcessing: React.FC = () => {
       if ((order.payment_method === 'eps' && !epsMerchantTxnId) || 
           (order.payment_method === 'ebpay' && !ebpayTransactionId) ||
           (order.payment_method === 'stripe' && !stripeSessionId)) {
-        toast.error(`Missing ${order.payment_method.toUpperCase()} transaction reference. Please try again.`);
         setVerifying(false);
         return;
       }
@@ -1387,18 +1375,15 @@ export const PaymentProcessing: React.FC = () => {
       if (error) throw error;
 
       if (data.paymentStatus === 'success') {
-        toast.success('Payment verified successfully!');
         // Clear cart after successful payment
         clearCart();
         const orderToken = searchParams.get('ot') || '';
         navigate(paths.orderConfirmation(order.id, orderToken));
       } else {
-        toast.error('Payment verification failed. Please contact support.');
         setOrder(prev => ({ ...prev, status: 'payment_failed' }));
       }
     } catch (error) {
       console.error('Payment verification error:', error);
-      toast.error('Failed to verify payment');
     } finally {
       setVerifying(false);
     }
