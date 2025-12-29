@@ -171,7 +171,27 @@ useEffect(() => {
         }
         
         // Clear cart when order confirmation is successfully loaded
+        // This ensures cart is cleared even if it wasn't cleared during payment processing
         clearCart();
+        
+        // Also clear cart from localStorage as a backup (in case clearCart didn't persist)
+        // Clear all possible cart keys to ensure cart is fully cleared
+        try {
+          if (orderData.store_id) {
+            const cartKey = `cart_${orderData.store_id}`;
+            localStorage.removeItem(cartKey);
+          }
+          // Also try global cart key as fallback
+          localStorage.removeItem('cart_global');
+          // Clear any cart keys that might exist
+          Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('cart_')) {
+              localStorage.removeItem(key);
+            }
+          });
+        } catch (e) {
+          // Ignore errors - clearCart() should have handled it
+        }
         
         // Track Purchase event when order confirmation page loads (for online payments)
         // Check if purchase was already tracked (e.g., from PaymentProcessing for deferred payments)
