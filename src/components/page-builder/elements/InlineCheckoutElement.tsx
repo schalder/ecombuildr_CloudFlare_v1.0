@@ -1159,8 +1159,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                 .select('settings, website_id')
                 .eq('id', funnelId)
                 .single();
-              if (funnel?.settings?.currency_code) {
-                currency = funnel.settings.currency_code;
+              if (funnel?.settings && typeof funnel.settings === 'object' && 'currency_code' in funnel.settings) {
+                currency = (funnel.settings as any).currency_code;
               } else if (funnel?.website_id) {
                 const { data: website } = await supabase
                   .from('websites')
