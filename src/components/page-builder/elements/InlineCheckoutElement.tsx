@@ -810,7 +810,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         }
 
         // Validate that the payment method is in allowed methods
-        if (!allowedMethods.includes(upfrontPaymentMethod)) {
+        if (!upfrontPaymentMethod || !allowedMethods.includes(upfrontPaymentMethod as any)) {
           console.error('❌ Upfront payment method not in allowed methods:', {
             upfrontPaymentMethod,
             allowedMethods
