@@ -165,7 +165,7 @@ export function getPaymentBreakdownMessage(
 
 /**
  * Get the payment method to use for upfront payment
- * Priority: Product's upfront_shipping_payment_method > customer selection > first available
+ * Priority: Digital products (customer selection) > Product's upfront_shipping_payment_method > customer selection > first available
  */
 export function getUpfrontPaymentMethod(
   items: CartItem[],
@@ -173,7 +173,13 @@ export function getUpfrontPaymentMethod(
   customerSelectedMethod: string | null,
   availableMethods: string[]
 ): string | null {
-  // Find products with upfront shipping
+  // Check for digital products first (they always require upfront payment)
+  const hasDigitalProducts = items.some(item => {
+    const productData = productDataMap.get(item.productId);
+    return productData?.product_type === 'digital';
+  });
+
+  // Check for COD products with upfront shipping
   const productsWithUpfront: ProductData[] = [];
   for (const item of items) {
     const productData = productDataMap.get(item.productId);
@@ -182,21 +188,25 @@ export function getUpfrontPaymentMethod(
     }
   }
 
-  if (productsWithUpfront.length === 0) {
-    // No upfront shipping, use customer selection or default
-    return customerSelectedMethod || availableMethods[0] || null;
+  // Priority 1: If digital products exist, use customer's selected method (digital products determine payment method)
+  if (hasDigitalProducts && customerSelectedMethod && availableMethods.includes(customerSelectedMethod)) {
+    return customerSelectedMethod;
   }
 
-  // Use the first product's upfront payment method (if multiple, use first one)
-  const upfrontMethod = productsWithUpfront[0].upfront_shipping_payment_method;
-  
-  // Verify the method is available
-  if (upfrontMethod && availableMethods.includes(upfrontMethod)) {
-    return upfrontMethod;
+  // Priority 2: If COD products with upfront shipping exist, use their specified method
+  if (productsWithUpfront.length > 0) {
+    const upfrontMethod = productsWithUpfront[0].upfront_shipping_payment_method;
+    if (upfrontMethod && availableMethods.includes(upfrontMethod)) {
+      return upfrontMethod;
+    }
   }
 
-  // Fallback to customer selection or first available
-  return customerSelectedMethod || availableMethods[0] || null;
+  // Priority 3: Fallback to customer selection or first available
+  if (customerSelectedMethod && availableMethods.includes(customerSelectedMethod)) {
+    return customerSelectedMethod;
+  }
+
+  return availableMethods[0] || null;
 }
 
 /**

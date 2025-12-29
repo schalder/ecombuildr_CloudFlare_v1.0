@@ -345,6 +345,34 @@ useEffect(() => {
     // Generate idempotency key for this submission
     const idempotencyKey = crypto.randomUUID();
     try {
+      // Recalculate payment breakdown to ensure we have latest data
+      const cartItems = items.map(item => ({
+        id: item.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        product_type: productDataMap.get(item.productId)?.product_type,
+        collect_shipping_upfront: productDataMap.get(item.productId)?.collect_shipping_upfront,
+        upfront_shipping_payment_method: productDataMap.get(item.productId)?.upfront_shipping_payment_method,
+      }));
+
+      const currentPaymentBreakdown = calculatePaymentBreakdown(
+        cartItems,
+        shippingCost,
+        productDataMap
+      );
+
+      // Use recalculated breakdown instead of state
+      const upfrontAmount = currentPaymentBreakdown.upfrontAmount || 0;
+      const upfrontPaymentMethod = upfrontAmount > 0 
+        ? getUpfrontPaymentMethod(
+            cartItems,
+            productDataMap,
+            form.payment_method,
+            allowedMethods
+          )
+        : null;
+
       // Determine manual number-only mode
       const hasBkashApi = !!(store?.settings?.bkash?.app_key && store?.settings?.bkash?.app_secret && store?.settings?.bkash?.username && store?.settings?.bkash?.password);
       const isBkashManual = !!(store?.settings?.bkash?.enabled && (store?.settings?.bkash?.mode === 'number' || !hasBkashApi) && store?.settings?.bkash?.number);
@@ -376,7 +404,7 @@ useEffect(() => {
         // Upfront payment info (if applicable)
         upfront_payment_amount: upfrontAmount > 0 ? upfrontAmount : null,
         upfront_payment_method: upfrontPaymentMethod || null,
-        delivery_payment_amount: paymentBreakdown?.deliveryAmount || null,
+        delivery_payment_amount: currentPaymentBreakdown.deliveryAmount || null,
       };
 
       const itemsPayload = items.map(item => ({
@@ -389,33 +417,24 @@ useEffect(() => {
         image: item.image || null,
       }));
 
-      // Calculate upfront payment if needed
-      const upfrontAmount = paymentBreakdown?.upfrontAmount || 0;
-      const upfrontPaymentMethod = upfrontAmount > 0 
-        ? getUpfrontPaymentMethod(
-            items.map(i => ({ id: i.id, productId: i.productId, quantity: i.quantity, price: i.price })),
-            productDataMap,
-            form.payment_method,
-            allowedMethods
-          )
-        : null;
-
       // Debug: Log payment breakdown for troubleshooting
       console.log('🔍 Payment Processing Debug:', {
-        paymentBreakdown,
+        paymentBreakdown: currentPaymentBreakdown,
         upfrontAmount,
         upfrontPaymentMethod,
         selectedPaymentMethod: form.payment_method,
-        hasUpfrontPayment: paymentBreakdown?.hasUpfrontPayment,
-        digitalProductsTotal: paymentBreakdown?.digitalProductsTotal,
-        upfrontShippingFee: paymentBreakdown?.upfrontShippingFee,
+        hasUpfrontPayment: currentPaymentBreakdown.hasUpfrontPayment,
+        upfrontPaymentIsLive: upfrontAmount > 0 && upfrontPaymentMethod && (upfrontPaymentMethod === 'eps' || upfrontPaymentMethod === 'ebpay' || upfrontPaymentMethod === 'stripe'),
+        isLivePayment: form.payment_method === 'eps' || form.payment_method === 'ebpay' || form.payment_method === 'stripe',
+        allowedMethods,
         productDataMapSize: productDataMap.size,
         itemsCount: items.length,
-        productDataMapEntries: Array.from(productDataMap.entries()).map(([id, data]) => ({
-          id,
-          product_type: data.product_type,
-          collect_shipping_upfront: data.collect_shipping_upfront,
-          upfront_shipping_payment_method: data.upfront_shipping_payment_method
+        cartItems: cartItems.map(item => ({
+          id: item.id,
+          productId: item.productId,
+          product_type: productDataMap.get(item.productId)?.product_type,
+          collect_shipping_upfront: productDataMap.get(item.productId)?.collect_shipping_upfront,
+          upfront_shipping_payment_method: productDataMap.get(item.productId)?.upfront_shipping_payment_method
         }))
       });
 
@@ -504,12 +523,33 @@ useEffect(() => {
       // Handle payment processing
       // PRIORITY: Check for upfront payment FIRST, regardless of selected payment method
       if (hasUpfrontPayment) {
+        // Validate that we have a valid payment method
+        if (!upfrontPaymentMethod) {
+          toast.error('Payment method not available. Please select a different payment method.');
+          setLoading(false);
+          return;
+        }
+
+        // Validate that the payment method is in allowed methods
+        if (!allowedMethods.includes(upfrontPaymentMethod)) {
+          toast.error(`Payment method ${upfrontPaymentMethod} is not available for this order.`);
+          setLoading(false);
+          return;
+        }
+
         // Check if the upfront payment method requires gateway processing
         if (upfrontPaymentIsLive) {
-          // Process upfront payment for live payment methods (EPS, EB Pay, Stripe, etc.)
-          // Order creation is deferred - payment gateway will create order after successful payment
-          await initiatePayment(createdOrderId, upfrontAmount, upfrontPaymentMethod, accessToken);
-          return; // Exit early - payment gateway will handle order creation
+          try {
+            // Process upfront payment for live payment methods (EPS, EB Pay, Stripe, etc.)
+            // Order creation is deferred - payment gateway will create order after successful payment
+            await initiatePayment(createdOrderId, upfrontAmount, upfrontPaymentMethod, accessToken);
+            return; // Exit early - payment gateway will handle order creation
+          } catch (error) {
+            console.error('Failed to initiate upfront payment:', error);
+            toast.error('Failed to initiate payment. Please try again.');
+            setLoading(false);
+            return;
+          }
         } else {
           // Manual payment method for upfront (bkash, nagad) - order already created above
           clearCart();
@@ -622,22 +662,23 @@ useEffect(() => {
       }
 
       if (response.error) {
-        throw new Error(response.error.message);
+        throw new Error(response.error.message || 'Payment gateway error');
       }
 
       const { paymentURL } = response.data;
-      if (paymentURL) {
-        // Show loading message and redirect to payment gateway
-        toast.success('Redirecting to payment gateway...');
-        // Cart will be cleared after successful payment verification
-        window.location.href = paymentURL;
-      } else {
-        throw new Error('Payment URL not received');
+      if (!paymentURL) {
+        throw new Error('Payment URL not received from gateway');
       }
+
+      // Show loading message and redirect to payment gateway
+      toast.success('Redirecting to payment gateway...');
+      // Cart will be cleared after successful payment verification
+      window.location.href = paymentURL;
     } catch (error) {
       console.error('Payment initiation error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to initiate payment. Please try again.';
       toast.error(errorMessage);
+      throw error; // Re-throw to let caller handle
     }
   };
 
