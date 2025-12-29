@@ -186,6 +186,15 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     if (orderBump.enabled && bumpChecked && bumpProduct?.allowed_payment_methods && bumpProduct.allowed_payment_methods.length > 0) {
       methods = methods.filter(m => (bumpProduct.allowed_payment_methods as string[]).includes(m));
     }
+    // Collect upfront payment methods that need to be included
+    const upfrontMethodsToInclude: string[] = [];
+    if (selectedProduct && (selectedProduct as any).collect_shipping_upfront && (selectedProduct as any).upfront_shipping_payment_method) {
+      upfrontMethodsToInclude.push((selectedProduct as any).upfront_shipping_payment_method);
+    }
+    if (orderBump.enabled && bumpChecked && bumpProduct && (bumpProduct as any).collect_shipping_upfront && (bumpProduct as any).upfront_shipping_payment_method) {
+      upfrontMethodsToInclude.push((bumpProduct as any).upfront_shipping_payment_method);
+    }
+    
     // Intersect with store-level enabled gateways
     const storeAllowed: Record<string, boolean> = {
       cod: true,
@@ -195,6 +204,14 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       ebpay: !!store?.settings?.ebpay?.enabled,
       stripe: !!store?.settings?.payment?.stripe?.enabled && !!store?.settings?.payment?.stripe?.stripe_account_id,
     };
+    
+    // Add upfront payment methods if they're store-enabled
+    upfrontMethodsToInclude.forEach(method => {
+      if ((storeAllowed as any)[method] && !methods.includes(method)) {
+        methods.push(method);
+      }
+    });
+    
     methods = methods.filter((m) => (storeAllowed as any)[m]);
     if (methods.length === 0) methods = ['cod'];
     
