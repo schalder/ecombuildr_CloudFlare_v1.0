@@ -2829,7 +2829,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           {(() => {
             // Handle both array and object formats for custom_fields
             const customFields = order.custom_fields;
-            if (!customFields) return false;
+            if (!customFields) return null;
             
             let upfrontAmount: number | null = null;
             let upfrontMethod: string | null = null;
@@ -2848,59 +2848,41 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
               deliveryAmount = (customFields as any).delivery_payment_amount ? Number((customFields as any).delivery_payment_amount) : null;
             }
             
-            return upfrontAmount && upfrontAmount > 0;
-          })() && (() => {
-            // Extract values for display
-            const customFields = order.custom_fields;
-            let upfrontAmount = 0;
-            let upfrontMethod: string | null = null;
-            let deliveryAmount = 0;
-            
-            if (Array.isArray(customFields)) {
-              const upfrontField = customFields.find((cf: any) => cf.id === 'upfront_payment_amount' || cf.label === 'upfront_payment_amount');
-              const methodField = customFields.find((cf: any) => cf.id === 'upfront_payment_method' || cf.label === 'upfront_payment_method');
-              const deliveryField = customFields.find((cf: any) => cf.id === 'delivery_payment_amount' || cf.label === 'delivery_payment_amount');
-              upfrontAmount = upfrontField ? Number(upfrontField.value) : 0;
-              upfrontMethod = methodField ? String(methodField.value) : null;
-              deliveryAmount = deliveryField ? Number(deliveryField.value) : 0;
-            } else if (typeof customFields === 'object') {
-              upfrontAmount = Number((customFields as any).upfront_payment_amount || 0);
-              upfrontMethod = (customFields as any).upfront_payment_method ? String((customFields as any).upfront_payment_method) : null;
-              deliveryAmount = Number((customFields as any).delivery_payment_amount || 0);
-            }
+            if (!upfrontAmount || upfrontAmount <= 0) return null;
             
             return (
-            <>
-              <Separator className="my-2" />
-              <div className="space-y-2 pt-2">
-                <div className="text-sm font-medium text-blue-600">Payment Breakdown:</div>
-                <div className="flex justify-between text-sm">
-                  <span>Paid Upfront:</span>
-                  <span className="font-medium text-green-600">
-                    {formatCurrency((order.custom_fields as any).upfront_payment_amount || 0)}
-                    {((order.custom_fields as any).upfront_payment_method && (
-                      <span className="text-xs text-muted-foreground ml-1">
-                        (via {((order.custom_fields as any).upfront_payment_method === 'eps' ? 'EPS' : 
-                               (order.custom_fields as any).upfront_payment_method === 'ebpay' ? 'EB Pay' : 
-                               (order.custom_fields as any).upfront_payment_method === 'stripe' ? 'Stripe' : 
-                               (order.custom_fields as any).upfront_payment_method === 'bkash' ? 'bKash' : 
-                               (order.custom_fields as any).upfront_payment_method === 'nagad' ? 'Nagad' : 
-                               (order.custom_fields as any).upfront_payment_method)})
-                      </span>
-                    ))}
-                  </span>
-                </div>
-                {((order.custom_fields as any).delivery_payment_amount && (order.custom_fields as any).delivery_payment_amount > 0) && (
+              <>
+                <Separator className="my-2" />
+                <div className="space-y-2 pt-2">
+                  <div className="text-sm font-medium text-blue-600">Payment Breakdown:</div>
                   <div className="flex justify-between text-sm">
-                    <span>To Pay on Delivery (COD):</span>
-                    <span className="font-medium">
-                      {formatCurrency((order.custom_fields as any).delivery_payment_amount || 0)}
+                    <span>Paid Upfront:</span>
+                    <span className="font-medium text-green-600">
+                      {formatCurrency(upfrontAmount)}
+                      {upfrontMethod && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          (via {upfrontMethod === 'eps' ? 'EPS' : 
+                                 upfrontMethod === 'ebpay' ? 'EB Pay' : 
+                                 upfrontMethod === 'stripe' ? 'Stripe' : 
+                                 upfrontMethod === 'bkash' ? 'bKash' : 
+                                 upfrontMethod === 'nagad' ? 'Nagad' : 
+                                 upfrontMethod})
+                        </span>
+                      )}
                     </span>
                   </div>
-                )}
-              </div>
-            </>
-          )}
+                  {deliveryAmount && deliveryAmount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span>To Pay on Delivery (COD):</span>
+                      <span className="font-medium">
+                        {formatCurrency(deliveryAmount)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </>
+            );
+          })()}
           </CardContent>
         </Card>
       </div>
