@@ -833,8 +833,21 @@ export const PaymentProcessing: React.FC = () => {
         }
       });
 
+      // Check if order was created even if there's an error
+      const orderWasCreated = data?.order?.id || data?.success;
+      
       if (error) {
         console.error('PaymentProcessing: create-order-on-payment-success error:', error);
+        // If order was created despite error, don't throw - just redirect
+        if (orderWasCreated && data?.order?.id) {
+          console.log('PaymentProcessing: Order created despite error, redirecting...');
+          setOrderCreated(true);
+          sessionStorage.removeItem('pending_checkout');
+          clearCart();
+          const newOrderToken = data.order.access_token || data.order.id;
+          window.location.replace(paths.orderConfirmation(data.order.id, newOrderToken));
+          return;
+        }
         throw error;
       }
 
@@ -849,7 +862,7 @@ export const PaymentProcessing: React.FC = () => {
       if (data?.success && data?.order) {
         console.log('PaymentProcessing: ✅ Order created successfully, preparing redirect...');
         
-        // Mark order as created to prevent duplicate execution
+        // Mark order as created IMMEDIATELY to prevent any error toasts
         setOrderCreated(true);
         
         // Clear stored checkout data
@@ -1126,14 +1139,26 @@ export const PaymentProcessing: React.FC = () => {
         window.location.replace(paths.orderConfirmation(data.order.id, newOrderToken));
         return; // Exit early to prevent further execution
       } else {
+        // Check if order was actually created (sometimes success=false but order exists)
+        const orderId = data?.order?.id;
+        if (orderId) {
+          console.log('PaymentProcessing: Order exists despite success=false, redirecting...');
+          setOrderCreated(true);
+          sessionStorage.removeItem('pending_checkout');
+          clearCart();
+          const newOrderToken = data.order.access_token || data.order.id;
+          window.location.replace(paths.orderConfirmation(orderId, newOrderToken));
+          return;
+        }
+        
         console.error('PaymentProcessing: Order creation failed - invalid response:', {
           success: data?.success,
           hasOrder: !!data?.order,
           error: data?.error,
           message: data?.message
         });
-        // Only show error if we haven't already redirected
-        if (!orderCreated) {
+        // Only show error if order was NOT created and we haven't redirected
+        if (!orderCreated && !orderId) {
           toast.error(data?.error || data?.message || 'Failed to create order. Please contact support.');
         }
         setCreatingOrder(false);
@@ -1142,10 +1167,16 @@ export const PaymentProcessing: React.FC = () => {
       }
     } catch (error) {
       console.error('PaymentProcessing: Error creating deferred order:', error);
-      // Only show error if we haven't already redirected
-      if (!orderCreated) {
-        toast.error('Failed to create order. Please contact support.');
+      
+      // Check if order was created before the error (e.g., during tracking)
+      // If order exists in sessionStorage or was already created, don't show error
+      if (orderCreated) {
+        console.log('PaymentProcessing: Order was already created, ignoring error');
+        return;
       }
+      
+      // Only show error if order was NOT created
+      toast.error('Failed to create order. Please contact support.');
       setCreatingOrder(false);
       setLoading(false);
     }
