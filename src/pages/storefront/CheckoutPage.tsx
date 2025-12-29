@@ -417,15 +417,27 @@ useEffect(() => {
         image: item.image || null,
       }));
 
+      // Helper function to check if a payment method requires gateway processing (live payment)
+      const isLivePaymentMethod = (method: string | null | undefined): boolean => {
+        if (!method) return false;
+        // Live payment methods that require gateway processing before order creation
+        return method === 'eps' || method === 'ebpay' || method === 'stripe';
+      };
+
+      // Determine if we need to process upfront payment (calculate BEFORE debug log and order creation)
+      const hasUpfrontPayment = upfrontAmount > 0 && upfrontPaymentMethod;
+      const upfrontPaymentIsLive = hasUpfrontPayment && isLivePaymentMethod(upfrontPaymentMethod);
+      const isLivePayment = isLivePaymentMethod(form.payment_method);
+
       // Debug: Log payment breakdown for troubleshooting
       console.log('🔍 Payment Processing Debug:', {
         paymentBreakdown: currentPaymentBreakdown,
         upfrontAmount,
         upfrontPaymentMethod,
         selectedPaymentMethod: form.payment_method,
-        hasUpfrontPayment: currentPaymentBreakdown.hasUpfrontPayment,
-        upfrontPaymentIsLive: upfrontAmount > 0 && upfrontPaymentMethod && (upfrontPaymentMethod === 'eps' || upfrontPaymentMethod === 'ebpay' || upfrontPaymentMethod === 'stripe'),
-        isLivePayment: form.payment_method === 'eps' || form.payment_method === 'ebpay' || form.payment_method === 'stripe',
+        hasUpfrontPayment,
+        upfrontPaymentIsLive,
+        isLivePayment,
         allowedMethods,
         productDataMapSize: productDataMap.size,
         itemsCount: items.length,
@@ -435,22 +447,16 @@ useEffect(() => {
           product_type: productDataMap.get(item.productId)?.product_type,
           collect_shipping_upfront: productDataMap.get(item.productId)?.collect_shipping_upfront,
           upfront_shipping_payment_method: productDataMap.get(item.productId)?.upfront_shipping_payment_method
-        }))
+        })),
+        willDeferOrderCreation: isLivePayment || upfrontPaymentIsLive,
+        willProcessUpfrontPayment: hasUpfrontPayment,
+        calculationDetails: {
+          upfrontAmountGreaterThanZero: upfrontAmount > 0,
+          upfrontPaymentMethodExists: !!upfrontPaymentMethod,
+          upfrontPaymentMethodValue: upfrontPaymentMethod,
+          upfrontPaymentMethodInAllowed: upfrontPaymentMethod ? allowedMethods.includes(upfrontPaymentMethod) : false
+        }
       });
-
-      // Helper function to check if a payment method requires gateway processing (live payment)
-      const isLivePaymentMethod = (method: string | null | undefined): boolean => {
-        if (!method) return false;
-        // Live payment methods that require gateway processing before order creation
-        return method === 'eps' || method === 'ebpay' || method === 'stripe';
-      };
-
-      // Determine if we need to process upfront payment
-      const hasUpfrontPayment = upfrontAmount > 0 && upfrontPaymentMethod;
-      const upfrontPaymentIsLive = hasUpfrontPayment && isLivePaymentMethod(upfrontPaymentMethod);
-      
-      // Determine if selected payment method is live
-      const isLivePayment = isLivePaymentMethod(form.payment_method);
       
       let createdOrderId: string | undefined;
       let accessToken: string | undefined;
@@ -522,9 +528,21 @@ useEffect(() => {
 
       // Handle payment processing
       // PRIORITY: Check for upfront payment FIRST, regardless of selected payment method
+      console.log('🔍 Before upfront payment check:', {
+        hasUpfrontPayment,
+        upfrontAmount,
+        upfrontPaymentMethod,
+        upfrontPaymentIsLive,
+        createdOrderId,
+        willProcessUpfront: hasUpfrontPayment
+      });
+
       if (hasUpfrontPayment) {
+        console.log('✅ Upfront payment detected, processing...');
+        
         // Validate that we have a valid payment method
         if (!upfrontPaymentMethod) {
+          console.error('❌ Upfront payment method is null!');
           toast.error('Payment method not available. Please select a different payment method.');
           setLoading(false);
           return;
@@ -532,6 +550,10 @@ useEffect(() => {
 
         // Validate that the payment method is in allowed methods
         if (!allowedMethods.includes(upfrontPaymentMethod)) {
+          console.error('❌ Upfront payment method not in allowed methods:', {
+            upfrontPaymentMethod,
+            allowedMethods
+          });
           toast.error(`Payment method ${upfrontPaymentMethod} is not available for this order.`);
           setLoading(false);
           return;
@@ -539,24 +561,33 @@ useEffect(() => {
 
         // Check if the upfront payment method requires gateway processing
         if (upfrontPaymentIsLive) {
+          console.log('✅ Upfront payment is live, initiating payment gateway...', {
+            orderId: createdOrderId,
+            amount: upfrontAmount,
+            method: upfrontPaymentMethod
+          });
           try {
             // Process upfront payment for live payment methods (EPS, EB Pay, Stripe, etc.)
             // Order creation is deferred - payment gateway will create order after successful payment
             await initiatePayment(createdOrderId, upfrontAmount, upfrontPaymentMethod, accessToken);
+            console.log('✅ Payment initiation completed, redirecting to gateway...');
             return; // Exit early - payment gateway will handle order creation
           } catch (error) {
-            console.error('Failed to initiate upfront payment:', error);
+            console.error('❌ Failed to initiate upfront payment:', error);
             toast.error('Failed to initiate payment. Please try again.');
             setLoading(false);
             return;
           }
         } else {
+          console.log('ℹ️ Upfront payment is manual, showing confirmation...');
           // Manual payment method for upfront (bkash, nagad) - order already created above
           clearCart();
           toast.success('Order placed! Please complete the upfront payment.');
           navigate(paths.orderConfirmation(createdOrderId, accessToken));
           return; // Exit early after showing confirmation
         }
+      } else {
+        console.log('ℹ️ No upfront payment required, processing regular flow...');
       }
       
       // If no upfront payment needed, process regular payment flow
