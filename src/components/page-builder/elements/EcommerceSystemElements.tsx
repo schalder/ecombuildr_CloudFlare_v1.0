@@ -1099,6 +1099,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         .in('id', ids);
       let acc: string[] = ['cod','bkash','nagad','eps','ebpay','stripe'];
       
+      // Collect upfront payment methods that need to be included
+      const upfrontMethodsToInclude: string[] = [];
+      
       // Build product data map for upfront payment method selection
       const productMapForPayment = new Map<string, ProductData>();
       (data || []).forEach((p: any) => {
@@ -1108,6 +1111,11 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
           collect_shipping_upfront: p.collect_shipping_upfront || false,
           upfront_shipping_payment_method: p.upfront_shipping_payment_method || null,
         });
+        
+        // If product has upfront shipping enabled, ensure its payment method is included
+        if (p.collect_shipping_upfront && p.upfront_shipping_payment_method) {
+          upfrontMethodsToInclude.push(p.upfront_shipping_payment_method);
+        }
         
         const arr: string[] | null = p.allowed_payment_methods;
         if (arr && arr.length > 0) {
@@ -1122,6 +1130,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         ebpay: !!store?.settings?.ebpay?.enabled,
         stripe: !!store?.settings?.payment?.stripe?.enabled && !!store?.settings?.payment?.stripe?.stripe_account_id,
       };
+      
+      // Add upfront payment methods if they're store-enabled
+      upfrontMethodsToInclude.forEach(method => {
+        if ((storeAllowed as any)[method] && !acc.includes(method)) {
+          acc.push(method);
+        }
+      });
+      
       acc = acc.filter((m) => (storeAllowed as any)[m]);
       if (acc.length === 0) acc = ['cod'];
       
