@@ -119,6 +119,7 @@ serve(async (req: Request) => {
     }
 
     // Return safe subset of order data (no PII exposed in logs)
+    // Include custom_fields so OrderConfirmationElement can check for upfront_payment_amount
     const safeOrder = {
       id: order.id,
       order_number: order.order_number,
@@ -137,6 +138,7 @@ serve(async (req: Request) => {
       total: order.total,
       created_at: order.created_at,
       notes: order.notes,
+      custom_fields: order.custom_fields || null, // Include custom_fields for upfront payment info
     };
 
     // Get download links for digital products
