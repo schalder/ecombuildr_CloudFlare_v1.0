@@ -1520,7 +1520,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       
       // For EPS/EB Pay/Stripe, store checkout data for potential deferred order creation
       // (though order is already created, this is kept for backward compatibility)
-      const isLivePayment = form.payment_method === 'eps' || form.payment_method === 'ebpay' || form.payment_method === 'stripe';
+      // Note: isLivePayment is already defined above in the upfront payment calculation
       if (isLivePayment) {
         sessionStorage.setItem('pending_checkout', JSON.stringify({
           orderData,
