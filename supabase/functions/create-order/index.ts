@@ -377,8 +377,11 @@ serve(async (req) => {
     // Generate access token for public order access
     const accessToken = generateAccessToken();
     
+    // Extract upfront payment fields before spreading order (they should only be in custom_fields, not as columns)
+    const { upfront_payment_amount, upfront_payment_method, delivery_payment_amount, ...orderWithoutUpfrontFields } = order as any;
+    
     const toInsert: any = {
-      ...order,
+      ...orderWithoutUpfrontFields,
       order_number: order && (order as any).order_number ? (order as any).order_number : generateOrderNumber(),
       status: safeStatus,
       discount_amount: order.discount_amount ?? 0,
@@ -393,9 +396,9 @@ serve(async (req) => {
       custom_fields: {
         ...(order.custom_fields || {}),
         order_access_token: accessToken,
-        upfront_payment_amount: (order as any).upfront_payment_amount || null,
-        upfront_payment_method: (order as any).upfront_payment_method || null,
-        delivery_payment_amount: (order as any).delivery_payment_amount || null,
+        upfront_payment_amount: upfront_payment_amount || null,
+        upfront_payment_method: upfront_payment_method || null,
+        delivery_payment_amount: delivery_payment_amount || null,
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
