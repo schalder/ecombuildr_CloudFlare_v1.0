@@ -1460,7 +1460,20 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
           product_type: data.product_type,
           collect_shipping_upfront: data.collect_shipping_upfront,
           upfront_shipping_payment_method: data.upfront_shipping_payment_method
-        }))
+        })),
+        storePaymentSettings: {
+          eps: !!store?.settings?.eps?.enabled,
+          ebpay: !!store?.settings?.ebpay?.enabled,
+          stripe: !!store?.settings?.payment?.stripe?.enabled && !!store?.settings?.payment?.stripe?.stripe_account_id,
+          bkash: !!store?.settings?.bkash?.enabled,
+          nagad: !!store?.settings?.nagad?.enabled
+        },
+        getUpfrontPaymentMethodResult: upfrontAmount > 0 ? getUpfrontPaymentMethod(
+          cartItems,
+          productDataMap,
+          form.payment_method,
+          allowedMethods
+        ) : null
       });
 
       // Helper function to check if a payment method requires gateway processing (live payment)
