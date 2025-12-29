@@ -330,21 +330,33 @@ useEffect(() => {
   };
 
   const handleSubmitOrder = async () => {
-    if (!store || items.length === 0) return;
+    console.log('🚀 handleSubmitOrder called', { store: !!store, itemsCount: items.length });
+    
+    if (!store || items.length === 0) {
+      console.log('❌ Early return: no store or items', { store: !!store, itemsCount: items.length });
+      return;
+    }
 
     // Normalize phone before submitting
     const normalizedPhone = normalizeBdPhone(form.customer_phone);
+    console.log('📞 Phone normalization:', { original: form.customer_phone, normalized: normalizedPhone });
+    
     if (!normalizedPhone || normalizedPhone.length < 11) {
+      console.log('❌ Early return: invalid phone', { normalizedPhone, length: normalizedPhone?.length });
       setPhoneError('Please enter a valid phone number');
       setCurrentStep(1); // Go back to step 1 to show error
       return;
     }
 
+    console.log('✅ Validation passed, starting order submission...');
     setLoading(true);
     
     // Generate idempotency key for this submission
     const idempotencyKey = crypto.randomUUID();
+    console.log('🔑 Generated idempotency key:', idempotencyKey);
+    
     try {
+      console.log('📊 Starting payment breakdown calculation...');
       // Recalculate payment breakdown to ensure we have latest data
       const cartItems = items.map(item => ({
         id: item.id,
@@ -602,9 +614,15 @@ useEffect(() => {
         await initiatePayment(createdOrderId, finalTotal, form.payment_method, accessToken);
       }
     } catch (error) {
-      console.error('Error creating order:', error);
+      console.error('❌ ERROR in handleSubmitOrder:', error);
+      console.error('❌ Error details:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        error
+      });
       toast.error('Failed to place order. Please try again.');
     } finally {
+      console.log('🏁 handleSubmitOrder finally block - setting loading to false');
       setLoading(false);
     }
   };
