@@ -242,12 +242,29 @@ export const PaymentProcessing: React.FC = () => {
     // Stripe orders are created BEFORE payment, so we can handle them without store/checkout data
     const isStripeSuccess = paymentMethod === 'stripe' && tempId && (urlStatus === 'success' || urlStatus === 'completed');
     
-    // If it's a funnel checkout, failed payment, or Stripe success, we can proceed without store
+    // ✅ For EPS/EB Pay success payments, also proceed immediately (store will be loaded from pending_checkout)
+    const isEpsEbpaySuccess = (paymentMethod === 'eps' || paymentMethod === 'ebpay') && tempId && (urlStatus === 'success' || urlStatus === 'completed');
+    
+    // If it's a funnel checkout, failed payment, Stripe success, or EPS/EB Pay success, we can proceed without store
     // If it's a site checkout with other payment methods, we need store to be loaded
-    const canProceed = isFunnelCheckout || isFailedPayment || isStripeSuccess || store;
+    const canProceed = isFunnelCheckout || isFailedPayment || isStripeSuccess || isEpsEbpaySuccess || store;
+    
+    console.log('PaymentProcessing: useEffect check:', {
+      tempId,
+      urlStatus,
+      paymentMethod,
+      isFunnelCheckout,
+      isFailedPayment,
+      isStripeSuccess,
+      isEpsEbpaySuccess,
+      hasStore: !!store,
+      canProceed,
+      isCoursePayment
+    });
     
     if (canProceed && isCoursePayment === false) {
       if (tempId && (urlStatus === 'success' || urlStatus === 'completed')) {
+        console.log('PaymentProcessing: Calling handleDeferredOrderCreation...');
         // Use standard deferred order creation for all payment methods
         // Webhooks will handle order status updates for Stripe
         handleDeferredOrderCreation();
@@ -261,6 +278,12 @@ export const PaymentProcessing: React.FC = () => {
         // If we have tempId but no status yet, show loading
         setLoading(false);
       }
+    } else {
+      console.log('PaymentProcessing: Cannot proceed yet:', {
+        canProceed,
+        isCoursePayment,
+        reason: !canProceed ? 'Waiting for store or conditions not met' : 'Course payment check pending'
+      });
     }
   }, [orderId, tempId, urlStatus, store, isCoursePayment]);
 
