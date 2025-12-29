@@ -196,7 +196,7 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
         // ✅ For system routes that work independently (payment-processing, order-confirmation),
         // bypass connection selection and allow direct rendering
         // These routes use sessionStorage funnel context and don't need a domain connection
-        const independentSystemRoutes = ['payment-processing', 'order-confirmation'];
+        const independentSystemRoutes = ['payment-processing']; // Removed 'order-confirmation' so it goes through DomainWebsiteRouter to check for page builder page
         const pathSegments = currentPath.split('/').filter(Boolean);
         const potentialSlug = pathSegments[pathSegments.length - 1];
         
@@ -308,7 +308,7 @@ export const DomainRouter: React.FC<DomainRouterProps> = ({ children }) => {
   const currentPath = window.location.pathname;
   const pathSegments = currentPath.split('/').filter(Boolean);
   const potentialSlug = pathSegments[pathSegments.length - 1];
-  const independentSystemRoutes = ['payment-processing', 'order-confirmation'];
+  const independentSystemRoutes = ['payment-processing']; // Removed 'order-confirmation' so it goes through DomainWebsiteRouter to check for page builder page
 
   if (independentSystemRoutes.includes(potentialSlug)) {
     return <>{children}</>;
