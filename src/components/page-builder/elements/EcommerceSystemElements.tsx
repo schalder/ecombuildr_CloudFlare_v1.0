@@ -1304,8 +1304,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address, items, total, productShippingData, productTypes.hasPhysical, productDataMap]);
 
   const handleSubmit = async () => {
-    if (!store || items.length === 0) return;
+    console.log('🚀 CheckoutFullElement handleSubmit called', { store: !!store, itemsCount: items.length });
+    
+    if (!store || items.length === 0) {
+      console.log('❌ Early return: no store or items', { store: !!store, itemsCount: items.length });
+      return;
+    }
     if (terms.enabled && terms.required && !form.accept_terms) {
+      console.log('❌ Early return: terms not accepted');
       toast.error('Please accept the terms to continue');
       return;
     }
@@ -1391,14 +1397,66 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
     setLoading(true);
     try {
+      console.log('✅ Validation passed, starting order submission...');
+      
+      // Recalculate payment breakdown to ensure we have latest data
+      const cartItems = items.map(item => ({
+        id: item.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        product_type: productDataMap.get(item.productId)?.product_type,
+        collect_shipping_upfront: productDataMap.get(item.productId)?.collect_shipping_upfront,
+        upfront_shipping_payment_method: productDataMap.get(item.productId)?.upfront_shipping_payment_method,
+      }));
+
+      const currentPaymentBreakdown = calculatePaymentBreakdown(
+        cartItems,
+        productTypes.hasPhysical ? shippingCost : 0,
+        productDataMap
+      );
+
+      // Use recalculated breakdown instead of state
+      const upfrontAmount = currentPaymentBreakdown.upfrontAmount || 0;
+      const upfrontPaymentMethod = upfrontAmount > 0 
+        ? getUpfrontPaymentMethod(
+            cartItems,
+            productDataMap,
+            form.payment_method,
+            allowedMethods
+          )
+        : null;
+
+      // Helper function to check if a payment method requires gateway processing (live payment)
+      const isLivePaymentMethod = (method: string | null | undefined): boolean => {
+        if (!method) return false;
+        return method === 'eps' || method === 'ebpay' || method === 'stripe';
+      };
+
+      // Determine if we need to process upfront payment
+      const hasUpfrontPayment = upfrontAmount > 0 && upfrontPaymentMethod;
+      const upfrontPaymentIsLive = hasUpfrontPayment && isLivePaymentMethod(upfrontPaymentMethod);
+      const isLivePayment = isLivePaymentMethod(form.payment_method);
+
+      console.log('🔍 Payment Processing Debug (CheckoutFullElement):', {
+        paymentBreakdown: currentPaymentBreakdown,
+        upfrontAmount,
+        upfrontPaymentMethod,
+        selectedPaymentMethod: form.payment_method,
+        hasUpfrontPayment,
+        upfrontPaymentIsLive,
+        isLivePayment,
+        allowedMethods,
+        productDataMapSize: productDataMap.size,
+        itemsCount: items.length
+      });
+
       const hasBkashApi = Boolean(store?.settings?.bkash?.app_key && store?.settings?.bkash?.app_secret && store?.settings?.bkash?.username && store?.settings?.bkash?.password);
       const isBkashManual = Boolean(store?.settings?.bkash?.enabled && (store?.settings?.bkash?.mode === 'number' || !hasBkashApi) && store?.settings?.bkash?.number);
       const hasNagadApi = Boolean(store?.settings?.nagad?.merchant_id && store?.settings?.nagad?.public_key && store?.settings?.nagad?.private_key);
       const isNagadManual = Boolean(store?.settings?.nagad?.enabled && (store?.settings?.nagad?.mode === 'number' || !hasNagadApi) && store?.settings?.nagad?.number);
       const isManual = (form.payment_method === 'bkash' && isBkashManual) || (form.payment_method === 'nagad' && isNagadManual);
 
-      
-      
       const orderData: any = {
         store_id: store.id,
         website_id: websiteId || null,
@@ -1421,16 +1479,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         total: total + (productTypes.hasPhysical ? shippingCost : 0),
         // Status will be set by create-order or create-order-on-payment-success based on payment method and product types
         // Upfront payment info (if applicable)
-        upfront_payment_amount: paymentBreakdown?.upfrontAmount || null,
-        upfront_payment_method: paymentBreakdown?.hasUpfrontPayment 
-          ? getUpfrontPaymentMethod(
-              items.map(i => ({ id: i.id, productId: i.productId, quantity: i.quantity, price: i.price })),
-              productDataMap,
-              form.payment_method,
-              allowedMethods
-            )
-          : null,
-        delivery_payment_amount: paymentBreakdown?.deliveryAmount || null,
+        upfront_payment_amount: upfrontAmount > 0 ? upfrontAmount : null,
+        upfront_payment_method: upfrontPaymentMethod || null,
+        delivery_payment_amount: currentPaymentBreakdown.deliveryAmount || null,
         // Persist custom fields with labels for better display later
         custom_fields: (customFields || [])
           .filter((cf: any) => cf.enabled)
@@ -1479,7 +1530,68 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         }));
       }
       
-      
+      // Handle payment processing
+      // PRIORITY: Check for upfront payment FIRST, regardless of selected payment method
+      console.log('🔍 Before upfront payment check (CheckoutFullElement):', {
+        hasUpfrontPayment,
+        upfrontAmount,
+        upfrontPaymentMethod,
+        upfrontPaymentIsLive,
+        orderId
+      });
+
+      if (hasUpfrontPayment) {
+        console.log('✅ Upfront payment detected, processing...');
+        
+        // Validate that we have a valid payment method
+        if (!upfrontPaymentMethod) {
+          console.error('❌ Upfront payment method is null!');
+          toast.error('Payment method not available. Please select a different payment method.');
+          setLoading(false);
+          return;
+        }
+
+        // Validate that the payment method is in allowed methods
+        if (!allowedMethods.includes(upfrontPaymentMethod)) {
+          console.error('❌ Upfront payment method not in allowed methods:', {
+            upfrontPaymentMethod,
+            allowedMethods
+          });
+          toast.error(`Payment method ${upfrontPaymentMethod} is not available for this order.`);
+          setLoading(false);
+          return;
+        }
+
+        // Check if the upfront payment method requires gateway processing
+        if (upfrontPaymentIsLive) {
+          console.log('✅ Upfront payment is live, initiating payment gateway...', {
+            orderId,
+            amount: upfrontAmount,
+            method: upfrontPaymentMethod
+          });
+          try {
+            // Process upfront payment for live payment methods (EPS, EB Pay, Stripe, etc.)
+            await initiatePayment(orderId, upfrontAmount, upfrontPaymentMethod);
+            console.log('✅ Payment initiation completed, redirecting to gateway...');
+            return; // Exit early - payment gateway will handle order creation
+          } catch (error) {
+            console.error('❌ Failed to initiate upfront payment:', error);
+            toast.error('Failed to initiate payment. Please try again.');
+            setLoading(false);
+            return;
+          }
+        } else {
+          console.log('ℹ️ Upfront payment is manual, showing confirmation...');
+          // Manual payment method for upfront (bkash, nagad) - order already created
+          clearCart();
+          toast.success('Order placed! Please complete the upfront payment.');
+          const orderToken = orderResponse?.order?.custom_fields?.order_access_token || accessToken;
+          navigate(paths.orderConfirmation(orderId, orderToken));
+          return; // Exit early after showing confirmation
+        }
+      } else {
+        console.log('ℹ️ No upfront payment required, processing regular flow...');
+      }
 
       if (form.payment_method === 'cod' || isManual) {
         // Track Purchase event for COD orders
