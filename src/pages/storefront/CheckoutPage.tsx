@@ -400,10 +400,17 @@ useEffect(() => {
           )
         : null;
 
-      // For EPS/EB Pay, defer order creation until after payment success
-      // Also defer if we need to process upfront payment
-      const isLivePayment = form.payment_method === 'eps' || form.payment_method === 'ebpay';
-      const needsUpfrontPayment = upfrontAmount > 0 && upfrontPaymentMethod && (upfrontPaymentMethod === 'eps' || upfrontPaymentMethod === 'ebpay');
+      // Helper function to check if a payment method requires gateway processing (live payment)
+      const isLivePaymentMethod = (method: string | null | undefined): boolean => {
+        if (!method) return false;
+        // Live payment methods that require gateway processing before order creation
+        return method === 'eps' || method === 'ebpay' || method === 'stripe';
+      };
+
+      // For EPS/EB Pay/Stripe, defer order creation until after payment success
+      // Also defer if we need to process upfront payment with a live method
+      const isLivePayment = isLivePaymentMethod(form.payment_method);
+      const needsUpfrontPayment = upfrontAmount > 0 && upfrontPaymentMethod && isLivePaymentMethod(upfrontPaymentMethod);
       
       let createdOrderId: string | undefined;
       let accessToken: string | undefined;
@@ -476,9 +483,30 @@ useEffect(() => {
 
       // Handle payment processing
       // If upfront payment is needed, process it first
-      if (upfrontAmount > 0 && upfrontPaymentMethod && (upfrontPaymentMethod === 'eps' || upfrontPaymentMethod === 'ebpay')) {
-        // Process upfront payment for live payment methods
-        await initiatePayment(createdOrderId, upfrontAmount, upfrontPaymentMethod, accessToken);
+      if (upfrontAmount > 0 && upfrontPaymentMethod) {
+        // Check if the upfront payment method requires gateway processing
+        if (isLivePaymentMethod(upfrontPaymentMethod)) {
+          // Process upfront payment for live payment methods (EPS, EB Pay, Stripe, etc.)
+          await initiatePayment(createdOrderId, upfrontAmount, upfrontPaymentMethod, accessToken);
+        } else {
+          // Manual payment method for upfront (bkash, nagad) - create order and show confirmation
+          // Order should already be created at this point, but ensure it exists
+          if (!createdOrderId || !accessToken) {
+            const { data, error: createErr } = await supabase.functions.invoke('create-order', {
+              body: {
+                order: orderData,
+                items: itemsPayload,
+                storeId: store.id,
+              }
+            });
+            if (createErr) throw createErr;
+            createdOrderId = data?.order?.id;
+            accessToken = data?.order?.access_token;
+          }
+          clearCart();
+          toast.success('Order placed! Please complete the upfront payment.');
+          navigate(paths.orderConfirmation(createdOrderId, accessToken));
+        }
       } else if (form.payment_method === 'cod' || isManual) {
         // Regular COD or manual payment
         clearCart();
