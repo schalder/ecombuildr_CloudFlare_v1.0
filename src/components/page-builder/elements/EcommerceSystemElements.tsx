@@ -1131,15 +1131,35 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         stripe: !!store?.settings?.payment?.stripe?.enabled && !!store?.settings?.payment?.stripe?.stripe_account_id,
       };
       
+      console.log('🔍 AllowedMethods Calculation Debug (loadAllowed):', {
+        upfrontMethodsToInclude,
+        storeAllowed,
+        accBeforeUpfront: [...acc],
+        productData: data?.map((p: any) => ({
+          id: p.id,
+          collect_shipping_upfront: p.collect_shipping_upfront,
+          upfront_shipping_payment_method: p.upfront_shipping_payment_method,
+          allowed_payment_methods: p.allowed_payment_methods
+        }))
+      });
+      
       // Add upfront payment methods if they're store-enabled
       upfrontMethodsToInclude.forEach(method => {
         if ((storeAllowed as any)[method] && !acc.includes(method)) {
           acc.push(method);
+          console.log(`✅ Added upfront payment method to allowedMethods: ${method}`);
+        } else {
+          console.log(`❌ Could not add upfront payment method ${method}:`, {
+            storeEnabled: (storeAllowed as any)[method],
+            alreadyIncluded: acc.includes(method)
+          });
         }
       });
       
       acc = acc.filter((m) => (storeAllowed as any)[m]);
       if (acc.length === 0) acc = ['cod'];
+      
+      console.log('🔍 Final allowedMethods (loadAllowed):', acc);
       
       // If there's upfront payment required, use the upfront payment method
       const upfrontMethod = paymentBreakdown?.hasUpfrontPayment
