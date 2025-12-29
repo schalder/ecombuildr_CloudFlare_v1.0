@@ -1452,6 +1452,48 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         productDataMap
       );
 
+      // Recalculate allowedMethods to include upfront payment methods
+      // This ensures we have the latest product data and store settings
+      const storeAllowed: Record<string, boolean> = {
+        cod: true,
+        bkash: !!store?.settings?.bkash?.enabled,
+        nagad: !!store?.settings?.nagad?.enabled,
+        eps: !!store?.settings?.eps?.enabled,
+        ebpay: !!store?.settings?.ebpay?.enabled,
+        stripe: !!store?.settings?.payment?.stripe?.enabled && !!store?.settings?.payment?.stripe?.stripe_account_id,
+      };
+      
+      // Start with current allowedMethods
+      let recalculatedAllowedMethods = [...allowedMethods];
+      
+      // Collect upfront payment methods from products
+      const upfrontMethodsToInclude: string[] = [];
+      cartItems.forEach(item => {
+        const productData = productDataMap.get(item.productId);
+        if (productData?.collect_shipping_upfront && productData?.upfront_shipping_payment_method) {
+          upfrontMethodsToInclude.push(productData.upfront_shipping_payment_method);
+        }
+      });
+      
+      // Add upfront payment methods if they're store-enabled
+      upfrontMethodsToInclude.forEach(method => {
+        if ((storeAllowed as any)[method] && !recalculatedAllowedMethods.includes(method)) {
+          recalculatedAllowedMethods.push(method);
+          console.log(`✅ Added upfront payment method to recalculatedAllowedMethods: ${method}`);
+        }
+      });
+      
+      // Filter by store settings
+      recalculatedAllowedMethods = recalculatedAllowedMethods.filter((m) => (storeAllowed as any)[m]);
+      if (recalculatedAllowedMethods.length === 0) recalculatedAllowedMethods = ['cod'];
+      
+      console.log('🔍 Recalculated allowedMethods in handleSubmit:', {
+        originalAllowedMethods: allowedMethods,
+        recalculatedAllowedMethods,
+        upfrontMethodsToInclude,
+        storeAllowed
+      });
+
       // Use recalculated breakdown instead of state
       const upfrontAmount = currentPaymentBreakdown.upfrontAmount || 0;
       const upfrontPaymentMethod = upfrontAmount > 0 
@@ -1459,7 +1501,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
             cartItems,
             productDataMap,
             form.payment_method,
-            allowedMethods
+            recalculatedAllowedMethods // Use recalculated methods
           )
         : null;
 
