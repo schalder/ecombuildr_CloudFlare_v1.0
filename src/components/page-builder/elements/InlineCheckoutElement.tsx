@@ -698,10 +698,12 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       
       // Collect upfront payment methods from products
       const upfrontMethodsToInclude: string[] = [];
+      let hasUpfrontShipping = false;
       cartItems.forEach(item => {
         const productData = productDataMap.get(item.productId);
         if (productData?.collect_shipping_upfront && productData?.upfront_shipping_payment_method) {
           upfrontMethodsToInclude.push(productData.upfront_shipping_payment_method);
+          hasUpfrontShipping = true;
         }
       });
       
