@@ -698,13 +698,13 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       // Add upfront payment methods if they're store-enabled
       upfrontMethodsToInclude.forEach(method => {
         if ((storeAllowed as any)[method] && !recalculatedAllowedMethods.includes(method)) {
-          recalculatedAllowedMethods.push(method);
+          recalculatedAllowedMethods.push(method as any);
           console.log(`✅ Added upfront payment method to recalculatedAllowedMethods: ${method}`);
         }
       });
       
       // Filter by store settings
-      recalculatedAllowedMethods = recalculatedAllowedMethods.filter((m) => (storeAllowed as any)[m]);
+      recalculatedAllowedMethods = recalculatedAllowedMethods.filter((m) => (storeAllowed as any)[m]) as any;
       if (recalculatedAllowedMethods.length === 0) recalculatedAllowedMethods = ['cod'];
       
       console.log('🔍 Recalculated allowedMethods in handleSubmit (InlineCheckoutElement):', {
