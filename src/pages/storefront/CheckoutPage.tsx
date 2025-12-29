@@ -400,6 +400,25 @@ useEffect(() => {
           )
         : null;
 
+      // Debug: Log payment breakdown for troubleshooting
+      console.log('🔍 Payment Processing Debug:', {
+        paymentBreakdown,
+        upfrontAmount,
+        upfrontPaymentMethod,
+        selectedPaymentMethod: form.payment_method,
+        hasUpfrontPayment: paymentBreakdown?.hasUpfrontPayment,
+        digitalProductsTotal: paymentBreakdown?.digitalProductsTotal,
+        upfrontShippingFee: paymentBreakdown?.upfrontShippingFee,
+        productDataMapSize: productDataMap.size,
+        itemsCount: items.length,
+        productDataMapEntries: Array.from(productDataMap.entries()).map(([id, data]) => ({
+          id,
+          product_type: data.product_type,
+          collect_shipping_upfront: data.collect_shipping_upfront,
+          upfront_shipping_payment_method: data.upfront_shipping_payment_method
+        }))
+      });
+
       // Helper function to check if a payment method requires gateway processing (live payment)
       const isLivePaymentMethod = (method: string | null | undefined): boolean => {
         if (!method) return false;
@@ -482,12 +501,13 @@ useEffect(() => {
       }
 
       // Handle payment processing
-      // If upfront payment is needed, process it first
+      // PRIORITY: Check for upfront payment FIRST, regardless of selected payment method
       if (upfrontAmount > 0 && upfrontPaymentMethod) {
         // Check if the upfront payment method requires gateway processing
         if (isLivePaymentMethod(upfrontPaymentMethod)) {
           // Process upfront payment for live payment methods (EPS, EB Pay, Stripe, etc.)
           await initiatePayment(createdOrderId, upfrontAmount, upfrontPaymentMethod, accessToken);
+          return; // Exit early - payment gateway will handle order creation
         } else {
           // Manual payment method for upfront (bkash, nagad) - create order and show confirmation
           // Order should already be created at this point, but ensure it exists
@@ -501,13 +521,18 @@ useEffect(() => {
             });
             if (createErr) throw createErr;
             createdOrderId = data?.order?.id;
+            if (!createdOrderId) throw new Error('Order was not created');
             accessToken = data?.order?.access_token;
           }
           clearCart();
           toast.success('Order placed! Please complete the upfront payment.');
           navigate(paths.orderConfirmation(createdOrderId, accessToken));
+          return; // Exit early after showing confirmation
         }
-      } else if (form.payment_method === 'cod' || isManual) {
+      }
+      
+      // If no upfront payment needed, process regular payment flow
+      if (form.payment_method === 'cod' || isManual) {
         // Regular COD or manual payment
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed successfully!');
