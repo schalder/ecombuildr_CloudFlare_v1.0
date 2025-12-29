@@ -1143,6 +1143,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         }))
       });
       
+      // Check if any product has upfront shipping enabled
+      const hasUpfrontShipping = (data || []).some((p: any) => p.collect_shipping_upfront);
+      
       // Add upfront payment methods if they're store-enabled
       upfrontMethodsToInclude.forEach(method => {
         if ((storeAllowed as any)[method] && !acc.includes(method)) {
@@ -1157,6 +1160,13 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       });
       
       acc = acc.filter((m) => (storeAllowed as any)[m]);
+      
+      // If any product has upfront shipping enabled, remove 'cod' from allowed methods
+      if (hasUpfrontShipping) {
+        acc = acc.filter(m => m !== 'cod');
+        console.log('🚫 Removed COD payment method because product has upfront shipping enabled');
+      }
+      
       if (acc.length === 0) acc = ['cod'];
       
       console.log('🔍 Final allowedMethods (loadAllowed):', acc);
@@ -2743,12 +2753,50 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           ))}
           <Separator className="my-2" />
           <div className="flex justify-between text-sm"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-          <div className="flex justify-between text-sm"><span>Shipping</span><span>{formatCurrency(shipping)}</span></div>
+          
+          {/* Shipping Fee Display */}
+          {shipping > 0 && (
+            <div className="flex justify-between text-sm">
+              <span>Shipping</span>
+              <span className="flex items-center gap-2">
+                {formatCurrency(shipping)}
+                {order.custom_fields && typeof order.custom_fields === 'object' && 
+                 (order.custom_fields as any).upfront_payment_amount && 
+                 (order.custom_fields as any).upfront_payment_amount > 0 &&
+                 shipping <= (order.custom_fields as any).upfront_payment_amount && (
+                  <span className="text-xs text-green-600 font-medium">(Paid)</span>
+                )}
+              </span>
+            </div>
+          )}
+          
           {discount > 0 && (
             <div className="flex justify-between text-sm"><span>Discount</span><span>- {formatCurrency(discount)}</span></div>
           )}
           <Separator className="my-2" />
-          <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(Number(order.total))}</span></div>
+          
+          {/* Total Calculation: When upfront shipping collected, show subtotal - shipping = total */}
+          {order.custom_fields && typeof order.custom_fields === 'object' && 
+           (order.custom_fields as any).upfront_payment_amount && 
+           (order.custom_fields as any).upfront_payment_amount > 0 ? (
+            <>
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-green-600">
+                <span>Shipping (Paid Upfront)</span>
+                <span>- {formatCurrency(shipping)}</span>
+              </div>
+              <Separator className="my-2" />
+              <div className="flex justify-between font-bold">
+                <span>Total</span>
+                <span>{formatCurrency(subtotal - shipping + (discount > 0 ? -discount : 0))}</span>
+              </div>
+            </>
+          ) : (
+            <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(Number(order.total))}</span></div>
+          )}
           
           {/* Upfront Payment Breakdown */}
           {order.custom_fields && typeof order.custom_fields === 'object' && (order.custom_fields as any).upfront_payment_amount && (order.custom_fields as any).upfront_payment_amount > 0 && (
@@ -2787,8 +2835,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         </Card>
       </div>
       <div className="flex gap-3">
-        <Button variant="outline" onClick={() => (window.location.href = paths.home)} className="flex-1">Continue Shopping</Button>
-        <Button variant="outline" onClick={downloadPDF} className="flex-1">
+        <Button variant="outline" onClick={downloadPDF} className="w-full">
           <Download className="h-4 w-4 mr-2" />
           Download PDF
         </Button>

@@ -205,6 +205,10 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       stripe: !!store?.settings?.payment?.stripe?.enabled && !!store?.settings?.payment?.stripe?.stripe_account_id,
     };
     
+    // Check if product has upfront shipping enabled
+    const hasUpfrontShipping = (selectedProduct as any)?.collect_shipping_upfront || 
+                               (orderBump.enabled && bumpChecked && (bumpProduct as any)?.collect_shipping_upfront);
+    
     // Add upfront payment methods if they're store-enabled
     upfrontMethodsToInclude.forEach(method => {
       if ((storeAllowed as any)[method] && !methods.includes(method)) {
@@ -213,6 +217,12 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     });
     
     methods = methods.filter((m) => (storeAllowed as any)[m]);
+    
+    // If product has upfront shipping enabled, remove 'cod' from allowed methods
+    if (hasUpfrontShipping) {
+      methods = methods.filter(m => m !== 'cod');
+    }
+    
     if (methods.length === 0) methods = ['cod'];
     
     // If there's upfront payment required, use the upfront payment method
