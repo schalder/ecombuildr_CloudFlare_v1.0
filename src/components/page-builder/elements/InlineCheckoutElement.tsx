@@ -697,7 +697,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       
       // Add upfront payment methods if they're store-enabled
       upfrontMethodsToInclude.forEach(method => {
-        if ((storeAllowed as any)[method] && !recalculatedAllowedMethods.includes(method)) {
+        if ((storeAllowed as any)[method] && !recalculatedAllowedMethods.includes(method as any)) {
           recalculatedAllowedMethods.push(method as any);
           console.log(`✅ Added upfront payment method to recalculatedAllowedMethods: ${method}`);
         }
