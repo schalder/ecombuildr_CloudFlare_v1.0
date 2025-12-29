@@ -40,6 +40,9 @@ type OrderInput = {
   custom_fields?: Record<string, any>;
   idempotency_key?: string | null;
   ip_address?: string | null;
+  upfront_payment_amount?: number | null;
+  upfront_payment_method?: string | null;
+  delivery_payment_amount?: number | null;
 };
 
 function generateOrderNumber() {
@@ -390,6 +393,9 @@ serve(async (req) => {
       custom_fields: {
         ...(order.custom_fields || {}),
         order_access_token: accessToken,
+        upfront_payment_amount: (order as any).upfront_payment_amount || null,
+        upfront_payment_method: (order as any).upfront_payment_method || null,
+        delivery_payment_amount: (order as any).delivery_payment_amount || null,
       },
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

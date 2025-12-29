@@ -543,6 +543,40 @@ useEffect(() => {
                 <span>Total:</span>
                 <span>${order.total.toFixed(2)}</span>
               </div>
+              
+              {/* Upfront Payment Breakdown */}
+              {order.custom_fields && typeof order.custom_fields === 'object' && (order.custom_fields as any).upfront_payment_amount && (order.custom_fields as any).upfront_payment_amount > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-2 pt-2">
+                    <div className="text-sm font-medium text-blue-600">Payment Breakdown:</div>
+                    <div className="flex justify-between text-sm">
+                      <span>Paid Upfront:</span>
+                      <span className="font-medium text-green-600">
+                        ${((order.custom_fields as any).upfront_payment_amount || 0).toFixed(2)}
+                        {((order.custom_fields as any).upfront_payment_method && (
+                          <span className="text-xs text-muted-foreground ml-1">
+                            (via {((order.custom_fields as any).upfront_payment_method === 'eps' ? 'EPS' : 
+                                   (order.custom_fields as any).upfront_payment_method === 'ebpay' ? 'EB Pay' : 
+                                   (order.custom_fields as any).upfront_payment_method === 'stripe' ? 'Stripe' : 
+                                   (order.custom_fields as any).upfront_payment_method === 'bkash' ? 'bKash' : 
+                                   (order.custom_fields as any).upfront_payment_method === 'nagad' ? 'Nagad' : 
+                                   (order.custom_fields as any).upfront_payment_method)})
+                          </span>
+                        ))}
+                      </span>
+                    </div>
+                    {((order.custom_fields as any).delivery_payment_amount && (order.custom_fields as any).delivery_payment_amount > 0) && (
+                      <div className="flex justify-between text-sm">
+                        <span>To Pay on Delivery (COD):</span>
+                        <span className="font-medium">
+                          ${((order.custom_fields as any).delivery_payment_amount || 0).toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

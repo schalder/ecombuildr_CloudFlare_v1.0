@@ -27,6 +27,7 @@ import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { getPhoneValidationError } from '@/utils/phoneValidation';
+import { calculatePaymentBreakdown, getPaymentBreakdownMessage, getUpfrontPaymentMethod, ProductData } from '@/utils/checkoutCalculations';
 
 const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const navigate = useNavigate();
@@ -159,6 +160,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     selectedShippingOption: '', // For custom shipping options
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [productDataMap, setProductDataMap] = useState<Map<string, ProductData>>(new Map());
+  const [paymentBreakdown, setPaymentBreakdown] = useState<ReturnType<typeof calculatePaymentBreakdown> | null>(null);
 
   // Set default custom shipping option when product changes
   useEffect(() => {
@@ -194,11 +197,46 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     };
     methods = methods.filter((m) => (storeAllowed as any)[m]);
     if (methods.length === 0) methods = ['cod'];
+    
+    // If there's upfront payment required, use the upfront payment method
+    const productMapForPayment = new Map<string, ProductData>();
+    if (selectedProduct) {
+      productMapForPayment.set(selectedProduct.id, {
+        id: selectedProduct.id,
+        product_type: (selectedProduct as any).product_type || 'physical',
+        collect_shipping_upfront: (selectedProduct as any).collect_shipping_upfront || false,
+        upfront_shipping_payment_method: (selectedProduct as any).upfront_shipping_payment_method || null,
+      });
+    }
+    if (orderBump.enabled && bumpChecked && bumpProduct) {
+      productMapForPayment.set(bumpProduct.id, {
+        id: bumpProduct.id,
+        product_type: (bumpProduct as any).product_type || 'physical',
+        collect_shipping_upfront: (bumpProduct as any).collect_shipping_upfront || false,
+        upfront_shipping_payment_method: (bumpProduct as any).upfront_shipping_payment_method || null,
+      });
+    }
+    
+    const upfrontMethod = paymentBreakdown?.hasUpfrontPayment
+      ? getUpfrontPaymentMethod(
+          [
+            ...(selectedProduct ? [{ id: selectedProduct.id, productId: selectedProduct.id, quantity: quantity || 1, price: Number(selectedProduct.price) }] : []),
+            ...(orderBump.enabled && bumpChecked && bumpProduct ? [{ id: bumpProduct.id, productId: bumpProduct.id, quantity: 1, price: Number(bumpProduct.price) }] : []),
+          ],
+          productMapForPayment,
+          form.payment_method,
+          methods
+        )
+      : null;
+    
     setAllowedMethods(methods as any);
-    if (!methods.includes(form.payment_method)) {
+    if (upfrontMethod && methods.includes(upfrontMethod)) {
+      // Use upfront payment method if available
+      setForm(prev => ({ ...prev, payment_method: upfrontMethod as any }));
+    } else if (!methods.includes(form.payment_method)) {
       setForm(prev => ({ ...prev, payment_method: methods[0] as any }));
     }
-  }, [selectedProduct?.id, bumpProduct?.id, bumpChecked, orderBump.enabled, store]);
+  }, [selectedProduct?.id, bumpProduct?.id, bumpChecked, orderBump.enabled, store, paymentBreakdown, quantity]);
 
   // Calculate subtotal for tracking (defined before useEffect)
   const trackingSubtotal = useMemo(() => {
@@ -399,11 +437,44 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     const result = computeOrderShipping(websiteShipping, cartItems, address, subtotal);
     
     // Add bump shipping fee if enabled and bump is checked
+    let finalShippingCost = result.shippingCost;
+    if (orderBump.enabled && bumpChecked && chargeShippingForBump) {
+      finalShippingCost = result.shippingCost + bumpShippingFee;
+    }
+    
+    // Calculate payment breakdown
+    if (selectedProduct || (orderBump.enabled && bumpChecked && bumpProduct)) {
+      // Build product data map
+      const productMap = new Map<string, ProductData>();
+      if (selectedProduct) {
+        productMap.set(selectedProduct.id, {
+          id: selectedProduct.id,
+          product_type: (selectedProduct as any).product_type || 'physical',
+          collect_shipping_upfront: (selectedProduct as any).collect_shipping_upfront || false,
+          upfront_shipping_payment_method: (selectedProduct as any).upfront_shipping_payment_method || null,
+        });
+      }
+      if (orderBump.enabled && bumpChecked && bumpProduct) {
+        productMap.set(bumpProduct.id, {
+          id: bumpProduct.id,
+          product_type: (bumpProduct as any).product_type || 'physical',
+          collect_shipping_upfront: (bumpProduct as any).collect_shipping_upfront || false,
+          upfront_shipping_payment_method: (bumpProduct as any).upfront_shipping_payment_method || null,
+        });
+      }
+      setProductDataMap(productMap);
+      
+      const breakdown = calculatePaymentBreakdown(cartItems, finalShippingCost, productMap);
+      setPaymentBreakdown(breakdown);
+    } else {
+      setPaymentBreakdown(null);
+    }
+    
     if (orderBump.enabled && bumpChecked && chargeShippingForBump) {
       return {
         ...result,
-        shippingCost: result.shippingCost + bumpShippingFee,
-        isFreeShipping: (result.shippingCost + bumpShippingFee) === 0,
+        shippingCost: finalShippingCost,
+        isFreeShipping: finalShippingCost === 0,
         breakdown: {
           ...result.breakdown,
           productSpecificFees: result.breakdown.productSpecificFees + bumpShippingFee,
@@ -570,6 +641,22 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         discount_amount: 0,
         total: total,
         // Status will be set by create-order or create-order-on-payment-success based on payment method and product types
+        // Upfront payment info (if applicable)
+        upfront_payment_amount: paymentBreakdown?.upfrontAmount || null,
+        upfront_payment_method: paymentBreakdown?.hasUpfrontPayment 
+          ? getUpfrontPaymentMethod(
+              cartItems.map((item, idx) => ({ 
+                id: item.id || `item-${idx}`, 
+                productId: item.productId, 
+                quantity: item.quantity, 
+                price: item.price 
+              })),
+              productDataMap,
+              form.payment_method,
+              allowedMethods
+            )
+          : null,
+        delivery_payment_amount: paymentBreakdown?.deliveryAmount || null,
         custom_fields: (customFields || []).filter((cf:any)=>cf.enabled).map((cf:any)=>{ const value=(form.custom_fields as any)[cf.id]; if (value===undefined||value===null||value==='') return null; return { id: cf.id, label: cf.label || cf.id, value }; }).filter(Boolean),
         idempotency_key: idempotencyKey,
         // Save shipping method for custom options
@@ -1644,6 +1731,15 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Subtotal</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(subtotal)}</span></div>
                   <div className="flex flex-wrap items-center justify-between gap-2 min-w-0"><span className="truncate">Shipping</span><span className="font-semibold shrink-0 whitespace-nowrap text-right">{formatCurrency(shippingCost)}</span></div>
                   <div className="flex flex-wrap items-center justify-between gap-2 min-w-0 font-bold"><span className="truncate">Total</span><span className="shrink-0 whitespace-nowrap text-right">{formatCurrency(subtotal + shippingCost)}</span></div>
+
+                  {/* Payment Breakdown Message */}
+                  {paymentBreakdown && paymentBreakdown.hasUpfrontPayment && (
+                    <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
+                        {getPaymentBreakdownMessage(paymentBreakdown, '৳')}
+                      </p>
+                    </div>
+                  )}
 
                   <Button 
                     size={buttonSize as any} 

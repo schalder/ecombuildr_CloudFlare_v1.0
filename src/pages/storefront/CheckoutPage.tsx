@@ -475,11 +475,17 @@ useEffect(() => {
       }
 
       // Handle payment processing
-      if (form.payment_method === 'cod' || isManual) {
+      // If upfront payment is needed, process it first
+      if (upfrontAmount > 0 && upfrontPaymentMethod && (upfrontPaymentMethod === 'eps' || upfrontPaymentMethod === 'ebpay')) {
+        // Process upfront payment for live payment methods
+        await initiatePayment(createdOrderId, upfrontAmount, upfrontPaymentMethod, accessToken);
+      } else if (form.payment_method === 'cod' || isManual) {
+        // Regular COD or manual payment
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed successfully!');
         navigate(paths.orderConfirmation(createdOrderId, accessToken));
       } else {
+        // Regular live payment (no upfront shipping)
         await initiatePayment(createdOrderId, finalTotal, form.payment_method, accessToken);
       }
     } catch (error) {

@@ -34,6 +34,7 @@ import { useChannelContext } from '@/hooks/useChannelContext';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { DigitalDownloadSection } from '../components/DigitalDownloadSection';
 import { getPhoneValidationError } from '@/utils/phoneValidation';
+import { calculatePaymentBreakdown, getPaymentBreakdownMessage, getUpfrontPaymentMethod, ProductData } from '@/utils/checkoutCalculations';
 
 const CartSummaryElement: React.FC<{ element: PageBuilderElement }> = () => {
   const { items, total, updateQuantity, removeItem } = useCart();
@@ -1043,6 +1044,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const [loading, setLoading] = useState(false);
   const [allowedMethods, setAllowedMethods] = useState<Array<'cod' | 'bkash' | 'nagad' | 'eps' | 'ebpay' | 'stripe'>>(['cod','bkash','nagad','eps','ebpay','stripe']);
   const [productShippingData, setProductShippingData] = useState<Map<string, { weight_grams?: number; shipping_config?: any; product_type?: string }>>(new Map());
+  const [productDataMap, setProductDataMap] = useState<Map<string, ProductData>>(new Map());
+  const [paymentBreakdown, setPaymentBreakdown] = useState<ReturnType<typeof calculatePaymentBreakdown> | null>(null);
   
   // Validation error states
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -1092,10 +1095,20 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       const ids = Array.from(new Set(items.map(i => i.productId)));
       const { data } = await supabase
         .from('products')
-        .select('id, allowed_payment_methods')
+        .select('id, allowed_payment_methods, collect_shipping_upfront, upfront_shipping_payment_method')
         .in('id', ids);
       let acc: string[] = ['cod','bkash','nagad','eps','ebpay','stripe'];
+      
+      // Build product data map for upfront payment method selection
+      const productMapForPayment = new Map<string, ProductData>();
       (data || []).forEach((p: any) => {
+        productMapForPayment.set(p.id, {
+          id: p.id,
+          product_type: 'physical', // Will be updated from productShippingData
+          collect_shipping_upfront: p.collect_shipping_upfront || false,
+          upfront_shipping_payment_method: p.upfront_shipping_payment_method || null,
+        });
+        
         const arr: string[] | null = p.allowed_payment_methods;
         if (arr && arr.length > 0) {
           acc = acc.filter(m => arr.includes(m));
@@ -1111,8 +1124,24 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       };
       acc = acc.filter((m) => (storeAllowed as any)[m]);
       if (acc.length === 0) acc = ['cod'];
+      
+      // If there's upfront payment required, use the upfront payment method
+      const upfrontMethod = paymentBreakdown?.hasUpfrontPayment
+        ? getUpfrontPaymentMethod(
+            items.map(i => ({ id: i.id, productId: i.productId, quantity: i.quantity, price: i.price })),
+            productDataMap,
+            form.payment_method,
+            acc
+          )
+        : null;
+      
       setAllowedMethods(acc as any);
-      if (!acc.includes(form.payment_method)) setForm(prev => ({ ...prev, payment_method: acc[0] as any }));
+      if (upfrontMethod && acc.includes(upfrontMethod)) {
+        // Use upfront payment method if available
+        setForm(prev => ({ ...prev, payment_method: upfrontMethod as any }));
+      } else if (!acc.includes(form.payment_method)) {
+        setForm(prev => ({ ...prev, payment_method: acc[0] as any }));
+      }
     };
     loadAllowed();
   }, [items, store]);
@@ -1239,12 +1268,30 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       const cost = shippingCalculation.shippingCost;
       
       setShippingCost(cost);
+      
+      // Calculate payment breakdown
+      if (items.length > 0 && productDataMap.size > 0) {
+        const cartItems = items.map(item => ({
+          id: item.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+          product_type: productDataMap.get(item.productId)?.product_type,
+          collect_shipping_upfront: productDataMap.get(item.productId)?.collect_shipping_upfront,
+          upfront_shipping_payment_method: productDataMap.get(item.productId)?.upfront_shipping_payment_method,
+        }));
+        
+        const breakdown = calculatePaymentBreakdown(cartItems, cost, productDataMap);
+        setPaymentBreakdown(breakdown);
+      } else {
+        setPaymentBreakdown(null);
+      }
     };
 
     if (items.length > 0 || !isEditing) {
       computeShipping();
     }
-  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address, items, total, productShippingData, productTypes.hasPhysical]);
+  }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_postal_code, form.shipping_address, items, total, productShippingData, productTypes.hasPhysical, productDataMap]);
 
   const handleSubmit = async () => {
     if (!store || items.length === 0) return;
@@ -1363,6 +1410,17 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         discount_amount: 0,
         total: total + (productTypes.hasPhysical ? shippingCost : 0),
         // Status will be set by create-order or create-order-on-payment-success based on payment method and product types
+        // Upfront payment info (if applicable)
+        upfront_payment_amount: paymentBreakdown?.upfrontAmount || null,
+        upfront_payment_method: paymentBreakdown?.hasUpfrontPayment 
+          ? getUpfrontPaymentMethod(
+              items.map(i => ({ id: i.id, productId: i.productId, quantity: i.quantity, price: i.price })),
+              productDataMap,
+              form.payment_method,
+              allowedMethods
+            )
+          : null,
+        delivery_payment_amount: paymentBreakdown?.deliveryAmount || null,
         // Persist custom fields with labels for better display later
         custom_fields: (customFields || [])
           .filter((cf: any) => cf.enabled)
@@ -1986,6 +2044,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                       </div>
                     </div>
 
+                    {/* Payment Breakdown Message */}
+                    {paymentBreakdown && paymentBreakdown.hasUpfrontPayment && (
+                      <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
+                          {getPaymentBreakdownMessage(paymentBreakdown, '৳')}
+                        </p>
+                      </div>
+                    )}
+
                     <Button 
                       size={buttonSize as any} 
                       className={`w-full h-auto min-h-12 text-base font-semibold element-${element.id} bg-blue-600 hover:bg-blue-700 text-white border-0 rounded-lg transition-colors ${buttonSubtextPosition === 'above' ? 'flex-col-reverse' : 'flex-col'} items-center justify-center gap-1 whitespace-normal`} 
@@ -2444,6 +2511,40 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           )}
           <Separator className="my-2" />
           <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(Number(order.total))}</span></div>
+          
+          {/* Upfront Payment Breakdown */}
+          {order.custom_fields && typeof order.custom_fields === 'object' && (order.custom_fields as any).upfront_payment_amount && (order.custom_fields as any).upfront_payment_amount > 0 && (
+            <>
+              <Separator className="my-2" />
+              <div className="space-y-2 pt-2">
+                <div className="text-sm font-medium text-blue-600">Payment Breakdown:</div>
+                <div className="flex justify-between text-sm">
+                  <span>Paid Upfront:</span>
+                  <span className="font-medium text-green-600">
+                    {formatCurrency((order.custom_fields as any).upfront_payment_amount || 0)}
+                    {((order.custom_fields as any).upfront_payment_method && (
+                      <span className="text-xs text-muted-foreground ml-1">
+                        (via {((order.custom_fields as any).upfront_payment_method === 'eps' ? 'EPS' : 
+                               (order.custom_fields as any).upfront_payment_method === 'ebpay' ? 'EB Pay' : 
+                               (order.custom_fields as any).upfront_payment_method === 'stripe' ? 'Stripe' : 
+                               (order.custom_fields as any).upfront_payment_method === 'bkash' ? 'bKash' : 
+                               (order.custom_fields as any).upfront_payment_method === 'nagad' ? 'Nagad' : 
+                               (order.custom_fields as any).upfront_payment_method)})
+                      </span>
+                    ))}
+                  </span>
+                </div>
+                {((order.custom_fields as any).delivery_payment_amount && (order.custom_fields as any).delivery_payment_amount > 0) && (
+                  <div className="flex justify-between text-sm">
+                    <span>To Pay on Delivery (COD):</span>
+                    <span className="font-medium">
+                      {formatCurrency((order.custom_fields as any).delivery_payment_amount || 0)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
           </CardContent>
         </Card>
       </div>
