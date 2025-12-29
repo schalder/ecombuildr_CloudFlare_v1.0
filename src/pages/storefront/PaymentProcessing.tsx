@@ -689,11 +689,19 @@ export const PaymentProcessing: React.FC = () => {
     }
     
     // ✅ For funnel checkouts, ensure store is loaded from funnel if not already loaded
+    // For EPS/EB Pay site checkouts, load store from pending_checkout.storeId
     if (!store) {
+      console.log('PaymentProcessing: Store not loaded, attempting to load from pending_checkout...');
       const pendingCheckout = sessionStorage.getItem('pending_checkout');
       if (pendingCheckout) {
         try {
           const checkoutData = JSON.parse(pendingCheckout);
+          console.log('PaymentProcessing: Found pending_checkout data:', {
+            isFunnelCheckout: checkoutData.orderData?.isFunnelCheckout,
+            hasFunnelId: !!checkoutData.orderData?.funnelId,
+            hasStoreId: !!checkoutData.storeId
+          });
+          
           if (checkoutData.orderData?.isFunnelCheckout && checkoutData.orderData.funnelId) {
             const { data: funnel } = await supabase
               .from('funnels')
@@ -703,6 +711,7 @@ export const PaymentProcessing: React.FC = () => {
               .maybeSingle();
             
             if (funnel?.store_id) {
+              console.log('PaymentProcessing: Loading store from funnel:', funnel.store_id);
               await loadStoreById(funnel.store_id);
             } else {
               console.error('PaymentProcessing: Cannot load store from funnel');
@@ -710,14 +719,18 @@ export const PaymentProcessing: React.FC = () => {
               setLoading(false);
               return;
             }
+          } else if (checkoutData.storeId) {
+            // Site checkout - load store from checkout data
+            console.log('PaymentProcessing: Loading store from checkout data:', checkoutData.storeId);
+            await loadStoreById(checkoutData.storeId);
           } else {
-            console.error('PaymentProcessing: Store not loaded and not a funnel checkout');
+            console.error('PaymentProcessing: Store not loaded and no storeId in checkout data');
             toast.error('Store information not available');
             setLoading(false);
             return;
           }
         } catch (e) {
-          console.error('PaymentProcessing: Error loading store from funnel:', e);
+          console.error('PaymentProcessing: Error loading store from pending_checkout:', e);
           toast.error('Failed to load store information');
           setLoading(false);
           return;
@@ -729,6 +742,8 @@ export const PaymentProcessing: React.FC = () => {
         return;
       }
     }
+    
+    console.log('PaymentProcessing: Store loaded, proceeding with order creation...');
 
     setCreatingOrder(true);
     try {
