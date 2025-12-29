@@ -393,13 +393,29 @@ serve(async (req) => {
       ip_address: normalizedClientIP || normalizedOrderIP || null,
       is_potential_fake: isPotentialFake,
       marked_not_fake: false,
-      custom_fields: {
-        ...(order.custom_fields || {}),
-        order_access_token: accessToken,
-        upfront_payment_amount: upfront_payment_amount || null,
-        upfront_payment_method: upfront_payment_method || null,
-        delivery_payment_amount: delivery_payment_amount || null,
-      },
+      custom_fields: (() => {
+        // Handle both array and object formats for custom_fields
+        let baseFields: any = {};
+        if (Array.isArray(order.custom_fields)) {
+          // Convert array format [{id, label, value}] to object for easier access
+          order.custom_fields.forEach((cf: any) => {
+            if (cf && cf.id) {
+              baseFields[cf.id] = cf.value;
+            }
+          });
+        } else if (order.custom_fields && typeof order.custom_fields === 'object') {
+          baseFields = { ...order.custom_fields };
+        }
+        
+        // Merge with upfront payment fields
+        return {
+          ...baseFields,
+          order_access_token: accessToken,
+          upfront_payment_amount: upfront_payment_amount || null,
+          upfront_payment_method: upfront_payment_method || null,
+          delivery_payment_amount: delivery_payment_amount || null,
+        };
+      })(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

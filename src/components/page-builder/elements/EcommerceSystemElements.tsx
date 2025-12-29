@@ -2760,14 +2760,27 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
               <span>Shipping</span>
               <span className="flex items-center gap-2">
                 {formatCurrency(shipping)}
-                {order.custom_fields && typeof order.custom_fields === 'object' && 
-                 (order.custom_fields as any).upfront_payment_amount && 
-                 (order.custom_fields as any).upfront_payment_amount > 0 && (
+                {(() => {
+                  // Handle both array and object formats for custom_fields
+                  const customFields = order.custom_fields;
+                  if (!customFields) return null;
+                  
+                  let upfrontAmount: number | null = null;
+                  if (Array.isArray(customFields)) {
+                    // Array format: find upfront_payment_amount in array
+                    const upfrontField = customFields.find((cf: any) => cf.id === 'upfront_payment_amount' || cf.label === 'upfront_payment_amount');
+                    upfrontAmount = upfrontField ? Number(upfrontField.value) : null;
+                  } else if (typeof customFields === 'object') {
+                    // Object format: access directly
+                    upfrontAmount = (customFields as any).upfront_payment_amount ? Number((customFields as any).upfront_payment_amount) : null;
+                  }
+                  
                   // Check if shipping was part of upfront payment (upfront amount >= shipping)
-                  (order.custom_fields as any).upfront_payment_amount >= shipping ? (
-                    <span className="text-xs text-green-600 font-medium">(Paid)</span>
-                  ) : null
-                )}
+                  if (upfrontAmount && upfrontAmount > 0 && upfrontAmount >= shipping) {
+                    return <span className="text-xs text-green-600 font-medium">(Paid)</span>;
+                  }
+                  return null;
+                })()}
               </span>
             </div>
           )}
@@ -2778,9 +2791,21 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           <Separator className="my-2" />
           
           {/* Total Calculation: When upfront shipping collected, show subtotal - shipping = total */}
-          {order.custom_fields && typeof order.custom_fields === 'object' && 
-           (order.custom_fields as any).upfront_payment_amount && 
-           (order.custom_fields as any).upfront_payment_amount > 0 ? (
+          {(() => {
+            // Handle both array and object formats for custom_fields
+            const customFields = order.custom_fields;
+            if (!customFields) return false;
+            
+            let upfrontAmount: number | null = null;
+            if (Array.isArray(customFields)) {
+              const upfrontField = customFields.find((cf: any) => cf.id === 'upfront_payment_amount' || cf.label === 'upfront_payment_amount');
+              upfrontAmount = upfrontField ? Number(upfrontField.value) : null;
+            } else if (typeof customFields === 'object') {
+              upfrontAmount = (customFields as any).upfront_payment_amount ? Number((customFields as any).upfront_payment_amount) : null;
+            }
+            
+            return upfrontAmount && upfrontAmount > 0;
+          })() ? (
             <>
               <div className="flex justify-between text-sm">
                 <span>Subtotal</span>
@@ -2801,7 +2826,50 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           )}
           
           {/* Upfront Payment Breakdown */}
-          {order.custom_fields && typeof order.custom_fields === 'object' && (order.custom_fields as any).upfront_payment_amount && (order.custom_fields as any).upfront_payment_amount > 0 && (
+          {(() => {
+            // Handle both array and object formats for custom_fields
+            const customFields = order.custom_fields;
+            if (!customFields) return false;
+            
+            let upfrontAmount: number | null = null;
+            let upfrontMethod: string | null = null;
+            let deliveryAmount: number | null = null;
+            
+            if (Array.isArray(customFields)) {
+              const upfrontField = customFields.find((cf: any) => cf.id === 'upfront_payment_amount' || cf.label === 'upfront_payment_amount');
+              const methodField = customFields.find((cf: any) => cf.id === 'upfront_payment_method' || cf.label === 'upfront_payment_method');
+              const deliveryField = customFields.find((cf: any) => cf.id === 'delivery_payment_amount' || cf.label === 'delivery_payment_amount');
+              upfrontAmount = upfrontField ? Number(upfrontField.value) : null;
+              upfrontMethod = methodField ? String(methodField.value) : null;
+              deliveryAmount = deliveryField ? Number(deliveryField.value) : null;
+            } else if (typeof customFields === 'object') {
+              upfrontAmount = (customFields as any).upfront_payment_amount ? Number((customFields as any).upfront_payment_amount) : null;
+              upfrontMethod = (customFields as any).upfront_payment_method ? String((customFields as any).upfront_payment_method) : null;
+              deliveryAmount = (customFields as any).delivery_payment_amount ? Number((customFields as any).delivery_payment_amount) : null;
+            }
+            
+            return upfrontAmount && upfrontAmount > 0;
+          })() && (() => {
+            // Extract values for display
+            const customFields = order.custom_fields;
+            let upfrontAmount = 0;
+            let upfrontMethod: string | null = null;
+            let deliveryAmount = 0;
+            
+            if (Array.isArray(customFields)) {
+              const upfrontField = customFields.find((cf: any) => cf.id === 'upfront_payment_amount' || cf.label === 'upfront_payment_amount');
+              const methodField = customFields.find((cf: any) => cf.id === 'upfront_payment_method' || cf.label === 'upfront_payment_method');
+              const deliveryField = customFields.find((cf: any) => cf.id === 'delivery_payment_amount' || cf.label === 'delivery_payment_amount');
+              upfrontAmount = upfrontField ? Number(upfrontField.value) : 0;
+              upfrontMethod = methodField ? String(methodField.value) : null;
+              deliveryAmount = deliveryField ? Number(deliveryField.value) : 0;
+            } else if (typeof customFields === 'object') {
+              upfrontAmount = Number((customFields as any).upfront_payment_amount || 0);
+              upfrontMethod = (customFields as any).upfront_payment_method ? String((customFields as any).upfront_payment_method) : null;
+              deliveryAmount = Number((customFields as any).delivery_payment_amount || 0);
+            }
+            
+            return (
             <>
               <Separator className="my-2" />
               <div className="space-y-2 pt-2">
