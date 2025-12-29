@@ -1440,14 +1440,14 @@ export const PaymentProcessing: React.FC = () => {
     return <CoursePaymentProcessing />;
   }
 
-  // ✅ For Stripe success payments, show minimal loading while redirecting
+  // ✅ For successful payments (all methods), show minimal loading while redirecting
   // This prevents "Order Processing" flash before redirect
-  if (paymentMethod === 'stripe' && tempId && (urlStatus === 'success' || urlStatus === 'completed') && loading) {
+  if (tempId && (urlStatus === 'success' || urlStatus === 'completed') && (loading || creatingOrder)) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Redirecting to order confirmation...</p>
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
+          <p className="text-gray-600">Redirecting to order confirmation...</p>
         </div>
       </div>
     );
@@ -1455,10 +1455,10 @@ export const PaymentProcessing: React.FC = () => {
 
   if (loading || isCoursePayment === null) {
     const loadingContent = (
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="fixed inset-0 flex items-center justify-center bg-white">
         <div className="text-center">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p>Loading order details...</p>
+          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -1483,8 +1483,8 @@ export const PaymentProcessing: React.FC = () => {
         }}
       >
         <div className="text-center px-4">
-          <h1 className="text-2xl font-bold mb-2" style={{ color: '#1f2937' }}>Order Processing</h1>
-          <p className="text-muted-foreground">Please wait while we process your order...</p>
+          <h1 className="text-2xl font-bold mb-2" style={{ color: '#1f2937' }}>Processing Payment</h1>
+          <p className="text-muted-foreground">Please wait...</p>
         </div>
       </div>
     );
