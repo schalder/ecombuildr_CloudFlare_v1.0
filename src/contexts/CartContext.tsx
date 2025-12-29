@@ -226,14 +226,24 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
   }, [storeId, currentStoreId, isInitialLoad]);
 
   // Save cart to localStorage whenever it changes (store-specific)
+  // BUT: Don't save if cart is empty (to prevent reloading empty cart after clearCart)
   useEffect(() => {
     const cartKey = getCartKey(storeId);
-    const cartData = {
-      items: state.items,
-      discountCode: state.discountCode,
-      discountAmount: state.discountAmount,
-    };
-    localStorage.setItem(cartKey, JSON.stringify(cartData));
+    
+    // Only save if cart has items OR if there's a discount code (to preserve discount)
+    // If cart is empty and no discount, remove from localStorage instead
+    if (state.items.length === 0 && !state.discountCode) {
+      // Cart is empty and no discount - remove from localStorage
+      localStorage.removeItem(cartKey);
+    } else {
+      // Cart has items or discount - save to localStorage
+      const cartData = {
+        items: state.items,
+        discountCode: state.discountCode,
+        discountAmount: state.discountAmount,
+      };
+      localStorage.setItem(cartKey, JSON.stringify(cartData));
+    }
   }, [state.items, state.discountCode, state.discountAmount, storeId]);
 
   const addItem = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
@@ -269,10 +279,20 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
   };
 
   const clearCart = () => {
-    dispatch({ type: 'CLEAR_CART' });
-    // Also clear from localStorage immediately to ensure it persists across page reloads
+    // Clear from localStorage FIRST to prevent race condition
     const cartKey = getCartKey(storeId);
     localStorage.removeItem(cartKey);
+    
+    // Also clear all possible cart keys as backup
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('cart_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Then dispatch CLEAR_CART to update state
+    // The save useEffect will see empty cart and won't save (due to our check above)
+    dispatch({ type: 'CLEAR_CART' });
   };
 
   const applyDiscount = (code: string, amount: number) => {
