@@ -1073,15 +1073,31 @@ export const PaymentProcessing: React.FC = () => {
         }
         
         // ✅ WEBSITE CHECKOUT: Navigate to order confirmation (existing behavior)
-        const newOrderToken = data.order.access_token;
+        const newOrderToken = data.order.access_token || data.order.id;
+        console.log('PaymentProcessing: Redirecting to order confirmation:', {
+          orderId: data.order.id,
+          hasToken: !!newOrderToken,
+          redirectUrl: paths.orderConfirmation(data.order.id, newOrderToken)
+        });
         toast.success('Order created successfully!');
-        window.location.href = paths.orderConfirmation(data.order.id, newOrderToken);
+        // Use window.location.replace to ensure redirect happens
+        window.location.replace(paths.orderConfirmation(data.order.id, newOrderToken));
+        return; // Exit early to prevent further execution
       } else {
-        throw new Error('Failed to create order');
+        console.error('PaymentProcessing: Order creation failed - invalid response:', {
+          success: data?.success,
+          hasOrder: !!data?.order,
+          error: data?.error,
+          message: data?.message
+        });
+        throw new Error(data?.error || data?.message || 'Failed to create order');
       }
     } catch (error) {
-      console.error('Error creating deferred order:', error);
+      console.error('PaymentProcessing: Error creating deferred order:', error);
       toast.error('Failed to create order. Please contact support.');
+      // Set loading to false so user can see the error
+      setCreatingOrder(false);
+      setLoading(false);
     } finally {
       setCreatingOrder(false);
       setLoading(false);
