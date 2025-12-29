@@ -426,22 +426,21 @@ useEffect(() => {
         return method === 'eps' || method === 'ebpay' || method === 'stripe';
       };
 
-      // For EPS/EB Pay/Stripe, defer order creation until after payment success
-      // Also defer if we need to process upfront payment with a live method
+      // Determine if we need to process upfront payment
+      const hasUpfrontPayment = upfrontAmount > 0 && upfrontPaymentMethod;
+      const upfrontPaymentIsLive = hasUpfrontPayment && isLivePaymentMethod(upfrontPaymentMethod);
+      
+      // Determine if selected payment method is live
       const isLivePayment = isLivePaymentMethod(form.payment_method);
-      const needsUpfrontPayment = upfrontAmount > 0 && upfrontPaymentMethod && isLivePaymentMethod(upfrontPaymentMethod);
       
       let createdOrderId: string | undefined;
       let accessToken: string | undefined;
 
-      // Process upfront payment if needed (before creating order)
-      if (upfrontAmount > 0 && upfrontPaymentMethod && !needsUpfrontPayment) {
-        // Process upfront payment for non-live methods (bkash, nagad manual)
-        // For live methods (eps, ebpay), we'll handle it in the payment flow
-        // For now, we'll create the order first and track upfront payment in metadata
-      }
-
-      if (isLivePayment || needsUpfrontPayment) {
+      // DECISION: Create order now or defer?
+      // Defer order creation if:
+      // 1. Selected payment method is live (EPS, EB Pay, Stripe) - for regular payments
+      // 2. OR upfront payment is needed and it's a live method - for upfront payments
+      if (isLivePayment || upfrontPaymentIsLive) {
         // Store checkout data temporarily for order creation after payment
         sessionStorage.setItem('pending_checkout', JSON.stringify({
           orderData,
@@ -453,7 +452,9 @@ useEffect(() => {
         // Generate temporary ID for tracking
         createdOrderId = crypto.randomUUID();
       } else {
-        // Create order immediately for COD and manual payments
+        // Create order immediately for:
+        // - COD payments (no upfront payment OR upfront is manual)
+        // - Manual payments (bKash, Nagad) without upfront
         const { data, error: createErr } = await supabase.functions.invoke('create-order', {
           body: {
             order: orderData,
@@ -502,28 +503,15 @@ useEffect(() => {
 
       // Handle payment processing
       // PRIORITY: Check for upfront payment FIRST, regardless of selected payment method
-      if (upfrontAmount > 0 && upfrontPaymentMethod) {
+      if (hasUpfrontPayment) {
         // Check if the upfront payment method requires gateway processing
-        if (isLivePaymentMethod(upfrontPaymentMethod)) {
+        if (upfrontPaymentIsLive) {
           // Process upfront payment for live payment methods (EPS, EB Pay, Stripe, etc.)
+          // Order creation is deferred - payment gateway will create order after successful payment
           await initiatePayment(createdOrderId, upfrontAmount, upfrontPaymentMethod, accessToken);
           return; // Exit early - payment gateway will handle order creation
         } else {
-          // Manual payment method for upfront (bkash, nagad) - create order and show confirmation
-          // Order should already be created at this point, but ensure it exists
-          if (!createdOrderId || !accessToken) {
-            const { data, error: createErr } = await supabase.functions.invoke('create-order', {
-              body: {
-                order: orderData,
-                items: itemsPayload,
-                storeId: store.id,
-              }
-            });
-            if (createErr) throw createErr;
-            createdOrderId = data?.order?.id;
-            if (!createdOrderId) throw new Error('Order was not created');
-            accessToken = data?.order?.access_token;
-          }
+          // Manual payment method for upfront (bkash, nagad) - order already created above
           clearCart();
           toast.success('Order placed! Please complete the upfront payment.');
           navigate(paths.orderConfirmation(createdOrderId, accessToken));
@@ -533,12 +521,13 @@ useEffect(() => {
       
       // If no upfront payment needed, process regular payment flow
       if (form.payment_method === 'cod' || isManual) {
-        // Regular COD or manual payment
+        // Regular COD or manual payment (no upfront payment required)
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed successfully!');
         navigate(paths.orderConfirmation(createdOrderId, accessToken));
       } else {
-        // Regular live payment (no upfront shipping)
+        // Regular live payment (no upfront shipping) - selected method is live (EPS, EB Pay, Stripe)
+        // Order creation is deferred - payment gateway will create order after successful payment
         await initiatePayment(createdOrderId, finalTotal, form.payment_method, accessToken);
       }
     } catch (error) {
@@ -595,6 +584,29 @@ useEffect(() => {
               orderData: checkoutData?.orderData,
               itemsData: checkoutData?.itemsPayload,
               redirectOrigin: window.location.origin,
+              customerData: {
+                name: form.customer_name,
+                email: form.customer_email,
+                phone: form.customer_phone,
+                address: form.shipping_address,
+                city: form.shipping_city,
+              }
+            }
+          });
+          break;
+        case 'stripe':
+          // Store original origin for redirects (preserves custom domain)
+          sessionStorage.setItem('payment_origin', window.location.origin);
+          
+          response = await supabase.functions.invoke('stripe-payment', {
+            body: {
+              tempOrderId: orderId,
+              amount,
+              storeId: store!.id,
+              orderData: checkoutData?.orderData,
+              itemsData: checkoutData?.itemsPayload,
+              redirectOrigin: window.location.origin,
+              currency: 'USD', // Default to USD, can be made configurable
               customerData: {
                 name: form.customer_name,
                 email: form.customer_email,
