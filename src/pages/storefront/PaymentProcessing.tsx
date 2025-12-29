@@ -23,6 +23,7 @@ export const PaymentProcessing: React.FC = () => {
   const [verifying, setVerifying] = useState(false);
   const [creatingOrder, setCreatingOrder] = useState(false);
   const [isCoursePayment, setIsCoursePayment] = useState<boolean | null>(null);
+  const [orderCreated, setOrderCreated] = useState(false); // Prevent duplicate execution
   const [funnelContext, setFunnelContext] = useState<{
     isFunnelCheckout: boolean;
     funnelId?: string;
@@ -847,6 +848,10 @@ export const PaymentProcessing: React.FC = () => {
 
       if (data?.success && data?.order) {
         console.log('PaymentProcessing: ✅ Order created successfully, preparing redirect...');
+        
+        // Mark order as created to prevent duplicate execution
+        setOrderCreated(true);
+        
         // Clear stored checkout data
         sessionStorage.removeItem('pending_checkout');
         
@@ -1088,20 +1093,20 @@ export const PaymentProcessing: React.FC = () => {
               } else {
                 console.log('PaymentProcessing: Next step not found for funnel checkout');
               }
-            } else {
-              console.log('PaymentProcessing: Current step not found or no next step configured');
+              } else {
+                console.log('PaymentProcessing: Current step not found or no next step configured');
                 // Fallback: redirect to order confirmation if no funnel redirect configured
-                const newOrderToken = data.order.access_token;
-                toast.success('Order created successfully!');
-                window.location.href = paths.orderConfirmation(data.order.id, newOrderToken);
+                const newOrderToken = data.order.access_token || data.order.id;
+                // Don't show toast - redirect immediately
+                window.location.replace(paths.orderConfirmation(data.order.id, newOrderToken));
                 return;
               }
             } else {
               console.log('PaymentProcessing: Current step not found or no next step configured');
               // Fallback: redirect to order confirmation if current step not found
-              const newOrderToken = data.order.access_token;
-              toast.success('Order created successfully!');
-              window.location.href = paths.orderConfirmation(data.order.id, newOrderToken);
+              const newOrderToken = data.order.access_token || data.order.id;
+              // Don't show toast - redirect immediately
+              window.location.replace(paths.orderConfirmation(data.order.id, newOrderToken));
               return;
             }
           } catch (error) {
@@ -1117,8 +1122,7 @@ export const PaymentProcessing: React.FC = () => {
           hasToken: !!newOrderToken,
           redirectUrl: paths.orderConfirmation(data.order.id, newOrderToken)
         });
-        toast.success('Order created successfully!');
-        // Use window.location.replace to ensure redirect happens
+        // Don't show toast - redirect immediately without user seeing any messages
         window.location.replace(paths.orderConfirmation(data.order.id, newOrderToken));
         return; // Exit early to prevent further execution
       } else {
@@ -1128,15 +1132,20 @@ export const PaymentProcessing: React.FC = () => {
           error: data?.error,
           message: data?.message
         });
-        throw new Error(data?.error || data?.message || 'Failed to create order');
+        // Only show error if we haven't already redirected
+        if (!orderCreated) {
+          toast.error(data?.error || data?.message || 'Failed to create order. Please contact support.');
+        }
+        setCreatingOrder(false);
+        setLoading(false);
+        return;
       }
     } catch (error) {
       console.error('PaymentProcessing: Error creating deferred order:', error);
-      toast.error('Failed to create order. Please contact support.');
-      // Set loading to false so user can see the error
-      setCreatingOrder(false);
-      setLoading(false);
-    } finally {
+      // Only show error if we haven't already redirected
+      if (!orderCreated) {
+        toast.error('Failed to create order. Please contact support.');
+      }
       setCreatingOrder(false);
       setLoading(false);
     }
