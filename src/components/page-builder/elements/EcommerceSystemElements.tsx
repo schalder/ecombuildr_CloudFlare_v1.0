@@ -1427,6 +1427,26 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
           )
         : null;
 
+      // Debug: Log why upfrontPaymentMethod might be wrong
+      console.log('🔍 Upfront Payment Method Debug (CheckoutFullElement):', {
+        upfrontAmount,
+        cartItems: cartItems.map(item => ({
+          productId: item.productId,
+          collect_shipping_upfront: productDataMap.get(item.productId)?.collect_shipping_upfront,
+          upfront_shipping_payment_method: productDataMap.get(item.productId)?.upfront_shipping_payment_method,
+          product_type: productDataMap.get(item.productId)?.product_type
+        })),
+        customerSelectedMethod: form.payment_method,
+        allowedMethods,
+        upfrontPaymentMethod,
+        productDataMapEntries: Array.from(productDataMap.entries()).map(([id, data]) => ({
+          id,
+          product_type: data.product_type,
+          collect_shipping_upfront: data.collect_shipping_upfront,
+          upfront_shipping_payment_method: data.upfront_shipping_payment_method
+        }))
+      });
+
       // Helper function to check if a payment method requires gateway processing (live payment)
       const isLivePaymentMethod = (method: string | null | undefined): boolean => {
         if (!method) return false;
@@ -1434,7 +1454,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       };
 
       // Determine if we need to process upfront payment
-      const hasUpfrontPayment = upfrontAmount > 0 && upfrontPaymentMethod;
+      const hasUpfrontPayment = upfrontAmount > 0 && !!upfrontPaymentMethod; // Add !! to ensure boolean
       const upfrontPaymentIsLive = hasUpfrontPayment && isLivePaymentMethod(upfrontPaymentMethod);
       const isLivePayment = isLivePaymentMethod(form.payment_method);
 
