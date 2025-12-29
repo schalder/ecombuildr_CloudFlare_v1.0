@@ -799,7 +799,16 @@ export const PaymentProcessing: React.FC = () => {
         throw error;
       }
 
+      console.log('PaymentProcessing: create-order-on-payment-success response:', {
+        success: data?.success,
+        hasOrder: !!data?.order,
+        orderId: data?.order?.id,
+        error: data?.error,
+        fullData: data
+      });
+
       if (data?.success && data?.order) {
+        console.log('PaymentProcessing: ✅ Order created successfully, preparing redirect...');
         // Clear stored checkout data
         sessionStorage.removeItem('pending_checkout');
         
