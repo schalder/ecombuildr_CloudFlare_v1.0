@@ -96,6 +96,10 @@ export default function AddProduct() {
     whatsapp: { enabled: false, label: 'WhatsApp', url: '' },
   });
   const [allowedPayments, setAllowedPayments] = useState<string[]>([]);
+  
+  // COD upfront shipping collection
+  const [collectShippingUpfront, setCollectShippingUpfront] = useState(false);
+  const [upfrontShippingPaymentMethod, setUpfrontShippingPaymentMethod] = useState<string>('');
 
   // Description mode (Rich Text or Page Builder)
   const [descriptionMode, setDescriptionMode] = useState<'rich_text' | 'builder'>('rich_text');
@@ -265,6 +269,19 @@ export default function AddProduct() {
         return;
       }
 
+      // Validate upfront shipping payment method
+      if (formData.product_type === 'physical' && collectShippingUpfront && !upfrontShippingPaymentMethod) {
+        toast({
+          title: "Validation Error",
+          description: "Please select a payment method for upfront shipping fee collection.",
+          variant: "destructive",
+        });
+        setLoading(false);
+        // Navigate to the actions-payments section
+        navigateToSection('actions-payments');
+        return;
+      }
+
       // Generate a unique, URL-safe slug per store
       const baseSlug = formData.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
       // Create fallback slug if baseSlug is empty
@@ -340,6 +357,8 @@ export default function AddProduct() {
         digital_files: formData.digital_files,
         download_limit: formData.download_limit,
         download_expiry_hours: formData.download_expiry_hours,
+        collect_shipping_upfront: formData.product_type === 'physical' ? collectShippingUpfront : false,
+        upfront_shipping_payment_method: formData.product_type === 'physical' && collectShippingUpfront && upfrontShippingPaymentMethod ? upfrontShippingPaymentMethod : null,
       };
 
       const { data: newProduct, error: insertError } = await supabase
@@ -975,6 +994,63 @@ export default function AddProduct() {
                         Leave all unchecked to allow all available payment methods from your store settings.
                       </p>
                     </div>
+
+                    {/* COD Upfront Shipping Collection - Only for physical products */}
+                    {formData.product_type === 'physical' && (
+                      <>
+                        <Separator />
+                        <div className="space-y-4">
+                          <div>
+                            <Label className="text-sm font-medium">COD Shipping Fee Collection</Label>
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Collect shipping fee upfront to reduce fake orders. Product price will still be collected on delivery.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Switch
+                              id="collect_shipping_upfront"
+                              checked={collectShippingUpfront}
+                              onCheckedChange={(checked) => {
+                                setCollectShippingUpfront(checked);
+                                if (!checked) {
+                                  setUpfrontShippingPaymentMethod('');
+                                }
+                              }}
+                            />
+                            <Label htmlFor="collect_shipping_upfront" className="text-sm font-medium">
+                              Collect shipping fee upfront for COD orders
+                            </Label>
+                          </div>
+                          {collectShippingUpfront && (
+                            <div className="ml-6 space-y-3">
+                              <div>
+                                <Label htmlFor="upfront_shipping_payment_method" className="text-sm font-medium">
+                                  Payment Method for Upfront Shipping Fee <span className="text-destructive">*</span>
+                                </Label>
+                                <Select
+                                  value={upfrontShippingPaymentMethod}
+                                  onValueChange={setUpfrontShippingPaymentMethod}
+                                >
+                                  <SelectTrigger className="mt-2 max-w-md">
+                                    <SelectValue placeholder="Select payment method" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="eps">EPS</SelectItem>
+                                    <SelectItem value="ebpay">EB Pay</SelectItem>
+                                    <SelectItem value="stripe">Stripe</SelectItem>
+                                    <SelectItem value="bkash">bKash</SelectItem>
+                                    <SelectItem value="nagad">Nagad</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  Customers will pay the shipping fee using this method. Product price will be collected on delivery (COD).
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </AccordionContent>
               </Card>

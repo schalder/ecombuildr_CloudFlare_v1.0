@@ -23,6 +23,7 @@ import { useWebsiteShipping } from '@/hooks/useWebsiteShipping';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
 import { useChannelContext } from '@/hooks/useChannelContext';
 import { isValidInternationalPhone } from '@/utils/phoneValidation';
+import { calculatePaymentBreakdown, getPaymentBreakdownMessage, getUpfrontPaymentMethod, ProductData } from '@/utils/checkoutCalculations';
 
 interface CheckoutForm {
   customer_name: string;
@@ -83,6 +84,8 @@ export const CheckoutPage: React.FC = () => {
 
   const [hasDigitalProducts, setHasDigitalProducts] = useState(false);
   const [hasPhysicalProducts, setHasPhysicalProducts] = useState(false);
+  const [productDataMap, setProductDataMap] = useState<Map<string, ProductData>>(new Map());
+  const [paymentBreakdown, setPaymentBreakdown] = useState<ReturnType<typeof calculatePaymentBreakdown> | null>(null);
 
 // Recompute shipping cost when address details or settings change
 useEffect(() => {
@@ -131,6 +134,27 @@ useEffect(() => {
   computeShipping();
 }, [websiteShipping, form.shipping_city, form.shipping_area, form.shipping_address, items, total, hasDigitalProducts, hasPhysicalProducts]);
 
+  // Calculate payment breakdown when shipping cost, items, or product data changes
+  useEffect(() => {
+    if (items.length === 0 || productDataMap.size === 0) {
+      setPaymentBreakdown(null);
+      return;
+    }
+
+    const cartItems = items.map(item => ({
+      id: item.id,
+      productId: item.productId,
+      quantity: item.quantity,
+      price: item.price,
+      product_type: productDataMap.get(item.productId)?.product_type,
+      collect_shipping_upfront: productDataMap.get(item.productId)?.collect_shipping_upfront,
+      upfront_shipping_payment_method: productDataMap.get(item.productId)?.upfront_shipping_payment_method,
+    }));
+
+    const breakdown = calculatePaymentBreakdown(cartItems, shippingCost, productDataMap);
+    setPaymentBreakdown(breakdown);
+  }, [items, shippingCost, productDataMap]);
+
   // Check product types and derive allowed payment methods
   useEffect(() => {
     const loadProductData = async () => {
@@ -158,8 +182,11 @@ useEffect(() => {
       const ids = Array.from(new Set(items.map(i => i.productId)));
       const { data } = await supabase
         .from('products')
-        .select('id, allowed_payment_methods, product_type')
+        .select('id, allowed_payment_methods, product_type, collect_shipping_upfront, upfront_shipping_payment_method')
         .in('id', ids);
+      
+      // Build product data map for calculations
+      const productMap = new Map<string, ProductData>();
       
       // Check product types
       let hasDigital = false;
@@ -167,6 +194,14 @@ useEffect(() => {
       
       let acc: string[] = ['cod','bkash','nagad','eps','ebpay'];
       (data || []).forEach((p: any) => {
+        // Store product data for calculations
+        productMap.set(p.id, {
+          id: p.id,
+          product_type: p.product_type || 'physical',
+          collect_shipping_upfront: p.collect_shipping_upfront || false,
+          upfront_shipping_payment_method: p.upfront_shipping_payment_method || null,
+        });
+        
         if (p.product_type === 'digital') {
           hasDigital = true;
         } else {
@@ -179,6 +214,7 @@ useEffect(() => {
         }
       });
       
+      setProductDataMap(productMap);
       setHasDigitalProducts(hasDigital);
       setHasPhysicalProducts(hasPhysical);
       
@@ -337,6 +373,10 @@ useEffect(() => {
         // Status will be set by create-order or create-order-on-payment-success based on payment method and product types
         order_number: `ORD-${Date.now()}`,
         idempotency_key: idempotencyKey,
+        // Upfront payment info (if applicable)
+        upfront_payment_amount: upfrontAmount > 0 ? upfrontAmount : null,
+        upfront_payment_method: upfrontPaymentMethod || null,
+        delivery_payment_amount: paymentBreakdown?.deliveryAmount || null,
       };
 
       const itemsPayload = items.map(item => ({
@@ -349,13 +389,33 @@ useEffect(() => {
         image: item.image || null,
       }));
 
+      // Calculate upfront payment if needed
+      const upfrontAmount = paymentBreakdown?.upfrontAmount || 0;
+      const upfrontPaymentMethod = upfrontAmount > 0 
+        ? getUpfrontPaymentMethod(
+            items.map(i => ({ id: i.id, productId: i.productId, quantity: i.quantity, price: i.price })),
+            productDataMap,
+            form.payment_method,
+            allowedMethods
+          )
+        : null;
+
       // For EPS/EB Pay, defer order creation until after payment success
+      // Also defer if we need to process upfront payment
       const isLivePayment = form.payment_method === 'eps' || form.payment_method === 'ebpay';
+      const needsUpfrontPayment = upfrontAmount > 0 && upfrontPaymentMethod && (upfrontPaymentMethod === 'eps' || upfrontPaymentMethod === 'ebpay');
       
       let createdOrderId: string | undefined;
       let accessToken: string | undefined;
 
-      if (isLivePayment) {
+      // Process upfront payment if needed (before creating order)
+      if (upfrontAmount > 0 && upfrontPaymentMethod && !needsUpfrontPayment) {
+        // Process upfront payment for non-live methods (bkash, nagad manual)
+        // For live methods (eps, ebpay), we'll handle it in the payment flow
+        // For now, we'll create the order first and track upfront payment in metadata
+      }
+
+      if (isLivePayment || needsUpfrontPayment) {
         // Store checkout data temporarily for order creation after payment
         sessionStorage.setItem('pending_checkout', JSON.stringify({
           orderData,
@@ -869,12 +929,23 @@ useEffect(() => {
                 Next
               </Button>
             ) : (
-              <Button
-                onClick={handleSubmitOrder}
-                disabled={loading}
-              >
-                {loading ? 'Placing Order...' : 'Place Order'}
-              </Button>
+              <>
+                {/* Payment Breakdown Message */}
+                {paymentBreakdown && paymentBreakdown.hasUpfrontPayment && (
+                  <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
+                      {getPaymentBreakdownMessage(paymentBreakdown, '৳')}
+                    </p>
+                  </div>
+                )}
+                <Button
+                  onClick={handleSubmitOrder}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  {loading ? 'Placing Order...' : 'Place Order'}
+                </Button>
+              </>
             )}
           </div>
         </div>

@@ -2945,6 +2945,8 @@ export type Database = {
           variations: Json | null
           video_url: string | null
           weight_grams: number | null
+          collect_shipping_upfront: boolean | null
+          upfront_shipping_payment_method: string | null
         }
         Insert: {
           action_buttons?: Json
@@ -2991,6 +2993,8 @@ export type Database = {
           variations?: Json | null
           video_url?: string | null
           weight_grams?: number | null
+          collect_shipping_upfront?: boolean | null
+          upfront_shipping_payment_method?: string | null
         }
         Update: {
           action_buttons?: Json
@@ -3037,6 +3041,8 @@ export type Database = {
           variations?: Json | null
           video_url?: string | null
           weight_grams?: number | null
+          collect_shipping_upfront?: boolean | null
+          upfront_shipping_payment_method?: string | null
         }
         Relationships: [
           {
