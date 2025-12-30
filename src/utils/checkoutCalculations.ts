@@ -146,20 +146,6 @@ export function getPaymentBreakdownMessage(
     return null;
   }
 
-  // Delivery payment details
-  if (breakdown.hasDeliveryPayment) {
-    const deliveryParts: string[] = [];
-    if (breakdown.codProductsTotal > 0) {
-      deliveryParts.push(`product price ${currency}${breakdown.codProductsTotal.toFixed(2)}`);
-    }
-    if (breakdown.deliveryShippingFee > 0) {
-      deliveryParts.push(`shipping fee ${currency}${breakdown.deliveryShippingFee.toFixed(2)}`);
-    }
-    if (deliveryParts.length > 0) {
-      parts.push(`You will pay ${deliveryParts.join(' and ')} upon delivery`);
-    }
-  }
-
   return parts.length > 0 ? parts.join('. ') + '.' : null;
 }
 
