@@ -288,35 +288,40 @@ Deno.serve(async (req: Request) => {
       : 0;
 
     // Calculate cod_amount based on upfront payment status
+    // Even if payment method is not COD, if shipping was collected upfront,
+    // the product price may still need to be collected on delivery
     const isCOD = (order.payment_method || 'cod') === 'cod';
     let cod_amount = 0;
     
-    if (isCOD) {
-      // Extract upfront payment info from custom_fields
-      const customFields = order.custom_fields;
-      let upfrontAmount: number | null = null;
-      let deliveryAmount: number | null = null;
-      
-      // Handle both array and object formats for custom_fields
-      if (Array.isArray(customFields)) {
-        const upfrontField = customFields.find((cf: any) => cf.id === 'upfront_payment_amount' || cf.label === 'upfront_payment_amount');
-        const deliveryField = customFields.find((cf: any) => cf.id === 'delivery_payment_amount' || cf.label === 'delivery_payment_amount');
-        upfrontAmount = upfrontField ? Number(upfrontField.value) : null;
-        deliveryAmount = deliveryField ? Number(deliveryField.value) : null;
-      } else if (customFields && typeof customFields === 'object') {
-        upfrontAmount = (customFields as any).upfront_payment_amount ? Number((customFields as any).upfront_payment_amount) : null;
-        deliveryAmount = (customFields as any).delivery_payment_amount ? Number((customFields as any).delivery_payment_amount) : null;
-      }
-      
-      // If shipping was collected upfront, use delivery_payment_amount (product price only)
-      // Otherwise, use order.total (product price + shipping)
-      if (upfrontAmount && upfrontAmount > 0 && deliveryAmount !== null && deliveryAmount >= 0) {
-        // Shipping collected upfront, so only collect product price on delivery
-        cod_amount = deliveryAmount;
-      } else {
-        // Shipping not collected upfront, so collect full amount (product + shipping)
-        cod_amount = Number(order.total || 0);
-      }
+    // Extract upfront payment info from custom_fields (regardless of payment method)
+    const customFields = order.custom_fields;
+    let upfrontAmount: number | null = null;
+    let deliveryAmount: number | null = null;
+    
+    // Handle both array and object formats for custom_fields
+    if (Array.isArray(customFields)) {
+      const upfrontField = customFields.find((cf: any) => cf.id === 'upfront_payment_amount' || cf.label === 'upfront_payment_amount');
+      const deliveryField = customFields.find((cf: any) => cf.id === 'delivery_payment_amount' || cf.label === 'delivery_payment_amount');
+      upfrontAmount = upfrontField ? Number(upfrontField.value) : null;
+      deliveryAmount = deliveryField ? Number(deliveryField.value) : null;
+    } else if (customFields && typeof customFields === 'object') {
+      upfrontAmount = (customFields as any).upfront_payment_amount ? Number((customFields as any).upfront_payment_amount) : null;
+      deliveryAmount = (customFields as any).delivery_payment_amount ? Number((customFields as any).delivery_payment_amount) : null;
+    }
+    
+    // Determine cod_amount:
+    // 1. If delivery_payment_amount exists (shipping collected upfront), use it (product price only)
+    // 2. If payment method is COD and no upfront payment, use order.total (product + shipping)
+    // 3. Otherwise, cod_amount = 0 (fully prepaid)
+    if (deliveryAmount !== null && deliveryAmount > 0) {
+      // Shipping was collected upfront, so collect product price on delivery
+      cod_amount = deliveryAmount;
+    } else if (isCOD) {
+      // Standard COD order (no upfront payment), collect full amount
+      cod_amount = Number(order.total || 0);
+    } else {
+      // Fully prepaid order (no delivery payment needed)
+      cod_amount = 0;
     }
 
     const payload = {
@@ -336,11 +341,14 @@ Deno.serve(async (req: Request) => {
     console.log('Steadfast order details:', {
       order_id: order.id,
       payment_method: order.payment_method,
+      isCOD,
       order_total: order.total,
       order_subtotal: order.subtotal,
       shipping_cost: order.shipping_cost,
       custom_fields: order.custom_fields,
-      cod_amount,
+      extracted_upfront_amount: upfrontAmount,
+      extracted_delivery_amount: deliveryAmount,
+      calculated_cod_amount: cod_amount,
       physical_items_count: items?.length || 0
     });
 
