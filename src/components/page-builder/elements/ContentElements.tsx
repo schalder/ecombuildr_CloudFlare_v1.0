@@ -424,39 +424,94 @@ const TabsElement: React.FC<{
     handleUpdate('tabs', newTabs);
   };
 
-  const gridCols = tabs.length <= 2 ? 'grid-cols-2' : tabs.length === 3 ? 'grid-cols-3' : 'grid-cols-4';
+  // Generate responsive CSS for this element
+  const responsiveCSS = generateResponsiveCSS(element.id, element.styles);
+  
+  // Get base styles using the utility function
+  const containerStyles = renderElementStyles(element, deviceType);
+  
+  // Determine device key for responsive styles
+  const deviceKey = deviceType === 'tablet' ? 'desktop' : deviceType;
+  
+  // Get tab-specific styles
+  const tabLabelStyles = (element.styles as any)?.tabLabelStyles?.responsive?.[deviceKey] || {};
+  const tabContentStyles = (element.styles as any)?.tabContentStyles?.responsive?.[deviceKey] || {};
+  const tabListStyles = (element.styles as any)?.tabListStyles?.responsive?.[deviceKey] || {};
+  
+  // Create inline styles
+  const tabLabelInlineStyles = {
+    fontSize: tabLabelStyles.fontSize,
+    lineHeight: tabLabelStyles.lineHeight,
+    color: tabLabelStyles.color,
+    fontFamily: tabLabelStyles.fontFamily,
+    fontWeight: tabLabelStyles.fontWeight,
+    textAlign: tabLabelStyles.textAlign || 'center'
+  };
+
+  const tabContentInlineStyles = {
+    fontSize: tabContentStyles.fontSize,
+    lineHeight: tabContentStyles.lineHeight,
+    color: tabContentStyles.color,
+    fontFamily: tabContentStyles.fontFamily,
+    fontWeight: tabContentStyles.fontWeight,
+    textAlign: tabContentStyles.textAlign || 'left'
+  };
+
+  const tabListInlineStyles = {
+    backgroundColor: tabListStyles.backgroundColor,
+    borderColor: tabListStyles.borderColor,
+    borderWidth: tabListStyles.borderWidth,
+    borderRadius: tabListStyles.borderRadius,
+    padding: tabListStyles.padding
+  };
 
   return (
-    <div className={`${deviceType === 'tablet' && columnCount === 1 ? 'w-full' : 'max-w-2xl mx-auto'}`} style={element.styles}>
-      <Tabs defaultValue={defaultTab} className="w-full">
-        <TabsList className={`grid w-full ${gridCols}`}>
+    <>
+      {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
+      <div 
+        className={`element-${element.id} w-full`} 
+        style={containerStyles}
+      >
+        <Tabs defaultValue={defaultTab} className="w-full">
+          <TabsList 
+            className="flex w-full flex-wrap gap-1" 
+            style={tabListInlineStyles}
+          >
+            {tabs.map((tab: any, index: number) => (
+              <TabsTrigger 
+                key={tab.id} 
+                value={tab.id} 
+                className="flex-1 min-w-0"
+                style={tabLabelInlineStyles}
+              >
+                <InlineEditor
+                  value={tab.label}
+                  onChange={(value) => updateTab(index, 'label', value)}
+                  placeholder="Tab label"
+                  disabled={!isEditing}
+                  className="truncate"
+                  style={tabLabelInlineStyles}
+                />
+              </TabsTrigger>
+            ))}
+          </TabsList>
           {tabs.map((tab: any, index: number) => (
-            <TabsTrigger key={tab.id} value={tab.id} className="min-w-0">
-              <InlineEditor
-                value={tab.label}
-                onChange={(value) => updateTab(index, 'label', value)}
-                placeholder="Tab label"
-                disabled={!isEditing}
-                className="truncate"
-              />
-            </TabsTrigger>
+            <TabsContent key={tab.id} value={tab.id} className="mt-6">
+              <div className="p-4 border rounded-lg bg-background" style={tabContentInlineStyles}>
+                <InlineEditor
+                  value={tab.content}
+                  onChange={(value) => updateTab(index, 'content', value)}
+                  placeholder="Tab content..."
+                  multiline
+                  disabled={!isEditing}
+                  style={tabContentInlineStyles}
+                />
+              </div>
+            </TabsContent>
           ))}
-        </TabsList>
-        {tabs.map((tab: any, index: number) => (
-          <TabsContent key={tab.id} value={tab.id} className="mt-6">
-            <div className="p-4 border rounded-lg bg-background">
-              <InlineEditor
-                value={tab.content}
-                onChange={(value) => updateTab(index, 'content', value)}
-                placeholder="Tab content..."
-                multiline
-                disabled={!isEditing}
-              />
-            </div>
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
+        </Tabs>
+      </div>
+    </>
   );
 };
 
