@@ -81,16 +81,23 @@ function normalizePhoneForSteadfast(phone: string): string {
     // If it's 12 digits and starts with 01, try to fix it
     if (cleaned.length === 12 && cleaned.startsWith('01')) {
       // Bangladesh mobile numbers: 017, 018, 019, 016, 015
-      // If 3rd digit is not 7,8,9,6,5, it might be an extra digit
-      const thirdDigit = cleaned[2];
       const validMobilePrefixes = ['7', '8', '9', '6', '5'];
+      const thirdDigit = cleaned[2];
+      const fourthDigit = cleaned[3];
       
-      if (!validMobilePrefixes.includes(thirdDigit)) {
-        // 3rd digit is invalid, remove it: 013039090987 -> 01039090987
+      // Strategy 1: If 4th digit (index 3) is valid, remove 3rd digit
+      // Example: 013039090987 -> 01039090987 (if 4th is valid)
+      if (validMobilePrefixes.includes(fourthDigit)) {
         cleaned = cleaned.substring(0, 2) + cleaned.substring(3);
-      } else {
-        // 3rd digit is valid, remove the last digit: 013039090987 -> 01303909098
+      }
+      // Strategy 2: If 3rd digit is valid, remove last digit
+      // Example: 01790909876 -> 0179090987
+      else if (validMobilePrefixes.includes(thirdDigit)) {
         cleaned = cleaned.substring(0, 11);
+      }
+      // Strategy 3: Remove 3rd digit anyway (might fix some cases)
+      else {
+        cleaned = cleaned.substring(0, 2) + cleaned.substring(3);
       }
     }
     // If it's 12 digits but doesn't start with 01, check if removing first digit gives us 01...
