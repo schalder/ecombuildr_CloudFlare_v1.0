@@ -136,14 +136,57 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Load order items to build item_description and total_lot
-    const { data: items, error: itemsErr } = await supabase
+    // Load order items with product types to filter out digital products
+    // Only include physical products that require shipping
+    const { data: allItems, error: itemsErr } = await supabase
       .from('order_items')
-      .select('product_name, quantity, variation')
+      .select(`
+        product_name,
+        quantity,
+        variation,
+        price,
+        total,
+        product_id,
+        products(product_type)
+      `)
       .eq('order_id', order_id);
 
     if (itemsErr) {
       console.error('Error loading order items:', itemsErr);
+      return new Response(JSON.stringify({ 
+        error: 'Failed to load order items',
+        details: itemsErr.message
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+
+    // Filter out digital products - only keep physical products
+    const items = Array.isArray(allItems) 
+      ? allItems.filter((item: any) => {
+          // products is returned as an object or array, handle both
+          const product = item.products;
+          if (Array.isArray(product) && product.length > 0) {
+            return product[0]?.product_type === 'physical';
+          }
+          if (product && typeof product === 'object') {
+            return product.product_type === 'physical';
+          }
+          // If product type is not available, assume physical (backward compatibility)
+          return true;
+        })
+      : [];
+
+    // Check if there are any physical products to ship
+    if (!items || items.length === 0) {
+      return new Response(JSON.stringify({ 
+        error: 'No physical products to ship',
+        details: 'This order contains only digital products which do not require shipping'
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
     }
 
     function formatVariant(variation: any): string {
@@ -179,10 +222,37 @@ Deno.serve(async (req: Request) => {
       ? items.reduce((sum: number, it: any) => sum + Number(it.quantity || 0), 0)
       : 0;
 
-    // If prepaid (not COD), set cod_amount = 0; else include order.total
+    // Calculate cod_amount based on upfront payment status
     const isCOD = (order.payment_method || 'cod') === 'cod';
-    const totalNum = Number(order.total || 0);
-    const cod_amount = isCOD ? totalNum : 0;
+    let cod_amount = 0;
+    
+    if (isCOD) {
+      // Extract upfront payment info from custom_fields
+      const customFields = order.custom_fields;
+      let upfrontAmount: number | null = null;
+      let deliveryAmount: number | null = null;
+      
+      // Handle both array and object formats for custom_fields
+      if (Array.isArray(customFields)) {
+        const upfrontField = customFields.find((cf: any) => cf.id === 'upfront_payment_amount' || cf.label === 'upfront_payment_amount');
+        const deliveryField = customFields.find((cf: any) => cf.id === 'delivery_payment_amount' || cf.label === 'delivery_payment_amount');
+        upfrontAmount = upfrontField ? Number(upfrontField.value) : null;
+        deliveryAmount = deliveryField ? Number(deliveryField.value) : null;
+      } else if (customFields && typeof customFields === 'object') {
+        upfrontAmount = (customFields as any).upfront_payment_amount ? Number((customFields as any).upfront_payment_amount) : null;
+        deliveryAmount = (customFields as any).delivery_payment_amount ? Number((customFields as any).delivery_payment_amount) : null;
+      }
+      
+      // If shipping was collected upfront, use delivery_payment_amount (product price only)
+      // Otherwise, use order.total (product price + shipping)
+      if (upfrontAmount && upfrontAmount > 0 && deliveryAmount !== null && deliveryAmount >= 0) {
+        // Shipping collected upfront, so only collect product price on delivery
+        cod_amount = deliveryAmount;
+      } else {
+        // Shipping not collected upfront, so collect full amount (product + shipping)
+        cod_amount = Number(order.total || 0);
+      }
+    }
 
     const payload = {
       invoice,
@@ -198,6 +268,16 @@ Deno.serve(async (req: Request) => {
     };
 
     console.log('Steadfast create_order payload:', payload);
+    console.log('Steadfast order details:', {
+      order_id: order.id,
+      payment_method: order.payment_method,
+      order_total: order.total,
+      order_subtotal: order.subtotal,
+      shipping_cost: order.shipping_cost,
+      custom_fields: order.custom_fields,
+      cod_amount,
+      physical_items_count: items?.length || 0
+    });
 
     // 4) Call Steadfast API
     const resp = await fetch('https://portal.packzy.com/api/v1/create_order', {
