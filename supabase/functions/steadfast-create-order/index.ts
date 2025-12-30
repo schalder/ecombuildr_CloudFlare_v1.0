@@ -76,9 +76,24 @@ function normalizePhoneForSteadfast(phone: string): string {
     }
   }
   
-  // If it's still longer than 11, take the last 11 digits
+  // If it's still longer than 11, handle intelligently
   if (cleaned.length > 11) {
-    cleaned = cleaned.substring(cleaned.length - 11);
+    // If it's 12 digits and starts with 01, it might have duplicate 01 prefix
+    // Example: 013039090987 -> should be 01303909098 (remove first 01 if 3rd digit is valid)
+    if (cleaned.length === 12 && cleaned.startsWith('01')) {
+      const thirdDigit = cleaned[2];
+      const validMobileThirdDigits = ['3', '4', '5', '6', '7', '8', '9'];
+      // If 3rd digit is valid for mobile, remove first "01" to get 11 digits
+      if (validMobileThirdDigits.includes(thirdDigit)) {
+        cleaned = cleaned.substring(2); // Remove first "01", keep rest
+      } else {
+        // Otherwise, take last 11 digits
+        cleaned = cleaned.substring(cleaned.length - 11);
+      }
+    } else {
+      // For other cases, take the last 11 digits
+      cleaned = cleaned.substring(cleaned.length - 11);
+    }
   }
   
   // Final fix: if we have 11 digits but they don't start with 0
