@@ -279,6 +279,22 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
       }
       
       console.log('FunnelSettings: Funnel saved successfully with website_id:', websiteIdToSave);
+      
+      // Verify the update by fetching the funnel again
+      const { data: updatedFunnel, error: verifyError } = await supabase
+        .from('funnels')
+        .select('id, name, website_id')
+        .eq('id', funnel.id)
+        .single();
+      
+      if (verifyError) {
+        console.error('FunnelSettings: Error verifying update:', verifyError);
+      } else {
+        console.log('FunnelSettings: Verified database update - funnel website_id is now:', updatedFunnel?.website_id);
+        if (updatedFunnel?.website_id !== websiteIdToSave) {
+          console.error('FunnelSettings: MISMATCH! Expected website_id:', websiteIdToSave, 'but database has:', updatedFunnel?.website_id);
+        }
+      }
 
       // Handle domain connection changes
       const currentConnection = connections.find(c => 
