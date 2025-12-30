@@ -258,8 +258,8 @@ const FeaturedProductsElement: React.FC<{
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
   // Responsive grid classes for multi-featured layout
+  const cols = element.content.columns || 2;
   const getGridClasses = () => {
-    const cols = element.content.columns || 2;
     if (deviceType === 'mobile') {
       const mCols = (element.content as any).mobileColumns as number | undefined;
       const m = typeof mCols === 'number' ? Math.max(1, Math.min(3, mCols)) : 1;
