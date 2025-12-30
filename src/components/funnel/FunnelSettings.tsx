@@ -140,6 +140,36 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
     form.setValue('canonical_domain', connectedDomain?.domain || '');
   }, [connectedDomain, form]);
 
+  // Reset form when funnel data changes (after save/refetch)
+  React.useEffect(() => {
+    if (funnel) {
+      form.reset({
+        name: funnel.name || '',
+        description: funnel.description || '',
+        slug: funnel.slug || '',
+        domain: connectedDomain?.domain || '',
+        is_published: funnel.is_published,
+        is_active: funnel.is_active,
+        website_id: funnel.website_id || '',
+        header_tracking_code: funnel.settings?.header_tracking_code || '',
+        footer_tracking_code: funnel.settings?.footer_tracking_code || '',
+        facebook_pixel_id: funnel.settings?.facebook_pixel_id || '',
+        facebook_access_token: funnel.settings?.facebook_access_token || '',
+        facebook_test_event_code: funnel.settings?.facebook_test_event_code || '',
+        facebook_server_side_enabled: funnel.settings?.facebook_server_side_enabled ?? false,
+        google_analytics_id: funnel.settings?.google_analytics_id || '',
+        google_ads_id: funnel.settings?.google_ads_id || '',
+        favicon_url: funnel.settings?.favicon_url || '',
+        currency_code: funnel.settings?.currency_code || 'BDT',
+        seo_title: funnel.seo_title || '',
+        seo_description: funnel.seo_description || '',
+        og_image: funnel.og_image || '',
+        meta_robots: funnel.meta_robots || 'index, follow',
+        canonical_domain: funnel.canonical_domain || connectedDomain?.domain || '',
+      });
+    }
+  }, [funnel, connectedDomain, form]);
+
   const [slugError, setSlugError] = React.useState<string>('');
   const [checkingSlug, setCheckingSlug] = React.useState(false);
 
@@ -215,12 +245,17 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         finalCanonicalDomain = domain;
       }
 
+      // Debug logging to verify website_id is being saved
+      console.log('FunnelSettings: Saving funnel with website_id:', website_id, 'Type:', typeof website_id);
+      const websiteIdToSave = website_id && website_id.trim() !== '' ? website_id : null;
+      console.log('FunnelSettings: website_id after processing:', websiteIdToSave);
+
       // Update the funnel settings first
       const { error } = await supabase
         .from('funnels')
         .update({
           ...basicFields,
-          website_id: website_id || null,
+          website_id: websiteIdToSave,
           settings,
           seo_title: seo_title || null,
           seo_description: seo_description || null,
@@ -231,7 +266,12 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         })
         .eq('id', funnel.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error('FunnelSettings: Error saving funnel website_id:', error);
+        throw error;
+      }
+      
+      console.log('FunnelSettings: Funnel saved successfully with website_id:', websiteIdToSave);
 
       // Handle domain connection changes
       const currentConnection = connections.find(c => 
