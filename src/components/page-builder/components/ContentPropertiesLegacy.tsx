@@ -105,6 +105,7 @@ export const TestimonialContentProperties: React.FC<ContentPropertiesProps> = ({
           value={element.content.avatar || ''}
           onChange={(url) => onUpdate('avatar', url)}
           label="Select Avatar Image"
+          showLabelOnly={true}
         />
       </div>
 
