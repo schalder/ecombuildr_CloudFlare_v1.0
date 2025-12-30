@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ImageUpload } from '@/components/ui/image-upload';
-import { CompactMediaSelector } from '../CompactMediaSelector';
+import { CompactMediaSelector } from './CompactMediaSelector';
 import { PageBuilderElement, ElementVisibility } from '../types';
 import { VisibilityControl } from './VisibilityControl';
 
