@@ -76,39 +76,9 @@ function normalizePhoneForSteadfast(phone: string): string {
     }
   }
   
-  // If it's still longer than 11, handle intelligently
+  // If it's still longer than 11, take the last 11 digits
   if (cleaned.length > 11) {
-    // If it's 12 digits and starts with 01, try to fix it
-    if (cleaned.length === 12 && cleaned.startsWith('01')) {
-      // Bangladesh mobile numbers: 017, 018, 019, 016, 015
-      const validMobilePrefixes = ['7', '8', '9', '6', '5'];
-      const thirdDigit = cleaned[2];
-      const fourthDigit = cleaned[3];
-      
-      // Strategy 1: If 4th digit (index 3) is valid, remove 3rd digit
-      // Example: 013039090987 -> 01039090987 (if 4th is valid)
-      if (validMobilePrefixes.includes(fourthDigit)) {
-        cleaned = cleaned.substring(0, 2) + cleaned.substring(3);
-      }
-      // Strategy 2: If 3rd digit is valid, remove last digit
-      // Example: 01790909876 -> 0179090987
-      else if (validMobilePrefixes.includes(thirdDigit)) {
-        cleaned = cleaned.substring(0, 11);
-      }
-      // Strategy 3: Remove 3rd digit anyway (might fix some cases)
-      else {
-        cleaned = cleaned.substring(0, 2) + cleaned.substring(3);
-      }
-    }
-    // If it's 12 digits but doesn't start with 01, check if removing first digit gives us 01...
-    else if (cleaned.length === 12 && cleaned.substring(1, 3) === '01') {
-      // Remove first digit to get 01XXXXXXXXX format
-      cleaned = cleaned.substring(1);
-    }
-    // Otherwise, take the last 11 digits (fallback)
-    else {
-      cleaned = cleaned.substring(cleaned.length - 11);
-    }
+    cleaned = cleaned.substring(cleaned.length - 11);
   }
   
   // Final fix: if we have 11 digits but they don't start with 0
@@ -124,14 +94,6 @@ function normalizePhoneForSteadfast(phone: string): string {
       // This looks like it might be missing the leading 0, but we can't be sure
       // Return as-is and let validation handle it
     }
-  }
-  
-  // Additional validation: Bangladesh mobile numbers should start with 01X where X is 7, 8, or 9
-  // If we have 11 digits starting with 0 but second digit is not 1, it might be invalid
-  if (cleaned.length === 11 && cleaned.startsWith('0') && cleaned[1] !== '1') {
-    // This might be a landline (03...) or invalid format
-    // Log it but still try to send (Steadfast will validate)
-    console.warn('Phone number might be invalid format (does not start with 01):', cleaned);
   }
   
   // Final validation: must be 11 digits starting with 0
@@ -231,8 +193,27 @@ Deno.serve(async (req: Request) => {
     // Validate phone number - Steadfast requires exactly 11 digits starting with 0
     if (!recipient_phone || recipient_phone.length !== 11 || !recipient_phone.startsWith('0')) {
       return new Response(JSON.stringify({ 
+        ok: false,
         error: 'Invalid phone number format',
-        details: `Phone number must be exactly 11 digits starting with 0 (e.g., 01234567890). Received: "${recipient_phone}" (${recipient_phone.length} digits) from input: "${rawPhone}". Please ensure the phone number is in the format 01XXXXXXXXX.`
+        message: `Phone number must be exactly 11 digits starting with 0 (e.g., 01234567890). Received: "${recipient_phone}" (${recipient_phone.length} digits) from input: "${rawPhone}". Please ensure the phone number is in the format 01XXXXXXXXX.`
+      }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+
+    // Validate Bangladesh mobile number format
+    // Steadfast requires mobile numbers starting with 01X where X is 7, 8, 9, 6, or 5
+    // Landline numbers (03X...) are not accepted
+    const validMobilePrefixes = ['017', '018', '019', '016', '015', '013', '014'];
+    const phonePrefix = recipient_phone.substring(0, 3);
+    const isValidMobile = validMobilePrefixes.includes(phonePrefix);
+    
+    if (!isValidMobile) {
+      return new Response(JSON.stringify({ 
+        ok: false,
+        error: 'Invalid phone number format',
+        message: `Phone number must be a valid Bangladesh mobile number starting with 01X (where X is 3, 4, 5, 6, 7, 8, or 9). Examples: 01712345678, 01812345678, 01912345678. The provided number "${recipient_phone}" does not match this format.`
       }), {
         status: 400,
         headers: corsHeaders,
@@ -414,6 +395,50 @@ Deno.serve(async (req: Request) => {
     const success =
       resp.ok && respJson && typeof respJson.status !== 'undefined' && Number(respJson.status) === 200;
 
+    // Helper function to extract user-friendly error message from Steadfast response
+    function getUserFriendlyError(respJson: any): string {
+      if (!respJson) return 'Failed to create consignment with Steadfast';
+      
+      // Check for specific error fields
+      if (respJson.errors) {
+        const errorMessages: string[] = [];
+        
+        // Handle phone number errors
+        if (respJson.errors.recipient_phone) {
+          const phoneErrors = Array.isArray(respJson.errors.recipient_phone) 
+            ? respJson.errors.recipient_phone 
+            : [respJson.errors.recipient_phone];
+          if (phoneErrors.length > 0) {
+            errorMessages.push(`Phone number: ${phoneErrors[0]}. Please ensure it's a valid Bangladesh mobile number (11 digits starting with 01X where X is 3, 4, 5, 6, 7, 8, or 9).`);
+          }
+        }
+        
+        // Handle other field errors
+        Object.keys(respJson.errors).forEach(key => {
+          if (key !== 'recipient_phone') {
+            const fieldErrors = Array.isArray(respJson.errors[key]) 
+              ? respJson.errors[key] 
+              : [respJson.errors[key]];
+            if (fieldErrors.length > 0) {
+              const fieldName = key.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
+              errorMessages.push(`${fieldName}: ${fieldErrors[0]}`);
+            }
+          }
+        });
+        
+        if (errorMessages.length > 0) {
+          return errorMessages.join(' ');
+        }
+      }
+      
+      // Fallback to message or generic error
+      if (respJson.message) {
+        return respJson.message;
+      }
+      
+      return 'Failed to create consignment with Steadfast. Please check the order details and try again.';
+    }
+
     if (success) {
       const consignment = respJson?.consignment || {};
       const insertRes = await supabase.from('courier_shipments').insert({
@@ -475,11 +500,15 @@ Deno.serve(async (req: Request) => {
         console.error('Failed to insert courier_shipments on error:', insertRes.error);
       }
 
+      // Extract user-friendly error message
+      const userFriendlyError = getUserFriendlyError(respJson);
+      
       return new Response(
         JSON.stringify({
           ok: false,
           error: 'Failed to create consignment',
-          details: respJson,
+          message: userFriendlyError,
+          details: respJson, // Keep details for debugging
         }),
         { status: 400, headers: corsHeaders }
       );

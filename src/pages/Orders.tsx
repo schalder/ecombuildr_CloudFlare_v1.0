@@ -1576,7 +1576,11 @@ export default function Orders() {
       const { data, error } = await supabase.functions.invoke('steadfast-create-order', {
         body: { store_id: order.store_id, order_id: order.id },
       });
-      if (error) throw error;
+      if (error) {
+        // Check if error has a user-friendly message
+        const errorMessage = error.message || (error as any)?.error || "Failed to create consignment";
+        throw new Error(errorMessage);
+      }
       if (data?.ok) {
         const consignment = data?.consignment || {};
         const tracking = consignment?.tracking_code || consignment?.consignment_id || data?.message;
@@ -1592,7 +1596,9 @@ export default function Orders() {
         ));
         toast({ title: "Pushed to Steadfast", description: tracking ? String(tracking) : "Consignment created." });
       } else {
-        throw new Error(data?.error || "Failed to create consignment");
+        // Use user-friendly message if available, otherwise fall back to error
+        const errorMessage = data?.message || data?.error || "Failed to create consignment";
+        throw new Error(errorMessage);
       }
     } catch (e: any) {
       console.error(e);
@@ -1609,8 +1615,17 @@ export default function Orders() {
           .limit(1)
           .maybeSingle();
         
-        if (errorShipment?.error || (errorShipment?.response_payload && typeof errorShipment.response_payload === 'object' && 'message' in errorShipment.response_payload)) {
-          const specificError = errorShipment.error || (typeof errorShipment.response_payload === 'object' && errorShipment.response_payload && 'message' in errorShipment.response_payload ? (errorShipment.response_payload as any).message : null);
+        // Check for user-friendly error message in response_payload
+        let specificError: string | null = null;
+        if (errorShipment?.response_payload && typeof errorShipment.response_payload === 'object') {
+          const payload = errorShipment.response_payload as any;
+          // Prefer user-friendly message, then error field, then generic error
+          specificError = payload.message || payload.error || errorShipment.error || null;
+        } else if (errorShipment?.error) {
+          specificError = errorShipment.error;
+        }
+        
+        if (specificError) {
           toast({ 
             title: "Steadfast Error", 
             description: specificError, 
