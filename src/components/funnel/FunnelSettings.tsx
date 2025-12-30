@@ -143,6 +143,12 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
   // Reset form when funnel data changes (after save/refetch)
   React.useEffect(() => {
     if (funnel) {
+      console.log('FunnelSettings: Resetting form with funnel data:', {
+        funnel_id: funnel.id,
+        funnel_name: funnel.name,
+        website_id: funnel.website_id,
+        website_id_type: typeof funnel.website_id
+      });
       form.reset({
         name: funnel.name || '',
         description: funnel.description || '',
@@ -167,6 +173,7 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
         meta_robots: funnel.meta_robots || 'index, follow',
         canonical_domain: funnel.canonical_domain || connectedDomain?.domain || '',
       });
+      console.log('FunnelSettings: Form reset complete, current website_id:', form.getValues('website_id'));
     }
   }, [funnel, connectedDomain, form]);
 
@@ -319,6 +326,12 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
   });
 
   const onSubmit = (data: FunnelSettingsForm) => {
+    console.log('FunnelSettings: Form submitted with data:', {
+      website_id: data.website_id,
+      website_id_type: typeof data.website_id,
+      funnel_id: funnel.id,
+      current_funnel_website_id: funnel.website_id
+    });
     updateFunnelMutation.mutate(data);
   };
 
@@ -451,13 +464,18 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                   <FormField
                     control={form.control}
                     name="website_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-foreground">Website *</FormLabel>
-                        <Select 
-                          value={field.value || 'none'} 
-                          onValueChange={(value) => field.onChange(value === 'none' ? '' : value)}
-                        >
+                    render={({ field }) => {
+                      console.log('FunnelSettings: Website field render - value:', field.value, 'funnel.website_id:', funnel.website_id);
+                      return (
+                        <FormItem>
+                          <FormLabel className="text-foreground">Website *</FormLabel>
+                          <Select 
+                            value={field.value || 'none'} 
+                            onValueChange={(value) => {
+                              console.log('FunnelSettings: Website selection changed from', field.value, 'to', value);
+                              field.onChange(value === 'none' ? '' : value);
+                            }}
+                          >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a website for this funnel" />
@@ -477,7 +495,8 @@ export const FunnelSettings: React.FC<FunnelSettingsProps> = ({ funnel }) => {
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
-                    )}
+                      );
+                    }}
                   />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
