@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Trash2, Star, Upload, GripVertical } from 'lucide-react';
+import { Plus, Trash2, Star, Upload, GripVertical, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { VisibilityControl } from './VisibilityControl';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface ContentPropertiesProps {
   element: PageBuilderElement;
@@ -620,6 +621,17 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
     type MenuItem = { id: string; label: string; type?: 'url' | 'page'; url?: string; pagePath?: string; children?: MenuItem[] };
     const items: MenuItem[] = element.content.items || [];
 
+    // State for collapsible sections
+    const [logoOpen, setLogoOpen] = React.useState(true);
+    const [colorsOpen, setColorsOpen] = React.useState(true);
+    const [settingsOpen, setSettingsOpen] = React.useState(true);
+    const [menuItemsOpen, setMenuItemsOpen] = React.useState(true);
+    const [itemOpenStates, setItemOpenStates] = React.useState<Record<string, boolean>>({});
+
+    const toggleItem = (itemId: string) => {
+      setItemOpenStates(prev => ({ ...prev, [itemId]: !prev[itemId] }));
+    };
+
     const addRootItem = () => {
       const next: MenuItem[] = [...items, { id: `mi-${Date.now()}`, label: 'Menu Item', type: 'url', url: '#', children: [] }];
       onUpdate('items', next);
@@ -661,154 +673,197 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
     return (
       <div className="space-y-4">
         <VisibilitySection />
-        <div>
-          <MediaSelector
-            value={element.content.logoUrl || ''}
-            onChange={(url) => onUpdate('logoUrl', url)}
-            label="Logo image"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="nav-link-color">Menu Item Color</Label>
-            <Input
-              id="nav-link-color"
-              type="color"
-              value={element.content.linkColor || '#333333'}
-              onChange={(e) => onUpdate('linkColor', e.target.value)}
+        
+        {/* Logo Section */}
+        <Collapsible open={logoOpen} onOpenChange={setLogoOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Logo</h4>
+            <ChevronDown className={`h-4 w-4 transition-transform ${logoOpen ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 pt-2">
+            <MediaSelector
+              value={element.content.logoUrl || ''}
+              onChange={(url) => onUpdate('logoUrl', url)}
+              label="Logo image"
             />
-          </div>
-          <div>
-            <Label htmlFor="nav-link-hover-color">Hover Color</Label>
-            <Input
-              id="nav-link-hover-color"
-              type="color"
-              value={element.content.linkHoverColor || '#111111'}
-              onChange={(e) => onUpdate('linkHoverColor', e.target.value)}
-            />
-          </div>
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
 
-        <div>
-          <Label htmlFor="submenu-hover-bg">Submenu Hover Background</Label>
-          <Input
-            id="submenu-hover-bg"
-            type="color"
-            value={element.content.submenuHoverBgColor || '#f5f5f5'}
-            onChange={(e) => onUpdate('submenuHoverBgColor', e.target.value)}
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="hamburger-icon-color">Hamburger Icon Color</Label>
-            <Input
-              id="hamburger-icon-color"
-              type="color"
-              value={element.content.hamburgerIconColor || element.content.linkColor || '#333333'}
-              onChange={(e) => onUpdate('hamburgerIconColor', e.target.value)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="hamburger-icon-hover-color">Hamburger Hover Color</Label>
-            <Input
-              id="hamburger-icon-hover-color"
-              type="color"
-              value={element.content.hamburgerIconHoverColor || element.content.linkHoverColor || '#111111'}
-              onChange={(e) => onUpdate('hamburgerIconHoverColor', e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label htmlFor="nav-gap">Menu Item Gap (px)</Label>
-          <Input
-            id="nav-gap"
-            type="number"
-            min={0}
-            value={element.content.menuGap ?? 24}
-            onChange={(e) => onUpdate('menuGap', Number(e.target.value))}
-          />
-        </div>
-
-        <div className="flex items-center space-x-2 mb-2">
-          <input
-            type="checkbox"
-            id="nav-show-cart"
-            checked={!!element.content.showCart}
-            onChange={(e) => onUpdate('showCart', e.target.checked)}
-          />
-          <Label htmlFor="nav-show-cart" className="text-sm">Show Cart Icon</Label>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div>
-            <Label className="text-sm">Menu Items</Label>
-            <p className="text-xs text-muted-foreground">Add items and optional sub items (one level)</p>
-          </div>
-          <Button size="sm" onClick={addRootItem} className="h-7">
-            <Plus className="h-3 w-3 mr-1" />
-            Add Item
-          </Button>
-        </div>
-
-        <div className="space-y-3">
-          {items.map((item, idx) => (
-            <div key={item.id} className="border rounded-md p-3 space-y-2">
-              <div className="grid grid-cols-2 gap-2">
-                <Input value={item.label} onChange={(e) => updateRootItem(idx, { label: e.target.value })} placeholder="Label" />
-                <Select value={item.type || 'url'} onValueChange={(v) => updateRootItem(idx, { type: v as any })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="url">Custom URL</SelectItem>
-                    <SelectItem value="page">Page path</SelectItem>
-                  </SelectContent>
-                </Select>
-                { (item.type || 'url') === 'url' ? (
-                  <Input className="col-span-2" value={item.url || ''} onChange={(e) => updateRootItem(idx, { url: e.target.value })} placeholder="https:// or /path" />
-                ) : (
-                  <Input className="col-span-2" value={item.pagePath || ''} onChange={(e) => updateRootItem(idx, { pagePath: e.target.value })} placeholder="/page-slug" />
-                )}
+        {/* Colors Section */}
+        <Collapsible open={colorsOpen} onOpenChange={setColorsOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Colors</h4>
+            <ChevronDown className={`h-4 w-4 transition-transform ${colorsOpen ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 pt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="nav-link-color">Menu Item Color</Label>
+                <Input
+                  id="nav-link-color"
+                  type="color"
+                  value={element.content.linkColor || '#333333'}
+                  onChange={(e) => onUpdate('linkColor', e.target.value)}
+                />
               </div>
-              <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" onClick={() => addChild(idx)}>Add Subitem</Button>
-                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeRootItem(idx)}>Delete</Button>
+              <div>
+                <Label htmlFor="nav-link-hover-color">Hover Color</Label>
+                <Input
+                  id="nav-link-hover-color"
+                  type="color"
+                  value={element.content.linkHoverColor || '#111111'}
+                  onChange={(e) => onUpdate('linkHoverColor', e.target.value)}
+                />
               </div>
+            </div>
 
-              {item.children && item.children.length > 0 && (
-                <div className="mt-2 pl-3 border-l space-y-2">
-                  {item.children.map((child, cIdx) => (
-                    <div key={child.id} className="grid grid-cols-2 gap-2 items-center">
-                      <Input value={child.label} onChange={(e) => updateChild(idx, cIdx, { label: e.target.value })} placeholder="Sub label" />
-                      <Select value={child.type || 'url'} onValueChange={(v) => updateChild(idx, cIdx, { type: v as any })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="url">Custom URL</SelectItem>
-                          <SelectItem value="page">Page path</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      { (child.type || 'url') === 'url' ? (
-                        <Input className="col-span-2" value={child.url || ''} onChange={(e) => updateChild(idx, cIdx, { url: e.target.value })} placeholder="https:// or /path" />
-                      ) : (
-                        <Input className="col-span-2" value={child.pagePath || ''} onChange={(e) => updateChild(idx, cIdx, { pagePath: e.target.value })} placeholder="/page-slug" />
-                      )}
-                      <div className="col-span-2 flex items-center justify-end">
-                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeChild(idx, cIdx)}>Remove</Button>
+            <div>
+              <Label htmlFor="submenu-hover-bg">Submenu Hover Background</Label>
+              <Input
+                id="submenu-hover-bg"
+                type="color"
+                value={element.content.submenuHoverBgColor || '#f5f5f5'}
+                onChange={(e) => onUpdate('submenuHoverBgColor', e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="hamburger-icon-color">Hamburger Icon Color</Label>
+                <Input
+                  id="hamburger-icon-color"
+                  type="color"
+                  value={element.content.hamburgerIconColor || element.content.linkColor || '#333333'}
+                  onChange={(e) => onUpdate('hamburgerIconColor', e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="hamburger-icon-hover-color">Hamburger Hover Color</Label>
+                <Input
+                  id="hamburger-icon-hover-color"
+                  type="color"
+                  value={element.content.hamburgerIconHoverColor || element.content.linkHoverColor || '#111111'}
+                  onChange={(e) => onUpdate('hamburgerIconHoverColor', e.target.value)}
+                />
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Settings Section */}
+        <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
+            <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Settings</h4>
+            <ChevronDown className={`h-4 w-4 transition-transform ${settingsOpen ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 pt-2">
+            <div>
+              <Label htmlFor="nav-gap">Menu Item Gap (px)</Label>
+              <Input
+                id="nav-gap"
+                type="number"
+                min={0}
+                value={element.content.menuGap ?? 24}
+                onChange={(e) => onUpdate('menuGap', Number(e.target.value))}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="nav-show-cart"
+                checked={!!element.content.showCart}
+                onChange={(e) => onUpdate('showCart', e.target.checked)}
+              />
+              <Label htmlFor="nav-show-cart" className="text-sm">Show Cart Icon</Label>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+
+        {/* Menu Items Section */}
+        <Collapsible open={menuItemsOpen} onOpenChange={setMenuItemsOpen}>
+          <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
+            <div>
+              <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Menu Items</h4>
+              <p className="text-xs text-muted-foreground mt-0.5">Add items and optional sub items (one level)</p>
+            </div>
+            <ChevronDown className={`h-4 w-4 transition-transform ${menuItemsOpen ? 'rotate-180' : ''}`} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="space-y-3 pt-2">
+            <div className="flex justify-end">
+              <Button size="sm" onClick={addRootItem} className="h-7">
+                <Plus className="h-3 w-3 mr-1" />
+                Add Item
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              {items.map((item, idx) => {
+                const isItemOpen = itemOpenStates[item.id] !== false; // Default to true
+                return (
+                  <Collapsible key={item.id} open={isItemOpen} onOpenChange={() => toggleItem(item.id)}>
+                    <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded border">
+                      <span className="text-sm font-medium">{item.label || `Menu Item ${idx + 1}`}</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${isItemOpen ? 'rotate-180' : ''}`} />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="space-y-2 pt-2 border border-t-0 rounded-b-md p-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input value={item.label} onChange={(e) => updateRootItem(idx, { label: e.target.value })} placeholder="Label" />
+                        <Select value={item.type || 'url'} onValueChange={(v) => updateRootItem(idx, { type: v as any })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="url">Custom URL</SelectItem>
+                            <SelectItem value="page">Page path</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        { (item.type || 'url') === 'url' ? (
+                          <Input className="col-span-2" value={item.url || ''} onChange={(e) => updateRootItem(idx, { url: e.target.value })} placeholder="https:// or /path" />
+                        ) : (
+                          <Input className="col-span-2" value={item.pagePath || ''} onChange={(e) => updateRootItem(idx, { pagePath: e.target.value })} placeholder="/page-slug" />
+                        )}
                       </div>
-                    </div>
-                  ))}
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" onClick={() => addChild(idx)}>Add Subitem</Button>
+                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeRootItem(idx)}>Delete</Button>
+                      </div>
+
+                      {item.children && item.children.length > 0 && (
+                        <div className="mt-2 pl-3 border-l space-y-2">
+                          {item.children.map((child, cIdx) => (
+                            <div key={child.id} className="grid grid-cols-2 gap-2 items-center">
+                              <Input value={child.label} onChange={(e) => updateChild(idx, cIdx, { label: e.target.value })} placeholder="Sub label" />
+                              <Select value={child.type || 'url'} onValueChange={(v) => updateChild(idx, cIdx, { type: v as any })}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="url">Custom URL</SelectItem>
+                                  <SelectItem value="page">Page path</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              { (child.type || 'url') === 'url' ? (
+                                <Input className="col-span-2" value={child.url || ''} onChange={(e) => updateChild(idx, cIdx, { url: e.target.value })} placeholder="https:// or /path" />
+                              ) : (
+                                <Input className="col-span-2" value={child.pagePath || ''} onChange={(e) => updateChild(idx, cIdx, { pagePath: e.target.value })} placeholder="/page-slug" />
+                              )}
+                              <div className="col-span-2 flex items-center justify-end">
+                                <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => removeChild(idx, cIdx)}>Remove</Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
+
+              {items.length === 0 && (
+                <div className="text-center text-muted-foreground text-sm py-4">
+                  No menu items yet. Click "Add Item" to create one.
                 </div>
               )}
             </div>
-          ))}
-
-          {items.length === 0 && (
-            <div className="text-center text-muted-foreground text-sm py-4">
-              No menu items yet. Click "Add Item" to create one.
-            </div>
-          )}
-        </div>
+          </CollapsibleContent>
+        </Collapsible>
       </div>
     );
   }

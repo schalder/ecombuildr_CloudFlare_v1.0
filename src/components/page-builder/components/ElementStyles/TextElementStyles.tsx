@@ -255,21 +255,23 @@ export const TextElementStyles: React.FC<TextElementStylesProps> = ({
               )}
             </ResponsiveStyleControl>
 
-            <ResponsiveStyleControl
-              element={element}
-              property="color"
-              label="Text Color"
-              deviceType={responsiveTab}
-              fallback=""
-              onStyleUpdate={onStyleUpdate}
-            >
-              {(value, onChange) => (
-                <ColorPicker 
-                  color={value}
-                  onChange={onChange}
-                />
-              )}
-            </ResponsiveStyleControl>
+            {!['navigation-menu'].includes(element.type) && (
+              <ResponsiveStyleControl
+                element={element}
+                property="color"
+                label="Text Color"
+                deviceType={responsiveTab}
+                fallback=""
+                onStyleUpdate={onStyleUpdate}
+              >
+                {(value, onChange) => (
+                  <ColorPicker 
+                    color={value}
+                    onChange={onChange}
+                  />
+                )}
+              </ResponsiveStyleControl>
+            )}
           </CollapsibleContent>
         </Collapsible>
       )}
