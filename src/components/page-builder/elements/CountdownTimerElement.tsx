@@ -170,7 +170,11 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
     const color = getEffectiveResponsiveValue(element, 'numberColor', deviceType, 'hsl(var(--primary-foreground))');
     const backgroundColor = getEffectiveResponsiveValue(element, 'numberBackgroundColor', deviceType, 'hsl(var(--primary))');
     const padding = getEffectiveResponsiveValue(element, 'segmentPadding', deviceType, '12px');
-    const borderRadius = getEffectiveResponsiveValue(element, 'segmentBorderRadius', deviceType, '8px');
+    
+    // Apply pill-specific border-radius when layout is 'pill'
+    const defaultBorderRadius = layout === 'pill' ? '9999px' : '8px'; // 9999px = fully rounded (pill shape)
+    const borderRadius = getEffectiveResponsiveValue(element, 'segmentBorderRadius', deviceType, defaultBorderRadius);
+    
     const borderWidth = getEffectiveResponsiveValue(element, 'segmentBorderWidth', deviceType, '0px');
     const borderColor = getEffectiveResponsiveValue(element, 'segmentBorderColor', deviceType, 'hsl(var(--border))');
     
@@ -211,21 +215,26 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
     };
   };
 
-  const renderTimeSegment = (value: number, label: string, showSeparator: boolean) => (
-    <div key={label} className="flex items-center">
-      <div className="text-center">
-        <div style={getSegmentStyles()}>
-          {value.toString().padStart(2, '0')}
+  const renderTimeSegment = (value: number, label: string, showSeparator: boolean) => {
+    // For inline layout, show separator when showSeparator is true
+    const shouldShowSeparator = layout === 'inline' && showSeparator;
+    
+    return (
+      <div key={label} className="flex items-center">
+        <div className="text-center">
+          <div style={getSegmentStyles()}>
+            {value.toString().padStart(2, '0')}
+          </div>
+          {showLabels && (
+            <div style={getLabelStyles()}>{label}</div>
+          )}
         </div>
-        {showLabels && (
-          <div style={getLabelStyles()}>{label}</div>
+        {shouldShowSeparator && (
+          <span className="mx-1 font-bold text-lg">{separator}</span>
         )}
       </div>
-      {showSeparator && layout === 'inline' && (
-        <span className="mx-1 font-bold text-lg">{separator}</span>
-      )}
-    </div>
-  );
+    );
+  };
 
   // Get element styles - margins are now always handled by ElementRenderer wrapper
   // This ensures consistent behavior in both builder and storefront modes
@@ -235,10 +244,10 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
     return (
       <div className={`element-${element.id} max-w-2xl mx-auto`} style={elementStyles}>
         <div className={getLayoutClasses()} style={getContainerStyles()}>
-          {renderTimeSegment(1, labels.days, false)}
-          {renderTimeSegment(23, labels.hours, false)}
-          {renderTimeSegment(59, labels.minutes, false)}
-          {renderTimeSegment(59, labels.seconds, false)}
+          {renderTimeSegment(1, labels.days, layout === 'inline')}
+          {renderTimeSegment(23, labels.hours, layout === 'inline')}
+          {renderTimeSegment(59, labels.minutes, layout === 'inline')}
+          {renderTimeSegment(59, labels.seconds, false)} {/* Last segment never shows separator */}
         </div>
       </div>
     );
@@ -256,10 +265,10 @@ export const CountdownTimerElement: React.FC<CountdownTimerElementProps> = ({
   return (
     <div className={`element-${element.id} max-w-2xl mx-auto`} style={elementStyles}>
       <div className={getLayoutClasses()} style={getContainerStyles()}>
-        {renderTimeSegment(timeLeft.days, labels.days, true)}
-        {renderTimeSegment(timeLeft.hours, labels.hours, true)}
-        {renderTimeSegment(timeLeft.minutes, labels.minutes, true)}
-        {renderTimeSegment(timeLeft.seconds, labels.seconds, false)}
+        {renderTimeSegment(timeLeft.days, labels.days, layout === 'inline')}
+        {renderTimeSegment(timeLeft.hours, labels.hours, layout === 'inline')}
+        {renderTimeSegment(timeLeft.minutes, labels.minutes, layout === 'inline')}
+        {renderTimeSegment(timeLeft.seconds, labels.seconds, false)} {/* Last segment never shows separator */}
       </div>
     </div>
   );
