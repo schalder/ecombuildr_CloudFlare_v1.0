@@ -279,8 +279,15 @@ const FeaturedProductsElement: React.FC<{
       // auto heuristic
       return cols >= 4 ? 'grid-cols-3' : 'grid-cols-2';
     }
-    const d = Math.min(cols, 4);
-    const map: Record<number, string> = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' };
+    const d = Math.min(cols, 6);
+    const map: Record<number, string> = { 
+      1: 'grid-cols-1', 
+      2: 'grid-cols-2', 
+      3: 'grid-cols-3', 
+      4: 'grid-cols-4',
+      5: 'grid-cols-5',
+      6: 'grid-cols-6'
+    };
     return map[d] || 'grid-cols-2';
   };
 
