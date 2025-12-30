@@ -2635,9 +2635,88 @@ export default function Orders() {
                   <div>
                     <h4 className="font-medium">Additional Information</h4>
                     <div className="mt-2 space-y-1">
-                      {(selectedOrder as any).custom_fields.map((cf: any, idx: number) => (
-                        <p key={idx} className="text-sm"><strong>{cf.label || cf.id}:</strong> {String(cf.value)}</p>
-                      ))}
+                      {(() => {
+                        const customFields = (selectedOrder as any).custom_fields;
+                        
+                        // Extract upfront payment info
+                        let upfrontAmount: number | null = null;
+                        let upfrontMethod: string | null = null;
+                        let deliveryAmount: number | null = null;
+                        
+                        const upfrontField = customFields.find((cf: any) => cf.id === 'upfront_payment_amount' || cf.label === 'upfront_payment_amount');
+                        const methodField = customFields.find((cf: any) => cf.id === 'upfront_payment_method' || cf.label === 'upfront_payment_method');
+                        const deliveryField = customFields.find((cf: any) => cf.id === 'delivery_payment_amount' || cf.label === 'delivery_payment_amount');
+                        
+                        if (upfrontField) upfrontAmount = Number(upfrontField.value);
+                        if (methodField) upfrontMethod = String(methodField.value);
+                        if (deliveryField) deliveryAmount = Number(deliveryField.value);
+                        
+                        const entries: Array<{ label: string; value: string }> = [];
+                        
+                        // Show upfront payment info if shipping was collected upfront
+                        if (upfrontAmount && upfrontAmount > 0 && deliveryAmount !== null && deliveryAmount >= 0) {
+                          const paymentMethodNames: Record<string, string> = {
+                            'eps': 'EPS',
+                            'ebpay': 'EB Pay',
+                            'stripe': 'Stripe',
+                            'bkash': 'bKash',
+                            'nagad': 'Nagad',
+                            'cod': 'Cash on Delivery'
+                          };
+                          const methodName = paymentMethodNames[upfrontMethod || ''] || upfrontMethod || 'Unknown';
+                          entries.push({ label: 'Shipping Fee', value: `Collected upfront via ${methodName} (৳${upfrontAmount.toFixed(2)})` });
+                        }
+                        
+                        // Process other custom fields
+                        customFields.forEach((cf: any) => {
+                          // Skip internal/technical fields
+                          if (cf.id === 'order_access_token' || cf.id === 'funnelId' || cf.id === 'currentStepId' || cf.id === 'isFunnelCheckout' ||
+                              cf.id === 'upfront_payment_amount' || cf.id === 'upfront_payment_method' || cf.id === 'delivery_payment_amount') {
+                            return;
+                          }
+                          
+                          // Handle payment_details - show only method and date
+                          if ((cf.id === 'payment_details' || cf.label === 'payment_details') && typeof cf.value === 'object' && cf.value !== null) {
+                            const paymentDetails = cf.value;
+                            if (paymentDetails.method) {
+                              const paymentMethodNames: Record<string, string> = {
+                                'eps': 'EPS',
+                                'ebpay': 'EB Pay',
+                                'stripe': 'Stripe',
+                                'bkash': 'bKash',
+                                'nagad': 'Nagad',
+                                'cod': 'Cash on Delivery'
+                              };
+                              const methodName = paymentMethodNames[paymentDetails.method] || paymentDetails.method;
+                              
+                              // Format date if verifiedAt exists
+                              let dateStr = '';
+                              if (paymentDetails.verifiedAt) {
+                                try {
+                                  const date = new Date(paymentDetails.verifiedAt);
+                                  dateStr = ` on ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
+                                } catch (e) {
+                                  dateStr = '';
+                                }
+                              }
+                              
+                              entries.push({ label: 'Payment Method', value: `${methodName}${dateStr}` });
+                            }
+                            return; // Don't show the full object
+                          }
+                          
+                          // For other fields, show as-is
+                          if (cf.value !== null && cf.value !== undefined) {
+                            entries.push({ label: cf.label || cf.id, value: String(cf.value) });
+                          }
+                        });
+                        
+                        return entries.map((entry, idx) => (
+                          <p key={idx} className="text-sm">
+                            <strong>{entry.label.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}:</strong> {entry.value}
+                          </p>
+                        ));
+                      })()}
                     </div>
                   </div>
                 )}
