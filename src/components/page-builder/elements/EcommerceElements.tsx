@@ -257,8 +257,10 @@ const FeaturedProductsElement: React.FC<{
     return bs as React.CSSProperties;
   }, [deviceType, (element as any).styles?.buttonStyles]);
 
-  // Responsive grid classes for multi-featured layout
+  // Get columns value for layout logic
   const cols = element.content.columns || 2;
+  
+  // Responsive grid classes for multi-featured layout
   const getGridClasses = () => {
     if (deviceType === 'mobile') {
       const mCols = (element.content as any).mobileColumns as number | undefined;
