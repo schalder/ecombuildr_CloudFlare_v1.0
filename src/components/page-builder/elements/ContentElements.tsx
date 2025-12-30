@@ -373,14 +373,14 @@ const AccordionElement: React.FC<{
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pb-4">
-                <div className="pt-2" style={descriptionInlineStyles}>
+                <div className="pt-2">
                   <InlineEditor
                     value={item.content}
                     onChange={(value) => updateItem(index, 'content', value)}
                     placeholder="Section content..."
                     multiline
                     disabled={!isEditing}
-                    className="text-muted-foreground"
+                    style={descriptionInlineStyles}
                   />
                 </div>
               </AccordionContent>
