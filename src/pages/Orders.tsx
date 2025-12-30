@@ -2645,40 +2645,106 @@ export default function Orders() {
                   <div>
                     <h4 className="font-medium">Additional Information</h4>
                     <div className="mt-2 space-y-1">
-                      {Object.entries((selectedOrder as any).custom_fields).map(([key, val]: any) => {
-                        // Skip internal/technical fields
-                        if (key === 'order_access_token' || key === 'funnelId' || key === 'currentStepId' || key === 'isFunnelCheckout') {
-                          return null;
+                      {(() => {
+                        const customFields = (selectedOrder as any).custom_fields;
+                        const entries: Array<[string, any]> = [];
+                        
+                        // Extract upfront payment info
+                        let upfrontAmount: number | null = null;
+                        let upfrontMethod: string | null = null;
+                        let deliveryAmount: number | null = null;
+                        
+                        if (customFields.upfront_payment_amount) {
+                          upfrontAmount = Number(customFields.upfront_payment_amount);
+                        }
+                        if (customFields.upfront_payment_method) {
+                          upfrontMethod = String(customFields.upfront_payment_method);
+                        }
+                        if (customFields.delivery_payment_amount) {
+                          deliveryAmount = Number(customFields.delivery_payment_amount);
                         }
                         
-                        // Handle Stripe object specially - only show payment status (not technical IDs)
-                        if (key === 'stripe' && typeof val === 'object' && val !== null) {
-                          const stripeData = val as any;
-                          // Only show payment status if it exists
-                          if (stripeData.payment_status) {
-                            return (
-                              <p key={key} className="text-sm">
-                                <strong>Payment Status:</strong> {stripeData.payment_status}
-                              </p>
-                            );
+                        // Show upfront payment info if shipping was collected upfront
+                        if (upfrontAmount && upfrontAmount > 0 && deliveryAmount !== null && deliveryAmount >= 0) {
+                          const paymentMethodNames: Record<string, string> = {
+                            'eps': 'EPS',
+                            'ebpay': 'EB Pay',
+                            'stripe': 'Stripe',
+                            'bkash': 'bKash',
+                            'nagad': 'Nagad',
+                            'cod': 'Cash on Delivery'
+                          };
+                          const methodName = paymentMethodNames[upfrontMethod || ''] || upfrontMethod || 'Unknown';
+                          entries.push(['Shipping Fee', `Collected upfront via ${methodName} (৳${upfrontAmount.toFixed(2)})`]);
+                        }
+                        
+                        // Process other custom fields
+                        Object.entries(customFields).forEach(([key, val]: any) => {
+                          // Skip internal/technical fields
+                          if (key === 'order_access_token' || key === 'funnelId' || key === 'currentStepId' || key === 'isFunnelCheckout' ||
+                              key === 'upfront_payment_amount' || key === 'upfront_payment_method' || key === 'delivery_payment_amount') {
+                            return;
                           }
-                          return null; // Don't show Stripe object if no payment_status
-                        }
+                          
+                          // Handle payment_details object - show only method and date
+                          if (key === 'payment_details' && typeof val === 'object' && val !== null) {
+                            const paymentDetails = val as any;
+                            if (paymentDetails.method) {
+                              const paymentMethodNames: Record<string, string> = {
+                                'eps': 'EPS',
+                                'ebpay': 'EB Pay',
+                                'stripe': 'Stripe',
+                                'bkash': 'bKash',
+                                'nagad': 'Nagad',
+                                'cod': 'Cash on Delivery'
+                              };
+                              const methodName = paymentMethodNames[paymentDetails.method] || paymentDetails.method;
+                              
+                              // Format date if verifiedAt exists
+                              let dateStr = '';
+                              if (paymentDetails.verifiedAt) {
+                                try {
+                                  const date = new Date(paymentDetails.verifiedAt);
+                                  dateStr = ` on ${date.toLocaleDateString()} at ${date.toLocaleTimeString()}`;
+                                } catch (e) {
+                                  dateStr = '';
+                                }
+                              }
+                              
+                              entries.push(['Payment Method', `${methodName}${dateStr}`]);
+                            }
+                            return; // Don't show the full object
+                          }
+                          
+                          // Handle Stripe object specially - only show payment status (not technical IDs)
+                          if (key === 'stripe' && typeof val === 'object' && val !== null) {
+                            const stripeData = val as any;
+                            // Only show payment status if it exists
+                            if (stripeData.payment_status) {
+                              entries.push(['Payment Status', stripeData.payment_status]);
+                            }
+                            return; // Don't show Stripe object if no payment_status
+                          }
+                          
+                          // For other objects, use JSON.stringify
+                          let displayValue: string;
+                          if (val === null || val === undefined) {
+                            return;
+                          } else if (typeof val === 'object') {
+                            displayValue = JSON.stringify(val, null, 2);
+                          } else {
+                            displayValue = String(val);
+                          }
+                          
+                          entries.push([key, displayValue]);
+                        });
                         
-                        // For other objects, use JSON.stringify
-                        let displayValue: string;
-                        if (val === null || val === undefined) {
-                          return null;
-                        } else if (typeof val === 'object') {
-                          displayValue = JSON.stringify(val, null, 2);
-                        } else {
-                          displayValue = String(val);
-                        }
-                        
-                        return (
-                          <p key={key} className="text-sm"><strong>{key}:</strong> {displayValue}</p>
-                        );
-                      })}
+                        return entries.map(([key, val], idx) => (
+                          <p key={idx} className="text-sm">
+                            <strong>{key.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}:</strong> {String(val)}
+                          </p>
+                        ));
+                      })()}
                     </div>
                   </div>
                 )}
