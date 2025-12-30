@@ -31,6 +31,7 @@ export const TestimonialElementStyles: React.FC<TestimonialElementStylesProps> =
   const [testimonialTypographyOpen, setTestimonialTypographyOpen] = React.useState(true);
   const [authorTypographyOpen, setAuthorTypographyOpen] = React.useState(false);
   const [positionTypographyOpen, setPositionTypographyOpen] = React.useState(false);
+  const [quoteIconOpen, setQuoteIconOpen] = React.useState(false);
   const [backgroundOpen, setBackgroundOpen] = React.useState(false);
   const [borderOpen, setBorderOpen] = React.useState(false);
   const [spacingOpen, setSpacingOpen] = React.useState(false);
@@ -294,6 +295,21 @@ export const TestimonialElementStyles: React.FC<TestimonialElementStylesProps> =
         setIsOpen={setPositionTypographyOpen}
         defaultFontSize="14px"
       />
+
+      {/* Quote Icon */}
+      <Collapsible open={quoteIconOpen} onOpenChange={setQuoteIconOpen}>
+        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded">
+          <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Quote Icon</h4>
+          <ChevronDown className={`h-4 w-4 transition-transform ${quoteIconOpen ? 'rotate-180' : ''}`} />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-3 pt-2">
+          <ColorPicker 
+            label="Icon Color"
+            color={(currentStyles.quoteIconColor || element.styles?.quoteIconColor) || ''}
+            onChange={(val) => handleResponsiveUpdate('quoteIconColor', val)}
+          />
+        </CollapsibleContent>
+      </Collapsible>
 
       {/* Background */}
       <Collapsible open={backgroundOpen} onOpenChange={setBackgroundOpen}>

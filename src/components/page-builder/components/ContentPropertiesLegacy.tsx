@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { CompactMediaSelector } from '../CompactMediaSelector';
 import { PageBuilderElement, ElementVisibility } from '../types';
 import { VisibilityControl } from './VisibilityControl';
 
@@ -100,9 +101,10 @@ export const TestimonialContentProperties: React.FC<ContentPropertiesProps> = ({
 
       <div>
         <Label className="text-xs">Avatar Image</Label>
-        <ImageUpload
+        <CompactMediaSelector
           value={element.content.avatar || ''}
           onChange={(url) => onUpdate('avatar', url)}
+          label="Select Avatar Image"
         />
       </div>
 

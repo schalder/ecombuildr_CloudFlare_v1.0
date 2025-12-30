@@ -85,6 +85,12 @@ const TestimonialElement: React.FC<{
     };
   };
 
+  const getQuoteIconStyles = () => {
+    return {
+      color: (currentResponsiveStyles as any).quoteIconColor || (element.styles as any)?.quoteIconColor || undefined,
+    };
+  };
+
   return (
     <>
       {responsiveCSS && <style dangerouslySetInnerHTML={{ __html: responsiveCSS }} />}
@@ -104,7 +110,12 @@ const TestimonialElement: React.FC<{
           ))}
         </div>
         
-        {showQuote && <Quote className="h-8 w-8 text-primary mb-4" />}
+        {showQuote && (
+          <Quote 
+            className="h-8 w-8 mb-4" 
+            style={getQuoteIconStyles()}
+          />
+        )}
         
         <blockquote className="mb-4" style={getTestimonialStyles()}>
           <InlineEditor
@@ -132,13 +143,13 @@ const TestimonialElement: React.FC<{
                 className="font-semibold"
               />
             </div>
-            <div style={getPositionStyles()}>
+            <div>
               <InlineEditor
                 value={position}
                 onChange={(value) => handleUpdate('position', value)}
                 placeholder="Position, Company"
                 disabled={!isEditing}
-                className="text-muted-foreground"
+                style={getPositionStyles()}
               />
             </div>
           </div>
