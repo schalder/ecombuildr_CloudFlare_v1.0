@@ -2654,7 +2654,8 @@ export default function Orders() {
                         const entries: Array<{ label: string; value: string }> = [];
                         
                         // Show upfront payment info if shipping was collected upfront
-                        if (upfrontAmount && upfrontAmount > 0 && deliveryAmount !== null && deliveryAmount >= 0) {
+                        // If upfrontAmount > 0, it means shipping (or part of the order) was collected upfront
+                        if (upfrontAmount && upfrontAmount > 0) {
                           const paymentMethodNames: Record<string, string> = {
                             'eps': 'EPS',
                             'ebpay': 'EB Pay',
@@ -2744,7 +2745,8 @@ export default function Orders() {
                         }
                         
                         // Show upfront payment info if shipping was collected upfront
-                        if (upfrontAmount && upfrontAmount > 0 && deliveryAmount !== null && deliveryAmount >= 0) {
+                        // If upfrontAmount > 0, it means shipping (or part of the order) was collected upfront
+                        if (upfrontAmount && upfrontAmount > 0) {
                           const paymentMethodNames: Record<string, string> = {
                             'eps': 'EPS',
                             'ebpay': 'EB Pay',
