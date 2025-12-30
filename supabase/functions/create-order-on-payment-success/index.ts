@@ -138,6 +138,58 @@ serve(async (req) => {
           }
         }
         
+        // Extract upfront payment fields from orderData to update existing order
+        const { upfront_payment_amount, upfront_payment_method, delivery_payment_amount } = orderData as any;
+        
+        // Update custom_fields with upfront payment info if provided
+        let updatedCustomFields = existingOrder.custom_fields || {};
+        if (typeof updatedCustomFields === 'object' && !Array.isArray(updatedCustomFields)) {
+          updatedCustomFields = { ...updatedCustomFields };
+        } else if (Array.isArray(updatedCustomFields)) {
+          // Convert array to object
+          updatedCustomFields = {};
+          (existingOrder.custom_fields as any[]).forEach((cf: any) => {
+            if (cf && cf.id) {
+              updatedCustomFields[cf.id] = cf.value;
+            }
+          });
+        }
+        
+        // Merge upfront payment info if provided
+        if (upfront_payment_amount !== null && upfront_payment_amount !== undefined) {
+          updatedCustomFields.upfront_payment_amount = upfront_payment_amount;
+        }
+        if (upfront_payment_method !== null && upfront_payment_method !== undefined) {
+          updatedCustomFields.upfront_payment_method = upfront_payment_method;
+        }
+        if (delivery_payment_amount !== null && delivery_payment_amount !== undefined) {
+          updatedCustomFields.delivery_payment_amount = delivery_payment_amount;
+        }
+        
+        // Update payment_details if provided
+        if (paymentDetails) {
+          updatedCustomFields.payment_details = paymentDetails;
+        }
+        
+        // Update the order's custom_fields in the database
+        if (JSON.stringify(updatedCustomFields) !== JSON.stringify(existingOrder.custom_fields)) {
+          console.log('create-order-on-payment-success: Updating existing order custom_fields with upfront payment info');
+          const { error: updateError } = await supabase
+            .from('orders')
+            .update({ 
+              custom_fields: updatedCustomFields,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', existingOrder.id);
+          
+          if (!updateError) {
+            existingOrder.custom_fields = updatedCustomFields;
+            console.log('create-order-on-payment-success: ✅ Order custom_fields updated with upfront payment info');
+          } else {
+            console.error('create-order-on-payment-success: Failed to update order custom_fields:', updateError);
+          }
+        }
+        
         const accessToken = existingOrder.custom_fields?.order_access_token || crypto.randomUUID();
         return new Response(
           JSON.stringify({ 
