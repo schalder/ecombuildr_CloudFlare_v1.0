@@ -621,11 +621,11 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
     type MenuItem = { id: string; label: string; type?: 'url' | 'page'; url?: string; pagePath?: string; children?: MenuItem[] };
     const items: MenuItem[] = element.content.items || [];
 
-    // State for collapsible sections
-    const [logoOpen, setLogoOpen] = React.useState(true);
-    const [colorsOpen, setColorsOpen] = React.useState(true);
-    const [settingsOpen, setSettingsOpen] = React.useState(true);
-    const [menuItemsOpen, setMenuItemsOpen] = React.useState(true);
+    // State for collapsible sections (default to collapsed)
+    const [logoOpen, setLogoOpen] = React.useState(false);
+    const [colorsOpen, setColorsOpen] = React.useState(false);
+    const [settingsOpen, setSettingsOpen] = React.useState(false);
+    const [menuItemsOpen, setMenuItemsOpen] = React.useState(false);
     const [itemOpenStates, setItemOpenStates] = React.useState<Record<string, boolean>>({});
 
     const toggleItem = (itemId: string) => {
