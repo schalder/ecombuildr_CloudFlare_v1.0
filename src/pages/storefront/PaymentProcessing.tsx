@@ -791,6 +791,10 @@ export const PaymentProcessing: React.FC = () => {
         idempotency_key: checkoutData.orderData.idempotency_key || crypto.randomUUID(),
         // ✅ Set funnel_id directly on the order (not just in custom_fields)
         funnel_id: checkoutData.orderData.funnelId || checkoutData.orderData.funnel_id || null,
+        // ✅ Preserve upfront payment info (critical for shipping fee display and Steadfast COD calculation)
+        upfront_payment_amount: checkoutData.orderData.upfront_payment_amount || null,
+        upfront_payment_method: checkoutData.orderData.upfront_payment_method || null,
+        delivery_payment_amount: checkoutData.orderData.delivery_payment_amount || null,
         // Store additional funnel context in custom_fields
         custom_fields: {
           ...(checkoutData.orderData.custom_fields || {}),

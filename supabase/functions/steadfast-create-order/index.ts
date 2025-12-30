@@ -344,18 +344,33 @@ Deno.serve(async (req: Request) => {
     }
     
     // Determine cod_amount:
-    // 1. If delivery_payment_amount exists (shipping collected upfront), use it (product price only)
+    // 1. If delivery_payment_amount exists and > 0 (shipping collected upfront), use it (product price only)
     // 2. If payment method is COD and no upfront payment, use order.total (product + shipping)
     // 3. Otherwise, cod_amount = 0 (fully prepaid)
+    
+    // Debug logging
+    console.log('Steadfast COD calculation:', {
+      isCOD,
+      upfrontAmount,
+      deliveryAmount,
+      order_total: order.total,
+      order_subtotal: order.subtotal,
+      shipping_cost: order.shipping_cost,
+      payment_method: order.payment_method
+    });
+    
     if (deliveryAmount !== null && deliveryAmount > 0) {
       // Shipping was collected upfront, so collect product price on delivery
       cod_amount = deliveryAmount;
+      console.log('Steadfast: Using delivery_payment_amount as cod_amount:', cod_amount);
     } else if (isCOD) {
       // Standard COD order (no upfront payment), collect full amount
       cod_amount = Number(order.total || 0);
+      console.log('Steadfast: Using order.total as cod_amount (standard COD):', cod_amount);
     } else {
       // Fully prepaid order (no delivery payment needed)
       cod_amount = 0;
+      console.log('Steadfast: cod_amount = 0 (fully prepaid)');
     }
 
     const payload = {

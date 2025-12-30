@@ -2734,19 +2734,30 @@ export default function Orders() {
                         let upfrontMethod: string | null = null;
                         let deliveryAmount: number | null = null;
                         
-                        if (customFields.upfront_payment_amount) {
+                        // Handle both direct access and string conversion
+                        if (customFields.upfront_payment_amount !== null && customFields.upfront_payment_amount !== undefined) {
                           upfrontAmount = Number(customFields.upfront_payment_amount);
+                          if (isNaN(upfrontAmount)) upfrontAmount = null;
                         }
-                        if (customFields.upfront_payment_method) {
+                        if (customFields.upfront_payment_method !== null && customFields.upfront_payment_method !== undefined) {
                           upfrontMethod = String(customFields.upfront_payment_method);
                         }
-                        if (customFields.delivery_payment_amount) {
+                        if (customFields.delivery_payment_amount !== null && customFields.delivery_payment_amount !== undefined) {
                           deliveryAmount = Number(customFields.delivery_payment_amount);
+                          if (isNaN(deliveryAmount)) deliveryAmount = null;
                         }
+                        
+                        // Debug logging (can be removed later)
+                        console.log('Order Details - Upfront Payment Info:', {
+                          upfrontAmount,
+                          upfrontMethod,
+                          deliveryAmount,
+                          customFields: customFields
+                        });
                         
                         // Show upfront payment info if shipping was collected upfront
                         // If upfrontAmount > 0, it means shipping (or part of the order) was collected upfront
-                        if (upfrontAmount && upfrontAmount > 0) {
+                        if (upfrontAmount !== null && upfrontAmount > 0) {
                           const paymentMethodNames: Record<string, string> = {
                             'eps': 'EPS',
                             'ebpay': 'EB Pay',
