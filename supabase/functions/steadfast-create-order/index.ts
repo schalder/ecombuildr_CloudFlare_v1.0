@@ -76,9 +76,32 @@ function normalizePhoneForSteadfast(phone: string): string {
     }
   }
   
-  // If it's still longer than 11, take the last 11 digits
+  // If it's still longer than 11, handle intelligently
   if (cleaned.length > 11) {
-    cleaned = cleaned.substring(cleaned.length - 11);
+    // If it's 12 digits and starts with 01, try to fix it
+    if (cleaned.length === 12 && cleaned.startsWith('01')) {
+      // Bangladesh mobile numbers: 017, 018, 019, 016, 015
+      // If 3rd digit is not 7,8,9,6,5, it might be an extra digit
+      const thirdDigit = cleaned[2];
+      const validMobilePrefixes = ['7', '8', '9', '6', '5'];
+      
+      if (!validMobilePrefixes.includes(thirdDigit)) {
+        // 3rd digit is invalid, remove it: 013039090987 -> 01039090987
+        cleaned = cleaned.substring(0, 2) + cleaned.substring(3);
+      } else {
+        // 3rd digit is valid, remove the last digit: 013039090987 -> 01303909098
+        cleaned = cleaned.substring(0, 11);
+      }
+    }
+    // If it's 12 digits but doesn't start with 01, check if removing first digit gives us 01...
+    else if (cleaned.length === 12 && cleaned.substring(1, 3) === '01') {
+      // Remove first digit to get 01XXXXXXXXX format
+      cleaned = cleaned.substring(1);
+    }
+    // Otherwise, take the last 11 digits (fallback)
+    else {
+      cleaned = cleaned.substring(cleaned.length - 11);
+    }
   }
   
   // Final fix: if we have 11 digits but they don't start with 0
@@ -94,6 +117,14 @@ function normalizePhoneForSteadfast(phone: string): string {
       // This looks like it might be missing the leading 0, but we can't be sure
       // Return as-is and let validation handle it
     }
+  }
+  
+  // Additional validation: Bangladesh mobile numbers should start with 01X where X is 7, 8, or 9
+  // If we have 11 digits starting with 0 but second digit is not 1, it might be invalid
+  if (cleaned.length === 11 && cleaned.startsWith('0') && cleaned[1] !== '1') {
+    // This might be a landline (03...) or invalid format
+    // Log it but still try to send (Steadfast will validate)
+    console.warn('Phone number might be invalid format (does not start with 01):', cleaned);
   }
   
   // Final validation: must be 11 digits starting with 0
