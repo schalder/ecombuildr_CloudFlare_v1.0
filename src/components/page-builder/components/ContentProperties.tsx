@@ -799,7 +799,7 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
 
             <div className="space-y-3">
               {items.map((item, idx) => {
-                const isItemOpen = itemOpenStates[item.id] !== false; // Default to true
+                const isItemOpen = itemOpenStates[item.id] === true; // Default to false (collapsed)
                 return (
                   <Collapsible key={item.id} open={isItemOpen} onOpenChange={() => toggleItem(item.id)}>
                     <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-muted/50 rounded border">
