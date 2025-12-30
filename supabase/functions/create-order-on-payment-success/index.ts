@@ -317,11 +317,11 @@ serve(async (req) => {
     // If any product is physical, set to 'processing' (payment collected, ready to process)
     if (hasDigitalProducts && !hasPhysicalProducts) {
       // All digital products - instant delivery
-      orderData.status = 'delivered';
+      orderToInsert.status = 'delivered';
       console.log('create-order-on-payment-success: ✅ Order status set to DELIVERED (digital products only)');
     } else {
       // Has physical products - start processing (payment already collected)
-      orderData.status = 'processing';
+      orderToInsert.status = 'processing';
       console.log('create-order-on-payment-success: ⚠️ Order status set to PROCESSING', {
         reason: hasPhysicalProducts ? 'has physical products' : 'no digital products found or query failed',
         hasDigitalProducts,
@@ -329,10 +329,10 @@ serve(async (req) => {
       });
     }
 
-    // Insert order
+    // Insert order (using orderToInsert which has upfront payment fields removed from top level)
     const { data: order, error: orderError } = await supabase
       .from('orders')
-      .insert(orderData)
+      .insert(orderToInsert)
       .select('id, order_number')
       .single();
 
