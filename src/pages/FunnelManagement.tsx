@@ -47,6 +47,7 @@ interface Funnel {
   og_image?: string;
   meta_robots?: string;
   canonical_domain?: string;
+  website_id?: string | null;
 }
 interface FunnelStep {
   id: string;
