@@ -140,7 +140,7 @@ export function getPaymentBreakdownMessage(
     parts.push(`To place your order, you need to pay ${shippingText}${shippingText && digitalText ? ' and ' : ''}${digitalText}, ${totalText} to complete the order`);
   } else if (breakdown.upfrontShippingFee > 0) {
     // Only shipping fee upfront
-    parts.push(`To place your order, you need to pay shipping fee ${currency}${breakdown.upfrontShippingFee.toFixed(2)} and product price ${currency}${breakdown.codProductsTotal.toFixed(2)} upon delivery`);
+    parts.push(`To place your order, you need to pay shipping fee ${currency}${breakdown.upfrontShippingFee.toFixed(2)} now and product price ${currency}${breakdown.codProductsTotal.toFixed(2)} upon delivery`);
   } else if (breakdown.digitalProductsTotal > 0) {
     // Only digital products (no message needed, handled by normal flow)
     return null;
