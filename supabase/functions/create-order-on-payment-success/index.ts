@@ -164,10 +164,32 @@ serve(async (req) => {
 
     // Generate order access token
     const orderAccessToken = crypto.randomUUID();
+    
+    // Extract upfront payment fields from orderData (they're at top level, not in custom_fields yet)
+    const { upfront_payment_amount, upfront_payment_method, delivery_payment_amount, ...orderDataWithoutUpfront } = orderData as any;
+    
+    // Build custom_fields, preserving existing fields and adding upfront payment info
+    let baseCustomFields: any = {};
+    if (Array.isArray(orderData.custom_fields)) {
+      // Convert array format [{id, label, value}] to object for easier access
+      orderData.custom_fields.forEach((cf: any) => {
+        if (cf && cf.id) {
+          baseCustomFields[cf.id] = cf.value;
+        }
+      });
+    } else if (orderData.custom_fields && typeof orderData.custom_fields === 'object') {
+      baseCustomFields = { ...orderData.custom_fields };
+    }
+    
+    // Merge with upfront payment fields and other required fields
     orderData.custom_fields = {
-      ...(orderData.custom_fields || {}),
+      ...baseCustomFields,
       order_access_token: orderAccessToken,
-      ...(paymentDetails && { payment_details: paymentDetails })
+      ...(paymentDetails && { payment_details: paymentDetails }),
+      // Preserve upfront payment info in custom_fields (same as create-order function)
+      upfront_payment_amount: upfront_payment_amount || null,
+      upfront_payment_method: upfront_payment_method || null,
+      delivery_payment_amount: delivery_payment_amount || null,
     };
 
     // ✅ Determine order status based on product types and payment method
