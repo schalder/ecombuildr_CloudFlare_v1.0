@@ -280,14 +280,15 @@ const FAQElement: React.FC<{
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="py-3 px-3 sm:py-4 sm:px-4 border-x border-b rounded-b-lg bg-muted/20 overflow-hidden">
-              <div style={answerInlineStyles} className="break-words whitespace-normal overflow-wrap-anywhere max-w-full leading-relaxed">
+              <div className="break-words whitespace-normal overflow-wrap-anywhere max-w-full leading-relaxed">
                 <InlineEditor
                   value={faq.answer}
                   onChange={(value) => updateFAQ(index, 'answer', value)}
                   placeholder="Enter answer..."
                   multiline
                   disabled={!isEditing}
-                  className="text-muted-foreground break-words whitespace-normal overflow-wrap-anywhere leading-relaxed"
+                  className="break-words whitespace-normal overflow-wrap-anywhere leading-relaxed"
+                  style={answerInlineStyles}
                 />
               </div>
             </CollapsibleContent>
