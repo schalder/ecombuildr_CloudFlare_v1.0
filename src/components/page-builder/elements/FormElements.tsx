@@ -9,7 +9,7 @@ import { PageBuilderElement, FormField } from '../types';
 import { elementRegistry } from './ElementRegistry';
 import { supabase } from '@/integrations/supabase/client';
 import { useParams } from 'react-router-dom';
-import { renderElementStyles } from '../utils/styleRenderer';
+import { renderElementStyles, getDeviceAwareSpacing } from '../utils/styleRenderer';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 import { useStore } from '@/contexts/StoreContext';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
@@ -73,6 +73,15 @@ const NewsletterElement: React.FC<{
   const formBorderWidth = getEffectiveResponsiveValue(element, 'formBorderWidth', deviceType, '1px');
   const formBorderRadius = getEffectiveResponsiveValue(element, 'formBorderRadius', deviceType, '8px');
 
+  // Get padding values from element.styles.paddingByDevice
+  const paddingByDevice = element.styles?.paddingByDevice as any;
+  const padding = getDeviceAwareSpacing(paddingByDevice, deviceType);
+  
+  // Build padding CSS string - use individual properties if paddingByDevice exists, otherwise default to 20px
+  const paddingCss = paddingByDevice 
+    ? `${padding.top}px ${padding.right}px ${padding.bottom}px ${padding.left}px`
+    : '20px';
+
   // Generate dynamic CSS for form styling
   const dynamicStyles = `
     #${containerId} {
@@ -80,7 +89,7 @@ const NewsletterElement: React.FC<{
       border: ${formBorderWidth} solid ${formBorderColor} !important;
       border-radius: ${formBorderRadius} !important;
       width: ${formWidth} !important;
-      padding: 20px !important;
+      padding: ${paddingCss} !important;
     }
     
     #${containerId} .form-field {
