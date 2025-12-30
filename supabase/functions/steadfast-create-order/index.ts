@@ -25,26 +25,83 @@ function buildRecipientAddress(order: any) {
   return parts.join(', ');
 }
 
-function normalizeBdPhone(phone: string): string {
+/**
+ * Normalize phone number for Steadfast API
+ * Steadfast requires exactly 11 digits (e.g., 01234567890)
+ * This function removes country code and ensures 11-digit format
+ */
+function normalizePhoneForSteadfast(phone: string): string {
   if (!phone) return '';
-  // Remove all non-digits except +
-  let cleaned = phone.replace(/[^\d+]/g, '');
-  // If starts with +88, keep it
-  if (cleaned.startsWith('+88')) {
+  
+  // Remove all non-digits
+  let cleaned = phone.replace(/\D/g, '');
+  
+  // Handle different input formats
+  // If it's 13 digits and starts with 880, extract last 11 digits
+  if (cleaned.length === 13 && cleaned.startsWith('880')) {
+    cleaned = cleaned.substring(2); // Remove 88, keep 0...
+  }
+  // If it's 12 digits and starts with 880, extract last 11 digits
+  else if (cleaned.length === 12 && cleaned.startsWith('880')) {
+    cleaned = cleaned.substring(1); // Remove 8, keep 0...
+  }
+  // If it's 13 digits and starts with 88, extract last 11 digits
+  else if (cleaned.length === 13 && cleaned.startsWith('88')) {
+    cleaned = cleaned.substring(2); // Remove 88, keep last 11
+  }
+  // If it's 12 digits and starts with 88, extract last 11 digits
+  else if (cleaned.length === 12 && cleaned.startsWith('88')) {
+    cleaned = cleaned.substring(1); // Remove 8, keep last 11
+  }
+  // If it starts with 880, remove it
+  else if (cleaned.startsWith('880')) {
+    cleaned = cleaned.substring(3); // Remove 880
+  }
+  // If it starts with 88 (but not 880), remove it
+  else if (cleaned.startsWith('88') && !cleaned.startsWith('880')) {
+    cleaned = cleaned.substring(2); // Remove 88
+  }
+  
+  // Now ensure it's 11 digits starting with 0
+  // If it's 10 digits starting with 1, add leading 0
+  if (cleaned.length === 10 && cleaned.startsWith('1')) {
+    cleaned = '0' + cleaned;
+  }
+  
+  // If it's 11 digits but doesn't start with 0, try to fix
+  if (cleaned.length === 11 && !cleaned.startsWith('0')) {
+    // If it starts with 1, add leading 0
+    if (cleaned.startsWith('1')) {
+      cleaned = '0' + cleaned.substring(1);
+    }
+  }
+  
+  // If it's still longer than 11, take the last 11 digits
+  if (cleaned.length > 11) {
+    cleaned = cleaned.substring(cleaned.length - 11);
+  }
+  
+  // Final fix: if we have 11 digits but they don't start with 0
+  if (cleaned.length === 11 && !cleaned.startsWith('0')) {
+    // If it starts with 1, add leading 0
+    if (cleaned.startsWith('1')) {
+      cleaned = '0' + cleaned.substring(1);
+    }
+    // If it doesn't start with 0 or 1, try to find a valid pattern
+    // Bangladesh mobile numbers are typically 01XXXXXXXXX
+    // If we have 11 digits that don't start with 0, it might be missing the leading 0
+    else if (cleaned.match(/^[1-9]\d{10}$/)) {
+      // This looks like it might be missing the leading 0, but we can't be sure
+      // Return as-is and let validation handle it
+    }
+  }
+  
+  // Final validation: must be 11 digits starting with 0
+  if (cleaned.length === 11 && cleaned.startsWith('0')) {
     return cleaned;
   }
-  // If starts with 88, add +
-  if (cleaned.startsWith('88')) {
-    return '+' + cleaned;
-  }
-  // If starts with 01 (local format), add +88
-  if (cleaned.startsWith('01')) {
-    return '+88' + cleaned;
-  }
-  // If it's 11 digits starting with 1, assume it's missing the 0
-  if (cleaned.length === 11 && cleaned.startsWith('1')) {
-    return '+880' + cleaned;
-  }
+  
+  // If we still don't have a valid format, return as-is (validation will catch it)
   return cleaned;
 }
 
@@ -121,15 +178,23 @@ Deno.serve(async (req: Request) => {
     const invoice = order.order_number || order.id;
     const recipient_name = order.customer_name || 'N/A';
     const rawPhone = order.customer_phone || '';
-    const recipient_phone = normalizeBdPhone(rawPhone);
+    const recipient_phone = normalizePhoneForSteadfast(rawPhone);
     const recipient_address = buildRecipientAddress(order);
     const note = order.notes || null;
 
-    // Validate phone number
-    if (!recipient_phone || recipient_phone.length < 11) {
+    // Log phone normalization for debugging
+    console.log('Phone normalization:', {
+      raw: rawPhone,
+      normalized: recipient_phone,
+      length: recipient_phone.length,
+      startsWith0: recipient_phone.startsWith('0')
+    });
+
+    // Validate phone number - Steadfast requires exactly 11 digits starting with 0
+    if (!recipient_phone || recipient_phone.length !== 11 || !recipient_phone.startsWith('0')) {
       return new Response(JSON.stringify({ 
         error: 'Invalid phone number format',
-        details: 'Phone number must be a valid Bangladesh number (11 digits starting with +88)'
+        details: `Phone number must be exactly 11 digits starting with 0 (e.g., 01234567890). Received: "${recipient_phone}" (${recipient_phone.length} digits) from input: "${rawPhone}". Please ensure the phone number is in the format 01XXXXXXXXX.`
       }), {
         status: 400,
         headers: corsHeaders,
