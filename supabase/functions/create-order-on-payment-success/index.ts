@@ -234,7 +234,7 @@ serve(async (req) => {
     }
     
     // Merge with upfront payment fields and other required fields
-    orderData.custom_fields = {
+    const finalCustomFields = {
       ...baseCustomFields,
       order_access_token: orderAccessToken,
       ...(paymentDetails && { payment_details: paymentDetails }),
@@ -242,6 +242,13 @@ serve(async (req) => {
       upfront_payment_amount: upfront_payment_amount || null,
       upfront_payment_method: upfront_payment_method || null,
       delivery_payment_amount: delivery_payment_amount || null,
+    };
+
+    // Use orderDataWithoutUpfront for insert (removes upfront payment fields from top level)
+    // and set custom_fields with the merged upfront payment info
+    const orderToInsert = {
+      ...orderDataWithoutUpfront,
+      custom_fields: finalCustomFields,
     };
 
     // ✅ Determine order status based on product types and payment method
