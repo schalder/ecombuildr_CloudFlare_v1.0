@@ -17,7 +17,7 @@ const ImageGalleryElement: React.FC<{
   isEditing?: boolean;
   deviceType?: 'desktop' | 'tablet' | 'mobile';
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
-}> = ({ element, isEditing, onUpdate }) => {
+}> = ({ element, isEditing, onUpdate, deviceType = 'desktop' }) => {
   const images = element.content.images || [
     'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=300&h=200&fit=crop',
     'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=300&h=200&fit=crop',
@@ -62,7 +62,7 @@ const ImageGalleryElement: React.FC<{
   };
 
   return (
-    <div className="max-w-4xl mx-auto" style={element.styles}>
+    <div className="max-w-4xl mx-auto" style={renderElementStyles(element, deviceType)}>
       <div className={`grid ${getColumnsClass()} ${getGapClass()}`}>
         {images.map((image: string, index: number) => {
           if (!image) return null;

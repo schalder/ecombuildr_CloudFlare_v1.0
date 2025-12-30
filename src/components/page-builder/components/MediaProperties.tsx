@@ -137,6 +137,7 @@ export const ImageGalleryProperties: React.FC<MediaPropertiesProps> = ({
                   value={image}
                   onChange={(url) => updateImage(index, url)}
                   label={`Image ${index + 1}`}
+                  showLabelOnly={true}
                 />
               </div>
               <Button
