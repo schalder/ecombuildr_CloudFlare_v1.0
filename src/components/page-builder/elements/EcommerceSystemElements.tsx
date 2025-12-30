@@ -2289,8 +2289,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
 
                     {/* Payment Breakdown Message */}
                     {(() => {
+                      const codShippingFeeLanguage = element.content?.codShippingFeeLanguage || 'english';
                       const message = paymentBreakdown && paymentBreakdown.hasUpfrontPayment 
-                        ? getPaymentBreakdownMessage(paymentBreakdown, '৳') 
+                        ? getPaymentBreakdownMessage(paymentBreakdown, '৳', codShippingFeeLanguage as 'english' | 'bangla') 
                         : null;
                       return message && (
                         <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -3038,6 +3039,7 @@ export const registerEcommerceSystemElements = () => {
       placeOrderLabel: 'Place Order',
       placeOrderSubtext: '',
       placeOrderSubtextPosition: 'below',
+      codShippingFeeLanguage: 'english',
     },
     description: 'Full checkout form with summary.'
   });

@@ -29,6 +29,7 @@ const defaultFields = {
 
 export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps> = ({ element, onUpdate }) => {
   const [checkoutButtonOpen, setCheckoutButtonOpen] = useState(true);
+  const [codShippingFeeOpen, setCodShippingFeeOpen] = useState(false);
   const fields = element.content?.fields || defaultFields;
   const customFields = element.content?.customFields || [];
   const terms = element.content?.terms || { enabled: false, required: true, label: 'I agree to the Terms & Conditions', url: '/terms' };
@@ -91,6 +92,26 @@ export const CheckoutContentProperties: React.FC<CheckoutContentPropertiesProps>
           </Select>
         </div>
       )}
+        </div>
+      </CollapsibleGroup>
+
+      <CollapsibleGroup title="COD Shipping Fee Collection" isOpen={codShippingFeeOpen} onToggle={setCodShippingFeeOpen}>
+        <div className="space-y-3">
+          <div>
+            <Label className="text-sm">Message Language</Label>
+            <Select
+              value={element.content?.codShippingFeeLanguage || 'english'}
+              onValueChange={(value) => onUpdate('codShippingFeeLanguage', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="english">English</SelectItem>
+                <SelectItem value="bangla">Bangla</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CollapsibleGroup>
 

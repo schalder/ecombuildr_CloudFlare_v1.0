@@ -1961,8 +1961,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
                   {/* Payment Breakdown Message */}
                   {(() => {
+                    const codShippingFeeLanguage = element.content?.codShippingFeeLanguage || 'english';
                     const message = paymentBreakdown && paymentBreakdown.hasUpfrontPayment 
-                      ? getPaymentBreakdownMessage(paymentBreakdown, '৳') 
+                      ? getPaymentBreakdownMessage(paymentBreakdown, '৳', codShippingFeeLanguage as 'english' | 'bangla') 
                       : null;
                     return message && (
                       <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
@@ -2070,6 +2071,7 @@ export const registerInlineCheckoutElements = () => {
       customFields: [],
       terms: { enabled: false, required: true, label: 'I agree to the Terms & Conditions', url: '/terms' },
       trustBadge: { enabled: false, imageUrl: '', alt: 'Secure checkout' },
+      codShippingFeeLanguage: 'english',
     },
     description: 'Per-page inline checkout with product selection and optional order bump.'
   });

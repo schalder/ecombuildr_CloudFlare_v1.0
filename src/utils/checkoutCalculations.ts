@@ -119,7 +119,8 @@ export function calculatePaymentBreakdown(
  */
 export function getPaymentBreakdownMessage(
   breakdown: PaymentBreakdown,
-  currency: string = '৳'
+  currency: string = '৳',
+  language: 'english' | 'bangla' = 'english'
 ): string | null {
   // Don't show message if there's no upfront payment required
   if (!breakdown.hasUpfrontPayment) {
@@ -137,10 +138,22 @@ export function getPaymentBreakdownMessage(
     const digitalText = `digital product ${currency}${breakdown.digitalProductsTotal.toFixed(2)}`;
     const totalText = `total ${currency}${breakdown.upfrontAmount.toFixed(2)}`;
     
-    parts.push(`To place your order, you need to pay ${shippingText}${shippingText && digitalText ? ' and ' : ''}${digitalText}, ${totalText} to complete the order`);
+    if (language === 'bangla') {
+      // Bangla version for mixed case (shipping + digital)
+      parts.push(`অর্ডার কনফার্মেশনের জন্য অগ্রিম ${shippingText ? `ডেলিভারি চার্জ ${currency}${breakdown.upfrontShippingFee.toFixed(2)}` : ''}${shippingText && digitalText ? ' এবং ' : ''}${digitalText ? `ডিজিটাল পণ্যের মূল্য ${currency}${breakdown.digitalProductsTotal.toFixed(2)}` : ''}, মোট ${currency}${breakdown.upfrontAmount.toFixed(2)} পরিশোধ করতে হবে।`);
+    } else {
+      // English version
+      parts.push(`To place your order, you need to pay ${shippingText}${shippingText && digitalText ? ' and ' : ''}${digitalText}, ${totalText} to complete the order`);
+    }
   } else if (breakdown.upfrontShippingFee > 0) {
     // Only shipping fee upfront
-    parts.push(`To place your order, you need to pay shipping fee ${currency}${breakdown.upfrontShippingFee.toFixed(2)} now and product price ${currency}${breakdown.codProductsTotal.toFixed(2)} upon delivery`);
+    if (language === 'bangla') {
+      // Bangla version: "অর্ডার কনফার্মেশনের জন্য অগ্রিম শুধু ডেলিভারি চার্জ xxx দিতে হবে। ডেলিভারি নেওয়ার সময় পণ্যের মূল্য xxx পরিশোধ করবেন।"
+      parts.push(`অর্ডার কনফার্মেশনের জন্য অগ্রিম শুধু ডেলিভারি চার্জ ${currency}${breakdown.upfrontShippingFee.toFixed(2)} দিতে হবে। ডেলিভারি নেওয়ার সময় পণ্যের মূল্য ${currency}${breakdown.codProductsTotal.toFixed(2)} পরিশোধ করবেন।`);
+    } else {
+      // English version
+      parts.push(`To place your order, you need to pay shipping fee ${currency}${breakdown.upfrontShippingFee.toFixed(2)} now and product price ${currency}${breakdown.codProductsTotal.toFixed(2)} upon delivery`);
+    }
   } else if (breakdown.digitalProductsTotal > 0) {
     // Only digital products (no message needed, handled by normal flow)
     return null;
