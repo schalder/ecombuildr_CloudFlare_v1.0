@@ -74,8 +74,8 @@ BEGIN
   -- Get currency symbol
   currency_symbol := public.get_currency_symbol(currency_code);
   
-  -- Format amount with currency symbol
-  formatted_amount := currency_symbol || ROUND(NEW.total, 2)::TEXT;
+  -- Format amount with currency symbol (always show 2 decimal places)
+  formatted_amount := currency_symbol || TO_CHAR(ROUND(NEW.total, 2), 'FM999999999.00');
   
   INSERT INTO public.notifications (store_id, type, title, message, metadata)
   VALUES (
