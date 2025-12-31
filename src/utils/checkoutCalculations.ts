@@ -140,7 +140,13 @@ export function getPaymentBreakdownMessage(
     
     if (language === 'bangla') {
       // Bangla version for mixed case (shipping + digital)
-      parts.push(`অর্ডার কনফার্মেশনের জন্য অগ্রিম ${shippingText ? `ডেলিভারি চার্জ ${currency}${breakdown.upfrontShippingFee.toFixed(2)}` : ''}${shippingText && digitalText ? ' এবং ' : ''}${digitalText ? `ডিজিটাল পণ্যের মূল্য ${currency}${breakdown.digitalProductsTotal.toFixed(2)}` : ''}, মোট ${currency}${breakdown.upfrontAmount.toFixed(2)} পরিশোধ করতে হবে।`);
+      // First part: upfront payment
+      parts.push(`অর্ডার কনফার্মেশনের জন্য অগ্রিম ডেলিভারি চার্জ ${currency}${breakdown.upfrontShippingFee.toFixed(2)} এবং ডিজিটাল পণ্যের মূল্য ${currency}${breakdown.digitalProductsTotal.toFixed(2)}, মোট ${currency}${breakdown.upfrontAmount.toFixed(2)} পরিশোধ করতে হবে।`);
+      
+      // Second part: delivery payment (if there are COD products)
+      if (breakdown.codProductsTotal > 0) {
+        parts.push(`ডেলিভারি নেওয়ার সময় পণ্যের মূল্য ${currency}${breakdown.codProductsTotal.toFixed(2)} পরিশোধ করবেন।`);
+      }
     } else {
       // English version
       parts.push(`To place your order, you need to pay ${shippingText}${shippingText && digitalText ? ' and ' : ''}${digitalText}, ${totalText} to complete the order`);

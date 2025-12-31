@@ -1962,11 +1962,12 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   {/* Payment Breakdown Message */}
                   {(() => {
                     const codShippingFeeLanguage = element.content?.codShippingFeeLanguage || 'english';
-                    const message = paymentBreakdown && paymentBreakdown.hasUpfrontPayment 
+                    // Only show message if there's an upfront shipping fee (not just any upfront payment)
+                    const message = paymentBreakdown && paymentBreakdown.upfrontShippingFee > 0 
                       ? getPaymentBreakdownMessage(paymentBreakdown, '৳', codShippingFeeLanguage as 'english' | 'bangla') 
                       : null;
                     return message && (
-                      <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                      <div className="mt-4 mb-6 p-4 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
                         <p className="text-sm text-blue-900 dark:text-blue-100 font-medium">
                           {message}
                         </p>
@@ -1976,7 +1977,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
 
                   <Button 
                     size={buttonSize as any} 
-                    className={`w-full mt-2 h-auto min-h-12 element-${element.id} ${buttonSubtextPosition === 'above' ? 'flex-col-reverse' : 'flex-col'} items-center justify-center gap-1 whitespace-normal`} 
+                    className={`w-full mt-4 h-auto min-h-12 element-${element.id} ${buttonSubtextPosition === 'above' ? 'flex-col-reverse' : 'flex-col'} items-center justify-center gap-1 whitespace-normal`} 
                     style={buttonInline as React.CSSProperties} 
                     onClick={handleSubmit} 
                     disabled={!selectedProduct || isSelectedOut || isSubmitting}
