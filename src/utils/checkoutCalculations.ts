@@ -149,7 +149,13 @@ export function getPaymentBreakdownMessage(
       }
     } else {
       // English version
-      parts.push(`To place your order, you need to pay ${shippingText}${shippingText && digitalText ? ' and ' : ''}${digitalText}, ${totalText} to complete the order`);
+      // First part: upfront payment
+      parts.push(`To place your order, you need to pay shipping fee ${currency}${breakdown.upfrontShippingFee.toFixed(2)} and digital product ${currency}${breakdown.digitalProductsTotal.toFixed(2)}, total ${currency}${breakdown.upfrontAmount.toFixed(2)} to complete the order`);
+      
+      // Second part: delivery payment (if there are COD products)
+      if (breakdown.codProductsTotal > 0) {
+        parts.push(`You will pay product price ${currency}${breakdown.codProductsTotal.toFixed(2)} upon delivery`);
+      }
     }
   } else if (breakdown.upfrontShippingFee > 0) {
     // Only shipping fee upfront
