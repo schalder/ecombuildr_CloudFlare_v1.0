@@ -170,9 +170,9 @@ export const usePlanLimits = () => {
       return { planLimits, userUsage, userProfile };
     },
     enabled: !!user,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 1 * 60 * 1000, // 1 minute (reduced from 5 minutes for faster trial extension updates)
     retry: 1,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true, // Refetch when user focuses window to get updated trial data
     refetchOnReconnect: true,
   });
 
