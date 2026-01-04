@@ -71,9 +71,9 @@ export const PlanStatusBanner = ({ onUpgrade }: PlanStatusBannerProps) => {
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription className="flex items-center justify-between">
           <div>
-            <span className="font-medium">ট্রায়াল শেষ - {graceDaysRemaining} দিন বাকি</span>
+            <span className="font-medium">ট্রায়াল শেষ - গ্রেস পিরিয়ড ({graceDaysRemaining} দিন বাকি)</span>
             <p className="text-sm mt-1">
-              আপনার ট্রায়াল শেষ হয়েছে। পেমেন্ট না করলে আরও {graceDaysRemaining} দিন পর অ্যাকাউন্ট রিড-অনলি হয়ে যাবে।
+              আপনার ট্রায়াল শেষ হয়েছে এবং আপনি এখন গ্রেস পিরিয়ডে আছেন। এই সময়ে আপনি নতুন পেজ, ফানেল বা অন্যান্য রিসোর্স তৈরি করতে পারবেন না। পেমেন্ট না করলে আরও {graceDaysRemaining} দিন পর অ্যাকাউন্ট রিড-অনলি হয়ে যাবে।
             </p>
           </div>
           <Button onClick={onUpgrade} size="sm">

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Check, X, Loader2, AlertCircle, FileText, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { usePlanLimits } from '@/hooks/usePlanLimits';
 import { debounce } from '@/lib/utils';
 import { TemplateSelectionModal } from '@/components/templates/TemplateSelectionModal';
 import type { PageBuilderData } from '@/components/page-builder/types';
@@ -51,6 +52,7 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
   websiteId
 }) => {
   const navigate = useNavigate();
+  const { isTrialExpired, isInGracePeriod, getGraceDaysRemaining } = usePlanLimits();
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -238,13 +240,38 @@ export const CreatePageModal: React.FC<CreatePageModalProps> = ({
       // Navigate directly to the page builder with the new page ID
       navigate(`/dashboard/websites/${websiteId}/pages/${result.id}/builder`);
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error creating page:', error);
-      toast({ 
-        title: 'Error creating page',
-        description: 'Please try again.',
-        variant: 'destructive'
-      });
+      
+      // Check if it's a limit/grace period error
+      const errorMessage = error?.message || '';
+      const isLimitError = errorMessage.includes('Page limit reached') || 
+                           errorMessage.includes('limit reached');
+      
+      // Check if user is in grace period
+      const trialExpired = isTrialExpired();
+      const inGracePeriod = isInGracePeriod();
+      const graceDaysRemaining = getGraceDaysRemaining();
+      
+      if (isLimitError && trialExpired && inGracePeriod) {
+        toast({ 
+          title: 'ট্রায়াল শেষ - গ্রেস পিরিয়ড',
+          description: `আপনার ট্রায়াল শেষ হয়েছে এবং আপনি এখন গ্রেস পিরিয়ডে আছেন (${graceDaysRemaining} দিন বাকি)। এই সময়ে আপনি নতুন পেজ তৈরি করতে পারবেন না। পেমেন্ট করে প্ল্যান সক্রিয় করুন।`,
+          variant: 'destructive'
+        });
+      } else if (isLimitError) {
+        toast({ 
+          title: 'পেজ তৈরির সীমা পূর্ণ',
+          description: 'আপনার বর্তমান প্ল্যানে পেজ তৈরির সীমা পূর্ণ হয়ে গেছে। প্ল্যান আপগ্রেড করুন।',
+          variant: 'destructive'
+        });
+      } else {
+        toast({ 
+          title: 'Error creating page',
+          description: 'Please try again.',
+          variant: 'destructive'
+        });
+      }
     }
   });
 

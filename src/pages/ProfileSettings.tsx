@@ -11,11 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Mail, Phone, Save, CreditCard, Crown, Calendar, Clock } from 'lucide-react';
+import { User, Mail, Phone, Save, CreditCard, Crown, Calendar, Clock, AlertTriangle } from 'lucide-react';
 
 export default function ProfileSettings() {
   const { user } = useAuth();
-  const { planLimits, userProfile, loading: planLoading, getTrialDaysRemaining } = usePlanLimits();
+  const { planLimits, userProfile, loading: planLoading, getTrialDaysRemaining, isTrialExpired, isInGracePeriod, getGraceDaysRemaining } = usePlanLimits();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -116,10 +116,37 @@ export default function ProfileSettings() {
 
     if (userProfile.account_status === 'trial') {
       const daysRemaining = getTrialDaysRemaining();
+      const trialExpired = isTrialExpired();
+      const inGracePeriod = isInGracePeriod();
+      const graceDaysRemaining = getGraceDaysRemaining();
       const trialExpiryDate = userProfile.trial_expires_at 
         ? new Date(userProfile.trial_expires_at).toLocaleDateString('bn-BD')
         : '';
 
+      // If trial expired but in grace period
+      if (trialExpired && inGracePeriod) {
+        return (
+          <div className="mt-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <span className="text-sm font-medium text-orange-800">
+                ট্রায়াল শেষ - গ্রেস পিরিয়ড ({graceDaysRemaining} দিন বাকি)
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <Calendar className="h-4 w-4 text-orange-600" />
+              <span className="text-xs text-orange-600">
+                ট্রায়াল শেষ: {trialExpiryDate}
+              </span>
+            </div>
+            <p className="text-xs text-orange-700 mt-2">
+              এই সময়ে আপনি নতুন রিসোর্স তৈরি করতে পারবেন না। পেমেন্ট করে প্ল্যান সক্রিয় করুন।
+            </p>
+          </div>
+        );
+      }
+
+      // If trial is still active
       return (
         <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
           <div className="flex items-center gap-2">

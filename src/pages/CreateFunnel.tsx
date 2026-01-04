@@ -24,7 +24,7 @@ export default function CreateFunnel() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { store, getOrCreateStore } = useAutoStore();
-  const { userProfile } = usePlanLimits();
+  const { userProfile, isTrialExpired, isInGracePeriod, getGraceDaysRemaining } = usePlanLimits();
   const queryClient = useQueryClient();
 
   // Redirect read-only users back to dashboard
@@ -171,11 +171,35 @@ export default function CreateFunnel() {
       navigate(`/dashboard/funnels/${funnel.id}`);
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create funnel. Please try again.",
-        variant: "destructive",
-      });
+      // Check if it's a limit/grace period error
+      const errorMessage = error?.message || '';
+      const isLimitError = errorMessage.includes('limit reached') || 
+                           errorMessage.includes('limit reached for your current plan');
+      
+      // Check if user is in grace period
+      const trialExpired = isTrialExpired();
+      const inGracePeriod = isInGracePeriod();
+      const graceDaysRemaining = getGraceDaysRemaining();
+      
+      if (isLimitError && trialExpired && inGracePeriod) {
+        toast({
+          title: "ট্রায়াল শেষ - গ্রেস পিরিয়ড",
+          description: `আপনার ট্রায়াল শেষ হয়েছে এবং আপনি এখন গ্রেস পিরিয়ডে আছেন (${graceDaysRemaining} দিন বাকি)। এই সময়ে আপনি নতুন ফানেল তৈরি করতে পারবেন না। পেমেন্ট করে প্ল্যান সক্রিয় করুন।`,
+          variant: "destructive",
+        });
+      } else if (isLimitError) {
+        toast({
+          title: "ফানেল তৈরির সীমা পূর্ণ",
+          description: "আপনার বর্তমান প্ল্যানে ফানেল তৈরির সীমা পূর্ণ হয়ে গেছে। প্ল্যান আপগ্রেড করুন।",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create funnel. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
