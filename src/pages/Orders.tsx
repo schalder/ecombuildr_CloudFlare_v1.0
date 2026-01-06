@@ -170,6 +170,7 @@ const isPaymentFailed = (order: Order): boolean => {
 // Works for all product types: physical, digital, courses
 // Allows manual approval when user pays manually after online payment fails
 // Supports: pending_payment and payment_failed statuses
+// Shows in: Incomplete Orders tab (pending_payment, payment_failed) and All Orders tab (payment_failed)
 const canManuallyApprove = (order: Order, currentTab: 'all' | 'fake' | 'incomplete'): boolean => {
   // Always log when checking (for debugging)
   console.log('[canManuallyApprove] Checking order:', {
@@ -177,14 +178,9 @@ const canManuallyApprove = (order: Order, currentTab: 'all' | 'fake' | 'incomple
     orderNumber: order.order_number,
     originalStatus: order.status,
     currentTab,
-    isIncompleteTab: currentTab === 'incomplete'
+    isIncompleteTab: currentTab === 'incomplete',
+    isAllTab: currentTab === 'all'
   });
-  
-  // Only show in incomplete tab
-  if (currentTab !== 'incomplete') {
-    console.log('[canManuallyApprove] Not in incomplete tab, returning false');
-    return false;
-  }
   
   // Get status and normalize it (trim whitespace, lowercase)
   const status = order.status?.toLowerCase()?.trim();
@@ -194,24 +190,37 @@ const canManuallyApprove = (order: Order, currentTab: 'all' | 'fake' | 'incomple
     return false;
   }
   
-  // Check if status matches incomplete order statuses
-  // payment_failed: Payment failed online, user may pay manually
-  // pending_payment: Payment pending, user may pay manually
-  const incompleteStatuses = [
-    'pending_payment',
-    'payment_failed'
-  ];
+  // In "Incomplete Orders" tab: show for pending_payment and payment_failed
+  if (currentTab === 'incomplete') {
+    const incompleteStatuses = ['pending_payment', 'payment_failed'];
+    const canApprove = incompleteStatuses.includes(status);
+    
+    console.log('[canManuallyApprove] Incomplete tab result:', {
+      normalizedStatus: status,
+      canApprove,
+      incompleteStatuses,
+      paymentMethod: order.payment_method
+    });
+    
+    return canApprove;
+  }
   
-  const canApprove = incompleteStatuses.includes(status);
+  // In "All Orders" tab: show for payment_failed only
+  if (currentTab === 'all') {
+    const canApprove = status === 'payment_failed';
+    
+    console.log('[canManuallyApprove] All orders tab result:', {
+      normalizedStatus: status,
+      canApprove,
+      paymentMethod: order.payment_method
+    });
+    
+    return canApprove;
+  }
   
-  console.log('[canManuallyApprove] Result:', {
-    normalizedStatus: status,
-    canApprove,
-    incompleteStatuses,
-    paymentMethod: order.payment_method
-  });
-  
-  return canApprove;
+  // Not available in other tabs
+  console.log('[canManuallyApprove] Not in incomplete or all tab, returning false');
+  return false;
 };
 
 export default function Orders() {
