@@ -167,14 +167,47 @@ const isPaymentFailed = (order: Order): boolean => {
 };
 
 // Helper function to check if an order can be manually approved
+// Works for all product types: physical, digital, courses
+// Allows manual approval when user pays manually after online payment fails
 const canManuallyApprove = (order: Order, currentTab: 'all' | 'fake' | 'incomplete'): boolean => {
+  // Only show in incomplete tab
   if (currentTab !== 'incomplete') {
     return false;
   }
-  const status = order.status?.toLowerCase();
-  return status === 'pending_payment' || 
-         status === 'payment_failed' || 
-         status === 'cancelled';
+  
+  // Get status and normalize it (trim whitespace, lowercase)
+  const status = order.status?.toLowerCase()?.trim();
+  
+  if (!status) {
+    return false;
+  }
+  
+  // Check if status matches incomplete order statuses
+  // payment_failed: Payment failed online, user may pay manually
+  // pending_payment: Payment pending, user may pay manually
+  // cancelled: Order cancelled, user may want to pay manually
+  const incompleteStatuses = [
+    'pending_payment',
+    'payment_failed', 
+    'cancelled'
+  ];
+  
+  const canApprove = incompleteStatuses.includes(status);
+  
+  // Debug logging - helps identify if status values don't match
+  if (currentTab === 'incomplete') {
+    console.log('Manual Approve Check:', {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      originalStatus: order.status,
+      normalizedStatus: status,
+      currentTab,
+      canApprove,
+      paymentMethod: order.payment_method
+    });
+  }
+  
+  return canApprove;
 };
 
 export default function Orders() {
