@@ -166,6 +166,17 @@ const isPaymentFailed = (order: Order): boolean => {
   return false;
 };
 
+// Helper function to check if an order can be manually approved
+const canManuallyApprove = (order: Order, currentTab: 'all' | 'fake' | 'incomplete'): boolean => {
+  if (currentTab !== 'incomplete') {
+    return false;
+  }
+  const status = order.status?.toLowerCase();
+  return status === 'pending_payment' || 
+         status === 'payment_failed' || 
+         status === 'cancelled';
+};
+
 export default function Orders() {
   const { user } = useAuth();
   const { orderId } = useParams<{ orderId?: string }>();
@@ -1150,6 +1161,25 @@ export default function Orders() {
     }
   };
 
+  const handleManualApprove = async (orderId: string) => {
+    try {
+      await updateOrderStatus(orderId, 'processing');
+      toast({ 
+        title: 'Order Approved', 
+        description: 'Order has been manually approved and moved to all orders.' 
+      });
+      // Refresh orders to update the list
+      fetchOrders();
+    } catch (error) {
+      console.error('Error approving order:', error);
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to approve order. Please try again.', 
+        variant: 'destructive' 
+      });
+    }
+  };
+
   const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled') => {
     try {
       const order = orders.find(o => o.id === orderId);
@@ -2123,6 +2153,15 @@ export default function Orders() {
                                 <Eye className="mr-3 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
+                              {canManuallyApprove(order, activeTab) && (
+                                <DropdownMenuItem
+                                  onClick={() => handleManualApprove(order.id)}
+                                  className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation text-green-600"
+                                >
+                                  <CheckCircle className="mr-3 h-4 w-4" />
+                                  Manual Approve
+                                </DropdownMenuItem>
+                              )}
                               {order.status === 'pending' && (
                                 <DropdownMenuItem
                                   onClick={() => updateOrderStatus(order.id, 'processing')}
@@ -2454,6 +2493,15 @@ export default function Orders() {
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
+                            {canManuallyApprove(order, activeTab) && (
+                              <DropdownMenuItem
+                                onClick={() => handleManualApprove(order.id)}
+                                className="flex items-center py-2 px-3 text-sm cursor-pointer text-green-600"
+                              >
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Manual Approve
+                              </DropdownMenuItem>
+                            )}
                             {order.status === 'pending' && (
                               <DropdownMenuItem
                                 onClick={() => updateOrderStatus(order.id, 'processing')}
