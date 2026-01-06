@@ -170,42 +170,51 @@ const isPaymentFailed = (order: Order): boolean => {
 // Works for all product types: physical, digital, courses
 // Allows manual approval when user pays manually after online payment fails
 const canManuallyApprove = (order: Order, currentTab: 'all' | 'fake' | 'incomplete'): boolean => {
+  // ALWAYS log to see if function is being called
+  console.log('🔍 canManuallyApprove called:', {
+    orderId: order.id,
+    orderNumber: order.order_number,
+    orderStatus: order.status,
+    currentTab,
+    activeTabValue: currentTab
+  });
+  
   // Only show in incomplete tab
   if (currentTab !== 'incomplete') {
+    console.log('❌ Tab check failed - not incomplete tab:', currentTab);
     return false;
   }
   
   // Get status and normalize it (trim whitespace, lowercase)
   const status = order.status?.toLowerCase()?.trim();
   
+  console.log('📊 Status check:', {
+    originalStatus: order.status,
+    normalizedStatus: status,
+    hasStatus: !!status
+  });
+  
   if (!status) {
+    console.log('❌ No status found');
     return false;
   }
   
   // Check if status matches incomplete order statuses
   // payment_failed: Payment failed online, user may pay manually
   // pending_payment: Payment pending, user may pay manually
-  // cancelled: Order cancelled, user may want to pay manually
   const incompleteStatuses = [
     'pending_payment',
-    'payment_failed', 
-    'cancelled'
+    'payment_failed'
   ];
   
   const canApprove = incompleteStatuses.includes(status);
   
-  // Debug logging - helps identify if status values don't match
-  if (currentTab === 'incomplete') {
-    console.log('Manual Approve Check:', {
-      orderId: order.id,
-      orderNumber: order.order_number,
-      originalStatus: order.status,
-      normalizedStatus: status,
-      currentTab,
-      canApprove,
-      paymentMethod: order.payment_method
-    });
-  }
+  console.log('✅ Final check:', {
+    status,
+    incompleteStatuses,
+    canApprove,
+    paymentMethod: order.payment_method
+  });
   
   return canApprove;
 };
