@@ -178,6 +178,8 @@ export function useWebsiteSales(websiteId: string, initialDateRange?: DateRange)
         `)
         .eq('website_id', websiteId)
         .neq('status', 'pending_payment')
+        .neq('status', 'payment_failed')
+        .neq('status', 'cancelled')
         .gte('created_at', startDate)
         .lte('created_at', endDate)
         .order('created_at', { ascending: false });

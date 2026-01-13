@@ -139,12 +139,15 @@ export default function DashboardOverview() {
         .eq('store_id', store.id);
 
       // Build orders query with date filter
-      // Exclude incomplete orders (pending_payment status) from stats calculations
+      // Exclude incomplete/failed/cancelled orders from stats calculations
+      // Excluded statuses: pending_payment, payment_failed, cancelled
       let ordersQuery = supabase
         .from('orders')
         .select('total, created_at, website_id, funnel_id')
         .eq('store_id', store.id)
-        .neq('status', 'pending_payment' as any);
+        .neq('status', 'pending_payment' as any)
+        .neq('status', 'payment_failed' as any)
+        .neq('status', 'cancelled' as any);
 
       if (start && end) {
         ordersQuery = ordersQuery
