@@ -12,17 +12,17 @@ export const WhyNotEcomBuildr = () => {
             Why Not <span className="text-accent">eComBuildr?</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            আমরা জানি—সব টুল সবার জন্য না।<br />
-            তাই সোজাসুজি বলি—
+            আমরা জানি সব টুল সবার জন্য না।<br />
+            তাই সোজাসুজি বলি
           </p>
         </div>
 
         {/* Not For Section */}
-        <div className="max-w-4xl mx-auto mb-16">
-          <div className="space-y-6">
+        <div className="max-w-6xl mx-auto mb-16">
+          <div className="grid md:grid-cols-3 gap-6">
             <Card className="p-6 border-destructive/30 bg-destructive/5">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center mt-1">
+              <div className="flex flex-col items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center">
                   <X className="h-5 w-5 text-destructive" />
                 </div>
                 <div className="flex-1">
@@ -30,7 +30,7 @@ export const WhyNotEcomBuildr = () => {
                     আপনি যদি কোডিং করতে ভালোবাসেন
                   </h3>
                   <p className="text-muted-foreground">
-                    নিজে নিজে সার্ভার, প্লাগইন, কাস্টম ডেভেলপমেন্ট করতে চান—<br />
+                    নিজে নিজে সার্ভার, প্লাগইন, কাস্টম ডেভেলপমেন্ট করতে চান<br />
                     <span className="font-medium text-foreground">এইটা আপনার জন্য না।</span>
                   </p>
                 </div>
@@ -38,8 +38,8 @@ export const WhyNotEcomBuildr = () => {
             </Card>
 
             <Card className="p-6 border-destructive/30 bg-destructive/5">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center mt-1">
+              <div className="flex flex-col items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center">
                   <X className="h-5 w-5 text-destructive" />
                 </div>
                 <div className="flex-1">
@@ -55,8 +55,8 @@ export const WhyNotEcomBuildr = () => {
             </Card>
 
             <Card className="p-6 border-destructive/30 bg-destructive/5">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center mt-1">
+              <div className="flex flex-col items-start gap-4">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center">
                   <X className="h-5 w-5 text-destructive" />
                 </div>
                 <div className="flex-1">
@@ -82,7 +82,7 @@ export const WhyNotEcomBuildr = () => {
         <div className="max-w-4xl mx-auto mb-12">
           <div className="text-center mb-8">
             <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-4">
-              কিন্তু আপনি যদি—
+              কিন্তু আপনি যদি
             </h3>
           </div>
 
