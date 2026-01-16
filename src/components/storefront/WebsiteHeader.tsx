@@ -26,6 +26,7 @@ interface HeaderNavItem {
 interface GlobalHeaderConfig {
   enabled: boolean;
   logo_url?: string;
+  logo_size?: 'default' | 'medium' | 'large' | 'extra-large';
   nav_items: HeaderNavItem[];
   show_search: boolean;
   show_cart: boolean;
@@ -55,6 +56,15 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
       default: return 'text-base';
     }
   }, [cfg?.font_size]);
+
+  const getLogoSizeClass = (size?: string): string => {
+    switch (size) {
+      case 'medium': return 'h-10';      // 40px
+      case 'large': return 'h-12';        // 48px
+      case 'extra-large': return 'h-16';   // 64px
+      default: return 'h-8';              // 32px (default)
+    }
+  };
 
   const styleVars = useMemo(() => ({
     backgroundColor: cfg?.style?.bg_color || undefined,
@@ -107,7 +117,7 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <a href={paths.home} className="flex items-center gap-3">
           {cfg?.logo_url ? (
-            <img src={cfg.logo_url} alt={`${website.name} logo`} className="h-8 w-auto object-contain" />
+            <img src={cfg.logo_url} alt={`${website.name} logo`} className={`${getLogoSizeClass(cfg?.logo_size)} w-auto object-contain`} />
           ) : (
             <span className="font-semibold">{website.name}</span>
           )}
@@ -147,7 +157,7 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
               <SheetHeader>
                 <div className="flex items-center gap-3 py-2">
                   {cfg?.logo_url ? (
-                    <img src={cfg.logo_url} alt={`${website.name} logo`} className="h-8 w-auto object-contain" />
+                    <img src={cfg.logo_url} alt={`${website.name} logo`} className={`${getLogoSizeClass(cfg?.logo_size)} w-auto object-contain`} />
                   ) : (
                     <span className="font-semibold">{website.name}</span>
                   )}

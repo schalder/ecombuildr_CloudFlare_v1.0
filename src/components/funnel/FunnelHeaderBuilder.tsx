@@ -38,6 +38,7 @@ export type HeaderNavItem = {
 export interface GlobalHeaderConfig {
   enabled: boolean;
   logo_url?: string;
+  logo_size?: 'default' | 'medium' | 'large' | 'extra-large';
   nav_items: HeaderNavItem[];
   show_search: boolean;
   show_cart: boolean;
@@ -64,6 +65,7 @@ export const FunnelHeaderBuilder: React.FC<Props> = ({ funnel }) => {
     return cfg ?? {
       enabled: true,
       logo_url: '',
+      logo_size: 'default',
       nav_items: [],
       show_search: false,
       show_cart: false,
@@ -167,6 +169,25 @@ export const FunnelHeaderBuilder: React.FC<Props> = ({ funnel }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <MediaSelector label="Logo" value={config.logo_url || ''} onChange={(url) => setField({ logo_url: url })} compact />
+              {config.logo_url && (
+                <div>
+                  <Label className="text-sm">Logo Size</Label>
+                  <Select 
+                    value={config.logo_size || 'default'} 
+                    onValueChange={(v) => setField({ logo_size: v as 'default' | 'medium' | 'large' | 'extra-large' })}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select logo size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default (32px)</SelectItem>
+                      <SelectItem value="medium">Medium (40px)</SelectItem>
+                      <SelectItem value="large">Large (48px)</SelectItem>
+                      <SelectItem value="extra-large">Extra Large (64px)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
