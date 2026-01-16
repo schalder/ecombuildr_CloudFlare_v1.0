@@ -60,13 +60,6 @@ const features = [
   }
 ];
 
-const stats = [
-  { value: "200+", label: "Active Stores", icon: Store },
-  { value: "500%", label: "Average ROI Increase", icon: TrendingUp },
-  { value: "98%", label: "Customer Satisfaction", icon: Users },
-  { value: "24/7", label: "Support Available", icon: Shield }
-];
-
 export const Features = () => {
   return (
     <section className="py-20 bg-background">
@@ -101,28 +94,49 @@ export const Features = () => {
           ))}
         </div>
 
-        {/* Stats Section */}
-        <div className="bg-gradient-primary rounded-2xl p-8 md:p-12 text-center">
-          <h3 className="text-2xl md:text-3xl font-bold text-white mb-8">
-            Success by the Numbers
-          </h3>
+        {/* Why Choose eComBuildr Section */}
+        <div className="bg-gradient-primary rounded-2xl p-8 md:p-12">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              উদ্যোক্তারা কেন eComBuildr বেছে নিচ্ছেন?
+            </h3>
+            <p className="text-lg text-primary-light max-w-3xl mx-auto leading-relaxed">
+              eComBuildr বানানো হয়েছে এমন একটি সিস্টেম হিসেবে, যেটা বাংলাদেশের উদ্যোক্তাদের বাস্তব সেলস ও ডেলিভারি সমস্যার সমাধান করে।<br />
+              আপনি নতুন হোন বা অভিজ্ঞ, এই প্ল্যাটফর্ম আপনাকে সহজভাবে বিক্রি করতে সাহায্য করবে।
+            </p>
+          </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex justify-center mb-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                    <stat.icon className="h-6 w-6 text-accent" />
-                  </div>
-                </div>
-                <div className="text-3xl md:text-4xl font-bold text-white">
-                  {stat.value}
-                </div>
-                <div className="text-primary-light text-sm md:text-base">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="p-6 bg-white/10 backdrop-blur-sm border-white/20 text-center">
+              <p className="text-white font-semibold text-lg">
+                বাংলা ল্যান্ডিং পেজ টেমপ্লেট
+              </p>
+            </Card>
+            <Card className="p-6 bg-white/10 backdrop-blur-sm border-white/20 text-center">
+              <p className="text-white font-semibold text-lg">
+                ফানেল, আপসেল ও অর্ডার বাম্প
+              </p>
+            </Card>
+            <Card className="p-6 bg-white/10 backdrop-blur-sm border-white/20 text-center">
+              <p className="text-white font-semibold text-lg">
+                কুরিয়ার ইন্টিগ্রেশন
+              </p>
+            </Card>
+            <Card className="p-6 bg-white/10 backdrop-blur-sm border-white/20 text-center">
+              <p className="text-white font-semibold text-lg">
+                Facebook Pixel & CAPI রেডি
+              </p>
+            </Card>
+          </div>
+
+          <div className="text-center space-y-4">
+            <div className="space-y-2 text-primary-light">
+              <p className="text-lg font-medium">কোনো setup নাটক না।</p>
+              <p className="text-lg font-medium">কোনো অপ্রয়োজনীয় টেকনিক্যাল ঝামেলা না।</p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center text-white font-semibold text-lg">
+              <span>👉 শুধু সেটআপ করুন। বিক্রি শুরু করুন।</span>
+            </div>
           </div>
         </div>
 
