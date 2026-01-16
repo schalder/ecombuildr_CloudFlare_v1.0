@@ -79,13 +79,13 @@ export const Hero = () => {
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
                 <span className="block">একটা প্ল্যাটফর্মেই</span>
                 <span className="block bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent">
-                ওয়েবসাইট, ল্যান্ডিং পেজ, ফানেল,
+                ওয়েবসাইট, ল্যান্ডিং পেজ, ফানেল, পেমেন্ট 
                 </span>
-                <span className="block">পেমেন্ট ও কুরিয়ার ইন্টিগ্রেশন</span>
+                <span className="block">ও কুরিয়ার ইন্টিগ্রেশন</span>
               </h1>
               
               <p className="text-xl md:text-2xl text-primary-light/90 max-w-xl mx-auto lg:mx-0">
-              বাংলাদেশি উদ্যোক্তাদের জন্য বানানো একটি সম্পূর্ণ ই-কমার্স সিস্টেম যেখানে আলাদা হোস্টিং, প্লাগইন বা টেকনিক্যাল ঝামেলা নেই।
+              Hosting, theme বা plugin-এর ঝামেলা ছাড়াই বাংলাদেশি উদ্যোক্তাদের জন্য বানানো একটি সহজ কিন্তু শক্তিশালী সিস্টেম— যেটা আপনাকে অনলাইনে বিক্রি শুরু ও ধাপে ধাপে স্কেল করতে সাহায্য করে।
               </p>
             </div>
 
