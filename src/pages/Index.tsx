@@ -11,6 +11,7 @@ import { ToolsShowcase } from "@/components/ToolsShowcase";
 import { AddonAppsShowcase } from "@/components/AddonAppsShowcase";
 import { Testimonials } from "@/components/Testimonials";
 import { Pricing } from "@/components/Pricing";
+import { WhyNotEcomBuildr } from "@/components/WhyNotEcomBuildr";
 import { Footer } from "@/components/Footer";
 import { WhatsAppWidget } from "@/components/WhatsAppWidget";
 import { ScrollToHash } from "@/components/ScrollToHash";
@@ -50,6 +51,7 @@ const Index = () => {
         <div id="pricing">
           <Pricing />
         </div>
+        <WhyNotEcomBuildr />
         <div id="testimonials">
           <Testimonials />
         </div>
