@@ -71,22 +71,21 @@ export const Hero = () => {
             {/* Social Proof Badge */}
             <div className="inline-flex items-center gap-2 backdrop-blur-sm border border-success/20 rounded-full px-4 py-2 text-sm font-medium text-success bg-cyan-700">
               <Star className="h-4 w-4 fill-current" />
-              <span className="text-slate-50">দ্রুত সেল শুরু করতে না পেরে কাস্টমার হারাচ্ছেন?</span>
+              <span className="text-slate-50">কোডিং না জেনেও অনলাইনে বিক্রি শুরু করুন</span>
             </div>
 
             {/* Main Heading */}
             <div className="space-y-4">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
-                <span className="block">Build Your</span>
+                <span className="block">একটা প্ল্যাটফর্মেই</span>
                 <span className="block bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent">
-                  E-commerce Empire
+                ওয়েবসাইট, ল্যান্ডিং পেজ, ফানেল,
                 </span>
-                <span className="block">In Minutes, Not Months</span>
+                <span className="block">পেমেন্ট ও কুরিয়ার ইন্টিগ্রেশন</span>
               </h1>
               
               <p className="text-xl md:text-2xl text-primary-light/90 max-w-xl mx-auto lg:mx-0">
-                Create conversion-driven online stores without coding. 
-                From landing pages to sales funnels - everything you need to turn traffic into sales.
+              বাংলাদেশি উদ্যোক্তাদের জন্য বানানো একটি সম্পূর্ণ ই-কমার্স সিস্টেম যেখানে আলাদা হোস্টিং, প্লাগইন বা টেকনিক্যাল ঝামেলা নেই।
               </p>
             </div>
 
