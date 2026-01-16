@@ -123,15 +123,15 @@ export const Hero = () => {
             <div className="flex flex-wrap gap-6 justify-center lg:justify-start text-white/80">
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-accent" />
-                <span className="font-semibold">250+ Entrepreneurs</span>
+                <span className="font-semibold">নতুন হলে সমস্যা নাই</span>
               </div>
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-accent" />
-                <span className="font-semibold">500% ROI Increase</span>
+                <span className="font-semibold">COD ও অনলাইন পেমেন্ট রেডি</span>
               </div>
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-accent fill-current" />
-                <span className="font-semibold">98% Success Rate</span>
+                <span className="font-semibold">বাংলা ল্যান্ডিং পেজ টেমপ্লেট</span>
               </div>
             </div>
 
@@ -156,7 +156,7 @@ export const Hero = () => {
             <div className="flex flex-wrap gap-4 justify-center lg:justify-start text-sm text-white/70">
               <span>✓ 7-Day Free Trial</span>
               <span>✓ No Credit Card Required</span>
-              <span>✓ 24/7 Expert Support</span>
+              <span>✓ Priority Customer Support</span>
             </div>
           </div>
 
@@ -200,7 +200,7 @@ export const Hero = () => {
             <div className="absolute -bottom-6 -left-6 bg-gradient-card rounded-lg p-4 shadow-large backdrop-blur-sm border border-white/20 animate-pulse">
               <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                 <Users className="h-4 w-4 text-accent" />
-                <span>30+ New Orders Daily</span>
+                <span>Sart Building Today</span>
               </div>
             </div>
           </div>
