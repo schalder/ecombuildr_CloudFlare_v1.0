@@ -541,6 +541,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                   ))}
                 </div>
               </div>
+            </div>
 
             {/* Right Sidebar */}
             <div className="lg:col-span-1">
