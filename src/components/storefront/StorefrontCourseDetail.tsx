@@ -62,6 +62,11 @@ interface CourseDetail {
   title: string;
   description?: string;
   content?: string;
+  overview?: string;
+  course_details?: string;
+  author_name?: string;
+  author_image_url?: string;
+  author_details?: string;
   thumbnail_url?: string;
   price: number;
   compare_price?: number;
@@ -76,6 +81,13 @@ interface CourseDetail {
     nagad: boolean;
     eps: boolean;
     ebpay: boolean;
+    stripe: boolean;
+  };
+  theme_settings?: {
+    module_color?: string;
+    module_text_color?: string;
+    enroll_button_color?: string;
+    enroll_button_text_color?: string;
   };
 }
 
@@ -129,7 +141,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
       let query = supabase
         .from('courses')
         .select(`
-          id, title, description, content, thumbnail_url, price, compare_price, is_published, is_active, created_at, includes_title, includes_items, payment_methods, theme_settings,
+          id, title, description, content, overview, course_details, author_name, author_image_url, author_details, thumbnail_url, price, compare_price, is_published, is_active, created_at, includes_title, includes_items, payment_methods, theme_settings,
           course_modules(
             id, title, description, sort_order, is_published,
             course_lessons(
@@ -158,7 +170,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
       
       return {
         ...data,
-        payment_methods: data.payment_methods as CourseDetail['payment_methods'] || { bkash: false, nagad: false, eps: false }
+        payment_methods: data.payment_methods as CourseDetail['payment_methods'] || { bkash: false, nagad: false, eps: false, ebpay: false, stripe: false }
       } as CourseDetail;
     },
     enabled: !!(finalCourseSlug || finalCourseId)
@@ -170,6 +182,18 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
         ? prev.filter(id => id !== moduleId)
         : [...prev, moduleId]
     );
+  };
+
+  // Helper function to detect if overview is a video URL
+  const isVideoUrl = (url: string): boolean => {
+    if (!url) return false;
+    const videoPatterns = [
+      /youtube\.com|youtu\.be/,
+      /vimeo\.com/,
+      /wistia\.com/,
+      /\.mp4|\.webm|\.ogg/i
+    ];
+    return videoPatterns.some(pattern => pattern.test(url));
   };
 
   const totalLessons = course?.course_modules.reduce((total, module) => 
@@ -249,20 +273,122 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Course Header */}
-              <div className="space-y-4">
+              {/* Title */}
+              <div>
                 <h1 className="text-3xl lg:text-4xl font-bold text-foreground">
                   {course.title}
                 </h1>
+              </div>
 
-                {/* Course Overview (Description) */}
-                {course.description && (
+              {/* Description */}
+              {course.description && (
+                <div className="prose prose-lg max-w-none">
+                  <div dangerouslySetInnerHTML={{ __html: course.description }} />
+                </div>
+              )}
+
+              {/* Course Overview - Text or Video */}
+              {course.overview && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-primary">Course Overview</h2>
+                  {isVideoUrl(course.overview) ? (
+                    <div className="aspect-video bg-muted rounded-lg overflow-hidden">
+                      {(() => {
+                        const videoInfo = parseVideoUrl(course.overview);
+                        if (videoInfo.type === 'youtube' || videoInfo.type === 'vimeo' || videoInfo.type === 'wistia') {
+                          const embedUrl = buildEmbedUrl(videoInfo.embedUrl!, videoInfo.type, {
+                            controls: true,
+                            autoplay: false
+                          });
+                          return (
+                            <iframe
+                              src={embedUrl}
+                              className="w-full h-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
+                          );
+                        } else if (videoInfo.type === 'hosted') {
+                          return (
+                            <video
+                              controls
+                              className="w-full h-full"
+                              poster="/placeholder.svg"
+                            >
+                              <source src={course.overview} type="video/mp4" />
+                              Your browser does not support the video tag.
+                            </video>
+                          );
+                        } else {
+                          const sanitizedCode = sanitizeEmbedCode(course.overview);
+                          return (
+                            <div 
+                              className="w-full h-full"
+                              dangerouslySetInnerHTML={{ __html: sanitizedCode }}
+                            />
+                          );
+                        }
+                      })()}
+                    </div>
+                  ) : (
+                    <div className="prose prose-lg max-w-none">
+                      <div dangerouslySetInnerHTML={{ __html: course.overview }} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Course Content */}
+              {course.content && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-primary">Course Content</h2>
                   <div className="prose prose-lg max-w-none">
-                    <div dangerouslySetInnerHTML={{ __html: course.description }} />
+                    <div dangerouslySetInnerHTML={{ __html: course.content }} />
                   </div>
-                )}
+                </div>
+              )}
 
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
+              {/* Course Details */}
+              {course.course_details && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-primary">Course Details</h2>
+                  <div className="prose prose-lg max-w-none">
+                    <div dangerouslySetInnerHTML={{ __html: course.course_details }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Author Section */}
+              {(course.author_name || course.author_image_url || course.author_details) && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-primary">About the Instructor</h2>
+                  <div className="flex items-start gap-4 p-6 bg-muted/50 rounded-lg">
+                    {course.author_image_url && (
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={course.author_image_url} 
+                          alt={course.author_name || 'Course Instructor'}
+                          className="w-20 h-20 rounded-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 space-y-2">
+                      {course.author_name && (
+                        <h3 className="text-lg font-semibold">{course.author_name}</h3>
+                      )}
+                      {course.author_details && (
+                        <div className="prose prose-sm max-w-none">
+                          <div dangerouslySetInnerHTML={{ __html: course.author_details }} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Course Modules */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-6 text-sm text-muted-foreground mb-4">
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-4 w-4" />
                     <span>{course.course_modules.length} modules</span>
@@ -278,16 +404,6 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                     <span>{formatDuration(totalDuration)}</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Course Description (Content) */}
-              {course.content && (
-                <div className="prose prose-lg max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: course.content }} />
-                </div>
-              )}
-
-              {/* Course Modules */}
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-primary">Course Content</h2>
                 
@@ -429,7 +545,8 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
             </div>
 
             {/* Right Sidebar */}
-            <div className="lg:col-span-1 space-y-6">
+            <div className="lg:col-span-1">
+              <div className="lg:sticky lg:top-4 space-y-6">
               {/* Combined Course Card: Thumbnail + Pricing + Includes */}
               <Card>
                 <CardContent className="p-6 space-y-6">
@@ -450,11 +567,13 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                   </div>
 
                   {/* Enrollment Card */}
-              <CourseEnrollmentCard 
-                course={course} 
-                storeId={store?.id || ''}
-                themeSettings={(course as any)?.theme_settings}
-              />
+              <div data-enrollment-card>
+                <CourseEnrollmentCard 
+                  course={course} 
+                  storeId={store?.id || ''}
+                  themeSettings={(course as any)?.theme_settings}
+                />
+              </div>
 
 
 
@@ -503,8 +622,51 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                   </div>
                 </CardContent>
               </Card>
+              </div>
             </div>
           </div>
+
+          {/* Mobile Floating Enroll Button */}
+          {course.price > 0 && (
+            <div className="fixed bottom-4 left-4 right-4 z-50 lg:hidden">
+              <Card className="shadow-2xl border-2">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground mb-1">Special Offer:</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl font-bold">{formatCoursePrice(course.price, currency)}</span>
+                        {course.compare_price && course.compare_price > course.price && (
+                          <span className="text-sm text-muted-foreground line-through">
+                            {formatCoursePrice(course.compare_price, currency)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <Button 
+                      className="flex-shrink-0"
+                      onClick={() => {
+                        // Scroll to enrollment card or trigger enrollment
+                        const enrollmentCard = document.querySelector('[data-enrollment-card]');
+                        if (enrollmentCard) {
+                          enrollmentCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                          // Fallback: navigate to checkout
+                          window.location.href = `/courses/${course.id}/checkout`;
+                        }
+                      }}
+                      style={{ 
+                        backgroundColor: course.theme_settings?.enroll_button_color || '#10b981',
+                        color: course.theme_settings?.enroll_button_text_color || '#ffffff'
+                      }}
+                    >
+                      Enroll Now
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
     </>

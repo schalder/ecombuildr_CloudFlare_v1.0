@@ -27,6 +27,11 @@ interface CourseFormData {
   title: string;
   description: string;
   content: string;
+  overview: string;
+  course_details: string;
+  author_name: string;
+  author_image_url: string;
+  author_details: string;
   price: number;
   compare_price: number | null;
   thumbnail_url: string;
@@ -40,6 +45,7 @@ interface CourseFormData {
     nagad: boolean;
     eps: boolean;
     ebpay: boolean;
+    stripe: boolean;
   };
 }
 
@@ -49,10 +55,16 @@ const CreateCourse = () => {
   const { flatCategories } = useCategories();
   
   const [loading, setLoading] = useState(false);
+  const [overviewType, setOverviewType] = useState<'text' | 'video'>('text');
   const [formData, setFormData] = useState<CourseFormData>({
     title: '',
     description: '',
     content: '',
+    overview: '',
+    course_details: '',
+    author_name: '',
+    author_image_url: '',
+    author_details: '',
     price: 0,
     compare_price: null,
     thumbnail_url: '',
@@ -65,7 +77,8 @@ const CreateCourse = () => {
       bkash: false,
       nagad: false,
       eps: false,
-      ebpay: false
+      ebpay: false,
+      stripe: false
     }
   });
 
@@ -94,6 +107,11 @@ const CreateCourse = () => {
         title: formData.title.trim(),
         description: formData.description.trim() || null,
         content: formData.content.trim() || null,
+        overview: formData.overview.trim() || null,
+        course_details: formData.course_details.trim() || null,
+        author_name: formData.author_name.trim() || null,
+        author_image_url: formData.author_image_url.trim() || null,
+        author_details: formData.author_details.trim() || null,
         price: formData.price,
         compare_price: formData.compare_price,
         thumbnail_url: formData.thumbnail_url.trim() || null,
@@ -212,14 +230,76 @@ const CreateCourse = () => {
                 </Card>
               </AccordionItem>
 
-              {/* Course Overview */}
+              {/* Course Overview - Text or Video */}
               <AccordionItem value="course-overview" className="border rounded-lg">
                 <Card className="border-0">
                   <AccordionTrigger className="px-6 hover:no-underline text-left">
                     <CardHeader className="p-0 text-left">
                       <CardTitle className="text-left text-base font-semibold">Course Overview</CardTitle>
                       <CardDescription className="text-left">
-                        Write a detailed description of your course content
+                        Add a video or text overview of your course
+                      </CardDescription>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="flex items-center gap-4">
+                        <Label>Overview Type</Label>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant={overviewType === 'text' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setOverviewType('text')}
+                          >
+                            Text
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={overviewType === 'video' ? 'default' : 'outline'}
+                            size="sm"
+                            onClick={() => setOverviewType('video')}
+                          >
+                            Video URL
+                          </Button>
+                        </div>
+                      </div>
+                      {overviewType === 'text' ? (
+                        <div className="space-y-2">
+                          <Label>Overview Text</Label>
+                          <RichTextEditor
+                            content={formData.overview}
+                            onChange={(content) => handleInputChange('overview', content)}
+                            placeholder="Write an overview of your course..."
+                            className="min-h-[150px]"
+                          />
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label>Video URL</Label>
+                          <Input
+                            value={formData.overview}
+                            onChange={(e) => handleInputChange('overview', e.target.value)}
+                            placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..."
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Supports YouTube, Vimeo, Wistia, or direct video URLs
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+
+              {/* Course Content */}
+              <AccordionItem value="course-content" className="border rounded-lg">
+                <Card className="border-0">
+                  <AccordionTrigger className="px-6 hover:no-underline text-left">
+                    <CardHeader className="p-0 text-left">
+                      <CardTitle className="text-left text-base font-semibold">Course Content</CardTitle>
+                      <CardDescription className="text-left">
+                        Detailed course content and curriculum information
                       </CardDescription>
                     </CardHeader>
                   </AccordionTrigger>
@@ -230,6 +310,74 @@ const CreateCourse = () => {
                         onChange={(content) => handleInputChange('content', content)}
                         placeholder="Describe what students will learn, course objectives, prerequisites, etc..."
                       />
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+
+              {/* Course Details */}
+              <AccordionItem value="course-details" className="border rounded-lg">
+                <Card className="border-0">
+                  <AccordionTrigger className="px-6 hover:no-underline text-left">
+                    <CardHeader className="p-0 text-left">
+                      <CardTitle className="text-left text-base font-semibold">Course Details</CardTitle>
+                      <CardDescription className="text-left">
+                        Additional course information and specifications
+                      </CardDescription>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="pt-0">
+                      <RichTextEditor
+                        content={formData.course_details}
+                        onChange={(content) => handleInputChange('course_details', content)}
+                        placeholder="Add detailed course information, requirements, what students will get, etc..."
+                        className="min-h-[200px]"
+                      />
+                    </CardContent>
+                  </AccordionContent>
+                </Card>
+              </AccordionItem>
+
+              {/* Author Information */}
+              <AccordionItem value="author-information" className="border rounded-lg">
+                <Card className="border-0">
+                  <AccordionTrigger className="px-6 hover:no-underline text-left">
+                    <CardHeader className="p-0 text-left">
+                      <CardTitle className="text-left text-base font-semibold">Author Information</CardTitle>
+                      <CardDescription className="text-left">
+                        Course instructor/author details
+                      </CardDescription>
+                    </CardHeader>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="space-y-2">
+                        <Label htmlFor="author-name">Author Name</Label>
+                        <Input
+                          id="author-name"
+                          value={formData.author_name}
+                          onChange={(e) => handleInputChange('author_name', e.target.value)}
+                          placeholder="e.g., John Doe"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="author-image">Author Image</Label>
+                        <CompactMediaSelector
+                          value={formData.author_image_url}
+                          onChange={(url) => handleInputChange('author_image_url', url)}
+                          label="Select Author Image"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="author-details">Author Details</Label>
+                        <RichTextEditor
+                          content={formData.author_details}
+                          onChange={(content) => handleInputChange('author_details', content)}
+                          placeholder="Write about the course author, their experience, credentials, etc..."
+                          className="min-h-[150px]"
+                        />
+                      </div>
                     </CardContent>
                   </AccordionContent>
                 </Card>
