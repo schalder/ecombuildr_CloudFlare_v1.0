@@ -60,6 +60,7 @@ interface Course {
   title: string;
   description: string;
   content?: string;
+  show_content?: boolean;
   overview?: string;
   course_details?: string;
   author_name?: string;
@@ -344,7 +345,8 @@ const CourseEditor = () => {
         .update({
           title: course.title,
           description: course.description,
-          content: course.content,
+          content: course.show_content ? (course.content || null) : null,
+          show_content: course.show_content ?? false,
           overview: course.overview,
           course_details: course.course_details,
           author_name: course.author_name,
@@ -790,15 +792,29 @@ const CourseEditor = () => {
                 </AccordionTrigger>
                 <AccordionContent>
                   <CardContent className="space-y-4 pt-0">
-                    <div className="space-y-2">
-                      <Label>Course Content</Label>
-                      <RichTextEditor
-                        content={course.content || ''}
-                        onChange={(content) => setCourse(prev => prev ? {...prev, content: content} : null)}
-                        placeholder="Write a detailed description of your course content, objectives, prerequisites, etc..."
-                        className="min-h-[200px]"
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Show Course Content Section</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Display course content text on the course page
+                        </p>
+                      </div>
+                      <Switch
+                        checked={course.show_content ?? false}
+                        onCheckedChange={(checked) => setCourse(prev => prev ? {...prev, show_content: checked} : null)}
                       />
                     </div>
+                    {course.show_content && (
+                      <div className="space-y-2">
+                        <Label>Course Content</Label>
+                        <RichTextEditor
+                          content={course.content || ''}
+                          onChange={(content) => setCourse(prev => prev ? {...prev, content: content} : null)}
+                          placeholder="Write a detailed description of your course content, objectives, prerequisites, etc..."
+                          className="min-h-[200px]"
+                        />
+                      </div>
+                    )}
                   </CardContent>
                 </AccordionContent>
               </Card>

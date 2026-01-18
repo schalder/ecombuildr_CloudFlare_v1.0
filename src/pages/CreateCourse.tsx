@@ -27,6 +27,7 @@ interface CourseFormData {
   title: string;
   description: string;
   content: string;
+  show_content: boolean;
   overview: string;
   course_details: string;
   author_name: string;
@@ -60,6 +61,7 @@ const CreateCourse = () => {
     title: '',
     description: '',
     content: '',
+    show_content: false,
     overview: '',
     course_details: '',
     author_name: '',
@@ -106,7 +108,8 @@ const CreateCourse = () => {
         store_id: store.id,
         title: formData.title.trim(),
         description: formData.description.trim() || null,
-        content: formData.content.trim() || null,
+        content: formData.show_content ? (formData.content.trim() || null) : null,
+        show_content: formData.show_content,
         overview: formData.overview.trim() || null,
         course_details: formData.course_details.trim() || null,
         author_name: formData.author_name.trim() || null,
@@ -304,12 +307,30 @@ const CreateCourse = () => {
                     </CardHeader>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <CardContent className="pt-0">
-                      <RichTextEditor
-                        content={formData.content}
-                        onChange={(content) => handleInputChange('content', content)}
-                        placeholder="Describe what students will learn, course objectives, prerequisites, etc..."
-                      />
+                    <CardContent className="space-y-4 pt-0">
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <Label>Show Course Content Section</Label>
+                          <p className="text-xs text-muted-foreground">
+                            Display course content text on the course page
+                          </p>
+                        </div>
+                        <Switch
+                          checked={formData.show_content}
+                          onCheckedChange={(checked) => handleInputChange('show_content', checked)}
+                        />
+                      </div>
+                      {formData.show_content && (
+                        <div className="space-y-2">
+                          <Label>Course Content</Label>
+                          <RichTextEditor
+                            content={formData.content}
+                            onChange={(content) => handleInputChange('content', content)}
+                            placeholder="Describe what students will learn, course objectives, prerequisites, etc..."
+                            className="min-h-[200px]"
+                          />
+                        </div>
+                      )}
                     </CardContent>
                   </AccordionContent>
                 </Card>

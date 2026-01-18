@@ -72,6 +72,7 @@ interface CourseDetail {
   compare_price?: number;
   is_published: boolean;
   is_active: boolean;
+  show_content?: boolean;
   created_at: string;
   includes_title?: string;
   includes_items?: string[];
@@ -141,7 +142,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
       let query = supabase
         .from('courses')
         .select(`
-          id, title, description, content, overview, course_details, author_name, author_image_url, author_details, thumbnail_url, price, compare_price, is_published, is_active, created_at, includes_title, includes_items, payment_methods, theme_settings,
+          id, title, description, content, overview, course_details, author_name, author_image_url, author_details, thumbnail_url, price, compare_price, is_published, is_active, show_content, created_at, includes_title, includes_items, payment_methods, theme_settings,
           course_modules(
             id, title, description, sort_order, is_published,
             course_lessons(
@@ -339,49 +340,11 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
               )}
 
               {/* Course Content */}
-              {course.content && (
+              {course.show_content && course.content && (
                 <div className="space-y-4">
                   <h2 className="text-xl font-semibold text-primary">Course Content</h2>
                   <div className="prose prose-lg max-w-none">
                     <div dangerouslySetInnerHTML={{ __html: course.content }} />
-                  </div>
-                </div>
-              )}
-
-              {/* Course Details */}
-              {course.course_details && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold text-primary">Course Details</h2>
-                  <div className="prose prose-lg max-w-none">
-                    <div dangerouslySetInnerHTML={{ __html: course.course_details }} />
-                  </div>
-                </div>
-              )}
-
-              {/* Author Section */}
-              {(course.author_name || course.author_image_url || course.author_details) && (
-                <div className="space-y-4">
-                  <h2 className="text-xl font-semibold text-primary">About the Instructor</h2>
-                  <div className="flex items-start gap-4 p-6 bg-muted/50 rounded-lg">
-                    {course.author_image_url && (
-                      <div className="flex-shrink-0">
-                        <img 
-                          src={course.author_image_url} 
-                          alt={course.author_name || 'Course Instructor'}
-                          className="w-20 h-20 rounded-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 space-y-2">
-                      {course.author_name && (
-                        <h3 className="text-lg font-semibold">{course.author_name}</h3>
-                      )}
-                      {course.author_details && (
-                        <div className="prose prose-sm max-w-none">
-                          <div dangerouslySetInnerHTML={{ __html: course.author_details }} />
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
               )}
@@ -541,6 +504,44 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                   ))}
                 </div>
               </div>
+
+              {/* Course Details */}
+              {course.course_details && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-primary">Course Details</h2>
+                  <div className="prose prose-lg max-w-none">
+                    <div dangerouslySetInnerHTML={{ __html: course.course_details }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Author Section */}
+              {(course.author_name || course.author_image_url || course.author_details) && (
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold text-primary">About the Instructor</h2>
+                  <div className="flex items-start gap-4 p-6 bg-muted/50 rounded-lg">
+                    {course.author_image_url && (
+                      <div className="flex-shrink-0">
+                        <img 
+                          src={course.author_image_url} 
+                          alt={course.author_name || 'Course Instructor'}
+                          className="w-20 h-20 rounded-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 space-y-2">
+                      {course.author_name && (
+                        <h3 className="text-lg font-semibold">{course.author_name}</h3>
+                      )}
+                      {course.author_details && (
+                        <div className="prose prose-sm max-w-none">
+                          <div dangerouslySetInnerHTML={{ __html: course.author_details }} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Sidebar */}
