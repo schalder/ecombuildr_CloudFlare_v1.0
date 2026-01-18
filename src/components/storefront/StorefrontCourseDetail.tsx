@@ -404,7 +404,6 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                     <span>{formatDuration(totalDuration)}</span>
                   </div>
                 </div>
-              <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-primary">Course Content</h2>
                 
                 <div className="border-2 border-dashed border-border rounded-lg p-6 space-y-4">
@@ -542,7 +541,6 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
                   ))}
                 </div>
               </div>
-            </div>
 
             {/* Right Sidebar */}
             <div className="lg:col-span-1">
