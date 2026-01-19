@@ -467,6 +467,105 @@ serve(async (req) => {
       // Don't fail the order creation if email fails
     }
 
+    // ✅ Track Purchase event server-side for COD orders
+    if (order.payment_method === 'cod') {
+      try {
+        // Fetch pixel config from website or funnel
+        let pixel_id: string | null = null;
+        let access_token: string | null = null;
+        let test_event_code: string | null = null;
+
+        if (order.website_id) {
+          const { data: website } = await supabase
+            .from('websites')
+            .select('facebook_pixel_id, facebook_access_token, facebook_test_event_code, facebook_server_side_enabled')
+            .eq('id', order.website_id)
+            .single();
+
+          if (website?.facebook_server_side_enabled && website?.facebook_pixel_id && website?.facebook_access_token) {
+            pixel_id = website.facebook_pixel_id;
+            access_token = website.facebook_access_token;
+            test_event_code = website.facebook_test_event_code;
+          }
+        }
+
+        if (!pixel_id && order.funnel_id) {
+          const { data: funnel } = await supabase
+            .from('funnels')
+            .select('settings')
+            .eq('id', order.funnel_id)
+            .single();
+
+          if (funnel?.settings) {
+            const settings = funnel.settings as any;
+            if (settings.facebook_server_side_enabled && settings.facebook_pixel_id && settings.facebook_access_token) {
+              pixel_id = settings.facebook_pixel_id;
+              access_token = settings.facebook_access_token;
+              test_event_code = settings.facebook_test_event_code || null;
+            }
+          }
+        }
+
+        if (pixel_id && access_token) {
+          // Generate event_id for deduplication
+          const eventId = `Purchase_${Date.now()}_${createdOrder.id}_${Math.random().toString(36).substring(2, 9)}`;
+          
+          // Prepare event data
+          const eventData = {
+            content_ids: items.map(item => item.product_id),
+            content_type: 'product',
+            value: createdOrder.total,
+            currency: 'BDT',
+            contents: items.map(item => ({
+              id: item.product_id,
+              quantity: item.quantity,
+              price: item.price,
+            })),
+          };
+
+          // Prepare user data
+          const userData = {
+            email: order.customer_email || null,
+            phone: order.customer_phone || null,
+            firstName: order.customer_name ? order.customer_name.split(' ')[0] : null,
+            lastName: order.customer_name && order.customer_name.includes(' ') 
+              ? order.customer_name.substring(order.customer_name.indexOf(' ') + 1) 
+              : null,
+            city: order.shipping_city || null,
+            state: order.shipping_state || null,
+            zipCode: order.shipping_postal_code || null,
+            country: order.shipping_country || null,
+          };
+
+          // Call send-facebook-event edge function
+          const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
+          await fetch(`${supabaseUrl}/functions/v1/send-facebook-event`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+            },
+            body: JSON.stringify({
+              pixel_id,
+              access_token,
+              event_name: 'Purchase',
+              event_data: eventData,
+              user_data: userData,
+              browser_context: {}, // No browser context for server-side COD orders
+              event_id: eventId,
+              event_time: Math.floor(Date.now() / 1000),
+              test_event_code: test_event_code || null,
+            }),
+          });
+          
+          console.log('Purchase event tracked server-side for COD order:', createdOrder.id);
+        }
+      } catch (purchaseError) {
+        console.error('Failed to track Purchase event for COD order:', purchaseError);
+        // Don't fail order creation if tracking fails
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, order: { ...createdOrder, access_token: accessToken } }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

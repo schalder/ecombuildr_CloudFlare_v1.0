@@ -1066,26 +1066,89 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const [hasTrackedInitiateCheckout, setHasTrackedInitiateCheckout] = useState<boolean>(false);
 
   // Helper function to track InitiateCheckout when user starts filling form
-  const handleInitiateCheckoutTracking = useCallback(() => {
+  const handleInitiateCheckoutTracking = useCallback(async () => {
     const sessionKey = `initiate_checkout_tracked_${element.id}`;
     const alreadyTracked = sessionStorage.getItem(sessionKey);
     
-    if (!hasTrackedInitiateCheckout && !alreadyTracked && items.length > 0 && store && pixels && total > 0) {
-      trackInitiateCheckout({
+    if (!hasTrackedInitiateCheckout && !alreadyTracked && items.length > 0 && store && total > 0) {
+      // Generate event_id for deduplication
+      let sessionId = sessionStorage.getItem('session_id');
+      if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        sessionStorage.setItem('session_id', sessionId);
+      }
+      const eventId = `InitiateCheckout_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Capture browser context
+      const getFacebookBrowserContext = () => {
+        try {
+          const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+            const [key, value] = cookie.trim().split('=');
+            acc[key] = value;
+            return acc;
+          }, {} as Record<string, string>);
+          
+          return {
+            fbp: cookies['_fbp'] || null,
+            fbc: cookies['_fbc'] || null,
+            client_user_agent: navigator.userAgent,
+            event_source_url: window.location.href,
+          };
+        } catch (error) {
+          return {
+            fbp: null,
+            fbc: null,
+            client_user_agent: navigator.userAgent,
+            event_source_url: window.location.href,
+          };
+        }
+      };
+      
+      const browserContext = getFacebookBrowserContext();
+      
+      const eventData = {
+        content_ids: items.map(item => item.productId),
         value: total + shippingCost,
-        items: items.map(item => ({
-          item_id: item.productId,
-          item_name: item.name,
-          price: item.price,
+        currency: 'BDT',
+        num_items: items.reduce((sum, item) => sum + item.quantity, 0),
+        contents: items.map(item => ({
+          id: item.productId,
           quantity: item.quantity,
-          item_category: 'General'
-        }))
-      });
+          price: item.price,
+        })),
+      };
+      
+      // 1. Fire browser pixel (with event_id for deduplication)
+      if (window.fbq && pixels?.facebook_pixel_id) {
+        window.fbq('track', 'InitiateCheckout', eventData, { eventID: eventId });
+      }
+      
+      // 2. Call server-side tracking edge function
+      try {
+        const supabaseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co';
+        
+        await fetch(`${supabaseUrl}/functions/v1/track-initiate-checkout`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            store_id: store.id,
+            website_id: websiteId || null,
+            funnel_id: funnelId || null,
+            event_id: eventId,
+            event_data: eventData,
+            browser_context: browserContext,
+          }),
+        });
+      } catch (error) {
+        console.error('Error sending InitiateCheckout to server:', error);
+      }
       
       setHasTrackedInitiateCheckout(true);
       sessionStorage.setItem(sessionKey, 'true');
     }
-  }, [hasTrackedInitiateCheckout, items, store, pixels, total, shippingCost, element.id, trackInitiateCheckout]);
+  }, [hasTrackedInitiateCheckout, items, store, pixels, total, shippingCost, element.id, websiteId, funnelId]);
 
   // Initialize default shipping option
   const availableShippingOptions = getAvailableShippingOptions(websiteShipping);
