@@ -74,15 +74,19 @@ export default defineConfig(({ mode }) => ({
             return 'storefront-components';
           }
           
-          // Split page builder (admin only - separate from storefront)
-          if (id.includes('/components/page-builder/') && 
-              !id.includes('/components/page-builder/types') &&
-              !id.includes('/components/page-builder/utils')) {
-            return 'page-builder';
-          }
-          
-          // Split vendor libraries
+          // Split vendor libraries FIRST (before page-builder check to avoid conflicts)
           if (id.includes('node_modules')) {
+            // ✅ FIX: Split react-dnd packages FIRST to avoid circular dependencies
+            if (id.includes('react-dnd-html5-backend')) {
+              return 'react-dnd-backend';
+            }
+            if (id.includes('react-dnd') && !id.includes('react-dnd-html5-backend')) {
+              return 'react-dnd-core';
+            }
+            if (id.includes('@hello-pangea/dnd')) {
+              return 'dnd-pangea';
+            }
+            
             // React core
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
               return 'react-vendor';
@@ -111,11 +115,6 @@ export default defineConfig(({ mode }) => ({
             // Date libraries
             if (id.includes('date-fns') || id.includes('react-day-picker')) {
               return 'date-vendor';
-            }
-            
-            // Page builder drag-drop (admin only)
-            if (id.includes('react-dnd') || id.includes('@hello-pangea/dnd')) {
-              return 'page-builder-dnd';
             }
             
             // Supabase client (used everywhere but can be split)
