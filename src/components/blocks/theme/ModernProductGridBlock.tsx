@@ -386,13 +386,14 @@ const ModernProductGridSave: React.FC<BlockSaveProps> = ({ block }) => {
                       onClick={() => {
                         if (content.ctaBehavior === 'buy_now' && store?.slug) {
                           clearCart();
+                          // ✅ FIX: Pass skipOpenCart: true for buy_now to prevent cart drawer from opening
                           addItem({
                             id: `cart-${product.id}`,
                             productId: product.id,
                             name: product.name,
                             price: product.price,
                             image: Array.isArray(product.images) ? product.images[0] : (product as any).images,
-                          });
+                          }, true); // Skip opening cart drawer for buy_now
                           window.location.href = `/store/${store.slug}/checkout`;
                          } else {
                            addItem({

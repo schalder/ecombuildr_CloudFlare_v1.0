@@ -64,6 +64,7 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setPendingBuyNow(buyNow);
     } else {
       // Add directly to cart
+      // ✅ FIX: Pass buyNow as skipOpenCart parameter to prevent cart drawer from opening when Order Now is clicked
       addItem({
         id: product.id,
         productId: product.id,
@@ -72,7 +73,7 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         quantity,
         image: product.images?.[0],
         variation: selectedOptions,
-      });
+      }, buyNow); // Pass buyNow as skipOpenCart parameter
 
       if (buyNow) {
         // For builder preview, open checkout in new tab, for storefront navigate normally
@@ -91,6 +92,7 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const handleQuickViewAddToCart = (product: Product, quantity: number, selectedOptions?: any) => {
+    // ✅ FIX: Pass pendingBuyNow as skipOpenCart parameter to prevent cart drawer from opening when Order Now is clicked
     addItem({
       id: product.id,
       productId: product.id,
@@ -99,7 +101,7 @@ export const AddToCartProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       quantity,
       image: product.images?.[0],
       variation: selectedOptions,
-    });
+    }, pendingBuyNow); // Pass pendingBuyNow as skipOpenCart parameter
 
     if (pendingBuyNow) {
       // For builder preview, open checkout in new tab, for storefront navigate normally

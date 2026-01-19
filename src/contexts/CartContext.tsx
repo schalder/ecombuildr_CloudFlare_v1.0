@@ -133,7 +133,7 @@ const cartReducer = (state: CartState, action: CartAction): CartState => {
 };
 
 interface CartContextType extends CartState {
-  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
+  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }, skipOpenCart?: boolean) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
@@ -246,7 +246,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
     }
   }, [state.items, state.discountCode, state.discountAmount, storeId]);
 
-  const addItem = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
+  const addItem = (item: Omit<CartItem, 'quantity'> & { quantity?: number }, skipOpenCart?: boolean) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
     
     // Track add to cart event (only if pixels are available)
@@ -264,8 +264,8 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
       console.warn('Failed to track add to cart event:', error);
     }
 
-    // Auto-open cart drawer when item is added
-    if (cartDrawer?.openCart) {
+    // Auto-open cart drawer when item is added (unless skipOpenCart is true)
+    if (!skipOpenCart && cartDrawer?.openCart) {
       cartDrawer.openCart();
     }
   };
