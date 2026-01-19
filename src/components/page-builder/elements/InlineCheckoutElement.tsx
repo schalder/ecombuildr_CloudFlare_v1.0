@@ -147,28 +147,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   // Tracking state
   const [hasTrackedInitiateCheckout, setHasTrackedInitiateCheckout] = useState<boolean>(false);
 
-  // Helper function to track InitiateCheckout when user starts filling form
-  const handleInitiateCheckoutTracking = useCallback(() => {
-    const sessionKey = `initiate_checkout_tracked_${element.id}`;
-    const alreadyTracked = sessionStorage.getItem(sessionKey);
-    
-    if (!hasTrackedInitiateCheckout && !alreadyTracked && selectedProduct && store && pixels && trackingSubtotal > 0) {
-      trackInitiateCheckout({
-        value: trackingSubtotal,
-        items: [{
-          item_id: selectedProduct.id,
-          item_name: selectedProduct.name,
-          price: selectedProduct.price,
-          quantity: quantity,
-          item_category: (selectedProduct as any).category || 'General'
-        }]
-      });
-      
-      setHasTrackedInitiateCheckout(true);
-      sessionStorage.setItem(sessionKey, 'true');
-    }
-  }, [hasTrackedInitiateCheckout, selectedProduct, store, pixels, trackingSubtotal, quantity, element.id, trackInitiateCheckout]);
-
   // Form state
   const [form, setForm] = useState({
     customer_name: '', customer_email: '', customer_phone: '',
@@ -293,6 +271,28 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     const bump = (orderBump.enabled && bumpChecked && bumpProduct) ? Number(bumpProduct.price) : 0;
     return main + bump;
   }, [selectedProduct, quantity, orderBump.enabled, bumpChecked, bumpProduct]);
+
+  // Helper function to track InitiateCheckout when user starts filling form
+  const handleInitiateCheckoutTracking = useCallback(() => {
+    const sessionKey = `initiate_checkout_tracked_${element.id}`;
+    const alreadyTracked = sessionStorage.getItem(sessionKey);
+    
+    if (!hasTrackedInitiateCheckout && !alreadyTracked && selectedProduct && store && pixels && trackingSubtotal > 0) {
+      trackInitiateCheckout({
+        value: trackingSubtotal,
+        items: [{
+          item_id: selectedProduct.id,
+          item_name: selectedProduct.name,
+          price: selectedProduct.price,
+          quantity: quantity,
+          item_category: (selectedProduct as any).category || 'General'
+        }]
+      });
+      
+      setHasTrackedInitiateCheckout(true);
+      sessionStorage.setItem(sessionKey, 'true');
+    }
+  }, [hasTrackedInitiateCheckout, selectedProduct, store, pixels, trackingSubtotal, quantity, element.id, trackInitiateCheckout]);
 
   // ✅ REMOVED: InitiateCheckout tracking on mount
   // Now fires when user starts filling the form (see handleInitiateCheckoutTracking)
