@@ -958,12 +958,45 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                 google_ads_id: settings?.google_ads_id || pixels?.google_ads_id,
               };
               
+              // ✅ Generate event_id for deduplication (use same for both fbq and database)
+              let sessionId = sessionStorage.getItem('session_id');
+              if (!sessionId) {
+                sessionId = crypto.randomUUID();
+                sessionStorage.setItem('session_id', sessionId);
+              }
+              const eventId = `Purchase_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
+              
+              // ✅ Capture browser context for server-side matching
+              const getFacebookBrowserContext = () => {
+                try {
+                  const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                    const [key, value] = cookie.trim().split('=');
+                    acc[key] = value;
+                    return acc;
+                  }, {} as Record<string, string>);
+                  
+                  return {
+                    fbp: cookies['_fbp'] || null,
+                    fbc: cookies['_fbc'] || null,
+                    client_user_agent: navigator.userAgent,
+                    event_source_url: window.location.href,
+                  };
+                } catch (error) {
+                  return {
+                    fbp: null,
+                    fbc: null,
+                    client_user_agent: navigator.userAgent,
+                    event_source_url: window.location.href,
+                  };
+                }
+              };
+              
+              const browserContext = getFacebookBrowserContext();
+              
               // Track purchase event directly using window.fbq if available
               if (window.fbq && funnelPixels.facebook_pixel_id) {
                 try {
-                  // Generate event_id for deduplication
-                  const eventId = `Purchase_${Date.now()}_${crypto.randomUUID()}`;
-                  const eventData = {
+                  const fbqEventData = {
                     content_ids: trackingItems.map(item => item.item_id),
                     content_type: 'product',
                     value: total,
@@ -971,16 +1004,18 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                     contents: trackingItems.map(item => ({
                       id: item.item_id,
                       quantity: item.quantity,
+                      price: item.price, // ✅ Add price for server-side tracking
                     })),
                     event_id: eventId, // Include in eventData for server-side
                   };
                   // ✅ FIX: Pass event_id in options parameter for proper deduplication
-                  window.fbq('track', 'Purchase', eventData, { eventID: eventId });
+                  window.fbq('track', 'Purchase', fbqEventData, { eventID: eventId });
                   console.log('InlineCheckoutElement: Facebook Purchase event tracked (COD):', {
                     orderId,
                     total,
                     itemsCount: trackingItems.length,
-                    funnelId: orderFunnelId
+                    funnelId: orderFunnelId,
+                    eventId
                   });
                 } catch (error) {
                   console.error('InlineCheckoutElement: Error tracking Facebook Purchase:', error);
@@ -1004,12 +1039,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
               
               // Store purchase event directly in database with funnel_id
               try {
-                let sessionId = sessionStorage.getItem('session_id');
-                if (!sessionId) {
-                  sessionId = crypto.randomUUID();
-                  sessionStorage.setItem('session_id', sessionId);
-                }
-                
                 const eventData = {
                   content_ids: trackingItems.map(item => item.item_id),
                   content_type: 'product',
@@ -1018,6 +1047,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   contents: trackingItems.map(item => ({
                     id: item.item_id,
                     quantity: item.quantity,
+                    price: item.price, // ✅ Add price for server-side tracking
                   })),
                   // Include customer data for better Facebook matching
                   customer_email: form.customer_email || null,
@@ -1027,6 +1057,13 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                   shipping_state: form.shipping_state || null,
                   shipping_postal_code: form.shipping_postal_code || null,
                   shipping_country: form.shipping_country || null,
+                  // ✅ ADD: Browser context for server-side matching
+                  fbp: browserContext.fbp,
+                  fbc: browserContext.fbc,
+                  client_user_agent: browserContext.client_user_agent,
+                  event_source_url: browserContext.event_source_url,
+                  // ✅ ADD: event_id for deduplication
+                  event_id: eventId,
                   _providers: {
                     facebook: {
                       configured: !!funnelPixels.facebook_pixel_id,

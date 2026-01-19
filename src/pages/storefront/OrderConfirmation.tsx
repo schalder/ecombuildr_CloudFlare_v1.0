@@ -219,6 +219,36 @@ useEffect(() => {
                 sessionStorage.setItem('session_id', sessionId);
               }
               
+              // ✅ Generate event_id for deduplication
+              const eventId = `Purchase_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
+              
+              // ✅ Capture browser context for server-side matching
+              const getFacebookBrowserContext = () => {
+                try {
+                  const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                    const [key, value] = cookie.trim().split('=');
+                    acc[key] = value;
+                    return acc;
+                  }, {} as Record<string, string>);
+                  
+                  return {
+                    fbp: cookies['_fbp'] || null,
+                    fbc: cookies['_fbc'] || null,
+                    client_user_agent: navigator.userAgent,
+                    event_source_url: window.location.href,
+                  };
+                } catch (error) {
+                  return {
+                    fbp: null,
+                    fbc: null,
+                    client_user_agent: navigator.userAgent,
+                    event_source_url: window.location.href,
+                  };
+                }
+              };
+              
+              const browserContext = getFacebookBrowserContext();
+              
               const eventData = {
                 content_ids: trackingItems.map(item => item.item_id),
                 content_type: 'product',
@@ -237,6 +267,13 @@ useEffect(() => {
                 shipping_state: orderData.shipping_state || null,
                 shipping_postal_code: orderData.shipping_postal_code || null,
                 shipping_country: orderData.shipping_country || null,
+                // ✅ ADD: Browser context for server-side matching
+                fbp: browserContext.fbp,
+                fbc: browserContext.fbc,
+                client_user_agent: browserContext.client_user_agent,
+                event_source_url: browserContext.event_source_url,
+                // ✅ ADD: event_id for deduplication
+                event_id: eventId,
                 _providers: {
                   facebook: {
                     configured: !!pixels?.facebook_pixel_id,
@@ -251,6 +288,11 @@ useEffect(() => {
                 },
                 funnel_id: finalFunnelId // ✅ Explicitly include funnel_id in event_data
               };
+              
+              // ✅ Track with Facebook Pixel using same event_id
+              if (window.fbq && pixels?.facebook_pixel_id) {
+                window.fbq('track', 'Purchase', eventData, { eventID: eventId });
+              }
               
               await supabase.from('pixel_events').insert({
                 store_id: store?.id || '',

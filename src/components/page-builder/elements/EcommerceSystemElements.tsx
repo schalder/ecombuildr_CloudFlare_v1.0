@@ -2531,9 +2531,42 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                   google_ads_id: settings?.google_ads_id || pixels?.google_ads_id,
                 };
                 
+                // ✅ Generate event_id for deduplication (use same for both fbq and database)
+                let sessionId = sessionStorage.getItem('session_id');
+                if (!sessionId) {
+                  sessionId = crypto.randomUUID();
+                  sessionStorage.setItem('session_id', sessionId);
+                }
+                const eventId = `Purchase_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
+                
+                // ✅ Capture browser context for server-side matching
+                const getFacebookBrowserContext = () => {
+                  try {
+                    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+                      const [key, value] = cookie.trim().split('=');
+                      acc[key] = value;
+                      return acc;
+                    }, {} as Record<string, string>);
+                    
+                    return {
+                      fbp: cookies['_fbp'] || null,
+                      fbc: cookies['_fbc'] || null,
+                      client_user_agent: navigator.userAgent,
+                      event_source_url: window.location.href,
+                    };
+                  } catch (error) {
+                    return {
+                      fbp: null,
+                      fbc: null,
+                      client_user_agent: navigator.userAgent,
+                      event_source_url: window.location.href,
+                    };
+                  }
+                };
+                
+                const browserContext = getFacebookBrowserContext();
+                
                 // Track directly with funnel pixel config
-                // Generate event_id for deduplication
-                const eventId = `Purchase_${Date.now()}_${crypto.randomUUID()}`;
                 const eventData = {
                   content_ids: trackingItems.map(item => item.item_id),
                   content_type: 'product',
@@ -2542,6 +2575,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                   contents: trackingItems.map(item => ({
                     id: item.item_id,
                     quantity: item.quantity,
+                    price: item.price, // ✅ Add price for server-side tracking
                   })),
                   // Include customer data for better Facebook matching
                   customer_email: data.order.customer_email || null,
@@ -2580,14 +2614,13 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                 
                 // Store purchase event directly in database with funnel_id
                 try {
-                  let sessionId = sessionStorage.getItem('session_id');
-                  if (!sessionId) {
-                    sessionId = crypto.randomUUID();
-                    sessionStorage.setItem('session_id', sessionId);
-                  }
-                  
                   const dbEventData = {
                     ...eventData,
+                    // ✅ ADD: Browser context for server-side matching
+                    fbp: browserContext.fbp,
+                    fbc: browserContext.fbc,
+                    client_user_agent: browserContext.client_user_agent,
+                    event_source_url: browserContext.event_source_url,
                     _providers: {
                       facebook: {
                         configured: !!funnelPixels.facebook_pixel_id,
