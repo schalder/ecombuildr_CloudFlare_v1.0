@@ -120,7 +120,7 @@ export const useFacebookPixelAnalytics = (
           return;
         }
 
-        // ✅ FIX: Filter events to only show those successfully sent to Facebook
+        // ✅ FIX: Filter events to show all events attempted/sent to Facebook
         // Deduplicate by event_id since Facebook deduplicates browser + server events with same ID
         const eventIdMap = new Map<string, any>();
         
@@ -129,10 +129,23 @@ export const useFacebookPixelAnalytics = (
               const eventData = event.event_data as any;
               const providers = eventData?._providers?.facebook;
               
-              if (!providers || !providers.configured) return false;
+              // ✅ FIX: Include events if Facebook was configured OR attempted
+              // This ensures we show all events that were meant for Facebook
+              if (!providers) return false;
               
-              // ✅ Only include events successfully sent to Facebook browser pixel
-              // OR events that were forwarded server-side (we can't verify server-side success without Facebook API)
+              // Check if Facebook pixel was configured (pixel ID exists)
+              const wasConfigured = providers.configured === true;
+              
+              // Check if Facebook pixel was attempted (even if it failed due to ad blocker)
+              const wasAttempted = providers.attempted === true;
+              
+              // ✅ Only include events where Facebook was configured OR attempted
+              if (!wasConfigured && !wasAttempted) return false;
+              
+              // ✅ Include events if:
+              // 1. Browser pixel succeeded (success === true), OR
+              // 2. Server-side tracking is enabled (forwarded to Facebook), OR
+              // 3. Browser pixel was attempted (even if blocked by ad blocker - we still tried to send it)
               const browserSuccess = providers.success === true;
               
               // Check if server-side tracking was enabled for this event
@@ -145,8 +158,8 @@ export const useFacebookPixelAnalytics = (
                 serverSideEnabled = funnelConfigs[eventAny.funnel_id] === true;
               }
               
-              // Include if browser was successful OR server-side was enabled (forwarded)
-              const shouldInclude = browserSuccess || serverSideEnabled;
+              // Include if browser succeeded OR server-side enabled OR was attempted (shows intent to track)
+              const shouldInclude = browserSuccess || serverSideEnabled || wasAttempted;
               
               if (!shouldInclude) return false;
               
