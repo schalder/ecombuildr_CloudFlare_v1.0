@@ -51,6 +51,47 @@ export const useFacebookPixelAnalytics = (
         const startDate = new Date(now);
         startDate.setDate(now.getDate() - dateRangeDays);
 
+        // ✅ Fetch website/funnel configs if not provided (for server-side tracking check)
+        let websiteConfigs: Record<string, boolean> = {};
+        let funnelConfigs: Record<string, boolean> = {};
+        
+        if (!websites || !funnels) {
+          // Fetch all websites and funnels for this store to check server-side status
+          const [websitesResult, funnelsResult] = await Promise.all([
+            supabase
+              .from('websites')
+              .select('id, facebook_server_side_enabled')
+              .eq('store_id', storeId)
+              .eq('is_active', true),
+            supabase
+              .from('funnels')
+              .select('id, settings')
+              .eq('store_id', storeId)
+              .eq('is_active', true)
+          ]);
+          
+          if (websitesResult.data) {
+            websitesResult.data.forEach(w => {
+              websiteConfigs[w.id] = w.facebook_server_side_enabled === true;
+            });
+          }
+          
+          if (funnelsResult.data) {
+            funnelsResult.data.forEach(f => {
+              const settings = f.settings as any;
+              funnelConfigs[f.id] = settings?.facebook_server_side_enabled === true;
+            });
+          }
+        } else {
+          // Use provided arrays
+          websites.forEach(w => {
+            websiteConfigs[w.id] = w.facebook_server_side_enabled === true;
+          });
+          funnels.forEach(f => {
+            funnelConfigs[f.id] = f.settings?.facebook_server_side_enabled === true;
+          });
+        }
+
         // Build query filters
         let query = supabase
           .from('pixel_events')
@@ -92,7 +133,7 @@ export const useFacebookPixelAnalytics = (
               const eventData = event.event_data as any;
               const providers = eventData?._providers?.facebook;
               
-              if (!providers) return false;
+              if (!providers || !providers.configured) return false;
               
               // ✅ Only include events successfully sent to Facebook browser pixel
               // OR events that were forwarded server-side (we can't verify server-side success without Facebook API)
@@ -100,16 +141,14 @@ export const useFacebookPixelAnalytics = (
               
               // Check if server-side tracking was enabled for this event
               let serverSideEnabled = false;
-              if (event.website_id && websites) {
-                const website = websites.find(w => w.id === event.website_id);
-                serverSideEnabled = website?.facebook_server_side_enabled === true;
-              } else if (event.funnel_id && funnels) {
-                const funnel = funnels.find(f => f.id === event.funnel_id);
-                serverSideEnabled = funnel?.settings?.facebook_server_side_enabled === true;
+              if (event.website_id) {
+                serverSideEnabled = websiteConfigs[event.website_id] === true;
+              } else if (event.funnel_id) {
+                serverSideEnabled = funnelConfigs[event.funnel_id] === true;
               }
               
               // Include if browser was successful OR server-side was enabled (forwarded)
-              const shouldInclude = browserSuccess || (serverSideEnabled && providers.configured === true);
+              const shouldInclude = browserSuccess || serverSideEnabled;
               
               if (!shouldInclude) return false;
               
@@ -117,6 +156,7 @@ export const useFacebookPixelAnalytics = (
               const eventId = eventData?.event_id;
               if (eventId) {
                 // If we've seen this event_id before, skip it (already counted)
+                // Facebook deduplicates events with same event_id, so we should too
                 if (eventIdMap.has(eventId)) {
                   return false;
                 }
