@@ -135,12 +135,9 @@ async function buildFacebookPayload(
     if (browserContext.fbc) {
       hashedUserData.fbc = browserContext.fbc;
     }
-    if (browserContext.client_user_agent) {
-      hashedUserData.client_user_agent = browserContext.client_user_agent;
-    }
-    if (browserContext.event_source_url) {
-      // event_source_url goes at event level, not user_data
-    }
+    // ❌ REMOVED: client_user_agent should NOT be in user_data
+    // Facebook doesn't accept client_user_agent as a user_data parameter
+    // It should be at the event level instead
   }
 
   // Build event data
@@ -154,6 +151,12 @@ async function buildFacebookPayload(
   // ✅ ADD: event_source_url at event level (if available)
   if (browserContext?.event_source_url) {
     event.event_source_url = browserContext.event_source_url;
+  }
+
+  // ✅ ADD: client_user_agent at event level (if available)
+  // Facebook requires client_user_agent at event level, not in user_data
+  if (browserContext?.client_user_agent) {
+    event.client_user_agent = browserContext.client_user_agent;
   }
 
   // Add event_id for deduplication (REQUIRED for proper deduplication)
