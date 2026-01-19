@@ -93,13 +93,15 @@ export const useFacebookPixelAnalytics = (
         }
 
         // Build query filters
-        // Build base query
+        // Build base query - order by created_at DESC to get newest events first
+        // Remove default 1000 limit by using a high limit or no limit
         let queryBuilder: any = supabase
           .from('pixel_events')
-          .select('*')
+          .select('*', { count: 'exact' })
           .eq('store_id', storeId)
           .gte('created_at', startDate.toISOString())
-          .lte('created_at', now.toISOString());
+          .lte('created_at', now.toISOString())
+          .order('created_at', { ascending: false }); // ✅ Get newest events first
 
         // Apply website filter if provided
         if (websiteId) {
@@ -111,6 +113,10 @@ export const useFacebookPixelAnalytics = (
         if (funnelId) {
           queryBuilder = queryBuilder.eq('funnel_id', funnelId);
         }
+
+        // ✅ Remove Supabase's default 1000 limit - fetch all events in date range
+        // Use a high limit (100,000) to ensure we get all events
+        queryBuilder = queryBuilder.limit(100000);
 
         const { data: events, error: fetchError } = await queryBuilder;
 
