@@ -161,7 +161,7 @@ export const useFacebookPixelAnalytics = (
                 
                 if (eventAny.website_id) {
                   const website = websites?.find(w => w.id === eventAny.website_id);
-                  hasFacebookPixel = !!website?.facebook_pixel_id;
+                  hasFacebookPixel = !!(website as any)?.facebook_pixel_id;
                 } else if (eventAny.funnel_id) {
                   const funnel = funnels?.find(f => f.id === eventAny.funnel_id);
                   hasFacebookPixel = !!(funnel?.settings as any)?.facebook_pixel_id;
