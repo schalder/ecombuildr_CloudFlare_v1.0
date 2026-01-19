@@ -120,6 +120,17 @@ export const useFacebookPixelAnalytics = (
           return;
         }
 
+        // ✅ DEBUG: Log raw events to see what we're getting
+        console.log('[FacebookAnalytics] Raw events fetched:', events?.length || 0);
+        if (events && events.length > 0) {
+          console.log('[FacebookAnalytics] Sample event:', {
+            event_type: events[0].event_type,
+            website_id: (events[0] as any).website_id,
+            funnel_id: (events[0] as any).funnel_id,
+            event_data: events[0].event_data,
+          });
+        }
+
         // ✅ FIX: Filter events to show all events attempted/sent to Facebook
         // Deduplicate by event_id since Facebook deduplicates browser + server events with same ID
         const eventIdMap = new Map<string, any>();
@@ -128,10 +139,43 @@ export const useFacebookPixelAnalytics = (
           ? (events || []).filter(event => {
               const eventData = event.event_data as any;
               const providers = eventData?._providers?.facebook;
+              const eventAny = event as any;
               
-              // ✅ FIX: Include events if Facebook was configured OR attempted
-              // This ensures we show all events that were meant for Facebook
-              if (!providers) return false;
+              // ✅ DEBUG: Log each event being filtered
+              console.log('[FacebookAnalytics] Filtering event:', {
+                event_type: event.event_type,
+                website_id: eventAny.website_id,
+                funnel_id: eventAny.funnel_id,
+                has_providers: !!providers,
+                configured: providers?.configured,
+                attempted: providers?.attempted,
+                success: providers?.success,
+              });
+              
+              // ✅ FIX: If no providers object, check if event has Facebook pixel ID in settings
+              // This handles cases where events might be stored differently
+              if (!providers) {
+                // Check if this is a Facebook event by checking if pixel was configured
+                // We'll include it if website/funnel has Facebook pixel configured
+                let hasFacebookPixel = false;
+                
+                if (eventAny.website_id) {
+                  const website = websites?.find(w => w.id === eventAny.website_id);
+                  hasFacebookPixel = !!website?.facebook_pixel_id;
+                } else if (eventAny.funnel_id) {
+                  const funnel = funnels?.find(f => f.id === eventAny.funnel_id);
+                  hasFacebookPixel = !!(funnel?.settings as any)?.facebook_pixel_id;
+                }
+                
+                // If website/funnel has Facebook pixel, include the event
+                if (hasFacebookPixel) {
+                  console.log('[FacebookAnalytics] Including event without _providers (has Facebook pixel)');
+                  return true;
+                }
+                
+                console.log('[FacebookAnalytics] Excluding event: no providers and no Facebook pixel');
+                return false;
+              }
               
               // Check if Facebook pixel was configured (pixel ID exists)
               const wasConfigured = providers.configured === true;
@@ -139,18 +183,21 @@ export const useFacebookPixelAnalytics = (
               // Check if Facebook pixel was attempted (even if it failed due to ad blocker)
               const wasAttempted = providers.attempted === true;
               
-              // ✅ Only include events where Facebook was configured OR attempted
-              if (!wasConfigured && !wasAttempted) return false;
+              // ✅ RELAXED: Include events where Facebook was configured OR attempted OR succeeded
+              // This ensures we show all events that were meant for Facebook
+              if (!wasConfigured && !wasAttempted && !providers.success) {
+                console.log('[FacebookAnalytics] Excluding event: not configured, not attempted, not successful');
+                return false;
+              }
               
               // ✅ Include events if:
               // 1. Browser pixel succeeded (success === true), OR
               // 2. Server-side tracking is enabled (forwarded to Facebook), OR
-              // 3. Browser pixel was attempted (even if blocked by ad blocker - we still tried to send it)
+              // 3. Browser pixel was attempted (even if blocked by ad blocker - we still tried to send it), OR
+              // 4. Facebook was configured (pixel ID exists - event was meant for Facebook)
               const browserSuccess = providers.success === true;
               
               // Check if server-side tracking was enabled for this event
-              // Note: funnel_id exists in DB but TypeScript types may not be updated
-              const eventAny = event as any;
               let serverSideEnabled = false;
               if (eventAny.website_id) {
                 serverSideEnabled = websiteConfigs[eventAny.website_id] === true;
@@ -158,25 +205,37 @@ export const useFacebookPixelAnalytics = (
                 serverSideEnabled = funnelConfigs[eventAny.funnel_id] === true;
               }
               
-              // Include if browser succeeded OR server-side enabled OR was attempted (shows intent to track)
-              const shouldInclude = browserSuccess || serverSideEnabled || wasAttempted;
+              // Include if browser succeeded OR server-side enabled OR was attempted OR was configured
+              const shouldInclude = browserSuccess || serverSideEnabled || wasAttempted || wasConfigured;
               
-              if (!shouldInclude) return false;
+              if (!shouldInclude) {
+                console.log('[FacebookAnalytics] Excluding event: does not meet inclusion criteria');
+                return false;
+              }
               
               // ✅ Deduplicate by event_id (Facebook deduplicates browser + server events with same ID)
               const eventId = eventData?.event_id;
               if (eventId) {
-                // If we've seen this event_id before, skip it (already counted)
-                // Facebook deduplicates events with same event_id, so we should too
                 if (eventIdMap.has(eventId)) {
+                  console.log('[FacebookAnalytics] Deduplicating event:', eventId);
                   return false;
                 }
                 eventIdMap.set(eventId, event);
               }
               
+              console.log('[FacebookAnalytics] Including event');
               return true;
             })
           : (events || []);
+
+        // ✅ DEBUG: Log filtered results
+        console.log('[FacebookAnalytics] Filtered events:', filteredEvents.length);
+        if (filteredEvents.length > 0) {
+          console.log('[FacebookAnalytics] Sample filtered event:', {
+            event_type: filteredEvents[0].event_type,
+            event_data: filteredEvents[0].event_data,
+          });
+        }
 
         // Process events data
         const eventCounts = {
