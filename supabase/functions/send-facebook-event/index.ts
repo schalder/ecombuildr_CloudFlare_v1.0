@@ -82,6 +82,7 @@ async function buildFacebookPayload(
     fbp?: string;
     fbc?: string;
     client_user_agent?: string;
+    client_ip_address?: string; // ✅ ADD: Required for action_source: "website"
     event_source_url?: string;
   },
   eventId?: string,
@@ -128,6 +129,7 @@ async function buildFacebookPayload(
   }
 
   // ✅ ADD: Browser context fields (for matching when PII is missing)
+  // Facebook requires client_user_agent and client_ip_address in user_data for action_source: "website"
   if (browserContext) {
     if (browserContext.fbp) {
       hashedUserData.fbp = browserContext.fbp;
@@ -135,9 +137,14 @@ async function buildFacebookPayload(
     if (browserContext.fbc) {
       hashedUserData.fbc = browserContext.fbc;
     }
-    // ❌ REMOVED: client_user_agent should NOT be in user_data
-    // Facebook doesn't accept client_user_agent as a user_data parameter
-    // It should be at the event level instead
+    // ✅ FIX: client_user_agent MUST be in user_data (Facebook requirement)
+    if (browserContext.client_user_agent) {
+      hashedUserData.client_user_agent = browserContext.client_user_agent;
+    }
+    // ✅ ADD: client_ip_address MUST be in user_data for action_source: "website"
+    if (browserContext.client_ip_address) {
+      hashedUserData.client_ip_address = browserContext.client_ip_address;
+    }
   }
 
   // Build event data
@@ -151,12 +158,6 @@ async function buildFacebookPayload(
   // ✅ ADD: event_source_url at event level (if available)
   if (browserContext?.event_source_url) {
     event.event_source_url = browserContext.event_source_url;
-  }
-
-  // ✅ ADD: client_user_agent at event level (if available)
-  // Facebook requires client_user_agent at event level, not in user_data
-  if (browserContext?.client_user_agent) {
-    event.client_user_agent = browserContext.client_user_agent;
   }
 
   // Add event_id for deduplication (REQUIRED for proper deduplication)
@@ -254,6 +255,20 @@ serve(async (req) => {
       );
     }
 
+    // ✅ ADD: Extract client IP from request headers (for Facebook requirement)
+    // Try various headers that might contain the real client IP
+    const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+                     req.headers.get('x-real-ip') ||
+                     req.headers.get('cf-connecting-ip') || // Cloudflare
+                     req.headers.get('x-client-ip') ||
+                     null;
+
+    // Add client_ip_address to browser_context if not already present
+    const enhancedBrowserContext = {
+      ...browser_context,
+      client_ip_address: browser_context?.client_ip_address || clientIp,
+    };
+
     // Map event name to Facebook event name
     const facebookEventName = mapEventTypeToFacebook(event_name);
 
@@ -263,7 +278,7 @@ serve(async (req) => {
       facebookEventName,
       event_data || {},
       user_data || {},
-      browser_context || {}, // ✅ Pass browser context
+      enhancedBrowserContext, // ✅ Use enhanced browser context with IP
       event_id,
       event_time,
       test_event_code
