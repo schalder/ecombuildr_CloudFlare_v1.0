@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, useParams, useLocation } from 'react-router-dom';
-import { usePixelTracking } from '@/hooks/usePixelTracking';
-import { usePixelContext } from '@/components/pixel/PixelManager';
 import { supabase } from '@/integrations/supabase/client';
 import { CartPage } from '@/pages/storefront/CartPage';
 import { CheckoutPage } from '@/pages/storefront/CheckoutPage';
