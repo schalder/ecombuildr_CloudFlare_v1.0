@@ -54,23 +54,74 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
+        manualChunks: (id) => {
           // Split vendor libraries
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
-          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          'chart-vendor': ['recharts'],
-          'date-vendor': ['date-fns', 'react-day-picker'],
-          
-          // Split page builder (admin only)
-          'page-builder': [
-            'react-dnd',
-            'react-dnd-html5-backend',
-            '@hello-pangea/dnd'
-          ],
-          
-          // Split major libraries that are actually used
-          'ui-libs': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority']
+          if (id.includes('node_modules')) {
+            // React core
+            if (id.includes('react') && (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/react-router'))) {
+              return 'react-vendor';
+            }
+            
+            // Split Radix UI into smaller chunks for better code splitting
+            if (id.includes('@radix-ui')) {
+              if (id.includes('react-dialog')) return 'radix-dialog';
+              if (id.includes('react-dropdown-menu')) return 'radix-dropdown';
+              if (id.includes('react-toast')) return 'radix-toast';
+              if (id.includes('react-popover')) return 'radix-popover';
+              if (id.includes('react-select')) return 'radix-select';
+              if (id.includes('react-tabs')) return 'radix-tabs';
+              // Group smaller Radix components
+              return 'radix-other';
+            }
+            
+            // Form libraries
+            if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) {
+              return 'form-vendor';
+            }
+            
+            // Chart library (heavy, lazy load when needed)
+            if (id.includes('recharts')) {
+              return 'chart-vendor';
+            }
+            
+            // Date libraries
+            if (id.includes('date-fns') || id.includes('react-day-picker')) {
+              return 'date-vendor';
+            }
+            
+            // Page builder (admin only - heavy)
+            if (id.includes('react-dnd') || id.includes('@hello-pangea/dnd')) {
+              return 'page-builder';
+            }
+            
+            // TipTap editor (heavy, lazy load)
+            if (id.includes('@tiptap')) {
+              return 'tiptap';
+            }
+            
+            // Supabase client
+            if (id.includes('@supabase/supabase-js')) {
+              return 'supabase';
+            }
+            
+            // React Query
+            if (id.includes('@tanstack/react-query')) {
+              return 'query';
+            }
+            
+            // UI utilities
+            if (id.includes('lucide-react') || id.includes('class-variance-authority')) {
+              return 'ui-libs';
+            }
+            
+            // Heavy PDF/image libraries (lazy load)
+            if (id.includes('html2canvas') || id.includes('jspdf')) {
+              return 'pdf-vendor';
+            }
+            
+            // Other vendor libraries
+            return 'vendor';
+          }
         },
       },
     },

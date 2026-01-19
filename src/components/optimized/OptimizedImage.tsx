@@ -4,12 +4,12 @@ interface OptimizedImageProps {
   src: string;
   alt: string;
   className?: string;
-  width?: number;
-  height?: number;
+  width: number; // Required to prevent layout shift (CLS)
+  height: number; // Required to prevent layout shift (CLS)
   priority?: boolean;
   loading?: 'lazy' | 'eager';
   decoding?: 'async' | 'sync' | 'auto';
-  aspectRatio?: string;
+  aspectRatio?: string; // Optional override, defaults to width/height
   style?: React.CSSProperties;
 }
 
@@ -53,6 +53,9 @@ export const OptimizedImage = ({
   // Memoize optimized URL
   const optimizedSrc = useMemo(() => getOptimizedUrl(src, width, height), [src, width, height]);
   
+  // Calculate aspect ratio from width/height if not provided
+  const calculatedAspectRatio = aspectRatio || (width && height ? `${width}/${height}` : undefined);
+  
   // Determine which URL to use
   const currentSrc = hasTriedFallback ? src : optimizedSrc;
   
@@ -64,6 +67,13 @@ export const OptimizedImage = ({
   }, [src]);
 
   const loadingStrategy = priority ? 'eager' : loading;
+  
+  // Ensure aspect ratio container prevents layout shift
+  const containerStyle: React.CSSProperties = {
+    aspectRatio: calculatedAspectRatio,
+    position: 'relative',
+    overflow: 'hidden',
+  };
 
   const handleError = () => {
     // If optimized URL failed and we haven't tried original yet, fall back
@@ -83,11 +93,11 @@ export const OptimizedImage = ({
   };
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div className={`relative overflow-hidden ${className}`} style={containerStyle}>
       {!loaded && !error && (
         <div 
-          className="absolute inset-0 bg-gray-200 animate-pulse" 
-          style={aspectRatio ? { aspectRatio } : undefined}
+          className="absolute inset-0 bg-gray-200 animate-pulse"
+          aria-hidden="true"
         />
       )}
       
@@ -102,14 +112,22 @@ export const OptimizedImage = ({
         onError={handleError}
         className={`transition-opacity duration-300 ${
           loaded ? 'opacity-100' : 'opacity-0'
-        } ${className}`}
-        style={{ ...style, aspectRatio }}
+        }`}
+        style={{ 
+          ...style, 
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+        }}
+        fetchPriority={priority ? 'high' : 'auto'}
       />
       
       {error && (
         <div 
           className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-400 text-xs"
-          style={aspectRatio ? { aspectRatio } : undefined}
         >
           Image failed to load
         </div>
