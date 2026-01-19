@@ -70,14 +70,14 @@ export const useFacebookPixelAnalytics = (
               .eq('is_active', true)
           ]);
           
-          if (websitesResult.data) {
-            websitesResult.data.forEach(w => {
+          if (websitesResult.data && !websitesResult.error) {
+            websitesResult.data.forEach((w: any) => {
               websiteConfigs[w.id] = w.facebook_server_side_enabled === true;
             });
           }
           
-          if (funnelsResult.data) {
-            funnelsResult.data.forEach(f => {
+          if (funnelsResult.data && !funnelsResult.error) {
+            funnelsResult.data.forEach((f: any) => {
               const settings = f.settings as any;
               funnelConfigs[f.id] = settings?.facebook_server_side_enabled === true;
             });
@@ -109,8 +109,9 @@ export const useFacebookPixelAnalytics = (
         }
 
         // Apply funnel filter if provided
+        // Note: funnel_id column exists but TypeScript types may not be updated
         if (funnelId) {
-          query = query.eq('funnel_id', funnelId);
+          query = query.eq('funnel_id' as any, funnelId);
         } else if (funnelId === undefined) {
           // When no specific funnel is selected, include both null and non-null funnel_ids
           // This handles legacy events that may have null funnel_id
@@ -140,11 +141,13 @@ export const useFacebookPixelAnalytics = (
               const browserSuccess = providers.success === true;
               
               // Check if server-side tracking was enabled for this event
+              // Note: funnel_id exists in DB but TypeScript types may not be updated
+              const eventAny = event as any;
               let serverSideEnabled = false;
-              if (event.website_id) {
-                serverSideEnabled = websiteConfigs[event.website_id] === true;
-              } else if (event.funnel_id) {
-                serverSideEnabled = funnelConfigs[event.funnel_id] === true;
+              if (eventAny.website_id) {
+                serverSideEnabled = websiteConfigs[eventAny.website_id] === true;
+              } else if (eventAny.funnel_id) {
+                serverSideEnabled = funnelConfigs[eventAny.funnel_id] === true;
               }
               
               // Include if browser was successful OR server-side was enabled (forwarded)
