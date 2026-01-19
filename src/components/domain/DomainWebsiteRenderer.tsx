@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
 import { setSEO } from '@/lib/seo';
-import { usePixelContext } from '@/components/pixel/PixelManager';
+import { PixelManager } from '@/components/pixel/PixelManager';
 import { DomainWebsiteRouter } from './DomainWebsiteRouter';
 import { WebsiteProvider } from '@/contexts/WebsiteContext';
 import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
