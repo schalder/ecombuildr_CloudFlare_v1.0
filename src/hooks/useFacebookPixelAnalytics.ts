@@ -168,14 +168,17 @@ export const useFacebookPixelAnalytics = (
         }
 
         // ✅ FIX: Filter events to show all events attempted/sent to Facebook
-        // Deduplicate by event_id since Facebook deduplicates browser + server events with same ID
-        const eventIdMap = new Map<string, any>();
+        // ✅ CRITICAL: Facebook deduplicates by event_type + event_id (NOT just event_id)
+        // A PageView and AddToCart with the same event_id are DIFFERENT events in Facebook
+        // Only deduplicate events of the SAME TYPE with the same event_id
+        const eventIdMap = new Map<string, any>(); // Key: `${event_type}_${event_id}`
         
         const filteredEvents = providerFilter === 'facebook' 
           ? (events || []).filter(event => {
               const eventData = event.event_data as any;
               const providers = eventData?._providers?.facebook;
               const eventAny = event as any;
+              const eventType = event.event_type;
               
               // ✅ FIX: First check if website/funnel has Facebook pixel configured
               // This is the source of truth - if pixel exists, include the event
@@ -192,13 +195,14 @@ export const useFacebookPixelAnalytics = (
               
               // ✅ If website/funnel has Facebook pixel, ALWAYS include the event
               if (hasFacebookPixel) {
-                // Still deduplicate by event_id
+                // ✅ CRITICAL: Deduplicate by event_type + event_id (Facebook only deduplicates same event type)
                 const eventId = eventData?.event_id;
                 if (eventId) {
-                  if (eventIdMap.has(eventId)) {
-                    return false;
+                  const dedupeKey = `${eventType}_${eventId}`;
+                  if (eventIdMap.has(dedupeKey)) {
+                    return false; // Duplicate of same event type
                   }
-                  eventIdMap.set(eventId, event);
+                  eventIdMap.set(dedupeKey, event);
                 }
                 return true;
               }
@@ -242,13 +246,14 @@ export const useFacebookPixelAnalytics = (
                 return false;
               }
               
-              // ✅ Deduplicate by event_id (Facebook deduplicates browser + server events with same ID)
+              // ✅ CRITICAL: Deduplicate by event_type + event_id (Facebook only deduplicates same event type)
               const eventId = eventData?.event_id;
               if (eventId) {
-                if (eventIdMap.has(eventId)) {
-                  return false;
+                const dedupeKey = `${eventType}_${eventId}`;
+                if (eventIdMap.has(dedupeKey)) {
+                  return false; // Duplicate of same event type
                 }
-                eventIdMap.set(eventId, event);
+                eventIdMap.set(dedupeKey, event);
               }
               
               return true;
