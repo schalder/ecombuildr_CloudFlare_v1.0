@@ -27,7 +27,15 @@ interface PixelAnalytics {
   }>;
 }
 
-export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number, websiteId?: string, funnelId?: string, providerFilter: 'facebook' | 'all' = 'facebook') => {
+export const useFacebookPixelAnalytics = (
+  storeId: string, 
+  dateRangeDays: number, 
+  websiteId?: string, 
+  funnelId?: string, 
+  providerFilter: 'facebook' | 'all' = 'facebook',
+  websites?: Array<{ id: string; facebook_server_side_enabled?: boolean | null }>,
+  funnels?: Array<{ id: string; settings?: any }>
+) => {
   const [analytics, setAnalytics] = useState<PixelAnalytics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,11 +83,47 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
           return;
         }
 
-        // Filter events based on provider filter
+        // ✅ FIX: Filter events to only show those successfully sent to Facebook
+        // Deduplicate by event_id since Facebook deduplicates browser + server events with same ID
+        const eventIdMap = new Map<string, any>();
+        
         const filteredEvents = providerFilter === 'facebook' 
           ? (events || []).filter(event => {
               const eventData = event.event_data as any;
-              return eventData?._providers?.facebook?.attempted === true;
+              const providers = eventData?._providers?.facebook;
+              
+              if (!providers) return false;
+              
+              // ✅ Only include events successfully sent to Facebook browser pixel
+              // OR events that were forwarded server-side (we can't verify server-side success without Facebook API)
+              const browserSuccess = providers.success === true;
+              
+              // Check if server-side tracking was enabled for this event
+              let serverSideEnabled = false;
+              if (event.website_id && websites) {
+                const website = websites.find(w => w.id === event.website_id);
+                serverSideEnabled = website?.facebook_server_side_enabled === true;
+              } else if (event.funnel_id && funnels) {
+                const funnel = funnels.find(f => f.id === event.funnel_id);
+                serverSideEnabled = funnel?.settings?.facebook_server_side_enabled === true;
+              }
+              
+              // Include if browser was successful OR server-side was enabled (forwarded)
+              const shouldInclude = browserSuccess || (serverSideEnabled && providers.configured === true);
+              
+              if (!shouldInclude) return false;
+              
+              // ✅ Deduplicate by event_id (Facebook deduplicates browser + server events with same ID)
+              const eventId = eventData?.event_id;
+              if (eventId) {
+                // If we've seen this event_id before, skip it (already counted)
+                if (eventIdMap.has(eventId)) {
+                  return false;
+                }
+                eventIdMap.set(eventId, event);
+              }
+              
+              return true;
             })
           : (events || []);
 

@@ -31,7 +31,9 @@ export default function FacebookAds() {
     parseInt(dateRange, 10),
     selectedWebsiteId === 'all' ? undefined : selectedWebsiteId,
     selectedFunnelId === 'all' ? undefined : selectedFunnelId,
-    showFacebookOnly ? 'facebook' : 'all'
+    showFacebookOnly ? 'facebook' : 'all',
+    websites, // ✅ Pass websites to check server-side tracking status
+    funnels // ✅ Pass funnels to check server-side tracking status
   );
 
   // Get pixel ID based on selection - only website/funnel level pixels
