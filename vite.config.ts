@@ -79,10 +79,9 @@ export default defineConfig(({ mode }) => ({
               return 'form-vendor';
             }
             
-            // Chart library (heavy, lazy load when needed)
-            if (id.includes('recharts')) {
-              return 'chart-vendor';
-            }
+            // Chart library - keep in vendor to avoid circular dependency issues
+            // Recharts will be lazy loaded at component level using useLazyRecharts hook
+            // Don't split it separately to avoid initialization order issues
             
             // Date libraries
             if (id.includes('date-fns') || id.includes('react-day-picker')) {
