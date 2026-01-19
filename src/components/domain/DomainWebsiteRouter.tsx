@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Routes, Route, useParams, useLocation } from 'react-router-dom';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
+import { supabase } from '@/integrations/supabase/client';
 import { CartPage } from '@/pages/storefront/CartPage';
 import { CheckoutPage } from '@/pages/storefront/CheckoutPage';
 import { PaymentProcessing } from '@/pages/storefront/PaymentProcessing';
@@ -38,6 +39,11 @@ interface DomainWebsiteRouterProps {
   website: any;
 }
 
+interface PageData {
+  hide_header?: boolean;
+  hide_footer?: boolean;
+}
+
 export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({ 
   websiteId, 
   customDomain,
@@ -46,6 +52,7 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
   const location = useLocation();
   const { pixels } = usePixelContext();
   const { trackPageView } = usePixelTracking(pixels, website?.store_id, websiteId);
+  const [currentPage, setCurrentPage] = useState<PageData | null>(null);
 
   // Track page views on route changes
   useEffect(() => {
@@ -59,9 +66,57 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
     return () => clearTimeout(timer);
   }, [location.pathname, trackPageView]);
 
+  // Fetch current page data to check hide_header/hide_footer settings
+  useEffect(() => {
+    const fetchCurrentPage = async () => {
+      if (!websiteId) {
+        setCurrentPage(null);
+        return;
+      }
+
+      try {
+        // Extract page slug from location pathname
+        // For custom domains, path format: /:pageSlug
+        const pathSegments = location.pathname.split('/').filter(Boolean);
+        const slug = pathSegments[0]; // First segment after domain
+
+        // Skip known system routes that aren't pages
+        const systemRoutes = ['products', 'cart', 'checkout', 'search', 'collections', 'payment-processing', 'order-confirmation', 'courses'];
+        if (systemRoutes.includes(slug)) {
+          setCurrentPage(null);
+          return;
+        }
+
+        // If no slug or homepage, fetch homepage
+        let pageQuery = supabase
+          .from('website_pages')
+          .select('hide_header, hide_footer')
+          .eq('website_id', websiteId)
+          .eq('is_published', true);
+
+        if (slug) {
+          pageQuery = pageQuery.eq('slug', slug);
+        } else {
+          pageQuery = pageQuery.eq('is_homepage', true);
+        }
+
+        const { data: pageData } = await pageQuery.maybeSingle();
+        setCurrentPage(pageData || null);
+      } catch (error) {
+        console.warn('DomainWebsiteRouter: Error fetching page data:', error);
+        setCurrentPage(null);
+      }
+    };
+
+    fetchCurrentPage();
+  }, [websiteId, location.pathname]);
+
   return (
     <WebsiteProvider websiteId={websiteId} websiteSlug={website.slug}>
-      <WebsiteHeader website={website} />
+      {/* Show header if global header is enabled AND page doesn't hide it */}
+      {website.settings?.global_header?.enabled !== false && !currentPage?.hide_header && (
+        <WebsiteHeader website={website} />
+      )}
       <main className="flex-1">
         <Routes>
       {/* Homepage - Dynamic Home Page */}
@@ -156,7 +211,10 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
           settings={website.settings.fomo} 
         />
       )}
-      <WebsiteFooter website={website} />
+      {/* Show footer if global footer is enabled AND page doesn't hide it */}
+      {website.settings?.global_footer?.enabled !== false && !currentPage?.hide_footer && (
+        <WebsiteFooter website={website} />
+      )}
     </WebsiteProvider>
   );
 };

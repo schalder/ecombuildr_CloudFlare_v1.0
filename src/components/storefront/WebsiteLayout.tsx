@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet, useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { Outlet, useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useStore } from '@/contexts/StoreContext';
@@ -24,12 +24,19 @@ interface WebsiteData {
   settings?: any;
 }
 
+interface PageData {
+  hide_header?: boolean;
+  hide_footer?: boolean;
+}
+
 export const WebsiteLayout: React.FC = () => {
-  const { websiteId, websiteSlug } = useParams<{ websiteId?: string; websiteSlug?: string }>();
+  const { websiteId, websiteSlug, pageSlug } = useParams<{ websiteId?: string; websiteSlug?: string; pageSlug?: string }>();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const isPreview = searchParams.get('preview') === '1';
   const [website, setWebsite] = React.useState<WebsiteData | null>(null);
+  const [currentPage, setCurrentPage] = React.useState<PageData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const { store, loadStoreById } = useStore();
@@ -88,6 +95,65 @@ export const WebsiteLayout: React.FC = () => {
     try { setGlobalCurrency(code as any); } catch {}
   }, [website?.settings?.currency?.code]);
 
+  // Fetch current page data to check hide_header/hide_footer settings
+  React.useEffect(() => {
+    const fetchCurrentPage = async () => {
+      if (!website?.id) {
+        setCurrentPage(null);
+        return;
+      }
+
+      try {
+        // Extract page slug from location pathname
+        // Path format: /website/:websiteId/:pageSlug or /site/:websiteSlug/:pageSlug
+        const pathSegments = location.pathname.split('/').filter(Boolean);
+        let slug: string | undefined = undefined;
+
+        // Check if we have pageSlug from params (for routes like /website/:id/:pageSlug)
+        if (pageSlug) {
+          slug = pageSlug;
+        } else {
+          // For homepage or other routes, check if there's a page slug in the path
+          // If path is /website/:id or /site/:slug, it's homepage
+          // If path is /website/:id/:something or /site/:slug/:something, check if it's a page
+          const websiteIndex = pathSegments.findIndex(s => s === websiteId || s === websiteSlug);
+          if (websiteIndex >= 0 && websiteIndex < pathSegments.length - 1) {
+            const potentialSlug = pathSegments[websiteIndex + 1];
+            // Skip known system routes that aren't pages
+            const systemRoutes = ['products', 'cart', 'checkout', 'search', 'collections', 'payment-processing', 'order-confirmation'];
+            if (!systemRoutes.includes(potentialSlug)) {
+              slug = potentialSlug;
+            }
+          }
+        }
+
+        // If no slug found, it's homepage
+        let pageQuery = supabase
+          .from('website_pages')
+          .select('hide_header, hide_footer')
+          .eq('website_id', website.id);
+
+        if (!isPreview) {
+          pageQuery = pageQuery.eq('is_published', true);
+        }
+
+        if (slug) {
+          pageQuery = pageQuery.eq('slug', slug);
+        } else {
+          pageQuery = pageQuery.eq('is_homepage', true);
+        }
+
+        const { data: pageData } = await pageQuery.maybeSingle();
+        setCurrentPage(pageData || null);
+      } catch (error) {
+        console.warn('WebsiteLayout: Error fetching page data:', error);
+        setCurrentPage(null);
+      }
+    };
+
+    fetchCurrentPage();
+  }, [website?.id, websiteId, websiteSlug, pageSlug, location.pathname, isPreview]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -130,7 +196,10 @@ export const WebsiteLayout: React.FC = () => {
             ${website.settings?.variant_button_hover_text ? `--variant-button-hover-text: ${website.settings.variant_button_hover_text};` : ''}
           }
         `}</style>
-            <WebsiteHeader website={website} />
+            {/* Show header if global header is enabled AND page doesn't hide it */}
+            {website.settings?.global_header?.enabled !== false && !currentPage?.hide_header && (
+              <WebsiteHeader website={website} />
+            )}
             <main className="flex-1">
               <Outlet />
             </main>
@@ -153,7 +222,10 @@ export const WebsiteLayout: React.FC = () => {
                 }}
               />
             )}
-            <WebsiteFooter website={website} />
+            {/* Show footer if global footer is enabled AND page doesn't hide it */}
+            {website.settings?.global_footer?.enabled !== false && !currentPage?.hide_footer && (
+              <WebsiteFooter website={website} />
+            )}
           </div>
       </PixelManager>
     </WebsiteProvider>

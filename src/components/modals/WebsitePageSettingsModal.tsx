@@ -14,6 +14,8 @@ import { useNavigate } from "react-router-dom";
 import { SEOSettingsCard } from "@/components/seo/SEOSettingsCard";
 import { usePageSEO } from "@/hooks/usePageSEO";
 import { Search } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 
 export interface WebsitePageSettingsModalProps {
   open: boolean;
@@ -25,6 +27,8 @@ export interface WebsitePageSettingsModalProps {
     slug: string;
     is_published: boolean;
     is_homepage: boolean;
+    hide_header?: boolean;
+    hide_footer?: boolean;
   } | null;
 }
 
@@ -51,6 +55,8 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
 
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
+  const [hideHeader, setHideHeader] = useState(false);
+  const [hideFooter, setHideFooter] = useState(false);
   const [websiteMeta, setWebsiteMeta] = useState<{ slug?: string; domain?: string } | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
@@ -80,6 +86,8 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
     if (page) {
       setTitle(page.title);
       setSlug(page.slug);
+      setHideHeader(page.hide_header || false);
+      setHideFooter(page.hide_footer || false);
     }
   }, [page]);
 
@@ -93,7 +101,7 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
       if (!page) return;
       const { error } = await supabase
         .from("website_pages")
-        .update({ title, slug })
+        .update({ title, slug, hide_header: hideHeader, hide_footer: hideFooter })
         .eq("id", page.id);
       if (error) throw error;
     },
@@ -236,6 +244,36 @@ export const WebsitePageSettingsModal: React.FC<WebsitePageSettingsModalProps> =
                 <div className="flex items-center gap-2">
                   <Input readOnly value={url} />
                   <Button variant="outline" onClick={handleCopyUrl}>Copy</Button>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Hide Global Header</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Hide the website header on this page only
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={hideHeader} 
+                    onCheckedChange={setHideHeader} 
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Hide Global Footer</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Hide the website footer on this page only
+                    </p>
+                  </div>
+                  <Switch 
+                    checked={hideFooter} 
+                    onCheckedChange={setHideFooter} 
+                  />
                 </div>
               </div>
 
