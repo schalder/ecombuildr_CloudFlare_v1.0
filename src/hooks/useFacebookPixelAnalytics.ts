@@ -118,7 +118,7 @@ export const useFacebookPixelAnalytics = (
         // Use a high limit (100,000) to ensure we get all events
         queryBuilder = queryBuilder.limit(100000);
 
-        const { data: events, error: fetchError } = await queryBuilder;
+        const { data: events, error: fetchError, count } = await queryBuilder;
 
         if (fetchError) {
           console.error('Error fetching pixel events:', fetchError);
@@ -128,12 +128,22 @@ export const useFacebookPixelAnalytics = (
 
         // ✅ DEBUG: Log raw events to see what we're getting
         console.log('[FacebookAnalytics] Raw events fetched:', events?.length || 0);
+        console.log('[FacebookAnalytics] Total count from DB:', count);
+        console.log('[FacebookAnalytics] Date range:', {
+          start: startDate.toISOString(),
+          end: now.toISOString(),
+          days: dateRangeDays
+        });
         if (events && events.length > 0) {
-          console.log('[FacebookAnalytics] Sample event:', {
+          console.log('[FacebookAnalytics] Sample event (newest):', {
             event_type: events[0].event_type,
+            created_at: events[0].created_at,
             website_id: (events[0] as any).website_id,
             funnel_id: (events[0] as any).funnel_id,
-            event_data: events[0].event_data,
+          });
+          console.log('[FacebookAnalytics] Sample event (oldest in batch):', {
+            event_type: events[events.length - 1]?.event_type,
+            created_at: events[events.length - 1]?.created_at,
           });
         }
 
