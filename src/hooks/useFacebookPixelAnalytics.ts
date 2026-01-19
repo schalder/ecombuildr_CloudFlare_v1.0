@@ -93,9 +93,9 @@ export const useFacebookPixelAnalytics = (
         }
 
         // Build query filters
-        // Build base query - order by created_at DESC to get newest events first
-        // Remove default 1000 limit by using a high limit or no limit
-        let queryBuilder: any = supabase
+        // ✅ FIX: Use pagination to fetch all events (Supabase has 1000 row default limit)
+        // Fetch events in chunks to avoid hitting the limit
+        let baseQuery: any = supabase
           .from('pixel_events')
           .select('*', { count: 'exact' })
           .eq('store_id', storeId)
@@ -105,20 +105,46 @@ export const useFacebookPixelAnalytics = (
 
         // Apply website filter if provided
         if (websiteId) {
-          queryBuilder = queryBuilder.eq('website_id', websiteId);
+          baseQuery = baseQuery.eq('website_id', websiteId);
         }
 
         // Apply funnel filter if provided
-        // Note: funnel_id column exists but TypeScript types may not be updated
         if (funnelId) {
-          queryBuilder = queryBuilder.eq('funnel_id', funnelId);
+          baseQuery = baseQuery.eq('funnel_id', funnelId);
         }
 
-        // ✅ Remove Supabase's default 1000 limit - fetch all events in date range
-        // Use a high limit (100,000) to ensure we get all events
-        queryBuilder = queryBuilder.limit(100000);
+        // ✅ Fetch all events using pagination (Supabase max is 1000 per request)
+        const allEvents: any[] = [];
+        const pageSize = 1000;
+        let offset = 0;
+        let hasMore = true;
+        let totalCount = 0;
 
-        const { data: events, error: fetchError, count } = await queryBuilder;
+        while (hasMore) {
+          const { data: pageEvents, error: fetchError, count } = await baseQuery
+            .range(offset, offset + pageSize - 1);
+
+          if (fetchError) {
+            console.error('Error fetching pixel events:', fetchError);
+            setError('Failed to fetch analytics data');
+            return;
+          }
+
+          if (count !== null && totalCount === 0) {
+            totalCount = count;
+          }
+
+          if (pageEvents && pageEvents.length > 0) {
+            allEvents.push(...pageEvents);
+            offset += pageSize;
+            hasMore = pageEvents.length === pageSize; // Continue if we got a full page
+          } else {
+            hasMore = false;
+          }
+        }
+
+        const events = allEvents;
+        const count = totalCount;
 
         if (fetchError) {
           console.error('Error fetching pixel events:', fetchError);
