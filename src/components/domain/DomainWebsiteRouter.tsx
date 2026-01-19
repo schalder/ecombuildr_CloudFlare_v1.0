@@ -50,21 +50,11 @@ export const DomainWebsiteRouter: React.FC<DomainWebsiteRouterProps> = ({
   website
 }) => {
   const location = useLocation();
-  const { pixels } = usePixelContext();
-  const { trackPageView } = usePixelTracking(pixels, website?.store_id, websiteId);
   const [currentPage, setCurrentPage] = useState<PageData | null>(null);
 
-  // Track page views on route changes
-  useEffect(() => {
-    
-    const timer = setTimeout(() => {
-      trackPageView({
-        page_title: document.title,
-        page_location: window.location.href
-      });
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [location.pathname, trackPageView]);
+  // ✅ REMOVED: PageView tracking - PixelManager already handles this
+  // PixelManager tracks PageView on mount and navigation changes
+  // No need to track again here to avoid duplicate events
 
   // Fetch current page data to check hide_header/hide_footer settings
   useEffect(() => {
