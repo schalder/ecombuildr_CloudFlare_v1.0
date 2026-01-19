@@ -237,11 +237,17 @@ export const useFacebookPixelAnalytics = (
 
         // ✅ DEBUG: Log filtered results
         console.log('[FacebookAnalytics] Filtered events:', filteredEvents.length);
+        console.log('[FacebookAnalytics] Deduplication removed:', (events?.length || 0) - filteredEvents.length, 'events');
         if (filteredEvents.length > 0) {
           console.log('[FacebookAnalytics] Sample filtered event:', {
             event_type: filteredEvents[0].event_type,
-            event_data: filteredEvents[0].event_data,
+            created_at: filteredEvents[0].created_at,
           });
+        }
+        
+        // ✅ WARNING: If we got exactly 1000 events, we might be hitting a limit
+        if (events && events.length === 1000) {
+          console.warn('[FacebookAnalytics] WARNING: Query returned exactly 1000 events. This might be a Supabase limit. Total in DB:', count);
         }
 
         // Process events data
