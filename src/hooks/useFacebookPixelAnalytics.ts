@@ -418,6 +418,15 @@ export const useFacebookPixelAnalytics = (
     fetchAnalytics();
   }, [user, storeId, websiteId, funnelId, dateRangeDays, providerFilter]);
 
+  // ✅ Also refetch when websites/funnels change (in case pixel config changes)
+  useEffect(() => {
+    if (!user || !storeId) return;
+    // Only refetch if websites/funnels are provided (not fetching internally)
+    if (websites && funnels) {
+      fetchAnalytics();
+    }
+  }, [websites, funnels]);
+
   const refetch = () => {
     return fetchAnalytics();
   };
