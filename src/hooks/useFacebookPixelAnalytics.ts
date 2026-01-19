@@ -141,39 +141,35 @@ export const useFacebookPixelAnalytics = (
               const providers = eventData?._providers?.facebook;
               const eventAny = event as any;
               
-              // ✅ DEBUG: Log each event being filtered
-              console.log('[FacebookAnalytics] Filtering event:', {
-                event_type: event.event_type,
-                website_id: eventAny.website_id,
-                funnel_id: eventAny.funnel_id,
-                has_providers: !!providers,
-                configured: providers?.configured,
-                attempted: providers?.attempted,
-                success: providers?.success,
-              });
+              // ✅ FIX: First check if website/funnel has Facebook pixel configured
+              // This is the source of truth - if pixel exists, include the event
+              // (regardless of what _providers says - events might be stored incorrectly)
+              let hasFacebookPixel = false;
               
-              // ✅ FIX: If no providers object, check if event has Facebook pixel ID in settings
-              // This handles cases where events might be stored differently
+              if (eventAny.website_id) {
+                const website = websites?.find(w => w.id === eventAny.website_id);
+                hasFacebookPixel = !!(website as any)?.facebook_pixel_id;
+              } else if (eventAny.funnel_id) {
+                const funnel = funnels?.find(f => f.id === eventAny.funnel_id);
+                hasFacebookPixel = !!(funnel?.settings as any)?.facebook_pixel_id;
+              }
+              
+              // ✅ If website/funnel has Facebook pixel, ALWAYS include the event
+              if (hasFacebookPixel) {
+                // Still deduplicate by event_id
+                const eventId = eventData?.event_id;
+                if (eventId) {
+                  if (eventIdMap.has(eventId)) {
+                    return false;
+                  }
+                  eventIdMap.set(eventId, event);
+                }
+                return true;
+              }
+              
+              // ✅ Fallback: If no website/funnel pixel found, check _providers
+              // (for legacy events or events without website_id/funnel_id)
               if (!providers) {
-                // Check if this is a Facebook event by checking if pixel was configured
-                // We'll include it if website/funnel has Facebook pixel configured
-                let hasFacebookPixel = false;
-                
-                if (eventAny.website_id) {
-                  const website = websites?.find(w => w.id === eventAny.website_id);
-                  hasFacebookPixel = !!(website as any)?.facebook_pixel_id;
-                } else if (eventAny.funnel_id) {
-                  const funnel = funnels?.find(f => f.id === eventAny.funnel_id);
-                  hasFacebookPixel = !!(funnel?.settings as any)?.facebook_pixel_id;
-                }
-                
-                // If website/funnel has Facebook pixel, include the event
-                if (hasFacebookPixel) {
-                  console.log('[FacebookAnalytics] Including event without _providers (has Facebook pixel)');
-                  return true;
-                }
-                
-                console.log('[FacebookAnalytics] Excluding event: no providers and no Facebook pixel');
                 return false;
               }
               
@@ -184,9 +180,7 @@ export const useFacebookPixelAnalytics = (
               const wasAttempted = providers.attempted === true;
               
               // ✅ RELAXED: Include events where Facebook was configured OR attempted OR succeeded
-              // This ensures we show all events that were meant for Facebook
               if (!wasConfigured && !wasAttempted && !providers.success) {
-                console.log('[FacebookAnalytics] Excluding event: not configured, not attempted, not successful');
                 return false;
               }
               
@@ -209,7 +203,6 @@ export const useFacebookPixelAnalytics = (
               const shouldInclude = browserSuccess || serverSideEnabled || wasAttempted || wasConfigured;
               
               if (!shouldInclude) {
-                console.log('[FacebookAnalytics] Excluding event: does not meet inclusion criteria');
                 return false;
               }
               
@@ -217,13 +210,11 @@ export const useFacebookPixelAnalytics = (
               const eventId = eventData?.event_id;
               if (eventId) {
                 if (eventIdMap.has(eventId)) {
-                  console.log('[FacebookAnalytics] Deduplicating event:', eventId);
                   return false;
                 }
                 eventIdMap.set(eventId, event);
               }
               
-              console.log('[FacebookAnalytics] Including event');
               return true;
             })
           : (events || []);
