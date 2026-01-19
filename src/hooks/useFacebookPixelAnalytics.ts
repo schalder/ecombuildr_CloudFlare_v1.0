@@ -121,17 +121,17 @@ export const useFacebookPixelAnalytics = (
         let totalCount = 0;
 
         while (hasMore) {
-          const { data: pageEvents, error: fetchError, count } = await baseQuery
+          const { data: pageEvents, error: pageError, count: pageCount } = await baseQuery
             .range(offset, offset + pageSize - 1);
 
-          if (fetchError) {
-            console.error('Error fetching pixel events:', fetchError);
+          if (pageError) {
+            console.error('Error fetching pixel events:', pageError);
             setError('Failed to fetch analytics data');
             return;
           }
 
-          if (count !== null && totalCount === 0) {
-            totalCount = count;
+          if (pageCount !== null && totalCount === 0) {
+            totalCount = pageCount;
           }
 
           if (pageEvents && pageEvents.length > 0) {
