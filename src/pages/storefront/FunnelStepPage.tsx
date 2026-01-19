@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import React, { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { useStore } from '@/contexts/StoreContext';
 import { setSEO, buildCanonical } from '@/lib/seo';
@@ -8,6 +7,7 @@ import { PixelManager } from '@/components/pixel/PixelManager';
 import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
 import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
+import { useStorefrontFunnelStep } from '@/hooks/useStorefrontData';
 interface FunnelStepData {
   id: string;
   title: string;
@@ -35,109 +35,30 @@ interface FunnelData {
 
 export const FunnelStepPage: React.FC = () => {
   const { funnelId, stepSlug } = useParams<{ funnelId: string; stepSlug?: string }>();
-  const [funnel, setFunnel] = useState<FunnelData | null>(null);
-  const [step, setStep] = useState<FunnelStepData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { loadStoreById, store } = useStore();
+  const navigate = useNavigate();
+
+  // ✅ OPTIMIZATION: Use optimized hook with aggressive caching and parallel fetching
+  const { data: funnelStepData, isLoading, error } = useStorefrontFunnelStep(funnelId || null, stepSlug || null);
+
+  const funnel = funnelStepData?.funnel;
+  const step = funnelStepData?.step;
+
+  // ✅ OPTIMIZATION: Handle redirect to first step if no stepSlug (only once)
   useEffect(() => {
-    const fetchFunnelAndStep = async () => {
-      if (!funnelId) {
-        setError('Invalid funnel URL');
-        setLoading(false);
-        return;
-      }
+    if (!isLoading && funnel && !stepSlug && step?.slug) {
+      navigate(`/funnel/${funnelId}/${step.slug}`, { replace: true });
+    }
+  }, [isLoading, funnel, step, stepSlug, funnelId, navigate]);
 
-      try {
-        setLoading(true);
-        setError(null);
-
-        console.log('FunnelStepPage: Fetching funnel and step:', { funnelId, stepSlug });
-
-        // First fetch the funnel to check if it's published and active
-        const { data: funnelData, error: funnelError } = await supabase
-          .from('funnels')
-          .select('*')
-          .eq('id', funnelId)
-          .eq('is_published', true)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (funnelError) {
-          console.error('FunnelStepPage: Error fetching funnel:', funnelError);
-          setError('Failed to load funnel');
-          return;
-        }
-
-        if (!funnelData) {
-          console.log('FunnelStepPage: Funnel not found or not published:', funnelId);
-          setError('Funnel not found or not available');
-          return;
-        }
-
-        setFunnel(funnelData);
-
-        // Ensure StoreContext is populated for ecommerce elements
-        try {
-          await loadStoreById(funnelData.store_id);
-        } catch (e) {
-          console.warn('FunnelStepPage: loadStoreById failed', e);
-        }
-
-        // If no stepSlug provided, redirect to first published step
-        if (!stepSlug) {
-          const { data: firstStep, error: firstStepError } = await supabase
-            .from('funnel_steps')
-            .select('slug')
-            .eq('funnel_id', funnelId)
-            .eq('is_published', true)
-            .order('step_order', { ascending: true })
-            .limit(1)
-            .maybeSingle();
-
-          if (firstStepError || !firstStep) {
-            setError('No published steps found');
-            return;
-          }
-
-          // Redirect to the first step
-          window.location.replace(`/funnel/${funnelId}/${firstStep.slug}`);
-          return;
-        }
-
-        // Fetch the specific funnel step
-        const { data: stepData, error: stepError } = await supabase
-          .from('funnel_steps')
-          .select('*')
-          .eq('funnel_id', funnelId)
-          .eq('slug', stepSlug)
-          .eq('is_published', true)
-          .maybeSingle();
-
-        if (stepError) {
-          console.error('FunnelStepPage: Error fetching step:', stepError);
-          setError('Failed to load step');
-          return;
-        }
-
-        if (!stepData) {
-          console.log('FunnelStepPage: Step not found:', stepSlug);
-          setError(`Step "${stepSlug}" not found`);
-          return;
-        }
-
-        console.log('FunnelStepPage: Funnel and step loaded successfully:', { funnelData, stepData });
-        setStep(stepData);
-      } catch (err) {
-        console.error('FunnelStepPage: Error fetching data:', err);
-        setError('Failed to load page');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFunnelAndStep();
-  }, [funnelId, stepSlug, loadStoreById]);
+  // ✅ OPTIMIZATION: Load store in parallel (non-blocking)
+  useEffect(() => {
+    if (funnel?.store_id) {
+      loadStoreById(funnel.store_id).catch(() => {
+        // Silently fail - store context is optional for some pages
+      });
+    }
+  }, [funnel?.store_id, loadStoreById]);
 
   // Provisional funnel-level SEO (runs as soon as funnel loads)
   useEffect(() => {
@@ -188,17 +109,22 @@ export const FunnelStepPage: React.FC = () => {
     }
   }, [step, funnel, store]);
 
-  // Optimistic rendering - show page structure immediately
-  if (!loading && (error || !step || !funnel)) {
+  // ✅ OPTIMIZATION: Show error state immediately if data failed to load
+  if (error && !isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
-          <p className="text-muted-foreground">{error || 'The requested page could not be found.'}</p>
+          <p className="text-muted-foreground">{error instanceof Error ? error.message : 'The requested page could not be found.'}</p>
           <p className="text-sm text-muted-foreground mt-2">Funnel: {funnelId} | Step: {stepSlug}</p>
         </div>
       </div>
     );
+  }
+
+  // Show loading state or redirecting state
+  if (isLoading || (!stepSlug && step?.slug)) {
+    return <div className="w-full min-h-screen" />;
   }
 
   return (

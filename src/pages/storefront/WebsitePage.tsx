@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { PageBuilderRenderer } from '@/components/storefront/PageBuilderRenderer';
 import { useStore } from '@/contexts/StoreContext';
 import { setGlobalCurrency } from '@/lib/currency';
-import { setSEO, buildCanonical } from '@/lib/seo';
-import { logger } from '@/lib/logger';
+import { setSEO } from '@/lib/seo';
+import { useStorefrontWebsiteId, useStorefrontWebsite, useStorefrontWebsitePage } from '@/hooks/useStorefrontData';
 interface WebsitePageData {
   id: string;
   title: string;
@@ -35,141 +34,36 @@ interface WebsiteData {
 
 export const WebsitePage: React.FC = () => {
   const { websiteId, websiteSlug, pageSlug } = useParams<{ websiteId?: string; websiteSlug?: string; pageSlug?: string }>();
-  const [website, setWebsite] = useState<WebsiteData | null>(null);
-  const [page, setPage] = useState<WebsitePageData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { loadStoreById } = useStore();
   const [searchParams] = useSearchParams();
   const isPreview = searchParams.get('preview') === '1';
-  const [resolvedWebsiteId, setResolvedWebsiteId] = useState<string | null>(null);
-  const [resolvingSiteId, setResolvingSiteId] = useState(true);
+
+  // ✅ OPTIMIZATION: Use optimized hooks with aggressive caching
+  // Resolve website ID from slug if needed
+  const { data: resolvedWebsiteIdFromSlug, isLoading: resolvingSiteId } = useStorefrontWebsiteId(websiteSlug || null);
+  const resolvedWebsiteId = websiteId || resolvedWebsiteIdFromSlug;
+
+  // ✅ OPTIMIZATION: Fetch website and page in parallel with caching
+  const { data: website, isLoading: websiteLoading, error: websiteError } = useStorefrontWebsite(resolvedWebsiteId);
+  const { data: page, isLoading: pageLoading, error: pageError } = useStorefrontWebsitePage(
+    resolvedWebsiteId,
+    pageSlug || null,
+    isPreview
+  );
+
+  const loading = resolvingSiteId || websiteLoading || pageLoading;
+  const error = websiteError || pageError 
+    ? (websiteError?.message || pageError?.message || 'Failed to load page')
+    : (!loading && (!page || !website) ? 'Page not found' : null);
+
+  // ✅ OPTIMIZATION: Load store in parallel (non-blocking)
   useEffect(() => {
-    let active = true;
-    setResolvingSiteId(true);
-    (async () => {
-      try {
-        if (websiteId) {
-          if (!active) return;
-          setResolvedWebsiteId(websiteId);
-        } else if (websiteSlug) {
-          const { data } = await supabase
-            .from('websites')
-            .select('id')
-            .eq('slug', websiteSlug)
-            .eq('is_active', true)
-            .maybeSingle();
-          if (!active) return;
-          setResolvedWebsiteId((data as any)?.id || null);
-        } else {
-          if (!active) return;
-          setResolvedWebsiteId(null);
-        }
-      } catch {
-        if (!active) return;
-        setResolvedWebsiteId(null);
-      } finally {
-        if (!active) return;
-        setResolvingSiteId(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [websiteId, websiteSlug]);
-
-  useEffect(() => {
-    const fetchWebsiteAndPage = async () => {
-      if (resolvingSiteId) {
-        setLoading(true);
-        return;
-      }
-
-      if (!resolvedWebsiteId) {
-        setError('Invalid website URL');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError(null);
-
-        logger.debug('WebsitePage: Fetching website and page:', { resolvedWebsiteId, pageSlug });
-
-        // First fetch the website to check if it's active
-        const { data: websiteData, error: websiteError } = await supabase
-          .from('websites')
-          .select('*')
-          .eq('id', resolvedWebsiteId)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (websiteError) {
-          logger.error('WebsitePage: Error fetching website:', websiteError);
-          setError('Failed to load website');
-          return;
-        }
-
-        if (!websiteData) {
-          logger.debug('WebsitePage: Website not found or not published:', resolvedWebsiteId);
-          setError('Website not found or not available');
-          return;
-        }
-
-        setWebsite(websiteData);
-
-        // Ensure StoreContext is populated for ecommerce elements
-        try {
-          await loadStoreById(websiteData.store_id);
-        } catch (e) {
-          logger.warn('WebsitePage: loadStoreById failed', e);
-        }
-
-        // Then fetch the website page
-        let pageQuery = supabase
-          .from('website_pages')
-          .select('*')
-          .eq('website_id', resolvedWebsiteId);
-
-        if (!isPreview) {
-          pageQuery = pageQuery.eq('is_published', true);
-        }
-
-        if (pageSlug) {
-          // Fetch specific page by slug
-          pageQuery = pageQuery.eq('slug', pageSlug);
-        } else {
-          // Fetch homepage if no slug provided
-          pageQuery = pageQuery.eq('is_homepage', true);
-        }
-
-        const { data: pageData, error: pageError } = await pageQuery.maybeSingle();
-
-        if (pageError) {
-          logger.error('WebsitePage: Error fetching page:', pageError);
-          setError('Failed to load page');
-          return;
-        }
-
-        if (!pageData) {
-          logger.debug('WebsitePage: Page not found:', pageSlug || 'homepage');
-          setError(pageSlug ? `Page "${pageSlug}" not found` : 'Homepage not found');
-          return;
-        }
-
-        logger.debug('WebsitePage: Website and page loaded successfully:', { websiteData, pageData });
-        setPage(pageData);
-      } catch (err) {
-        logger.error('WebsitePage: Error fetching data:', err);
-        setError('Failed to load page');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWebsiteAndPage();
-  }, [resolvedWebsiteId, pageSlug, loadStoreById, isPreview, resolvingSiteId]);
+    if (website?.store_id) {
+      loadStoreById(website.store_id).catch(() => {
+        // Silently fail - store context is optional for some pages
+      });
+    }
+  }, [website?.store_id, loadStoreById]);
 
   // Set up SEO metadata from page-level settings only
   useEffect(() => {
@@ -198,10 +92,12 @@ export const WebsitePage: React.FC = () => {
       scriptElement.innerHTML = page.custom_scripts;
       document.head.appendChild(scriptElement);
       return () => {
-        document.head.removeChild(scriptElement);
+        if (document.head.contains(scriptElement)) {
+          document.head.removeChild(scriptElement);
+        }
       };
     }
-  }, [page, website]);
+  }, [page, website, isPreview]);
 
   // Ensure global currency matches website settings on WebsitePage routes
   useEffect(() => {
@@ -209,13 +105,13 @@ export const WebsitePage: React.FC = () => {
     try { setGlobalCurrency(code as any); } catch {}
   }, [website?.settings?.currency?.code]);
 
-  // Optimistic rendering - show page structure immediately
-  if (error || (!loading && (!page || !website))) {
+  // ✅ OPTIMIZATION: Show error state immediately if data failed to load
+  if (error && !loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-destructive mb-2">Page Not Found</h1>
-          <p className="text-muted-foreground">{error || 'The requested page could not be found.'}</p>
+          <p className="text-muted-foreground">{error}</p>
           <p className="text-sm text-muted-foreground mt-2">Website: {websiteSlug || websiteId || 'unknown'} | Page: {pageSlug || 'homepage'}</p>
         </div>
       </div>
