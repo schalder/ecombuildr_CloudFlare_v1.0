@@ -5,10 +5,17 @@ export function ensureGoogleFontLoaded(family: string, weights: string = '400;50
   const id = `gf-${familyId}-${weightsId}`;
   if (document.getElementById(id)) return;
 
+  // ✅ PERFORMANCE: Load fonts asynchronously with font-display: swap to prevent blocking
   const link = document.createElement('link');
   link.id = id;
   link.rel = 'stylesheet';
   const encodedFamily = family.trim().replace(/\s+/g, '+');
+  // Always use display=swap to prevent invisible text during font load
   link.href = `https://fonts.googleapis.com/css2?family=${encodedFamily}:wght@${weights}&display=swap`;
+  // Load asynchronously to prevent blocking render
+  link.media = 'print';
+  link.onload = function() {
+    (this as HTMLLinkElement).media = 'all';
+  };
   document.head.appendChild(link);
 }

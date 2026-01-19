@@ -54,23 +54,93 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
+        manualChunks: (id) => {
+          // ✅ PERFORMANCE: Storefront-specific bundle splitting
+          // Split storefront renderer components (only loaded on public pages)
+          if (id.includes('/components/storefront/renderer/') || 
+              id.includes('/components/storefront/PageBuilderRenderer')) {
+            return 'storefront-renderer';
+          }
+          
+          // Split storefront pages (lazy-loaded)
+          if (id.includes('/pages/storefront/')) {
+            return 'storefront-pages';
+          }
+          
+          // Split storefront components (cart, product cards, etc.)
+          if (id.includes('/components/storefront/') && 
+              !id.includes('/components/storefront/renderer/') &&
+              !id.includes('/components/storefront/PageBuilderRenderer')) {
+            return 'storefront-components';
+          }
+          
+          // Split page builder (admin only - separate from storefront)
+          if (id.includes('/components/page-builder/') && 
+              !id.includes('/components/page-builder/types') &&
+              !id.includes('/components/page-builder/utils')) {
+            return 'page-builder';
+          }
+          
           // Split vendor libraries
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-toast'],
-          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          'chart-vendor': ['recharts'],
-          'date-vendor': ['date-fns', 'react-day-picker'],
-          
-          // Split page builder (admin only)
-          'page-builder': [
-            'react-dnd',
-            'react-dnd-html5-backend',
-            '@hello-pangea/dnd'
-          ],
-          
-          // Split major libraries that are actually used
-          'ui-libs': ['lucide-react', '@radix-ui/react-slot', 'class-variance-authority']
+          if (id.includes('node_modules')) {
+            // React core
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            
+            // Radix UI - split into smaller chunks for storefront
+            if (id.includes('@radix-ui')) {
+              // Only common UI components used in storefront
+              if (id.includes('react-dialog') || id.includes('react-dropdown-menu') || id.includes('react-toast')) {
+                return 'ui-vendor-core';
+              }
+              // Other Radix components (admin-heavy)
+              return 'ui-vendor-extended';
+            }
+            
+            // Form libraries (used in checkout/storefront)
+            if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) {
+              return 'form-vendor';
+            }
+            
+            // Chart library (admin only)
+            if (id.includes('recharts')) {
+              return 'chart-vendor';
+            }
+            
+            // Date libraries
+            if (id.includes('date-fns') || id.includes('react-day-picker')) {
+              return 'date-vendor';
+            }
+            
+            // Page builder drag-drop (admin only)
+            if (id.includes('react-dnd') || id.includes('@hello-pangea/dnd')) {
+              return 'page-builder-dnd';
+            }
+            
+            // Supabase client (used everywhere but can be split)
+            if (id.includes('@supabase/supabase-js')) {
+              return 'supabase-client';
+            }
+            
+            // React Query (used everywhere)
+            if (id.includes('@tanstack/react-query')) {
+              return 'react-query';
+            }
+            
+            // UI utilities (small, common)
+            if (id.includes('lucide-react') || id.includes('class-variance-authority') || id.includes('clsx') || id.includes('tailwind-merge')) {
+              return 'ui-utils';
+            }
+            
+            // TipTap editor (admin only)
+            if (id.includes('@tiptap')) {
+              return 'tiptap-editor';
+            }
+            
+            // Other node_modules
+            return 'vendor-misc';
+          }
         },
       },
     },
@@ -79,8 +149,8 @@ export default defineConfig(({ mode }) => ({
     minify: 'esbuild', // Use ESBuild for faster minification
     // Enable CSS code splitting
     cssCodeSplit: true,
-    // Reduce chunk size warnings for better performance
-    chunkSizeWarningLimit: 1000,
+    // ✅ PERFORMANCE: Lower chunk size warning limit to catch large chunks early
+    chunkSizeWarningLimit: 600,
   },
   // Environment variable defaults
   define: {

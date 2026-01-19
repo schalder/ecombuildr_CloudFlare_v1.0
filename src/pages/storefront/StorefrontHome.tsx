@@ -62,76 +62,65 @@ export const StorefrontHome: React.FC = () => {
     init();
   }, [slug, websiteId, websiteSlug, loadStore, loadStoreById]);
 
+  // ✅ PERFORMANCE: Parallelize API calls for faster loading
   useEffect(() => {
-    if (store?.id) {
-      fetchHomepage();
-      fetchFeaturedProducts();
-    }
+    if (!store?.id) return;
+    
+    let mounted = true;
+    setLoading(true);
+    
+    // Fetch homepage and products in parallel
+    const fetchData = async () => {
+      try {
+        const [homepageResult, productsResult] = await Promise.allSettled([
+          // Homepage query
+          supabase
+            .from('pages')
+            .select('*')
+            .eq('store_id', store.id)
+            .eq('is_homepage', true)
+            .eq('is_published', true)
+            .maybeSingle(),
+          // Products query
+          supabase
+            .from('products')
+            .select('id, name, slug, description, short_description, price, compare_price, images, is_active')
+            .eq('store_id', store.id)
+            .eq('is_active', true)
+            .eq('show_on_website', true)
+            .limit(8)
+        ]);
+        
+        if (!mounted) return;
+        
+        // Process homepage result
+        if (homepageResult.status === 'fulfilled' && !homepageResult.value.error) {
+          setHomepage(homepageResult.value.data);
+        }
+        
+        // Process products result
+        if (productsResult.status === 'fulfilled' && !productsResult.value.error) {
+          const products = productsResult.value.data?.map(product => ({
+            ...product,
+            images: Array.isArray(product.images) ? product.images.filter(img => typeof img === 'string') as string[] : [],
+          })) || [];
+          setFeaturedProducts(products);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchData();
+    
+    return () => {
+      mounted = false;
+    };
   }, [store?.id]);
-
-  const fetchHomepage = async () => {
-    if (!store) return;
-    
-    try {
-      console.log('StorefrontHome: Fetching homepage for store:', store.id);
-      const { data, error } = await supabase
-        .from('pages')
-        .select('*')
-        .eq('store_id', store.id)
-        .eq('is_homepage', true)
-        .eq('is_published', true)
-        .maybeSingle();
-
-      if (error) {
-        console.error('StorefrontHome: Error fetching homepage:', error);
-        return;
-      }
-
-      console.log('StorefrontHome: Homepage data:', data);
-      setHomepage(data);
-    } catch (error) {
-      console.error('StorefrontHome: Error fetching homepage:', error);
-    }
-  };
-
-
-  const fetchFeaturedProducts = async () => {
-    if (!store) return;
-    
-    try {
-      setLoading(true);
-      console.log('Fetching products for store:', store.id);
-      
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, slug, description, short_description, price, compare_price, images, is_active')
-        .eq('store_id', store.id)
-        .eq('is_active', true)
-        .eq('show_on_website', true)
-        .limit(8);
-
-      console.log('Products query result:', { data, error });
-
-      if (error) {
-        console.error('Products query error:', error);
-        setFeaturedProducts([]);
-        return;
-      }
-      
-      const products = data?.map(product => ({
-        ...product,
-        images: Array.isArray(product.images) ? product.images.filter(img => typeof img === 'string') as string[] : [],
-      })) || [];
-      
-      console.log('Processed products:', products);
-      setFeaturedProducts(products);
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      setFeaturedProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddToCart = (product: Product) => {
     addItem({
