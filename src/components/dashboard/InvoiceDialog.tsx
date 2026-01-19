@@ -2,7 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { useLazyPDF } from "@/components/analytics/LazyChart";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { nameWithVariant } from '@/lib/utils';
 
 interface InvoiceData {
@@ -18,7 +19,7 @@ interface Props {
 
 export const InvoiceDialog: React.FC<Props> = ({ open, onOpenChange, data }) => {
   const printRef = useRef<HTMLDivElement>(null);
-  const { generatePDF, loading: pdfLoading } = useLazyPDF();
+  const [downloading, setDownloading] = useState(false);
 
   const totals = useMemo(() => {
     const subtotal = Number(data?.order?.subtotal ?? 0);
@@ -87,10 +88,55 @@ export const InvoiceDialog: React.FC<Props> = ({ open, onOpenChange, data }) => 
   };
   const handleDownloadPdf = async () => {
     if (!printRef.current) return;
+    setDownloading(true);
     try {
-      await generatePDF(printRef.current, `invoice-${data?.order?.order_number || data?.order?.id || 'unknown'}.pdf`);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
+      const canvas = await html2canvas(printRef.current, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let position = 0;
+
+      if (imgHeight < pageHeight) {
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      } else {
+        let remainingHeight = imgHeight;
+        let sourceY = 0;
+        const canvasPage = document.createElement("canvas");
+        const ctx = canvasPage.getContext("2d");
+        if (!ctx) throw new Error("Canvas not supported");
+        const pageCanvasHeight = Math.floor((canvas.width * pageHeight) / pageWidth);
+        canvasPage.width = canvas.width;
+        canvasPage.height = pageCanvasHeight;
+
+        while (remainingHeight > 0) {
+          ctx.clearRect(0, 0, canvas.width, pageCanvasHeight);
+          ctx.drawImage(
+            canvas,
+            0,
+            sourceY,
+            canvas.width,
+            pageCanvasHeight,
+            0,
+            0,
+            canvas.width,
+            pageCanvasHeight
+          );
+          const pageData = canvasPage.toDataURL("image/png");
+          pdf.addImage(pageData, "PNG", 0, position, imgWidth, pageHeight);
+          remainingHeight -= pageHeight;
+          sourceY += pageCanvasHeight;
+          if (remainingHeight > 0) pdf.addPage();
+        }
+      }
+
+      pdf.save(`invoice-${data?.order?.order_number || data?.order?.id}.pdf`);
+    } catch (e) {
+      console.error("Failed to generate PDF", e);
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -103,7 +149,7 @@ export const InvoiceDialog: React.FC<Props> = ({ open, onOpenChange, data }) => 
         <div className="space-y-4">
           <div className="flex gap-2 justify-end print:hidden">
             <Button variant="outline" onClick={handlePrint}>Print</Button>
-            <Button onClick={handleDownloadPdf} disabled={pdfLoading}>{pdfLoading ? "Generating..." : "Download PDF"}</Button>
+            <Button onClick={handleDownloadPdf} disabled={downloading}>{downloading ? "Generating..." : "Download PDF"}</Button>
           </div>
           <div ref={printRef} className="bg-white text-foreground p-6 rounded border shadow-sm">
             <div className="flex items-start justify-between">

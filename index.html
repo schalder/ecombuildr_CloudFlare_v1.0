@@ -18,24 +18,11 @@
     <link rel="preconnect" href="https://fhqwacmokbtbspkxjixf.supabase.co" />
     <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
     
-    <!-- Load Inter font with display=swap for non-blocking render -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
-    </noscript>
+    <!-- Critical resource hints -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     
     <!-- Critical CSS for image optimization -->
     <style>
-      /* Prevent font layout shift - use system fonts as fallback */
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-      }
-      /* Inter will load asynchronously and swap in */
-      .fonts-loaded body {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-      }
-      
-      /* Image optimization styles */
       @keyframes shimmer {
         0% { background-position: -200% 0; }
         100% { background-position: 200% 0; }
@@ -47,15 +34,6 @@
       picture { display: block; width: 100%; height: 100%; }
       img[width][height] { aspect-ratio: attr(width) / attr(height); }
     </style>
-    
-    <!-- Add class when fonts are loaded -->
-    <script>
-      if ('fonts' in document) {
-        document.fonts.ready.then(function() {
-          document.documentElement.classList.add('fonts-loaded');
-        });
-      }
-    </script>
     
     <!-- Social crawlers are handled by Vercel Edge Function (social-meta) -->
     <!-- Client-side SEO is managed by individual pages/components -->

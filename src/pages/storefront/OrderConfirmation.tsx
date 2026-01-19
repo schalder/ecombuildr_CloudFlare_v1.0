@@ -13,7 +13,7 @@ import { useEcomPaths } from '@/lib/pathResolver';
 import { nameWithVariant } from '@/lib/utils';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
-// jsPDF will be lazy loaded when downloadPDF is called
+import jsPDF from 'jspdf';
 import CourseOrderConfirmation from '@/components/course/CourseOrderConfirmation';
 
 interface Order {
@@ -451,9 +451,7 @@ useEffect(() => {
     }
   };
 
-  const downloadPDF = async () => {
-    // Lazy load jsPDF only when user clicks download
-    const { default: jsPDF } = await import('jspdf');
+  const downloadPDF = () => {
     const pdf = new jsPDF();
     const pageWidth = pdf.internal.pageSize.getWidth();
     let y = 20;
