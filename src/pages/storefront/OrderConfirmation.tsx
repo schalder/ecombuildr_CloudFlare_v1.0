@@ -227,6 +227,7 @@ useEffect(() => {
                 contents: trackingItems.map(item => ({
                   id: item.item_id,
                   quantity: item.quantity,
+                  price: item.price, // ✅ Add price for server-side tracking
                 })),
                 // Include customer data for better Facebook matching
                 customer_email: orderData.customer_email || null,

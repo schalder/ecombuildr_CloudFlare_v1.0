@@ -78,19 +78,26 @@ async function buildFacebookPayload(
     zipCode?: string;
     country?: string;
   },
+  browserContext?: {
+    fbp?: string;
+    fbc?: string;
+    client_user_agent?: string;
+    event_source_url?: string;
+  },
   eventId?: string,
   eventTime?: number,
   testEventCode?: string
-): Promise<any | null> {
-  // Validate user data first - Facebook requires at least one identifier
-  if (!hasSufficientUserData(userData)) {
-    console.warn(`Skipping Facebook event ${eventName}: insufficient user data for matching`);
-    return null; // Return null to indicate skip
+): Promise<any> {
+  // ✅ REMOVED: Strict validation that blocks events
+  // ✅ NEW: Log warning but continue processing (PII is optional, not required)
+  const hasUserPII = hasSufficientUserData(userData);
+  if (!hasUserPII) {
+    console.warn(`[CAPI] Event ${eventName} has insufficient user PII - will use browser context for matching`);
   }
 
   const hashedUserData: any = {};
 
-  // Hash user identifiers
+  // Hash user identifiers if available (OPTIONAL, not required)
   if (userData.email) {
     hashedUserData.em = await hashValue(userData.email);
   }
@@ -120,6 +127,22 @@ async function buildFacebookPayload(
     hashedUserData.country = await hashValue(userData.country);
   }
 
+  // ✅ ADD: Browser context fields (for matching when PII is missing)
+  if (browserContext) {
+    if (browserContext.fbp) {
+      hashedUserData.fbp = browserContext.fbp;
+    }
+    if (browserContext.fbc) {
+      hashedUserData.fbc = browserContext.fbc;
+    }
+    if (browserContext.client_user_agent) {
+      hashedUserData.client_user_agent = browserContext.client_user_agent;
+    }
+    if (browserContext.event_source_url) {
+      // event_source_url goes at event level, not user_data
+    }
+  }
+
   // Build event data
   const event: any = {
     event_name: eventName,
@@ -128,9 +151,18 @@ async function buildFacebookPayload(
     action_source: 'website',
   };
 
-  // Add event_id for deduplication
+  // ✅ ADD: event_source_url at event level (if available)
+  if (browserContext?.event_source_url) {
+    event.event_source_url = browserContext.event_source_url;
+  }
+
+  // Add event_id for deduplication (REQUIRED for proper deduplication)
   if (eventId) {
     event.event_id = eventId;
+  } else {
+    // Generate fallback event_id if not provided (shouldn't happen, but safety)
+    console.warn(`[CAPI] Event ${eventName} missing event_id - generating fallback`);
+    event.event_id = `${eventName}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
 
   // Add custom data for ecommerce events
@@ -152,8 +184,9 @@ async function buildFacebookPayload(
       customData.contents = eventData.contents.map((item: any) => ({
         id: item.id || item.item_id,
         quantity: item.quantity || 1,
-        item_price: item.price || item.item_price,
-      }));
+        // ✅ FIX: Include item_price (now available in contents array)
+        item_price: item.price || item.item_price || undefined, // Only include if available
+      })).filter((item: any) => item.item_price !== undefined || item.id); // Filter out invalid items
     }
     
     if (eventData.content_name) {
@@ -182,6 +215,7 @@ async function buildFacebookPayload(
     payload.test_event_code = testEventCode;
   }
 
+  // ✅ ALWAYS return payload (never null)
   return payload;
 }
 
@@ -198,6 +232,7 @@ serve(async (req) => {
       event_name,
       event_data,
       user_data,
+      browser_context, // ✅ NEW: Extract browser context
       event_id,
       event_time,
       test_event_code,
@@ -219,31 +254,19 @@ serve(async (req) => {
     // Map event name to Facebook event name
     const facebookEventName = mapEventTypeToFacebook(event_name);
 
-    // Build Facebook payload
+    // ✅ Build Facebook payload - ALWAYS send (never null)
     const payload = await buildFacebookPayload(
       pixel_id,
       facebookEventName,
       event_data || {},
       user_data || {},
+      browser_context || {}, // ✅ Pass browser context
       event_id,
       event_time,
       test_event_code
     );
 
-    // If payload is null, skip sending (insufficient user data)
-    if (!payload) {
-      return new Response(
-        JSON.stringify({ 
-          success: true,
-          skipped: true,
-          reason: 'Insufficient user data for Facebook matching - event requires at least email, phone, name (first+last), or address (city+state+zip+country)'
-        }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
+    // ✅ REMOVED: Null check - payload is always returned now
 
     // Set access token
     payload.access_token = access_token;

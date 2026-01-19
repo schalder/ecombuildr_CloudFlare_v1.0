@@ -924,6 +924,7 @@ export const PaymentProcessing: React.FC = () => {
                       contents: trackingItems.map(item => ({
                         id: item.item_id,
                         quantity: item.quantity,
+                        price: item.price, // ✅ Add price for server-side tracking
                       })),
                     };
                     window.fbq('track', 'Purchase', eventData);
@@ -970,6 +971,7 @@ export const PaymentProcessing: React.FC = () => {
                     contents: trackingItems.map(item => ({
                       id: item.item_id,
                       quantity: item.quantity,
+                      price: item.price, // ✅ Add price for server-side tracking
                     })),
                     // Include customer data for better Facebook matching
                     customer_email: data.order.customer_email || null,

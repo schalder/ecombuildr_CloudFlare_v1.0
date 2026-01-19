@@ -35,6 +35,32 @@ interface EcommerceEvent {
   event_id?: string;
 }
 
+// Helper function to extract Facebook browser context cookies
+const getFacebookBrowserContext = () => {
+  try {
+    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+
+    return {
+      fbp: cookies['_fbp'] || null, // Facebook Browser ID
+      fbc: cookies['_fbc'] || null, // Facebook Click ID
+      client_user_agent: navigator.userAgent,
+      event_source_url: window.location.href,
+    };
+  } catch (error) {
+    logger.warn('[PixelTracking] Failed to extract browser context:', error);
+    return {
+      fbp: null,
+      fbc: null,
+      client_user_agent: navigator.userAgent,
+      event_source_url: window.location.href,
+    };
+  }
+};
+
 export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, websiteId?: string, funnelId?: string) => {
   const storePixelEvent = useCallback(async (eventType: string, eventData: any, providers?: { facebook?: { configured: boolean; attempted: boolean; success: boolean }; google?: { configured: boolean; attempted: boolean; success: boolean } }) => {
     if (!storeId) return;
@@ -51,11 +77,19 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       // Use existing event_id if provided, otherwise generate one
       const eventId = eventData.event_id || `${eventType}_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
       
-      // Add provider metadata and event_id to event data
+      // Capture browser context for server-side matching (when PII is missing)
+      const browserContext = getFacebookBrowserContext();
+      
+      // Add provider metadata, event_id, and browser context to event data
       const enhancedEventData = {
         ...eventData,
         event_id: eventId,
-        _providers: providers || {}
+        _providers: providers || {},
+        // Browser context for server-side matching (when PII is missing)
+        fbp: browserContext.fbp,
+        fbc: browserContext.fbc,
+        client_user_agent: browserContext.client_user_agent,
+        event_source_url: browserContext.event_source_url,
       };
       
       const eventRecord = {
@@ -112,11 +146,12 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       }
     };
 
-    // Generate event_id for deduplication (consistent between client and server-side)
+    // Generate event_id ONCE - use same ID for browser pixel AND server-side
+    // This ensures proper deduplication between browser and server events
     const eventId = eventData.event_id || `${eventName}_${Date.now()}_${crypto.randomUUID()}`;
     const eventDataWithId = {
       ...eventData,
-      event_id: eventId
+      event_id: eventId // Same event_id used for both browser and server
     };
 
     // Facebook Pixel tracking - fire if fbq is available (regardless of pixelConfig)
@@ -147,7 +182,7 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       }
     }
 
-    // Store event in database with provider metadata (only if storeId is provided)
+    // Store event in database with provider metadata and same event_id for server-side forwarding
     storePixelEvent(eventName, eventDataWithId, providers);
   }, [pixelConfig, storePixelEvent]);
 
@@ -201,6 +236,7 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       contents: [{
         id: product.id,
         quantity: product.quantity,
+        price: product.price, // ✅ Add price for server-side tracking
       }],
     };
 
@@ -237,6 +273,7 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       contents: data.items.map(item => ({
         id: item.item_id,
         quantity: item.quantity,
+        price: item.price, // ✅ Add price for server-side tracking
       })),
     };
 
@@ -266,6 +303,7 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       contents: data.items.map(item => ({
         id: item.item_id,
         quantity: item.quantity,
+        price: item.price, // ✅ Add price for server-side tracking
       })),
     };
 
@@ -375,6 +413,7 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       contents: data.items?.map(item => ({
         id: item.item_id,
         quantity: item.quantity,
+        price: item.price, // ✅ Add price for server-side tracking
       })) || [],
     };
 
