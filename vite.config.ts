@@ -55,10 +55,11 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Split vendor libraries
+          // CRITICAL: React must be in its own chunk and loaded first
+          // All other chunks depend on React, so it must be available
           if (id.includes('node_modules')) {
-            // React core
-            if (id.includes('react') && (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/react-router'))) {
+            // React core - MUST be first chunk, everything depends on it
+            if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/react-router')) {
               return 'react-vendor';
             }
             
@@ -79,18 +80,15 @@ export default defineConfig(({ mode }) => ({
               return 'form-vendor';
             }
             
-            // Chart library - keep in vendor to avoid circular dependency issues
-            // Recharts will be lazy loaded at component level using useLazyRecharts hook
-            // Don't split it separately to avoid initialization order issues
-            
             // Date libraries
             if (id.includes('date-fns') || id.includes('react-day-picker')) {
               return 'date-vendor';
             }
             
-            // Page builder (admin only - heavy)
+            // Page builder drag-and-drop libraries
+            // These will be loaded after React is available
             if (id.includes('react-dnd') || id.includes('@hello-pangea/dnd')) {
-              return 'page-builder';
+              return 'page-builder-vendor';
             }
             
             // TipTap editor (heavy, lazy load)
