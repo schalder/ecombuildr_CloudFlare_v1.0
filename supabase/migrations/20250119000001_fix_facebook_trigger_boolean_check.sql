@@ -160,12 +160,13 @@ BEGIN
   BEGIN
     edge_function_url := supabase_url || '/functions/v1/send-facebook-event';
     
+    -- ✅ FIX: net.http_post expects body as jsonb, not text
     PERFORM net.http_post(
       url := edge_function_url,
+      body := request_payload,  -- Pass as jsonb, not text
       headers := jsonb_build_object(
         'Content-Type', 'application/json'
-      ),
-      body := request_payload::text
+      )
     );
     
   EXCEPTION
