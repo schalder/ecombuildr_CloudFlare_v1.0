@@ -14,6 +14,13 @@ import { useEcomPaths } from '@/lib/pathResolver';
 import { getEffectiveResponsiveValue } from '../utils/responsiveHelpers';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { StorefrontImage } from '@/components/storefront/renderer/StorefrontImage';
+import { usePixelContext } from '@/components/pixel/PixelManager';
+import { usePixelTracking } from '@/hooks/usePixelTracking';
+import { useStoreProducts } from '@/hooks/useStoreData';
+import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
+import { useStore } from '@/contexts/StoreContext';
+import { useWebsiteContext } from '@/contexts/WebsiteContext';
+import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -631,6 +638,19 @@ const ButtonElement: React.FC<{
   const scrollTarget: string | undefined = element.content.scrollTarget;
   const paths = useEcomPaths();
 
+  // Pixel tracking setup
+  const { pixels } = usePixelContext();
+  const { store } = useStore();
+  const { websiteId } = useWebsiteContext();
+  const { funnelId } = useFunnelStepContext();
+  const { trackAddToCart } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
+  const resolvedWebsiteId = useResolvedWebsiteId(element);
+  const productIds = element.content.addToCartProductIds || [];
+  const { products } = useStoreProducts({ 
+    specificProductIds: productIds.length > 0 ? productIds : undefined,
+    websiteId: resolvedWebsiteId 
+  });
+
   const computedUrl = React.useMemo(() => {
     if (linkType === 'page') {
       return pageSlug ? `${paths.base}/${pageSlug}` : paths.home;
@@ -642,6 +662,20 @@ const ButtonElement: React.FC<{
   }, [linkType, pageSlug, paths.base, paths.home, url]);
 
   const handleClick = (e: React.MouseEvent) => {
+    // Fire AddToCart pixel events if enabled (tracking only, no cart manipulation)
+    if (element.content.enableAddToCart && !isEditing && productIds.length > 0 && trackAddToCart && products.length > 0) {
+      products.forEach((product) => {
+        if (productIds.includes(product.id)) {
+          trackAddToCart({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            category: product.category_id || undefined,
+          });
+        }
+      });
+    }
     // Handle in-page scroll always within editor/live
     if (linkType === 'scroll') {
       e.preventDefault();

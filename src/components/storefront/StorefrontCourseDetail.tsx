@@ -171,14 +171,7 @@ const StorefrontCourseDetail: React.FC<StorefrontCourseDetailProps> = ({ courseS
       
       return {
         ...data,
-        payment_methods: {
-          bkash: false,
-          nagad: false,
-          eps: false,
-          ebpay: false,
-          stripe: false,
-          ...(data.payment_methods as CourseDetail['payment_methods'] || {})
-        } as CourseDetail['payment_methods']
+        payment_methods: data.payment_methods as CourseDetail['payment_methods'] || { bkash: false, nagad: false, eps: false, ebpay: false, stripe: false }
       } as CourseDetail;
     },
     enabled: !!(finalCourseSlug || finalCourseId)

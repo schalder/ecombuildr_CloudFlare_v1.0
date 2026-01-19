@@ -20,6 +20,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { ColorPicker } from '@/components/ui/color-picker';
 import { VisibilityControl } from './VisibilityControl';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useStoreProducts } from '@/hooks/useStoreData';
+import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
+import { useStore } from '@/contexts/StoreContext';
 
 interface ContentPropertiesProps {
   element: PageBuilderElement;
@@ -191,6 +196,12 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
   // Button element content
   if (element.type === 'button') {
     const linkType = element.content.linkType || (element.content.url ? 'url' : 'page');
+    const { store } = useStore();
+    const resolvedWebsiteId = useResolvedWebsiteId(element);
+    const { products } = useStoreProducts({ 
+      websiteId: resolvedWebsiteId 
+    });
+    
     return (
       <div className="space-y-4">
         <VisibilitySection />
@@ -333,6 +344,82 @@ export const ContentProperties: React.FC<ContentPropertiesProps> = ({
             </SelectContent>
           </Select>
         </div>
+
+        <Separator />
+
+        {/* AddToCart Event Toggle */}
+        <div className="flex items-center justify-between pt-2">
+          <div className="space-y-0.5">
+            <Label>Enable AddToCart Event</Label>
+            <p className="text-xs text-muted-foreground">
+              Fire AddToCart pixel event when button is clicked (for tracking only)
+            </p>
+          </div>
+          <Switch
+            checked={element.content.enableAddToCart || false}
+            onCheckedChange={(checked) => onUpdate('enableAddToCart', checked)}
+          />
+        </div>
+
+        {/* Product Selection - Only show if AddToCart is enabled */}
+        {element.content.enableAddToCart && (
+          <div>
+            <Label className="text-sm">Select Products for Tracking</Label>
+            <p className="text-xs text-muted-foreground mb-2">
+              These products will be tracked in AddToCart events. Button navigation remains unchanged.
+            </p>
+            <div className="space-y-2 max-h-60 overflow-y-auto border rounded-lg p-3">
+              {!store ? (
+                <p className="text-xs text-muted-foreground">No store available</p>
+              ) : products.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No products available</p>
+              ) : (
+                products.map((product) => {
+                  const isSelected = (element.content.addToCartProductIds || []).includes(product.id);
+                  const productImage = Array.isArray(product.images) 
+                    ? product.images[0] 
+                    : typeof product.images === 'string' 
+                      ? product.images 
+                      : product.images?.url || '/placeholder.svg';
+                  
+                  return (
+                    <div key={product.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) => {
+                          const currentIds = element.content.addToCartProductIds || [];
+                          const newIds = checked
+                            ? [...currentIds, product.id]
+                            : currentIds.filter(id => id !== product.id);
+                          onUpdate('addToCartProductIds', newIds);
+                        }}
+                      />
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <img
+                          src={productImage}
+                          alt={product.name}
+                          className="w-8 h-8 rounded object-cover flex-shrink-0"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/placeholder.svg';
+                          }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <Label className="text-xs font-medium truncate block">{product.name}</Label>
+                          <p className="text-xs text-muted-foreground">৳{product.price}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            {(element.content.addToCartProductIds || []).length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                {(element.content.addToCartProductIds || []).length} product(s) selected
+              </p>
+            )}
+          </div>
+        )}
       </div>
     );
   }

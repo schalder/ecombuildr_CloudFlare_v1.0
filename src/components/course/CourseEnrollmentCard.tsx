@@ -132,7 +132,7 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
           });
         }
 
-        if (paymentSettings.stripe?.enabled && paymentSettings.stripe?.stripe_account_id && (course.payment_methods.stripe === true)) {
+        if (paymentSettings.stripe?.enabled && paymentSettings.stripe?.stripe_account_id && course.payment_methods.stripe) {
           methods.push({
             id: 'stripe',
             name: 'Credit/Debit Card (Stripe)',
@@ -245,7 +245,7 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
         </div>
 
         {course.price > 0 && availablePaymentMethods.length > 0 && (
-          <div className="mb-4 space-y-3">
+          <div className="mb-4">
             <Select value={selectedPaymentMethod} onValueChange={setSelectedPaymentMethod}>
               <SelectTrigger>
                 <SelectValue placeholder="Select Payment Method" />
@@ -261,15 +261,6 @@ export const CourseEnrollmentCard: React.FC<CourseEnrollmentCardProps> = ({
                 ))}
               </SelectContent>
             </Select>
-            
-            {/* Show note if manual payment methods are selected */}
-            {selectedPaymentMethod && (selectedPaymentMethod === 'bkash' || selectedPaymentMethod === 'nagad') && (
-              <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-xs text-blue-800 dark:text-blue-200">
-                  <strong>Note:</strong> Manual payment methods require approval. You'll receive course access after payment verification.
-                </p>
-              </div>
-            )}
           </div>
         )}
 
