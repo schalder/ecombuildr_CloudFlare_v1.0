@@ -121,34 +121,42 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
   // Render the website with proper layout structure matching WebsiteLayout
   return (
     <WebsiteProvider websiteId={websiteId} websiteSlug={website?.slug || ''}>
-      <TrackingCodeManager
-        headerCode={website?.settings?.header_tracking_code}
-        footerCode={website?.settings?.footer_tracking_code}
-        priority="website"
-      />
-      <div className="min-h-screen flex flex-col bg-background">
-        <style>{`
-          :root {
-            ${storeData?.primary_color ? `--store-primary: ${storeData.primary_color};` : '--store-primary: #10B981;'}
-            ${storeData?.secondary_color ? `--store-secondary: ${storeData.secondary_color};` : '--store-secondary: #059669;'}
-            ${website?.settings?.product_button_bg ? `--product-button-bg: ${website.settings.product_button_bg};` : ''}
-            ${website?.settings?.product_button_text ? `--product-button-text: ${website.settings.product_button_text};` : ''}
-            ${website?.settings?.product_button_hover_bg ? `--product-button-hover-bg: ${website.settings.product_button_hover_bg};` : ''}
-            ${website?.settings?.product_button_hover_text ? `--product-button-hover-text: ${website.settings.product_button_hover_text};` : ''}
-            ${website?.settings?.variant_button_selected_bg ? `--variant-button-selected-bg: ${website.settings.variant_button_selected_bg};` : ''}
-            ${website?.settings?.variant_button_selected_text ? `--variant-button-selected-text: ${website.settings.variant_button_selected_text};` : ''}
-            ${website?.settings?.variant_button_hover_bg ? `--variant-button-hover-bg: ${website.settings.variant_button_hover_bg};` : ''}
-            ${website?.settings?.variant_button_hover_text ? `--variant-button-hover-text: ${website.settings.variant_button_hover_text};` : ''}
-          }
-        `}</style>
-        {website && (
-          <DomainWebsiteRouter 
-            websiteId={websiteId} 
-            customDomain={customDomain}
-            website={website}
-          />
-        )}
-        {!website && <div className="min-h-screen" />}
+      <PixelManager 
+        websitePixels={{
+          facebook_pixel_id: website?.settings?.facebook_pixel_id,
+          google_analytics_id: website?.settings?.google_analytics_id,
+          google_ads_id: website?.settings?.google_ads_id,
+        }}
+        storeId={website?.store_id || ''}
+      >
+        <TrackingCodeManager
+          headerCode={website?.settings?.header_tracking_code}
+          footerCode={website?.settings?.footer_tracking_code}
+          priority="website"
+        />
+        <div className="min-h-screen flex flex-col bg-background">
+          <style>{`
+            :root {
+              ${storeData?.primary_color ? `--store-primary: ${storeData.primary_color};` : '--store-primary: #10B981;'}
+              ${storeData?.secondary_color ? `--store-secondary: ${storeData.secondary_color};` : '--store-secondary: #059669;'}
+              ${website?.settings?.product_button_bg ? `--product-button-bg: ${website.settings.product_button_bg};` : ''}
+              ${website?.settings?.product_button_text ? `--product-button-text: ${website.settings.product_button_text};` : ''}
+              ${website?.settings?.product_button_hover_bg ? `--product-button-hover-bg: ${website.settings.product_button_hover_bg};` : ''}
+              ${website?.settings?.product_button_hover_text ? `--product-button-hover-text: ${website.settings.product_button_hover_text};` : ''}
+              ${website?.settings?.variant_button_selected_bg ? `--variant-button-selected-bg: ${website.settings.variant_button_selected_bg};` : ''}
+              ${website?.settings?.variant_button_selected_text ? `--variant-button-selected-text: ${website.settings.variant_button_selected_text};` : ''}
+              ${website?.settings?.variant_button_hover_bg ? `--variant-button-hover-bg: ${website.settings.variant_button_hover_bg};` : ''}
+              ${website?.settings?.variant_button_hover_text ? `--variant-button-hover-text: ${website.settings.variant_button_hover_text};` : ''}
+            }
+          `}</style>
+          {website && (
+            <DomainWebsiteRouter 
+              websiteId={websiteId} 
+              customDomain={customDomain}
+              website={website}
+            />
+          )}
+          {!website && <div className="min-h-screen" />}
         </div>
       </PixelManager>
     </WebsiteProvider>
