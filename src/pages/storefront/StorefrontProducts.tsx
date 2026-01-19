@@ -530,17 +530,12 @@ export const StorefrontProducts: React.FC = () => {
     init();
   }, [slug, websiteId, websiteSlug, loadStore, loadStoreById]);
 
-  // ✅ PERFORMANCE: Parallelize category and collection fetching
   useEffect(() => {
-    if (!store?.id) return;
-    
-    // Fetch categories and collections in parallel
-    Promise.allSettled([
-      Promise.resolve(fetchCategories()),
-      Promise.resolve(fetchCollections())
-    ]).catch(err => {
-      console.error('Error fetching categories/collections:', err);
-    });
+    if (store?.id) {
+      console.log('Store loaded, fetching data for store:', store.id);
+      fetchCategories();
+      fetchCollections();
+    }
   }, [store?.id, websiteId, websiteSlug, detectedWebsiteId]);
 
   useEffect(() => {

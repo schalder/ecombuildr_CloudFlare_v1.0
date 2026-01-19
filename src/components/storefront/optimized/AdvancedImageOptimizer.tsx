@@ -155,7 +155,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
     onError?.();
   }, [onError, src]);
 
-  // ✅ PERFORMANCE: Calculate container styles with aspect ratio to prevent CLS
+  // Calculate container styles
   const getContainerStyles = useCallback((): React.CSSProperties => {
     // When preserving original, exclude width-related and border properties from container
     // These should only be applied to the image itself, not the container
@@ -188,7 +188,7 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
         ...baseStyles,
         width,
         height,
-        aspectRatio: `${width} / ${height}` // ✅ Prevent layout shift
+        aspectRatio: `${width} / ${height}`
       };
     }
 
@@ -196,14 +196,14 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
     if (aspectRatio) {
       return {
         ...baseStyles,
-        aspectRatio // ✅ Prevent layout shift
+        aspectRatio
       };
     }
 
-    // ✅ PERFORMANCE: Default aspect ratio for unknown dimensions to prevent CLS
+    // Default aspect ratio for unknown dimensions in responsive mode
     return {
       ...baseStyles,
-      aspectRatio: '16 / 9' // Default prevents layout shift
+      aspectRatio: '16 / 9'
     };
   }, [width, height, aspectRatio, style, preserveOriginal]);
 

@@ -128,7 +128,7 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
     });
   }, [data]);
 
-  // ✅ PERFORMANCE: Preload LCP image candidate with high priority
+  // Preload LCP image candidate
   useEffect(() => {
     if (!data?.sections) return;
     
@@ -136,15 +136,11 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
     const firstSection = data.sections[0];
     if (!firstSection) return;
     
-    const findFirstImage = (obj: any): { src: string; width?: number; height?: number } | null => {
+    const findFirstImage = (obj: any): string | null => {
       if (!obj) return null;
       
       if (obj.type === 'image' && obj.content?.src) {
-        return {
-          src: obj.content.src,
-          width: obj.content.width,
-          height: obj.content.height
-        };
+        return obj.content.src;
       }
       
       if (Array.isArray(obj)) {
@@ -164,22 +160,13 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
     
     const lcpImage = findFirstImage(firstSection);
     
-    if (lcpImage?.src) {
-      // Check if already preloaded
-      const existingPreload = document.querySelector(`link[rel="preload"][href="${lcpImage.src}"]`);
-      if (existingPreload) return;
-      
-      // Preload the LCP image with high priority
+    if (lcpImage) {
+      // Preload the LCP image
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
-      link.href = lcpImage.src;
-      link.setAttribute('fetchpriority', 'high');
-      // Add width/height hints if available to prevent layout shift
-      if (lcpImage.width && lcpImage.height) {
-        link.setAttribute('imagesrcset', `${lcpImage.src} ${lcpImage.width}w`);
-        link.setAttribute('imagesizes', `${lcpImage.width}px`);
-      }
+      link.href = lcpImage;
+      link.fetchPriority = 'high';
       document.head.appendChild(link);
       
       return () => {
@@ -316,40 +303,6 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
 
   const criticalResources = extractCriticalResources();
 
-  // ✅ PERFORMANCE: Extract critical CSS for above-the-fold content
-  const extractCriticalCSS = () => {
-    if (!data?.sections?.[0]) return '';
-    
-    const firstSection = data.sections[0];
-    const criticalStyles: string[] = [];
-    
-    // Extract styles from first section (above the fold)
-    if (firstSection.styles) {
-      Object.entries(firstSection.styles).forEach(([key, value]) => {
-        if (value) criticalStyles.push(`${key}: ${value};`);
-      });
-    }
-    
-    // Extract styles from first row/column/element
-    const firstRow = firstSection.rows?.[0];
-    if (firstRow?.styles) {
-      Object.entries(firstRow.styles).forEach(([key, value]) => {
-        if (value) criticalStyles.push(`.section-${firstSection.id} .row-${firstRow.id} { ${key}: ${value}; }`);
-      });
-    }
-    
-    const firstColumn = firstRow?.columns?.[0];
-    if (firstColumn?.styles) {
-      Object.entries(firstColumn.styles).forEach(([key, value]) => {
-        if (value) criticalStyles.push(`.section-${firstSection.id} .column-${firstColumn.id} { ${key}: ${value}; }`);
-      });
-    }
-    
-    return criticalStyles.join(' ');
-  };
-
-  const criticalCSS = extractCriticalCSS();
-
   return (
     <CriticalImageManager maxCriticalImages={3}>
       {/* Critical resource optimization */}
@@ -358,7 +311,6 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
         primaryFonts={criticalResources.fonts}
         preloadImages={criticalResources.preloadImages}
       />
-      <CriticalCSSLoader css={criticalCSS} fonts={criticalResources.fonts} />
       <FontOptimizer fonts={criticalResources.fonts} />
       <ScriptManager customScripts={customScripts} defer={true} />
       <PerformanceMonitor page="storefront" enabled={process.env.NODE_ENV === 'development'} />
