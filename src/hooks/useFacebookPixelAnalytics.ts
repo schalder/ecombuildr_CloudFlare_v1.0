@@ -93,7 +93,8 @@ export const useFacebookPixelAnalytics = (
         }
 
         // Build query filters
-        let query = supabase
+        // Build base query
+        let queryBuilder: any = supabase
           .from('pixel_events')
           .select('*')
           .eq('store_id', storeId)
@@ -102,22 +103,16 @@ export const useFacebookPixelAnalytics = (
 
         // Apply website filter if provided
         if (websiteId) {
-          query = query.eq('website_id', websiteId);
-        } else if (websiteId === undefined) {
-          // When no specific website is selected, include both null and non-null website_ids
-          // This handles legacy events that may have null website_id
+          queryBuilder = queryBuilder.eq('website_id', websiteId);
         }
 
         // Apply funnel filter if provided
         // Note: funnel_id column exists but TypeScript types may not be updated
         if (funnelId) {
-          query = query.eq('funnel_id' as any, funnelId);
-        } else if (funnelId === undefined) {
-          // When no specific funnel is selected, include both null and non-null funnel_ids
-          // This handles legacy events that may have null funnel_id
+          queryBuilder = queryBuilder.eq('funnel_id', funnelId);
         }
 
-        const { data: events, error: fetchError } = await query;
+        const { data: events, error: fetchError } = await queryBuilder;
 
         if (fetchError) {
           console.error('Error fetching pixel events:', fetchError);
