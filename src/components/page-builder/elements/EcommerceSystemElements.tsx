@@ -2532,6 +2532,8 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                 };
                 
                 // Track directly with funnel pixel config
+                // Generate event_id for deduplication
+                const eventId = `Purchase_${Date.now()}_${crypto.randomUUID()}`;
                 const eventData = {
                   content_ids: trackingItems.map(item => item.item_id),
                   content_type: 'product',
@@ -2549,12 +2551,14 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                   shipping_state: data.order.shipping_state || null,
                   shipping_postal_code: data.order.shipping_postal_code || null,
                   shipping_country: data.order.shipping_country || null,
+                  event_id: eventId, // Include in eventData for server-side
                 };
                 
                 // Facebook Pixel
                 if (funnelPixels.facebook_pixel_id && window.fbq) {
                   try {
-                    window.fbq('track', 'Purchase', eventData);
+                    // ✅ FIX: Pass event_id in options parameter for proper deduplication
+                    window.fbq('track', 'Purchase', eventData, { eventID: eventId });
                   } catch (error) {
                     console.error('OrderConfirmationElement: Error tracking Facebook Purchase:', error);
                   }

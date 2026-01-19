@@ -916,6 +916,8 @@ export const PaymentProcessing: React.FC = () => {
                 // Track purchase event directly using window.fbq if available
                 if (window.fbq && funnelPixels.facebook_pixel_id) {
                   try {
+                    // Generate event_id for deduplication
+                    const eventId = `Purchase_${Date.now()}_${crypto.randomUUID()}`;
                     const eventData = {
                       content_ids: trackingItems.map(item => item.item_id),
                       content_type: 'product',
@@ -926,8 +928,10 @@ export const PaymentProcessing: React.FC = () => {
                         quantity: item.quantity,
                         price: item.price, // ✅ Add price for server-side tracking
                       })),
+                      event_id: eventId, // Include in eventData for server-side
                     };
-                    window.fbq('track', 'Purchase', eventData);
+                    // ✅ FIX: Pass event_id in options parameter for proper deduplication
+                    window.fbq('track', 'Purchase', eventData, { eventID: eventId });
                     console.log('PaymentProcessing: Facebook Purchase event tracked:', {
                       orderId: data.order.id,
                       total: data.order.total,

@@ -158,10 +158,11 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     if (window.fbq) {
       providers.facebook.attempted = true;
       try {
-        // Include event_id in Facebook Pixel call for deduplication
-        window.fbq('track', eventName, eventDataWithId);
+        // ✅ FIX: Pass event_id in options parameter (4th argument) for proper deduplication
+        // Facebook Pixel requires eventID in options, not inside eventData
+        window.fbq('track', eventName, eventDataWithId, { eventID: eventId });
         providers.facebook.success = true;
-        logger.debug('[PixelTracking] Facebook event:', eventName, eventDataWithId);
+        logger.debug('[PixelTracking] Facebook event:', eventName, eventDataWithId, { eventID: eventId });
       } catch (error) {
         logger.warn('[PixelTracking] Facebook tracking error:', error);
       }
@@ -330,10 +331,13 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       return;
     }
 
+    // Generate event_id for PageView
+    const eventId = `PageView_${Date.now()}_${crypto.randomUUID()}`;
     const eventData = {
       page_title: data?.page_title || document.title,
       page_location: data?.page_location || window.location.href,
       referrer: document.referrer || null,
+      event_id: eventId, // Include in eventData for server-side
     };
 
     // Track provider attempts and success
@@ -354,7 +358,8 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     if (window.fbq) {
       providers.facebook.attempted = true;
       try {
-        window.fbq('track', 'PageView');
+        // ✅ FIX: Pass event_id in options parameter for PageView too
+        window.fbq('track', 'PageView', eventData, { eventID: eventId });
         providers.facebook.success = true;
       } catch (error) {
         logger.warn('[PixelTracking] Facebook PageView tracking error:', error);
