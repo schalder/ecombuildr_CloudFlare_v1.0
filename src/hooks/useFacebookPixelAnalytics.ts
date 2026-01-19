@@ -59,9 +59,12 @@ export const useFacebookPixelAnalytics = (storeId: string, dateRangeDays: number
           // This handles legacy events that may have null website_id
         }
 
-        // Apply funnel filter if provided (check if event_data contains funnel info)
+        // Apply funnel filter if provided
         if (funnelId) {
-          query = query.contains('event_data', { funnel_id: funnelId });
+          query = query.eq('funnel_id', funnelId);
+        } else if (funnelId === undefined) {
+          // When no specific funnel is selected, include both null and non-null funnel_ids
+          // This handles legacy events that may have null funnel_id
         }
 
         const { data: events, error: fetchError } = await query;

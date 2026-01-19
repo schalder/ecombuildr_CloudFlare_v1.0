@@ -9,6 +9,9 @@ interface Website {
   domain: string | null;
   connected_domain: string | null;
   facebook_pixel_id: string | null;
+  facebook_server_side_enabled: boolean | null;
+  facebook_access_token: string | null;
+  facebook_test_event_code: string | null;
   is_published: boolean;
   is_active: boolean;
 }
@@ -29,7 +32,7 @@ export const useStoreWebsites = (storeId: string) => {
       // First get websites
       const { data: websiteData, error: websiteError } = await supabase
         .from('websites')
-        .select('id, name, slug, domain, facebook_pixel_id, is_published, is_active')
+        .select('id, name, slug, domain, facebook_pixel_id, facebook_server_side_enabled, facebook_access_token, facebook_test_event_code, is_published, is_active')
         .eq('store_id', storeId)
         .eq('is_active', true)
         .order('created_at');
