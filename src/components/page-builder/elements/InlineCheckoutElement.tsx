@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { CreditCard } from 'lucide-react';
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
@@ -147,6 +147,28 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   // Tracking state
   const [hasTrackedInitiateCheckout, setHasTrackedInitiateCheckout] = useState<boolean>(false);
 
+  // Helper function to track InitiateCheckout when user starts filling form
+  const handleInitiateCheckoutTracking = useCallback(() => {
+    const sessionKey = `initiate_checkout_tracked_${element.id}`;
+    const alreadyTracked = sessionStorage.getItem(sessionKey);
+    
+    if (!hasTrackedInitiateCheckout && !alreadyTracked && selectedProduct && store && pixels && trackingSubtotal > 0) {
+      trackInitiateCheckout({
+        value: trackingSubtotal,
+        items: [{
+          item_id: selectedProduct.id,
+          item_name: selectedProduct.name,
+          price: selectedProduct.price,
+          quantity: quantity,
+          item_category: (selectedProduct as any).category || 'General'
+        }]
+      });
+      
+      setHasTrackedInitiateCheckout(true);
+      sessionStorage.setItem(sessionKey, 'true');
+    }
+  }, [hasTrackedInitiateCheckout, selectedProduct, store, pixels, trackingSubtotal, quantity, element.id, trackInitiateCheckout]);
+
   // Form state
   const [form, setForm] = useState({
     customer_name: '', customer_email: '', customer_phone: '',
@@ -272,36 +294,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     return main + bump;
   }, [selectedProduct, quantity, orderBump.enabled, bumpChecked, bumpProduct]);
 
-  // Track InitiateCheckout event when component mounts and has configured products
-  useEffect(() => {
-    const sessionKey = `initiate_checkout_tracked_${element.id}`;
-    const alreadyTracked = sessionStorage.getItem(sessionKey);
-    
-    if (!hasTrackedInitiateCheckout && !alreadyTracked && selectedProduct && store && pixels && trackingSubtotal > 0) {
-
-      trackInitiateCheckout({
-        value: trackingSubtotal,
-        items: [{
-          item_id: selectedProduct.id,
-          item_name: selectedProduct.name,
-          price: selectedProduct.price,
-          quantity: quantity,
-          item_category: (selectedProduct as any).category || 'General'
-        }]
-      });
-      
-      setHasTrackedInitiateCheckout(true);
-      sessionStorage.setItem(sessionKey, 'true');
-    } else if (!selectedProduct) {
-      // No product selected, skip tracking
-    } else if (!store) {
-      // Store not loaded yet, skip tracking
-    } else if (!pixels) {
-      // Pixels not configured, skip tracking
-    } else if (alreadyTracked || hasTrackedInitiateCheckout) {
-      // Already tracked this session, skip
-    }
-  }, [selectedProduct, store, pixels, trackingSubtotal, quantity, element.id, hasTrackedInitiateCheckout, trackInitiateCheckout, websiteId, funnelId]);
+  // ✅ REMOVED: InitiateCheckout tracking on mount
+  // Now fires when user starts filling the form (see handleInitiateCheckoutTracking)
 
   // Styles
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
@@ -929,208 +923,8 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       }
 
       if (form.payment_method === 'cod' || isManual) {
-        // Track Purchase event for COD orders
-        const trackingItems = itemsPayload.map(item => ({
-          item_id: item.product_id,
-          item_name: item.product_name,
-          price: item.price,
-          quantity: item.quantity,
-          item_category: undefined
-        }));
-        
-        // ✅ TRACK PURCHASE EVENT FOR COD ORDERS
-        // Check if we're in a funnel context
-        if (orderFunnelId) {
-          // Funnel checkout: Store purchase event directly with funnel_id
-          try {
-            // Fetch funnel pixel configuration
-            const { data: funnelData } = await supabase
-              .from('funnels')
-              .select('settings')
-              .eq('id', orderFunnelId)
-              .single();
-            
-            if (funnelData?.settings) {
-              const settings = funnelData.settings as any;
-              const funnelPixels = {
-                facebook_pixel_id: settings?.facebook_pixel_id || pixels?.facebook_pixel_id,
-                google_analytics_id: settings?.google_analytics_id || pixels?.google_analytics_id,
-                google_ads_id: settings?.google_ads_id || pixels?.google_ads_id,
-              };
-              
-              // ✅ Generate event_id for deduplication (use same for both fbq and database)
-              let sessionId = sessionStorage.getItem('session_id');
-              if (!sessionId) {
-                sessionId = crypto.randomUUID();
-                sessionStorage.setItem('session_id', sessionId);
-              }
-              const eventId = `Purchase_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
-              
-              // ✅ Capture browser context for server-side matching
-              const getFacebookBrowserContext = () => {
-                try {
-                  const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-                    const [key, value] = cookie.trim().split('=');
-                    acc[key] = value;
-                    return acc;
-                  }, {} as Record<string, string>);
-                  
-                  return {
-                    fbp: cookies['_fbp'] || null,
-                    fbc: cookies['_fbc'] || null,
-                    client_user_agent: navigator.userAgent,
-                    event_source_url: window.location.href,
-                  };
-                } catch (error) {
-                  return {
-                    fbp: null,
-                    fbc: null,
-                    client_user_agent: navigator.userAgent,
-                    event_source_url: window.location.href,
-                  };
-                }
-              };
-              
-              const browserContext = getFacebookBrowserContext();
-              
-              // Track purchase event directly using window.fbq if available
-              if (window.fbq && funnelPixels.facebook_pixel_id) {
-                try {
-                  const fbqEventData = {
-                    content_ids: trackingItems.map(item => item.item_id),
-                    content_type: 'product',
-                    value: total,
-                    currency: 'BDT',
-                    contents: trackingItems.map(item => ({
-                      id: item.item_id,
-                      quantity: item.quantity,
-                      price: item.price, // ✅ Add price for server-side tracking
-                    })),
-                    event_id: eventId, // Include in eventData for server-side
-                  };
-                  // ✅ FIX: Pass event_id in options parameter for proper deduplication
-                  window.fbq('track', 'Purchase', fbqEventData, { eventID: eventId });
-                  console.log('InlineCheckoutElement: Facebook Purchase event tracked (COD):', {
-                    orderId,
-                    total,
-                    itemsCount: trackingItems.length,
-                    funnelId: orderFunnelId,
-                    eventId
-                  });
-                } catch (error) {
-                  console.error('InlineCheckoutElement: Error tracking Facebook Purchase:', error);
-                }
-              }
-              
-              // Track with Google Analytics if configured
-              if ((funnelPixels.google_analytics_id || funnelPixels.google_ads_id) && window.gtag) {
-                try {
-                  window.gtag('event', 'purchase', {
-                    transaction_id: orderId,
-                    currency: 'BDT',
-                    value: total,
-                    items: trackingItems,
-                  });
-                  console.log('InlineCheckoutElement: Google Analytics Purchase event tracked (COD)');
-                } catch (error) {
-                  console.error('InlineCheckoutElement: Error tracking Google Purchase:', error);
-                }
-              }
-              
-              // Store purchase event directly in database with funnel_id
-              try {
-                const eventData = {
-                  content_ids: trackingItems.map(item => item.item_id),
-                  content_type: 'product',
-                  value: total,
-                  currency: 'BDT',
-                  contents: trackingItems.map(item => ({
-                    id: item.item_id,
-                    quantity: item.quantity,
-                    price: item.price, // ✅ Add price for server-side tracking
-                  })),
-                  // Include customer data for better Facebook matching
-                  customer_email: form.customer_email || null,
-                  customer_phone: form.customer_phone || null,
-                  customer_name: form.customer_name || null,
-                  shipping_city: form.shipping_city || null,
-                  shipping_state: form.shipping_state || null,
-                  shipping_postal_code: form.shipping_postal_code || null,
-                  shipping_country: form.shipping_country || null,
-                  // ✅ ADD: Browser context for server-side matching
-                  fbp: browserContext.fbp,
-                  fbc: browserContext.fbc,
-                  client_user_agent: browserContext.client_user_agent,
-                  event_source_url: browserContext.event_source_url,
-                  // ✅ ADD: event_id for deduplication
-                  event_id: eventId,
-                  _providers: {
-                    facebook: {
-                      configured: !!funnelPixels.facebook_pixel_id,
-                      attempted: !!window.fbq && !!funnelPixels.facebook_pixel_id,
-                      success: !!window.fbq && !!funnelPixels.facebook_pixel_id
-                    },
-                    google: {
-                      configured: !!(funnelPixels.google_analytics_id || funnelPixels.google_ads_id),
-                      attempted: !!(window.gtag && (funnelPixels.google_analytics_id || funnelPixels.google_ads_id)),
-                      success: !!(window.gtag && (funnelPixels.google_analytics_id || funnelPixels.google_ads_id))
-                    }
-                  },
-                  funnel_id: orderFunnelId // ✅ Explicitly include funnel_id in event_data
-                };
-                
-                await supabase.from('pixel_events').insert({
-                  store_id: store.id,
-                  website_id: resolvedWebsiteId || null,
-                  funnel_id: orderFunnelId || null, // ✅ Add funnel_id column for server-side tracking
-                  event_type: 'Purchase',
-                  event_data: eventData,
-                  session_id: sessionId,
-                  page_url: window.location.href,
-                  referrer: document.referrer || null,
-                  utm_source: new URLSearchParams(window.location.search).get('utm_source'),
-                  utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
-                  utm_medium: new URLSearchParams(window.location.search).get('utm_medium'),
-                  utm_term: new URLSearchParams(window.location.search).get('utm_term'),
-                  utm_content: new URLSearchParams(window.location.search).get('utm_content'),
-                  user_agent: navigator.userAgent,
-                });
-                
-                console.log('InlineCheckoutElement: Purchase event stored in database with funnel_id (COD):', orderFunnelId);
-              } catch (dbError) {
-                console.error('InlineCheckoutElement: Error storing purchase event in database:', dbError);
-                // Fallback: use hook-based tracking if direct insert fails
-                trackPurchase({
-                  transaction_id: orderId,
-                  value: total,
-                  items: trackingItems
-                });
-              }
-            } else {
-              // Funnel data not found, fallback to hook-based tracking
-              trackPurchase({
-                transaction_id: orderId,
-                value: total,
-                items: trackingItems
-              });
-            }
-          } catch (error) {
-            console.error('InlineCheckoutElement: Error tracking purchase event (COD):', error);
-            // Fallback: use hook-based tracking if funnel config fetch fails
-            trackPurchase({
-              transaction_id: orderId,
-              value: total,
-              items: trackingItems
-            });
-          }
-        } else {
-          // Website checkout: Use hook-based tracking (no funnel_id)
-          trackPurchase({
-            transaction_id: orderId,
-            value: total,
-            items: trackingItems
-          });
-        }
+        // ✅ REMOVED: Purchase tracking - Purchase events should only fire on order confirmation page
+        // Purchase event will be tracked when user lands on order confirmation page
         
         // Clear InitiateCheckout tracking on successful order
         const sessionKey = `initiate_checkout_tracked_${element.id}`;
@@ -1474,6 +1268,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                         onChange={e => {
                           setForm(f => ({ ...f, customer_name: e.target.value }));
                           clearFieldError('customer_name');
+                          handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout when user starts typing
                         }} 
                         required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
                         aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}

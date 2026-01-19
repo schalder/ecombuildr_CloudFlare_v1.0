@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { ShoppingCart, CreditCard, Package, MapPin, CheckCircle, RefreshCw, Heart, Share2, Star, Download, CheckCircle2 } from 'lucide-react';
 import { PageBuilderElement } from '../types';
 import { elementRegistry } from './ElementRegistry';
@@ -1065,6 +1065,28 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   // Tracking state
   const [hasTrackedInitiateCheckout, setHasTrackedInitiateCheckout] = useState<boolean>(false);
 
+  // Helper function to track InitiateCheckout when user starts filling form
+  const handleInitiateCheckoutTracking = useCallback(() => {
+    const sessionKey = `initiate_checkout_tracked_${element.id}`;
+    const alreadyTracked = sessionStorage.getItem(sessionKey);
+    
+    if (!hasTrackedInitiateCheckout && !alreadyTracked && items.length > 0 && store && pixels && total > 0) {
+      trackInitiateCheckout({
+        value: total + shippingCost,
+        items: items.map(item => ({
+          item_id: item.productId,
+          item_name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          item_category: 'General'
+        }))
+      });
+      
+      setHasTrackedInitiateCheckout(true);
+      sessionStorage.setItem(sessionKey, 'true');
+    }
+  }, [hasTrackedInitiateCheckout, items, store, pixels, total, shippingCost, element.id, trackInitiateCheckout]);
+
   // Initialize default shipping option
   const availableShippingOptions = getAvailableShippingOptions(websiteShipping);
   useEffect(() => {
@@ -1192,36 +1214,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     loadAllowed();
   }, [items, store]);
 
-  // Track InitiateCheckout event when component mounts and has items in cart
-  useEffect(() => {
-    const sessionKey = `initiate_checkout_tracked_${element.id}`;
-    const alreadyTracked = sessionStorage.getItem(sessionKey);
-    
-    if (!hasTrackedInitiateCheckout && !alreadyTracked && items.length > 0 && store && pixels && total > 0) {
-
-      trackInitiateCheckout({
-        value: total + shippingCost,
-        items: items.map(item => ({
-          item_id: item.productId,
-          item_name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          item_category: 'General'
-        }))
-      });
-      
-      setHasTrackedInitiateCheckout(true);
-      sessionStorage.setItem(sessionKey, 'true');
-    } else if (items.length === 0) {
-      console.log('🛒 No items in cart for full checkout, skipping InitiateCheckout tracking');
-    } else if (!store) {
-      console.log('🛒 Store not loaded yet for full checkout, skipping InitiateCheckout tracking');
-    } else if (!pixels) {
-      console.log('🛒 Pixels not configured for full checkout, skipping InitiateCheckout tracking');
-    } else if (alreadyTracked || hasTrackedInitiateCheckout) {
-      console.log('🛒 InitiateCheckout already tracked for full checkout this session');
-    }
-  }, [items, store, pixels, total, shippingCost, element.id, hasTrackedInitiateCheckout, trackInitiateCheckout, websiteId, funnelId]);
+  // ✅ REMOVED: InitiateCheckout tracking on mount
+  // Now fires when user starts filling the form (see handleInitiateCheckoutTracking)
 
   // Button and header responsive CSS + background settings
   const buttonStyles = (element.styles as any)?.checkoutButton || { responsive: { desktop: {}, mobile: {} } };
@@ -1715,20 +1709,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       }
 
       if (form.payment_method === 'cod' || isManual) {
-        // Track Purchase event for COD orders
-        const trackingItems = itemsPayload.map(item => ({
-          item_id: item.product_id,
-          item_name: item.product_name,
-          price: item.price,
-          quantity: item.quantity,
-          item_category: undefined
-        }));
-        
-        trackPurchase({
-          transaction_id: orderId,
-          value: orderData.total,
-          items: trackingItems
-        });
+        // ✅ REMOVED: Purchase tracking - Purchase events should only fire on order confirmation page
+        // Purchase event will be tracked when user lands on order confirmation page
         
         // Clear InitiateCheckout tracking on successful order
         const sessionKey = `initiate_checkout_tracked_${element.id}`;
@@ -1921,6 +1903,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                           onChange={e => {
                             setForm(f => ({ ...f, customer_name: e.target.value }));
                             clearFieldError('customer_name');
+                            handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout when user starts typing
                           }} 
                           required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
                           aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
