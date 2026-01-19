@@ -1070,83 +1070,97 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     const sessionKey = `initiate_checkout_tracked_${element.id}`;
     const alreadyTracked = sessionStorage.getItem(sessionKey);
     
-    if (!hasTrackedInitiateCheckout && !alreadyTracked && items.length > 0 && store && total > 0) {
-      // Generate event_id for deduplication
-      let sessionId = sessionStorage.getItem('session_id');
-      if (!sessionId) {
-        sessionId = crypto.randomUUID();
-        sessionStorage.setItem('session_id', sessionId);
-      }
-      const eventId = `InitiateCheckout_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
-      
-      // Capture browser context
-      const getFacebookBrowserContext = () => {
-        try {
-          const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-            const [key, value] = cookie.trim().split('=');
-            acc[key] = value;
-            return acc;
-          }, {} as Record<string, string>);
-          
-          return {
-            fbp: cookies['_fbp'] || null,
-            fbc: cookies['_fbc'] || null,
-            client_user_agent: navigator.userAgent,
-            event_source_url: window.location.href,
-          };
-        } catch (error) {
-          return {
-            fbp: null,
-            fbc: null,
-            client_user_agent: navigator.userAgent,
-            event_source_url: window.location.href,
-          };
-        }
-      };
-      
-      const browserContext = getFacebookBrowserContext();
-      
-      const eventData = {
-        content_ids: items.map(item => item.productId),
-        value: total + shippingCost,
-        currency: 'BDT',
-        num_items: items.reduce((sum, item) => sum + item.quantity, 0),
-        contents: items.map(item => ({
-          id: item.productId,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-      };
-      
-      // 1. Fire browser pixel (with event_id for deduplication)
-      if (window.fbq && pixels?.facebook_pixel_id) {
-        window.fbq('track', 'InitiateCheckout', eventData, { eventID: eventId });
-      }
-      
-      // 2. Call server-side tracking edge function
+    // ✅ FIX: Set flag IMMEDIATELY (synchronously) to prevent multiple calls
+    if (alreadyTracked || hasTrackedInitiateCheckout) {
+      return; // Exit early if already tracked
+    }
+    
+    // Validate conditions before proceeding
+    if (!items.length || !store || total === 0) {
+      return;
+    }
+    
+    // ✅ FIX: Set flag BEFORE async operations to prevent race conditions
+    sessionStorage.setItem(sessionKey, 'true');
+    setHasTrackedInitiateCheckout(true);
+    
+    // Generate event_id for deduplication
+    let sessionId = sessionStorage.getItem('session_id');
+    if (!sessionId) {
+      sessionId = crypto.randomUUID();
+      sessionStorage.setItem('session_id', sessionId);
+    }
+    const eventId = `InitiateCheckout_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
+    
+    // Capture browser context
+    const getFacebookBrowserContext = () => {
       try {
-        const supabaseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co';
+        const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+          const [key, value] = cookie.trim().split('=');
+          acc[key] = value;
+          return acc;
+        }, {} as Record<string, string>);
         
-        await fetch(`${supabaseUrl}/functions/v1/track-initiate-checkout`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            store_id: store.id,
-            website_id: websiteId || null,
-            funnel_id: funnelId || null,
-            event_id: eventId,
-            event_data: eventData,
-            browser_context: browserContext,
-          }),
-        });
+        return {
+          fbp: cookies['_fbp'] || null,
+          fbc: cookies['_fbc'] || null,
+          client_user_agent: navigator.userAgent,
+          event_source_url: window.location.href,
+        };
       } catch (error) {
-        console.error('Error sending InitiateCheckout to server:', error);
+        return {
+          fbp: null,
+          fbc: null,
+          client_user_agent: navigator.userAgent,
+          event_source_url: window.location.href,
+        };
       }
+    };
+    
+    const browserContext = getFacebookBrowserContext();
+    
+    const eventData = {
+      content_ids: items.map(item => item.productId),
+      value: total + shippingCost,
+      currency: 'BDT',
+      num_items: items.reduce((sum, item) => sum + item.quantity, 0),
+      contents: items.map(item => ({
+        id: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+    };
+    
+    // 1. Fire browser pixel (with event_id for deduplication)
+    if (window.fbq && pixels?.facebook_pixel_id) {
+      window.fbq('track', 'InitiateCheckout', eventData, { eventID: eventId });
+    }
+    
+    // 2. Call server-side tracking edge function
+    try {
+      const supabaseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co';
       
-      setHasTrackedInitiateCheckout(true);
-      sessionStorage.setItem(sessionKey, 'true');
+      const response = await fetch(`${supabaseUrl}/functions/v1/track-initiate-checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          store_id: store.id,
+          website_id: websiteId || null,
+          funnel_id: funnelId || null,
+          event_id: eventId,
+          event_data: eventData,
+          browser_context: browserContext,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error sending InitiateCheckout to server:', response.status, errorData);
+      }
+    } catch (error) {
+      console.error('Error sending InitiateCheckout to server:', error);
     }
   }, [hasTrackedInitiateCheckout, items, store, pixels, total, shippingCost, element.id, websiteId, funnelId]);
 
@@ -1963,10 +1977,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                         <Input 
                           placeholder={fields.fullName.placeholder} 
                           value={form.customer_name} 
+                          onFocus={() => {
+                            handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout once when user focuses the field
+                          }}
                           onChange={e => {
                             setForm(f => ({ ...f, customer_name: e.target.value }));
                             clearFieldError('customer_name');
-                            handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout when user starts typing
                           }} 
                           required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
                           aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
@@ -2682,10 +2698,11 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                     funnel_id: funnelId // ✅ Explicitly include funnel_id in event_data
                   };
                   
+                  // Store in database (for analytics)
                   await supabase.from('pixel_events').insert({
                     store_id: store?.id || '',
                     website_id: websiteId || null,
-                    funnel_id: funnelId || null, // ✅ Add funnel_id column for server-side tracking
+                    funnel_id: funnelId || null,
                     event_type: 'Purchase',
                     event_data: dbEventData,
                     session_id: sessionId,
@@ -2698,6 +2715,51 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                     utm_content: new URLSearchParams(window.location.search).get('utm_content'),
                     user_agent: navigator.userAgent,
                   });
+                  
+                  // ✅ FIX: Call server-side tracking edge function directly
+                  try {
+                    const access_token = settings?.facebook_access_token;
+                    const test_event_code = settings?.facebook_test_event_code || null;
+                    
+                    if (funnelPixels.facebook_pixel_id && access_token) {
+                      const supabaseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co';
+                      
+                      await fetch(`${supabaseUrl}/functions/v1/send-facebook-event`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          pixel_id: funnelPixels.facebook_pixel_id,
+                          access_token: access_token,
+                          event_name: 'Purchase',
+                          event_data: eventData,
+                          user_data: {
+                            email: data.order.customer_email || null,
+                            phone: data.order.customer_phone || null,
+                            firstName: data.order.customer_name ? data.order.customer_name.split(' ')[0] : null,
+                            lastName: data.order.customer_name && data.order.customer_name.includes(' ') 
+                              ? data.order.customer_name.substring(data.order.customer_name.indexOf(' ') + 1) 
+                              : null,
+                            city: data.order.shipping_city || null,
+                            state: data.order.shipping_state || null,
+                            zipCode: data.order.shipping_postal_code || null,
+                            country: data.order.shipping_country || null,
+                          },
+                          browser_context: browserContext,
+                          event_id: eventId,
+                          event_time: Math.floor(Date.now() / 1000),
+                          test_event_code: test_event_code,
+                        }),
+                      });
+                      
+                      console.log('OrderConfirmationElement: Purchase event sent to server-side:', funnelId);
+                    } else {
+                      console.warn('OrderConfirmationElement: Missing pixel_id or access_token for server-side Purchase');
+                    }
+                  } catch (serverError) {
+                    console.error('OrderConfirmationElement: Error sending Purchase to server:', serverError);
+                  }
                   
                   console.log('OrderConfirmationElement: Purchase event stored in database with funnel_id:', funnelId);
                 } catch (dbError) {

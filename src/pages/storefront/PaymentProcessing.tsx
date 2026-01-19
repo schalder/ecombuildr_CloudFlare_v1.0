@@ -1035,10 +1035,11 @@ export const PaymentProcessing: React.FC = () => {
                     funnel_id: funnelId // ✅ Explicitly include funnel_id in event_data
                   };
                   
+                  // Store in database (for analytics)
                   await supabase.from('pixel_events').insert({
                     store_id: store.id,
                     website_id: websiteId || null,
-                    funnel_id: funnelId || null, // ✅ Add funnel_id column for server-side tracking
+                    funnel_id: funnelId || null,
                     event_type: 'Purchase',
                     event_data: eventData,
                     session_id: sessionId,
@@ -1051,6 +1052,52 @@ export const PaymentProcessing: React.FC = () => {
                     utm_content: new URLSearchParams(window.location.search).get('utm_content'),
                     user_agent: navigator.userAgent,
                   });
+                  
+                  // ✅ FIX: Call server-side tracking edge function directly
+                  try {
+                    const settings = funnelData?.settings as any;
+                    const access_token = settings?.facebook_access_token;
+                    const test_event_code = settings?.facebook_test_event_code || null;
+                    
+                    if (funnelPixels.facebook_pixel_id && access_token) {
+                      const supabaseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co';
+                      
+                      await fetch(`${supabaseUrl}/functions/v1/send-facebook-event`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          pixel_id: funnelPixels.facebook_pixel_id,
+                          access_token: access_token,
+                          event_name: 'Purchase',
+                          event_data: eventData,
+                          user_data: {
+                            email: data.order.customer_email || null,
+                            phone: data.order.customer_phone || null,
+                            firstName: data.order.customer_name ? data.order.customer_name.split(' ')[0] : null,
+                            lastName: data.order.customer_name && data.order.customer_name.includes(' ') 
+                              ? data.order.customer_name.substring(data.order.customer_name.indexOf(' ') + 1) 
+                              : null,
+                            city: data.order.shipping_city || null,
+                            state: data.order.shipping_state || null,
+                            zipCode: data.order.shipping_postal_code || null,
+                            country: data.order.shipping_country || null,
+                          },
+                          browser_context: browserContext,
+                          event_id: eventId,
+                          event_time: Math.floor(Date.now() / 1000),
+                          test_event_code: test_event_code,
+                        }),
+                      });
+                      
+                      console.log('PaymentProcessing: Purchase event sent to server-side:', funnelId);
+                    } else {
+                      console.warn('PaymentProcessing: Missing pixel_id or access_token for server-side Purchase');
+                    }
+                  } catch (serverError) {
+                    console.error('PaymentProcessing: Error sending Purchase to server:', serverError);
+                  }
                   
                   console.log('PaymentProcessing: Purchase event stored in database with funnel_id:', funnelId);
                 } catch (dbError) {
