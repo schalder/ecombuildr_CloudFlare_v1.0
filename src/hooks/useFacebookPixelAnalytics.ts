@@ -146,12 +146,6 @@ export const useFacebookPixelAnalytics = (
         const events = allEvents;
         const count = totalCount;
 
-        if (fetchError) {
-          console.error('Error fetching pixel events:', fetchError);
-          setError('Failed to fetch analytics data');
-          return;
-        }
-
         // ✅ DEBUG: Log raw events to see what we're getting
         console.log('[FacebookAnalytics] Raw events fetched:', events?.length || 0);
         console.log('[FacebookAnalytics] Total count from DB:', count);
