@@ -1169,16 +1169,31 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     sessionStorage.setItem(sessionKey, 'true');
     setHasTrackedInitiateCheckout(true);
     
-    // ✅ Use trackInitiateCheckout hook - stores in database, trigger handles server-side
-    trackInitiateCheckout({
+    console.log('[CheckoutFullElement] 📤 Calling trackInitiateCheckout hook', {
       value: total + shippingCost,
+      itemsCount: items.length,
       items: items.map(item => ({
         item_id: item.productId,
         quantity: item.quantity,
         price: item.price,
-      })),
+      }))
     });
-  }, [hasTrackedInitiateCheckout, items, effectiveStoreId, total, shippingCost, element.id, trackInitiateCheckout, pixels, websiteId, funnelId]);
+    
+    // ✅ Use trackInitiateCheckout hook - stores in database, trigger handles server-side
+    try {
+      trackInitiateCheckout({
+        value: total + shippingCost,
+        items: items.map(item => ({
+          item_id: item.productId,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      });
+      console.log('[CheckoutFullElement] ✅ trackInitiateCheckout called successfully');
+    } catch (error) {
+      console.error('[CheckoutFullElement] ❌ Error calling trackInitiateCheckout:', error);
+    }
+  }, [hasTrackedInitiateCheckout, items, effectiveStoreId, total, shippingCost, element.id, trackInitiateCheckout, pixels, websiteId, funnelId, store?.id]);
 
   // Initialize default shipping option
   const availableShippingOptions = getAvailableShippingOptions(websiteShipping);
