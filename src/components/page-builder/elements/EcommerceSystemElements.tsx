@@ -2685,32 +2685,6 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             <p className="text-sm">{order.shipping_address}</p>
             <p className="text-sm">{order.shipping_city}{order.shipping_area && `, ${order.shipping_area}`}</p>
           </div>
-          {Array.isArray(order.custom_fields) && order.custom_fields.length > 0 && (
-            <>
-              <Separator />
-              <div>
-                <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>Additional Information</h3>
-                <div className="space-y-1">
-                  {order.custom_fields.map((cf: any, idx: number) => (
-                    <p key={idx} className="text-sm"><strong>{cf.label || cf.id}:</strong> {String(cf.value)}</p>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
-          {!Array.isArray(order.custom_fields) && order.custom_fields && (
-            <>
-              <Separator />
-              <div>
-                <h3 className={`font-semibold mb-2 element-${element.id}-oc-section-title`}>Additional Information</h3>
-                <div className="space-y-1">
-                  {Object.entries(order.custom_fields as any).map(([key, val]: any) => (
-                    <p key={key} className="text-sm"><strong>{key}:</strong> {String(val)}</p>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
           {show.notes && order.notes && (
             <>
               <Separator />
