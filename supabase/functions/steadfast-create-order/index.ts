@@ -343,11 +343,10 @@ Deno.serve(async (req: Request) => {
       deliveryAmount = (customFields as any).delivery_payment_amount ? Number((customFields as any).delivery_payment_amount) : null;
     }
     
-    // Determine cod_amount based on payment breakdown:
-    // 1. If upfrontAmount > 0 AND deliveryAmount > 0: Shipping was collected upfront, collect product price on delivery
-    // 2. If upfrontAmount is null/0 AND deliveryAmount > 0: No upfront payment, deliveryAmount includes product + shipping
-    // 3. If payment method is COD and no deliveryAmount: Standard COD, use order.total
-    // 4. Otherwise: Fully prepaid, cod_amount = 0
+    // Determine cod_amount:
+    // 1. If delivery_payment_amount exists and > 0 (shipping collected upfront), use it (product price only)
+    // 2. If payment method is COD and no upfront payment, use order.total (product + shipping)
+    // 3. Otherwise, cod_amount = 0 (fully prepaid)
     
     // Debug logging
     console.log('Steadfast COD calculation:', {
@@ -360,17 +359,12 @@ Deno.serve(async (req: Request) => {
       payment_method: order.payment_method
     });
     
-    // Check if upfront payment was collected (indicates shipping was paid upfront)
-    const hasUpfrontPayment = upfrontAmount !== null && upfrontAmount > 0;
-    
     if (deliveryAmount !== null && deliveryAmount > 0) {
-      // delivery_payment_amount exists - this is what needs to be collected on delivery
-      // If upfront payment exists, deliveryAmount is product prices only
-      // If no upfront payment, deliveryAmount is product prices + shipping
+      // Shipping was collected upfront, so collect product price on delivery
       cod_amount = deliveryAmount;
-      console.log('Steadfast: Using delivery_payment_amount as cod_amount:', cod_amount, hasUpfrontPayment ? '(shipping collected upfront)' : '(no upfront payment)');
+      console.log('Steadfast: Using delivery_payment_amount as cod_amount:', cod_amount);
     } else if (isCOD) {
-      // Standard COD order (no delivery_payment_amount field), collect full amount
+      // Standard COD order (no upfront payment), collect full amount
       cod_amount = Number(order.total || 0);
       console.log('Steadfast: Using order.total as cod_amount (standard COD):', cod_amount);
     } else {
@@ -408,7 +402,9 @@ Deno.serve(async (req: Request) => {
     });
 
     // 4) Call Steadfast API
-    const resp = await fetch('https://portal.packzy.com/api/v1/create_order', {
+    // Using portal.steadfast.com.bd to match the working balance endpoint
+    const steadfastApiUrl = 'https://portal.steadfast.com.bd/api/v1/create_order';
+    const resp = await fetch(steadfastApiUrl, {
       method: 'POST',
       headers: {
         'Api-Key': account.api_key,
@@ -426,14 +422,49 @@ Deno.serve(async (req: Request) => {
       respJson = { raw: respText };
     }
 
+    // Log detailed error response for debugging
+    if (!resp.ok) {
+      console.error('Steadfast API error response:', {
+        status: resp.status,
+        statusText: resp.statusText,
+        response: respJson,
+        payload: payload,
+        order_id: order.id,
+        cod_amount: cod_amount,
+        deliveryAmount: deliveryAmount,
+        upfrontAmount: upfrontAmount
+      });
+    }
+
     // 5) Persist shipment record regardless of success/failure
     const provider = 'steadfast';
     const success =
       resp.ok && respJson && typeof respJson.status !== 'undefined' && Number(respJson.status) === 200;
 
     // Helper function to extract user-friendly error message from Steadfast response
-    function getUserFriendlyError(respJson: any): string {
+    function getUserFriendlyError(respJson: any, httpStatus: number, respText: string): string {
       if (!respJson) return 'Failed to create consignment with Steadfast';
+      
+      // Handle HTTP 401 - Account authentication/activation issues
+      if (httpStatus === 401) {
+        const errorText = respText.toLowerCase();
+        if (errorText.includes('account is not active') || errorText.includes('account not active')) {
+          return 'Your Steadfast account is not active for API access. Please contact Steadfast support to activate API access for your account, or verify your API credentials are correct.';
+        }
+        if (errorText.includes('unauthorized') || errorText.includes('invalid credentials')) {
+          return 'Invalid Steadfast API credentials. Please verify your API Key and Secret Key in the shipping settings match your Steadfast portal credentials.';
+        }
+        return 'Authentication failed with Steadfast. Please verify your API credentials are correct and your account has API access enabled.';
+      }
+      
+      // Handle plain text responses (when JSON parsing fails)
+      if (respJson.raw) {
+        const rawText = String(respJson.raw).toLowerCase();
+        if (rawText.includes('account is not active') || rawText.includes('account not active')) {
+          return 'Your Steadfast account is not active for API access. Please contact Steadfast support to activate API access.';
+        }
+        return String(respJson.raw);
+      }
       
       // Check for specific error fields
       if (respJson.errors) {
@@ -467,9 +498,22 @@ Deno.serve(async (req: Request) => {
         }
       }
       
+      // Check for error field (common in API responses)
+      if (respJson.error) {
+        const errorText = String(respJson.error).toLowerCase();
+        if (errorText.includes('account is not active') || errorText.includes('account not active')) {
+          return 'Your Steadfast account is not active for API access. Please contact Steadfast support.';
+        }
+        return String(respJson.error);
+      }
+      
       // Fallback to message or generic error
       if (respJson.message) {
-        return respJson.message;
+        const messageText = String(respJson.message).toLowerCase();
+        if (messageText.includes('account is not active') || messageText.includes('account not active')) {
+          return 'Your Steadfast account is not active for API access. Please contact Steadfast support.';
+        }
+        return String(respJson.message);
       }
       
       return 'Failed to create consignment with Steadfast. Please check the order details and try again.';
@@ -519,18 +563,6 @@ Deno.serve(async (req: Request) => {
         { status: 200, headers: corsHeaders }
       );
     } else {
-      // Log detailed error information
-      console.error('Steadfast API error response:', {
-        status: resp.status,
-        statusText: resp.statusText,
-        response: respJson,
-        payload: payload,
-        order_id: order.id,
-        cod_amount: cod_amount,
-        deliveryAmount: deliveryAmount,
-        upfrontAmount: upfrontAmount
-      });
-      
       const insertRes = await supabase.from('courier_shipments').insert({
         store_id,
         order_id,
@@ -549,7 +581,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // Extract user-friendly error message
-      const userFriendlyError = getUserFriendlyError(respJson);
+      const userFriendlyError = getUserFriendlyError(respJson, resp.status, respText);
       
       return new Response(
         JSON.stringify({
