@@ -9,7 +9,7 @@ const corsHeaders = {
 
 interface UpdateOrderStatusRequest {
   orderId: string;
-  status: 'payment_failed' | 'cancelled' | 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'pending_payment';
+  status: 'payment_failed' | 'cancelled' | 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'pending_payment' | 'hold';
   storeId?: string;
 }
 

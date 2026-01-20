@@ -530,7 +530,7 @@ export default function Orders() {
 
         // Apply status filter if statusFilter exists (but not for incomplete tab to avoid overriding the query)
         if (statusFilter && activeTab !== 'incomplete') {
-          ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+          ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled' | 'hold');
         }
 
         // Apply payment status filter if paymentStatusFilter exists (but not for incomplete tab to avoid overriding the query)
@@ -749,7 +749,7 @@ export default function Orders() {
 
         // Apply status filter if statusFilter exists
         if (statusFilter) {
-          ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+          ordersQuery = ordersQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled' | 'hold');
         }
 
         // Apply payment status filter if paymentStatusFilter exists
@@ -786,7 +786,7 @@ export default function Orders() {
         }
 
         if (statusFilter) {
-          countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+          countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled' | 'hold');
         }
 
         // Apply payment status filter to count query
@@ -1271,7 +1271,7 @@ export default function Orders() {
     }
   };
 
-  const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled') => {
+  const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled' | 'hold') => {
     try {
       const order = orders.find(o => o.id === orderId);
       if (!order) throw new Error('Order not found');
@@ -1392,7 +1392,7 @@ export default function Orders() {
   const isSomeSelected = selectedOrderIds.size > 0 && selectedOrderIds.size < orders.length;
 
   // Bulk action functions
-  const bulkUpdateOrderStatus = async (newStatus: 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled') => {
+  const bulkUpdateOrderStatus = async (newStatus: 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled' | 'hold') => {
     if (selectedOrderIds.size === 0) return;
 
     const orderIds = Array.from(selectedOrderIds);
@@ -1907,6 +1907,16 @@ export default function Orders() {
                   });
                 }}>
                   Cancelled
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  setStatusFilter("hold");
+                  setSearchParams(prev => {
+                    const newParams = new URLSearchParams(prev);
+                    newParams.set("status", "hold");
+                    return newParams;
+                  });
+                }}>
+                  Hold
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -2450,6 +2460,26 @@ export default function Orders() {
                                   Mark Delivered
                                 </DropdownMenuItem>
                               )}
+                              {/* Mark Hold - available for all statuses */}
+                              {order.status !== 'hold' && (
+                                <DropdownMenuItem
+                                  onClick={() => updateOrderStatus(order.id, 'hold')}
+                                  className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                >
+                                  <Clock className="mr-3 h-4 w-4" />
+                                  Mark Hold
+                                </DropdownMenuItem>
+                              )}
+                              {/* Remove Hold - if order is on hold, allow removing hold */}
+                              {order.status === 'hold' && (
+                                <DropdownMenuItem
+                                  onClick={() => updateOrderStatus(order.id, 'pending')}
+                                  className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                >
+                                  <Clock className="mr-3 h-4 w-4" />
+                                  Remove Hold
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem
                                 onClick={async () => {
                                   setSelectedOrder(order);
@@ -2785,6 +2815,24 @@ export default function Orders() {
                                 onClick={() => updateOrderStatus(order.id, 'delivered')}
                               >
                                 Mark Delivered
+                              </DropdownMenuItem>
+                            )}
+                            {/* Mark Hold - available for all statuses */}
+                            {order.status !== 'hold' && (
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order.id, 'hold')}
+                              >
+                                <Clock className="mr-3 h-4 w-4" />
+                                Mark Hold
+                              </DropdownMenuItem>
+                            )}
+                            {/* Remove Hold - if order is on hold, allow removing hold */}
+                            {order.status === 'hold' && (
+                              <DropdownMenuItem
+                                onClick={() => updateOrderStatus(order.id, 'pending')}
+                              >
+                                <Clock className="mr-3 h-4 w-4" />
+                                Remove Hold
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem
