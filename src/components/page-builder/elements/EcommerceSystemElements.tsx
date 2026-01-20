@@ -2428,7 +2428,16 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   
   // Get pixel context for tracking
   const { pixels } = usePixelContext();
-  const { trackPurchase } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
+  const [effectiveStoreId, setEffectiveStoreId] = useState<string | undefined>(store?.id);
+  
+  // Update effectiveStoreId when store loads
+  useEffect(() => {
+    if (store?.id) {
+      setEffectiveStoreId(store.id);
+    }
+  }, [store?.id]);
+  
+  const { trackPurchase } = usePixelTracking(pixels, effectiveStoreId, websiteId, funnelId);
 
   const cfg: any = element.content || {};
   const texts = cfg.texts || {
@@ -2539,6 +2548,11 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         setItems(data?.items || []);
         setDownloadLinks(data?.downloadLinks || []);
         setUrlFiles(data?.urlFiles || []);
+        
+        // ✅ FIX: Update effectiveStoreId from order if not available from store context
+        if (data?.order?.store_id && !effectiveStoreId) {
+          setEffectiveStoreId(data.order.store_id);
+        }
 
         // Fallback: if no download links yet, try to generate them (service-side)
         if ((!data?.downloadLinks || data.downloadLinks.length === 0) && id) {
@@ -2558,7 +2572,8 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         // Check if purchase was already tracked (e.g., from PaymentProcessing for deferred payments)
         const alreadyTracked = sessionStorage.getItem('purchase_tracked_' + id) === 'true';
         
-        if (!alreadyTracked && data?.order && data?.items && data.items.length > 0) {
+        // ✅ FIX: Only track if effectiveStoreId is available (ensures server-side tracking works)
+        if (!alreadyTracked && data?.order && data?.items && data.items.length > 0 && effectiveStoreId) {
           const trackingItems = data.items.map((item: any) => ({
             item_id: item.product_id || item.id,
             item_name: item.product_name,

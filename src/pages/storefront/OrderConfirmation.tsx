@@ -59,12 +59,20 @@ export const OrderConfirmation: React.FC = () => {
   const [loadingStore, setLoadingStore] = useState(false);
   const [isCourseOrder, setIsCourseOrder] = useState(false);
   const [funnelId, setFunnelId] = useState<string | undefined>(urlFunnelId);
+  const [effectiveStoreId, setEffectiveStoreId] = useState<string | undefined>(store?.id);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const orderToken = searchParams.get('ot') || '';
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
   const { pixels } = usePixelContext();
-  const { trackPurchase } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
+  const { trackPurchase } = usePixelTracking(pixels, effectiveStoreId, websiteId, funnelId);
+
+  // Update effectiveStoreId when store loads
+  useEffect(() => {
+    if (store?.id) {
+      setEffectiveStoreId(store.id);
+    }
+  }, [store?.id]);
 useEffect(() => {
   if (slug) {
     loadStore(slug);
@@ -162,6 +170,11 @@ useEffect(() => {
         setOrder(orderData);
         setOrderItems(itemsData);
         
+        // ✅ FIX: Update effectiveStoreId from order if not available from store context
+        if (!effectiveStoreId && orderData.store_id) {
+          setEffectiveStoreId(orderData.store_id);
+        }
+        
         // Extract funnelId from order's custom_fields if not already set from URL
         if (!funnelId && orderData.custom_fields) {
           const customFields = orderData.custom_fields as any;
@@ -197,7 +210,8 @@ useEffect(() => {
         // Check if purchase was already tracked (e.g., from PaymentProcessing for deferred payments)
         const alreadyTracked = sessionStorage.getItem('purchase_tracked_' + orderData.id) === 'true';
         
-        if (!alreadyTracked && orderData && itemsData.length > 0) {
+        // ✅ FIX: Only track if storeId is available (ensures server-side tracking works)
+        if (!alreadyTracked && orderData && itemsData.length > 0 && effectiveStoreId) {
           const trackingItems = itemsData.map(item => ({
             item_id: item.id,
             item_name: item.product_name,

@@ -34,10 +34,18 @@ export const PaymentProcessing: React.FC = () => {
     google_analytics_id?: string;
     google_ads_id?: string;
   } | undefined>(undefined);
+  const [effectiveStoreId, setEffectiveStoreId] = useState<string | undefined>(store?.id);
   const paths = useEcomPaths();
   
+  // Update effectiveStoreId when store loads
+  useEffect(() => {
+    if (store?.id) {
+      setEffectiveStoreId(store.id);
+    }
+  }, [store?.id]);
+  
   // Initialize pixel tracking hook (must be called unconditionally)
-  const { trackPurchase } = usePixelTracking(pixelConfig, store?.id, websiteId, funnelContext?.funnelId);
+  const { trackPurchase } = usePixelTracking(pixelConfig, effectiveStoreId, websiteId, funnelContext?.funnelId);
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const tempId = searchParams.get('tempId') || '';
   const paymentMethod = searchParams.get('pm') || '';
@@ -1057,7 +1065,8 @@ export const PaymentProcessing: React.FC = () => {
                   .select('product_id, product_name, price, quantity')
                   .eq('order_id', data.order.id);
                 
-                if (orderItems && orderItems.length > 0) {
+                // ✅ FIX: Only track if effectiveStoreId is available
+                if (orderItems && orderItems.length > 0 && effectiveStoreId) {
                   const trackingItems = orderItems.map(item => ({
                     item_id: item.product_id,
                     item_name: item.product_name,
