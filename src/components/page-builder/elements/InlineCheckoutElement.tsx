@@ -1340,14 +1340,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                         placeholder={fields.fullName.placeholder} 
                         value={form.customer_name} 
                         onFocus={() => {
-                          console.log('[InlineCheckoutElement] 👆 onFocus fired - calling handleInitiateCheckoutTracking', {
-                            hasHandleInitiateCheckoutTracking: typeof handleInitiateCheckoutTracking === 'function',
-                            hasTrackedInitiateCheckout,
-                            selectedProduct: !!selectedProduct,
-                            effectiveStoreId,
-                            trackingSubtotal,
-                            elementId: element.id
-                          });
                           handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout when user focuses (user intent)
                         }}
                         onChange={e => {
@@ -1355,14 +1347,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                           clearFieldError('customer_name');
                           // ✅ FIX: Also fire on first character typed (backup trigger for user intent)
                           if (e.target.value.length === 1 && !hasTrackedInitiateCheckout) {
-                            console.log('[InlineCheckoutElement] ⌨️ onChange fired (first char) - calling handleInitiateCheckoutTracking', {
-                              hasHandleInitiateCheckoutTracking: typeof handleInitiateCheckoutTracking === 'function',
-                              hasTrackedInitiateCheckout,
-                              selectedProduct: !!selectedProduct,
-                              effectiveStoreId,
-                              trackingSubtotal,
-                              elementId: element.id
-                            });
                             handleInitiateCheckoutTracking();
                           }
                         }} 
