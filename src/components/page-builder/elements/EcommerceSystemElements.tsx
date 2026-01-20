@@ -1189,6 +1189,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         value: total + shippingCost,
         items: items.map(item => ({
           item_id: item.productId,
+          item_name: item.name,
           quantity: item.quantity,
           price: item.price,
         })),
