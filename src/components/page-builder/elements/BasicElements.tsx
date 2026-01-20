@@ -891,6 +891,7 @@ const ButtonElement: React.FC<{
           className={`${customClassName} h-auto leading-none inline-flex ${subtextPosition === 'above' ? 'flex-col-reverse' : 'flex-col'} items-center justify-center gap-1 whitespace-normal rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
           onClick={handleClick}
           style={elementStyles}
+          data-fb-avoid-tracking={element.content.enableAddToCart ? 'true' : undefined}
         >
           {/* Main content wrapper for icon + text */}
           <div className="flex items-center justify-center gap-2 whitespace-normal text-center">
