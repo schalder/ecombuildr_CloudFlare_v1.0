@@ -4,6 +4,7 @@ import { usePixelContext } from '@/components/pixel/PixelManager';
 import { createCartItem, mergeCartItems } from '@/lib/cart';
 import { useChannelContext } from '@/hooks/useChannelContext';
 import { useCartDrawer } from '@/contexts/CartDrawerContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CartItem {
   id: string;
