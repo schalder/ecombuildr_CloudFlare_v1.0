@@ -62,7 +62,17 @@ const getFacebookBrowserContext = () => {
 };
 
 export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, websiteId?: string, funnelId?: string) => {
-  const storePixelEvent = useCallback(async (eventType: string, eventData: any, providers?: { facebook?: { configured: boolean; attempted: boolean; success: boolean }; google?: { configured: boolean; attempted: boolean; success: boolean } }) => {
+  const storePixelEvent = useCallback(async (
+    eventType: string, 
+    eventData: any, 
+    providers?: { facebook?: { configured: boolean; attempted: boolean; success: boolean }; google?: { configured: boolean; attempted: boolean; success: boolean } },
+    overrideWebsiteId?: string | null,
+    overrideFunnelId?: string | null
+  ) => {
+    // Use override values if provided, otherwise use hook's values
+    const effectiveWebsiteId = overrideWebsiteId !== undefined ? overrideWebsiteId : websiteId;
+    const effectiveFunnelId = overrideFunnelId !== undefined ? overrideFunnelId : funnelId;
+    
     if (!storeId) {
       // ✅ FIX: Add detailed logging when storeId is missing
       console.error('[PixelTracking] storePixelEvent called without storeId:', {
