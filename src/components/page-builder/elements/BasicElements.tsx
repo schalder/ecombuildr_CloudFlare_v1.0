@@ -695,17 +695,6 @@ const ButtonElement: React.FC<{
   }, [linkType, pageSlug, paths.base, paths.home, url]);
 
   const handleClick = (e: React.MouseEvent) => {
-    // ✅ CRITICAL FIX: Stop Facebook's automatic button click tracking for AddToCart buttons
-    // This prevents ob3_plugin-set events from firing when we manually track AddToCart
-    if (element.content.enableAddToCart && !isEditing) {
-      // Access native event to use stopImmediatePropagation (React synthetic events don't have it)
-      if (e.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') {
-        e.nativeEvent.stopImmediatePropagation();
-      }
-      // Also stop propagation to prevent parent listeners
-      e.stopPropagation();
-    }
-    
     // Fire AddToCart pixel events if enabled (tracking only, no cart manipulation)
     if (element.content.enableAddToCart && !isEditing && productIds.length > 0 && trackAddToCart && products.length > 0) {
       console.log('[ButtonElement] Firing AddToCart events:', {
@@ -902,7 +891,6 @@ const ButtonElement: React.FC<{
           className={`${customClassName} h-auto leading-none inline-flex ${subtextPosition === 'above' ? 'flex-col-reverse' : 'flex-col'} items-center justify-center gap-1 whitespace-normal rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50`}
           onClick={handleClick}
           style={elementStyles}
-          data-fb-avoid-tracking={element.content.enableAddToCart ? 'true' : undefined}
         >
           {/* Main content wrapper for icon + text */}
           <div className="flex items-center justify-center gap-2 whitespace-normal text-center">

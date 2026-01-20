@@ -1101,51 +1101,25 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   // ✅ REFACTORED: Now uses trackInitiateCheckout hook (same flow as PageView/AddToCart)
   // This stores event in database, and database trigger handles server-side tracking automatically
   const handleInitiateCheckoutTracking = useCallback(() => {
-    console.log('[CheckoutFullElement] 🔍 handleInitiateCheckoutTracking CALLED', {
-      elementId: element.id,
-      hasTrackedInitiateCheckout,
-      itemsLength: items.length,
-      effectiveStoreId,
-      total,
-      shippingCost,
-      websiteId,
-      funnelId,
-      hasTrackInitiateCheckout: typeof trackInitiateCheckout === 'function',
-      hasPixels: !!pixels,
-      timestamp: new Date().toISOString()
-    });
-    
     const sessionKey = `initiate_checkout_tracked_${element.id}`;
     const alreadyTracked = sessionStorage.getItem(sessionKey);
     
     // ✅ FIX: Only trust sessionStorage if state also confirms it (prevent stale flags)
     if (hasTrackedInitiateCheckout) {
-      console.log('[CheckoutFullElement] ⏭️ InitiateCheckout already tracked (state confirmed), skipping');
       return; // Exit early if state confirms tracking
     }
     
     // ✅ FIX: If sessionStorage says tracked but state doesn't, clear stale flag
     if (alreadyTracked === 'true' && !hasTrackedInitiateCheckout) {
-      console.log('[CheckoutFullElement] 🧹 Clearing stale sessionStorage flag (state mismatch)', {
-        alreadyTracked,
-        hasTrackedInitiateCheckout,
-        reason: 'Flag exists but state is false - likely from previous session or failed tracking'
-      });
       sessionStorage.removeItem(sessionKey);
       // Continue with tracking
     }
     
     // ✅ FIX: If effectiveStoreId is not ready, wait and retry (up to 2 seconds)
     if (!effectiveStoreId && (websiteId || funnelId)) {
-      console.log('[CheckoutFullElement] ⏳ effectiveStoreId not ready, retrying in 500ms...', {
-        websiteId,
-        funnelId,
-        storeId: store?.id
-      });
       setTimeout(() => {
         // Retry once after 500ms
         if (!hasTrackedInitiateCheckout) {
-          console.log('[CheckoutFullElement] 🔄 Retrying handleInitiateCheckoutTracking after delay');
           handleInitiateCheckoutTracking();
         }
       }, 500);
@@ -1154,34 +1128,8 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     
     // ✅ FIX: Check effectiveStoreId instead of store object
     if (!items.length || !effectiveStoreId || total === 0) {
-      console.warn('[CheckoutFullElement] ❌ InitiateCheckout not tracked - missing conditions:', {
-        itemsLength: items.length,
-        effectiveStoreId,
-        total,
-        hasPixels: !!pixels,
-        hasTrackInitiateCheckout: !!trackInitiateCheckout,
-        timestamp: new Date().toISOString()
-      });
       return;
     }
-    
-    console.log('[CheckoutFullElement] ✅ Firing InitiateCheckout (user intent detected):', {
-      itemsCount: items.length,
-      total: total + shippingCost,
-      effectiveStoreId,
-      trigger: 'onFocus',
-      timestamp: new Date().toISOString()
-    });
-    
-    console.log('[CheckoutFullElement] 📤 Calling trackInitiateCheckout hook', {
-      value: total + shippingCost,
-      itemsCount: items.length,
-      items: items.map(item => ({
-        item_id: item.productId,
-        quantity: item.quantity,
-        price: item.price,
-      }))
-    });
     
     // ✅ FIX: Call trackInitiateCheckout FIRST, then set flag only if successful
     try {
@@ -1196,11 +1144,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       });
       
       // ✅ FIX: Only set flag AFTER successful tracking call (not before)
-      console.log('[CheckoutFullElement] ✅ trackInitiateCheckout called successfully - setting flag');
       sessionStorage.setItem(sessionKey, 'true');
       setHasTrackedInitiateCheckout(true);
     } catch (error) {
-      console.error('[CheckoutFullElement] ❌ Error calling trackInitiateCheckout:', error);
       // Don't set flag if tracking failed
     }
   }, [hasTrackedInitiateCheckout, items, effectiveStoreId, total, shippingCost, element.id, trackInitiateCheckout, pixels, websiteId, funnelId, store?.id]);
