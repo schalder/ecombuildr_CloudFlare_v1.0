@@ -2467,7 +2467,6 @@ export default function Orders() {
                                   onClick={() => updateOrderStatus(order.id, 'hold')}
                                   className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
                                 >
-                                  <Clock className="mr-3 h-4 w-4" />
                                   Mark Hold
                                 </DropdownMenuItem>
                               )}
@@ -2477,7 +2476,6 @@ export default function Orders() {
                                   onClick={() => updateOrderStatus(order.id, 'pending')}
                                   className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
                                 >
-                                  <Clock className="mr-3 h-4 w-4" />
                                   Remove Hold
                                 </DropdownMenuItem>
                               )}
@@ -2823,7 +2821,6 @@ export default function Orders() {
                               <DropdownMenuItem
                                 onClick={() => updateOrderStatus(order.id, 'hold')}
                               >
-                                <Clock className="mr-3 h-4 w-4" />
                                 Mark Hold
                               </DropdownMenuItem>
                             )}
@@ -2832,7 +2829,6 @@ export default function Orders() {
                               <DropdownMenuItem
                                 onClick={() => updateOrderStatus(order.id, 'pending')}
                               >
-                                <Clock className="mr-3 h-4 w-4" />
                                 Remove Hold
                               </DropdownMenuItem>
                             )}
