@@ -316,8 +316,13 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       return; // Exit early if already tracked
     }
     
-    // Validate conditions before proceeding
-    if (!selectedProduct || !store || trackingSubtotal === 0) {
+    // ✅ FIX: Check effectiveStoreId instead of store object
+    if (!selectedProduct || !effectiveStoreId || trackingSubtotal === 0) {
+      console.warn('[InlineCheckoutElement] InitiateCheckout not tracked - missing conditions:', {
+        selectedProduct: !!selectedProduct,
+        effectiveStoreId,
+        trackingSubtotal
+      });
       return;
     }
     
@@ -334,7 +339,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         price: selectedProduct.price,
       }],
     });
-  }, [hasTrackedInitiateCheckout, selectedProduct, store, trackingSubtotal, quantity, element.id, trackInitiateCheckout]);
+  }, [hasTrackedInitiateCheckout, selectedProduct, effectiveStoreId, trackingSubtotal, quantity, element.id, trackInitiateCheckout]);
 
   // ✅ REMOVED: InitiateCheckout tracking on mount
   // Now fires when user starts filling the form (see handleInitiateCheckoutTracking)

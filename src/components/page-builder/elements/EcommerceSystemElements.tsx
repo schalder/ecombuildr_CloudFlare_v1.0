@@ -1109,8 +1109,13 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       return; // Exit early if already tracked
     }
     
-    // Validate conditions before proceeding
-    if (!items.length || !store || total === 0) {
+    // ✅ FIX: Check effectiveStoreId instead of store object
+    if (!items.length || !effectiveStoreId || total === 0) {
+      console.warn('[CheckoutFullElement] InitiateCheckout not tracked - missing conditions:', {
+        itemsLength: items.length,
+        effectiveStoreId,
+        total
+      });
       return;
     }
     
@@ -1127,7 +1132,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         price: item.price,
       })),
     });
-  }, [hasTrackedInitiateCheckout, items, store, total, shippingCost, element.id, trackInitiateCheckout]);
+  }, [hasTrackedInitiateCheckout, items, effectiveStoreId, total, shippingCost, element.id, trackInitiateCheckout]);
 
   // Initialize default shipping option
   const availableShippingOptions = getAvailableShippingOptions(websiteShipping);

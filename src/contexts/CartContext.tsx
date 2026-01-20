@@ -158,9 +158,40 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
   const { websiteId: resolvedWebsiteId, funnelId: resolvedFunnelId } = useChannelContext();
   const cartDrawer = useCartDrawer();
   
+  // ✅ FIX: Ensure storeId is available - fetch from website/funnel if not provided
+  const [effectiveStoreId, setEffectiveStoreId] = useState<string | undefined>(storeId);
+  
+  useEffect(() => {
+    if (storeId) {
+      setEffectiveStoreId(storeId);
+    } else if (resolvedWebsiteId) {
+      // Fetch storeId from website
+      supabase.from('websites').select('store_id').eq('id', resolvedWebsiteId).maybeSingle()
+        .then(({ data }) => {
+          if (data?.store_id) {
+            setEffectiveStoreId(data.store_id);
+          }
+        })
+        .catch((error) => {
+          console.warn('[CartContext] Failed to fetch storeId from website:', error);
+        });
+    } else if (resolvedFunnelId) {
+      // Fetch storeId from funnel
+      supabase.from('funnels').select('store_id').eq('id', resolvedFunnelId).maybeSingle()
+        .then(({ data }) => {
+          if (data?.store_id) {
+            setEffectiveStoreId(data.store_id);
+          }
+        })
+        .catch((error) => {
+          console.warn('[CartContext] Failed to fetch storeId from funnel:', error);
+        });
+    }
+  }, [storeId, resolvedWebsiteId, resolvedFunnelId]);
+  
   // Use websiteIdOverride if provided, otherwise fall back to resolved websiteId
   const effectiveWebsiteId = websiteIdOverride || resolvedWebsiteId;
-  const { trackAddToCart } = usePixelTracking(pixels, storeId, effectiveWebsiteId, resolvedFunnelId);
+  const { trackAddToCart } = usePixelTracking(pixels, effectiveStoreId, effectiveWebsiteId, resolvedFunnelId);
 
   // Create store-specific cart key
   const getCartKey = (id?: string) => id ? `cart_${id}` : 'cart_global';
@@ -249,17 +280,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, storeId, w
   const addItem = (item: Omit<CartItem, 'quantity'> & { quantity?: number }, skipOpenCart?: boolean) => {
     dispatch({ type: 'ADD_ITEM', payload: item });
     
-    // Track add to cart event (only if pixels are available)
+    // ✅ FIX: Always track add to cart event (trackAddToCart handles missing pixels internally)
     try {
-      if (pixels) {
-        trackAddToCart({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity || 1,
-          variant: item.variation ? JSON.stringify(item.variation) : undefined,
-        });
-      }
+      trackAddToCart({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity || 1,
+        variant: item.variation ? JSON.stringify(item.variation) : undefined,
+      });
     } catch (error) {
       console.warn('Failed to track add to cart event:', error);
     }
