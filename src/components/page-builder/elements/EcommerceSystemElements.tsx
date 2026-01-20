@@ -1532,8 +1532,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       // Filter by store settings
       recalculatedAllowedMethods = recalculatedAllowedMethods.filter((m) => (storeAllowed as any)[m]);
       if (recalculatedAllowedMethods.length === 0) recalculatedAllowedMethods = ['cod'];
-        storeAllowed
-      });
 
       // Use recalculated breakdown instead of state
       const upfrontAmount = currentPaymentBreakdown.upfrontAmount || 0;
