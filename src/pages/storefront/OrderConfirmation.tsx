@@ -36,6 +36,10 @@ interface Order {
   created_at: string;
   notes?: string;
   custom_fields?: any;
+  // ✅ CRITICAL: Add these fields for pixel tracking
+  website_id?: string | null;
+  funnel_id?: string | null;
+  store_id?: string;
 }
 
 interface OrderItem {
