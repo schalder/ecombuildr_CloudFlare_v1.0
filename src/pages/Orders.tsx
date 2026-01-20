@@ -82,6 +82,36 @@ interface Order {
   marked_not_fake?: boolean;
 }
 
+interface IncompleteCheckout {
+  id: string;
+  store_id: string;
+  website_id?: string | null;
+  funnel_id?: string | null;
+  customer_name?: string | null;
+  customer_email?: string | null;
+  customer_phone?: string | null;
+  shipping_address?: string | null;
+  shipping_city?: string | null;
+  shipping_area?: string | null;
+  shipping_country?: string | null;
+  shipping_state?: string | null;
+  shipping_postal_code?: string | null;
+  cart_items: any[];
+  subtotal: number;
+  shipping_cost: number;
+  total: number;
+  payment_method?: string | null;
+  custom_fields?: Record<string, any>;
+  session_id?: string | null;
+  page_url?: string | null;
+  referrer?: string | null;
+  utm_source?: string | null;
+  utm_campaign?: string | null;
+  utm_medium?: string | null;
+  last_updated_at: string;
+  created_at: string;
+}
+
 const statusColors = {
   pending: "secondary",
   processing: "default",
@@ -171,7 +201,7 @@ const isPaymentFailed = (order: Order): boolean => {
 // Allows manual approval when user pays manually after online payment fails
 // Supports: pending_payment and payment_failed statuses
 // Shows in: Incomplete Orders tab (pending_payment, payment_failed) and All Orders tab (payment_failed)
-const canManuallyApprove = (order: Order, currentTab: 'all' | 'fake' | 'incomplete'): boolean => {
+const canManuallyApprove = (order: Order, currentTab: 'all' | 'fake' | 'incomplete' | 'abandoned'): boolean => {
   // Always log when checking (for debugging)
   console.log('[canManuallyApprove] Checking order:', {
     orderId: order.id,
@@ -233,7 +263,7 @@ export default function Orders() {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>(searchParams.get("paymentStatus") || "");
-  const [activeTab, setActiveTab] = useState<'all' | 'fake' | 'incomplete'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'fake' | 'incomplete' | 'abandoned'>('all');
   const [fakeOrderFilter, setFakeOrderFilter] = useState<'all' | 'blocked'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
@@ -282,6 +312,44 @@ export default function Orders() {
   const formatSelectedOrderAmount = (amount: number) => {
     return formatAmount(amount, getOrderCurrency(selectedOrder));
   };
+  const fetchIncompleteCheckouts = async () => {
+    if (!user || !store) return;
+    
+    try {
+      setLoading(true);
+      const start = (currentPage - 1) * ordersPerPage;
+      const end = start + ordersPerPage - 1;
+
+      let query = supabase
+        .from('incomplete_checkouts')
+        .select('*', { count: 'exact' })
+        .eq('store_id', store.id)
+        .order('last_updated_at', { ascending: false })
+        .range(start, end);
+
+      // Apply search filter
+      if (searchTerm) {
+        query = query.or(`customer_name.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      setIncompleteCheckouts((data as IncompleteCheckout[]) || []);
+      setTotalCount(count || 0);
+    } catch (error) {
+      console.error('Error fetching incomplete checkouts:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load abandoned checkouts",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       if (activeTab === 'fake') {
@@ -290,6 +358,8 @@ export default function Orders() {
         } else {
           fetchFakeOrders();
         }
+      } else if (activeTab === 'abandoned') {
+        fetchIncompleteCheckouts();
       } else if (activeTab === 'incomplete') {
         fetchOrders();
       } else {
@@ -1957,6 +2027,15 @@ export default function Orders() {
               >
                 Fake Orders
               </Button>
+              <Button
+                variant={activeTab === 'abandoned' ? 'default' : 'outline'}
+                onClick={() => {
+                  setActiveTab('abandoned');
+                  setCurrentPage(1);
+                }}
+              >
+                Abandoned Checkouts
+              </Button>
             </div>
 
             {/* Fake Orders Filter */}
@@ -2103,6 +2182,170 @@ export default function Orders() {
                   <div key={i} className="h-16 bg-muted animate-pulse rounded" />
                 ))}
               </div>
+            ) : activeTab === 'abandoned' ? (
+              incompleteCheckouts.length === 0 ? (
+                <div className="text-center py-8">
+                  <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium">No abandoned checkouts</h3>
+                  <p className="text-muted-foreground">
+                    Abandoned checkouts will appear here when customers start but don't complete checkout
+                  </p>
+                </div>
+              ) : isMobile ? (
+                // Mobile Card View for Incomplete Checkouts
+                <div className="space-y-4 overflow-x-hidden">
+                  {incompleteCheckouts.map((checkout) => (
+                    <Card key={checkout.id} className="p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold">{checkout.customer_name || 'Unknown'}</h3>
+                          <p className="text-sm text-muted-foreground">{checkout.customer_phone || 'No phone'}</p>
+                          {checkout.customer_email && (
+                            <p className="text-sm text-muted-foreground">{checkout.customer_email}</p>
+                          )}
+                        </div>
+                        <Badge variant="secondary">Abandoned</Badge>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        {checkout.shipping_address && (
+                          <div className="flex items-start gap-2">
+                            <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                            <span>{checkout.shipping_address}, {checkout.shipping_city || ''}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                          <span>{checkout.cart_items?.length || 0} item(s)</span>
+                        </div>
+                        <div className="flex items-center gap-2 font-semibold">
+                          <span>Total: {formatAmount(checkout.total, 'BDT')}</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground pt-2 border-t">
+                          Last updated: {new Date(checkout.last_updated_at).toLocaleString()}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                // Desktop Table View for Incomplete Checkouts
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Contact</TableHead>
+                        <TableHead>Address</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Last Updated</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {incompleteCheckouts.map((checkout) => (
+                        <TableRow key={checkout.id}>
+                          <TableCell className="font-medium">
+                            {checkout.customer_name || 'Unknown'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {checkout.customer_phone && (
+                                <div className="flex items-center gap-1">
+                                  <Phone className="h-3 w-3" />
+                                  <span>{checkout.customer_phone}</span>
+                                </div>
+                              )}
+                              {checkout.customer_email && (
+                                <div className="flex items-center gap-1">
+                                  <Mail className="h-3 w-3" />
+                                  <span className="text-xs">{checkout.customer_email}</span>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {checkout.shipping_address ? (
+                              <div className="text-sm">
+                                {checkout.shipping_address}
+                                {checkout.shipping_city && `, ${checkout.shipping_city}`}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">No address</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {checkout.cart_items?.length || 0} item(s)
+                              {checkout.cart_items && checkout.cart_items.length > 0 && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {checkout.cart_items.slice(0, 2).map((item: any, idx: number) => (
+                                    <div key={idx}>{item.name} (x{item.quantity})</div>
+                                  ))}
+                                  {checkout.cart_items.length > 2 && (
+                                    <div>+{checkout.cart_items.length - 2} more</div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-semibold">
+                            {formatAmount(checkout.total, 'BDT')}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(checkout.last_updated_at).toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {checkout.customer_phone && (
+                                  <DropdownMenuItem
+                                    onClick={() => openWhatsApp(checkout.customer_phone!)}
+                                    className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                  >
+                                    <MessageCircle className="mr-3 h-4 w-4" />
+                                    Contact via WhatsApp
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                  onClick={async () => {
+                                    try {
+                                      await supabase
+                                        .from('incomplete_checkouts')
+                                        .delete()
+                                        .eq('id', checkout.id);
+                                      toast({
+                                        title: "Success",
+                                        description: "Abandoned checkout deleted",
+                                      });
+                                      fetchIncompleteCheckouts();
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to delete abandoned checkout",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  }}
+                                  className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation text-red-600"
+                                >
+                                  <Trash2 className="mr-3 h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )
             ) : orders.length === 0 ? (
               <div className="text-center py-8">
                 <ShoppingCart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />

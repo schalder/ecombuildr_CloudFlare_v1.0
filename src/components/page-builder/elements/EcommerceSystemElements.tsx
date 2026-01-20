@@ -32,6 +32,7 @@ import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useChannelContext } from '@/hooks/useChannelContext';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
+import { useIncompleteCheckoutCapture } from '@/hooks/useIncompleteCheckoutCapture';
 import { DigitalDownloadSection } from '../components/DigitalDownloadSection';
 import { getPhoneValidationError } from '@/utils/phoneValidation';
 import { calculatePaymentBreakdown, getPaymentBreakdownMessage, getUpfrontPaymentMethod, ProductData } from '@/utils/checkoutCalculations';
@@ -1097,6 +1098,31 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   // Tracking state
   const [hasTrackedInitiateCheckout, setHasTrackedInitiateCheckout] = useState<boolean>(false);
 
+  // Capture incomplete checkout data (auto-save as user types)
+  const { clearIncompleteCheckout } = useIncompleteCheckoutCapture(
+    effectiveStoreId,
+    websiteId,
+    funnelId,
+    {
+      customer_name: form.customer_name,
+      customer_email: form.customer_email,
+      customer_phone: form.customer_phone,
+      shipping_address: form.shipping_address,
+      shipping_city: form.shipping_city,
+      shipping_area: form.shipping_area,
+      shipping_country: form.shipping_country,
+      shipping_state: form.shipping_state,
+      shipping_postal_code: form.shipping_postal_code,
+      subtotal: total,
+      shipping_cost: productTypes.hasPhysical ? shippingCost : 0,
+      total: total + (productTypes.hasPhysical ? shippingCost : 0),
+      payment_method: form.payment_method,
+      custom_fields: form.custom_fields,
+    },
+    items,
+    !isEditing // Only capture in live mode, not in editor
+  );
+
   // Helper function to track InitiateCheckout when user starts filling form
   // ✅ REFACTORED: Now uses trackInitiateCheckout hook (same flow as PageView/AddToCart)
   // This stores event in database, and database trigger handles server-side tracking automatically
@@ -1733,6 +1759,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         } else {
           console.log('ℹ️ Upfront payment is manual, showing confirmation...');
           // Manual payment method for upfront (bkash, nagad) - order already created
+          await clearIncompleteCheckout(); // Clear incomplete checkout on successful order
           clearCart();
           toast.success('Order placed! Please complete the upfront payment.');
           const orderToken = orderResponse?.order?.custom_fields?.order_access_token || accessToken;
@@ -1752,6 +1779,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         sessionStorage.removeItem(sessionKey);
         setHasTrackedInitiateCheckout(false);
         
+        await clearIncompleteCheckout(); // Clear incomplete checkout on successful order
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         // Get order access token from the response

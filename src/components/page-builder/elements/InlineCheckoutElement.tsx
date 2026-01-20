@@ -29,6 +29,7 @@ import { useChannelContext } from '@/hooks/useChannelContext';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { getPhoneValidationError } from '@/utils/phoneValidation';
 import { calculatePaymentBreakdown, getPaymentBreakdownMessage, getUpfrontPaymentMethod, ProductData } from '@/utils/checkoutCalculations';
+import { useIncompleteCheckoutCapture } from '@/hooks/useIncompleteCheckoutCapture';
 
 const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const navigate = useNavigate();
@@ -189,6 +190,63 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   // Tracking state
   const [hasTrackedInitiateCheckout, setHasTrackedInitiateCheckout] = useState<boolean>(false);
 
+  // Calculate subtotal for tracking (defined early for use in hook)
+  const trackingSubtotal = useMemo(() => {
+    const main = selectedProduct ? Number(selectedProduct.price) * Math.max(1, quantity || 1) : 0;
+    const bump = (orderBump.enabled && bumpChecked && bumpProduct) ? Number(bumpProduct.price) : 0;
+    return main + bump;
+  }, [selectedProduct, quantity, orderBump.enabled, bumpChecked, bumpProduct]);
+
+  // Capture incomplete checkout data (auto-save as user types)
+  const cartItems = useMemo(() => {
+    const items: any[] = [];
+    if (selectedProduct) {
+      items.push({
+        productId: selectedProduct.id,
+        name: selectedProduct.name,
+        price: selectedProduct.price,
+        quantity: quantity,
+        image: selectedProduct.images?.[0] || null,
+        sku: selectedProduct.sku || null,
+      });
+    }
+    if (orderBump.enabled && bumpChecked && bumpProduct) {
+      items.push({
+        productId: bumpProduct.id,
+        name: bumpProduct.name,
+        price: bumpProduct.price,
+        quantity: 1,
+        image: bumpProduct.images?.[0] || null,
+        sku: bumpProduct.sku || null,
+      });
+    }
+    return items;
+  }, [selectedProduct, quantity, orderBump.enabled, bumpChecked, bumpProduct]);
+
+  const { clearIncompleteCheckout } = useIncompleteCheckoutCapture(
+    effectiveStoreId,
+    websiteId,
+    funnelId,
+    {
+      customer_name: form.customer_name,
+      customer_email: form.customer_email,
+      customer_phone: form.customer_phone,
+      shipping_address: form.shipping_address,
+      shipping_city: form.shipping_city,
+      shipping_area: form.shipping_area,
+      shipping_country: form.shipping_country,
+      shipping_state: form.shipping_state,
+      shipping_postal_code: form.shipping_postal_code,
+      subtotal: trackingSubtotal,
+      shipping_cost: 0, // Inline checkout doesn't have separate shipping cost
+      total: trackingSubtotal,
+      payment_method: form.payment_method,
+      custom_fields: form.custom_fields,
+    },
+    cartItems,
+    true // Always enabled for inline checkout
+  );
+
   // Form state
   const [form, setForm] = useState({
     customer_name: '', customer_email: '', customer_phone: '',
@@ -306,13 +364,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       setForm(prev => ({ ...prev, payment_method: methods[0] as any }));
     }
   }, [selectedProduct?.id, bumpProduct?.id, bumpChecked, orderBump.enabled, store, paymentBreakdown, quantity]);
-
-  // Calculate subtotal for tracking (defined before useEffect)
-  const trackingSubtotal = useMemo(() => {
-    const main = selectedProduct ? Number(selectedProduct.price) * Math.max(1, quantity || 1) : 0;
-    const bump = (orderBump.enabled && bumpChecked && bumpProduct) ? Number(bumpProduct.price) : 0;
-    return main + bump;
-  }, [selectedProduct, quantity, orderBump.enabled, bumpChecked, bumpProduct]);
 
   // Helper function to track InitiateCheckout when user starts filling form
   // ✅ REFACTORED: Now uses trackInitiateCheckout hook (same flow as PageView/AddToCart)
@@ -996,6 +1047,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         sessionStorage.removeItem(sessionKey);
         setHasTrackedInitiateCheckout(false);
         
+        await clearIncompleteCheckout(); // Clear incomplete checkout on successful order
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         
         // Handle funnel step success redirect
