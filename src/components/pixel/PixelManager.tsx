@@ -41,6 +41,14 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
     return funnelMatch ? funnelMatch[1] : undefined;
   }, [propFunnelId]);
   
+  // ✅ CRITICAL: Update pixels when initialPixels prop changes
+  // This ensures PixelManager updates when website/funnel data loads
+  React.useEffect(() => {
+    if (initialPixels) {
+      setCurrentPixels(initialPixels);
+    }
+  }, [initialPixels]);
+  
   const { trackPageView } = usePixelTracking(currentPixels, storeId, websiteId, funnelId);
 
   const updatePixels = React.useCallback((newPixels: any) => {
