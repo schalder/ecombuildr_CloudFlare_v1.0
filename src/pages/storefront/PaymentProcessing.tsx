@@ -770,6 +770,7 @@ export const PaymentProcessing: React.FC = () => {
       if (!tempId) {
         console.error('PaymentProcessing: No tempId available, cannot load store from order');
         // ✅ CRITICAL: Even without store, redirect using tempId (payment was successful)
+        // Don't wait for store - payment was successful, redirect immediately
         setOrderCreated(true);
         sessionStorage.removeItem('pending_checkout');
         clearCart();
@@ -780,7 +781,7 @@ export const PaymentProcessing: React.FC = () => {
       
       try {
         console.log('PaymentProcessing: Attempting to fetch order to get store_id:', tempId);
-        // Try to fetch order using edge function (bypasses RLS)
+        // Try to fetch order using edge function (bypasses RLS) - this doesn't require storeId/token
         const { data: orderData, error: fetchError } = await supabase.functions.invoke('get-order', {
           body: { orderId: tempId }
         });
@@ -788,16 +789,18 @@ export const PaymentProcessing: React.FC = () => {
         if (!fetchError && orderData?.order?.store_id) {
           console.log('PaymentProcessing: Found store_id from order:', orderData.order.store_id);
           await loadStoreById(orderData.order.store_id);
+          // Store is now loaded, continue with order creation
           return;
         }
         
-        // If order fetch fails or no store_id, redirect anyway
+        // If order fetch fails or no store_id, redirect anyway (don't wait)
         console.log('PaymentProcessing: Could not fetch order or get store_id, redirecting anyway');
         setOrderCreated(true);
         sessionStorage.removeItem('pending_checkout');
         clearCart();
         const fallbackToken = crypto.randomUUID().replace(/-/g, '');
         window.location.replace(paths.orderConfirmation(tempId, fallbackToken));
+        return; // Exit early - don't continue
       } catch (error) {
         console.error('PaymentProcessing: Error fetching order for store_id:', error);
         // ✅ CRITICAL: Even on error, redirect using tempId (payment was successful)
@@ -806,10 +809,12 @@ export const PaymentProcessing: React.FC = () => {
         clearCart();
         const fallbackToken = crypto.randomUUID().replace(/-/g, '');
         window.location.replace(paths.orderConfirmation(tempId, fallbackToken));
+        return; // Exit early - don't continue
       }
     }
     
     // ✅ Check if store is still not loaded after fallback attempts
+    // If store is not loaded, redirect immediately (don't wait for order creation)
     if (!store) {
       console.error('PaymentProcessing: Store still not loaded after all attempts, redirecting anyway');
       setOrderCreated(true);
@@ -817,7 +822,7 @@ export const PaymentProcessing: React.FC = () => {
       clearCart();
       const fallbackToken = crypto.randomUUID().replace(/-/g, '');
       window.location.replace(paths.orderConfirmation(tempId, fallbackToken));
-      return;
+      return; // Exit early - don't continue with order creation
     }
     
     console.log('PaymentProcessing: Store loaded, proceeding with order creation...');
