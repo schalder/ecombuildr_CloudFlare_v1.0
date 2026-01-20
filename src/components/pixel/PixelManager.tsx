@@ -72,8 +72,6 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
         s.parentNode.insertBefore(t,s)}(window, document,'script',
         'https://connect.facebook.net/en_US/fbevents.js');
         fbq('init', '${currentPixels.facebook_pixel_id}');
-        // ✅ FIX: Disable auto PageView - we track manually for consistency and deduplication
-        fbq('set', 'autoConfig', false, '${currentPixels.facebook_pixel_id}');
       `;
       document.head.appendChild(script);
       
@@ -111,9 +109,17 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
       logger.debug('[PixelManager] Google Analytics/Ads loaded:', gtagId);
     }
 
-    // Track initial page view
+    // Track initial page view (with deduplication check)
     const timer = setTimeout(() => {
-      trackPageView();
+      // ✅ FIX: Check if PageView was already tracked (prevent duplicates from Facebook auto PageView)
+      const pageViewKey = `pageview_${window.location.href}`;
+      const lastPageViewTime = sessionStorage.getItem(pageViewKey);
+      const now = Date.now();
+      
+      // Only track if not tracked in last 2 seconds (prevents duplicate from Facebook auto PageView)
+      if (!lastPageViewTime || (now - parseInt(lastPageViewTime)) > 2000) {
+        trackPageView();
+      }
     }, 100);
 
     return () => clearTimeout(timer);
