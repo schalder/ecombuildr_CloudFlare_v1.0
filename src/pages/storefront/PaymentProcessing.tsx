@@ -226,9 +226,21 @@ export const PaymentProcessing: React.FC = () => {
       }
       try {
         console.log('[PaymentProcessing] checking course payment via edge function', { checkId });
-        const { data, error } = await supabase.functions.invoke('get-course-order-public', {
+        
+        // ✅ CRITICAL: Add timeout to prevent hanging
+        const courseCheckPromise = supabase.functions.invoke('get-course-order-public', {
           body: { orderId: checkId }
         });
+        
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Course payment check timeout')), 3000)
+        );
+        
+        const { data, error } = await Promise.race([courseCheckPromise, timeoutPromise]).catch((err) => {
+          console.warn('[PaymentProcessing] Course payment check timeout or error:', err);
+          return { data: null, error: err };
+        }) as { data: any; error: any };
+        
         if (error) {
           console.warn('[PaymentProcessing] get-course-order-public error', error);
           setIsCoursePayment(false);
@@ -281,7 +293,17 @@ export const PaymentProcessing: React.FC = () => {
       isCoursePayment
     });
     
-    if (canProceed && isCoursePayment === false) {
+    // ✅ CRITICAL FIX: Proceed if course payment is false OR null (after 2 seconds timeout)
+    // This prevents the page from getting stuck if course payment check hangs
+    const courseCheckTimeout = setTimeout(() => {
+      if (isCoursePayment === null) {
+        console.log('PaymentProcessing: Course payment check timeout, defaulting to false');
+        setIsCoursePayment(false);
+      }
+    }, 2000);
+    
+    if (canProceed && (isCoursePayment === false || (isCoursePayment === null && tempId && (urlStatus === 'success' || urlStatus === 'completed')))) {
+      clearTimeout(courseCheckTimeout);
       if (tempId && (urlStatus === 'success' || urlStatus === 'completed')) {
         console.log('PaymentProcessing: Calling handleDeferredOrderCreation...');
         // Use standard deferred order creation for all payment methods
@@ -304,6 +326,8 @@ export const PaymentProcessing: React.FC = () => {
         reason: !canProceed ? 'Waiting for store or conditions not met' : 'Course payment check pending'
       });
     }
+    
+    return () => clearTimeout(courseCheckTimeout);
   }, [orderId, tempId, urlStatus, store, isCoursePayment]);
 
   // Auto-update order status if URL indicates failure/cancellation (for orders fetched via orderId)
