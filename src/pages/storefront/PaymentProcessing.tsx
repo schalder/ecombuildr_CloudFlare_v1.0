@@ -832,7 +832,8 @@ export const PaymentProcessing: React.FC = () => {
       });
       
       // Create order now that payment is successful
-      const { data, error } = await supabase.functions.invoke('create-order-on-payment-success', {
+      // ✅ CRITICAL: Add timeout to prevent infinite waiting
+      const edgeFunctionCall = supabase.functions.invoke('create-order-on-payment-success', {
         body: {
           orderData: cleanOrderData,
           itemsData: checkoutData.itemsPayload,
@@ -849,6 +850,16 @@ export const PaymentProcessing: React.FC = () => {
           }
         }
       });
+      
+      // Add 10-second timeout to prevent infinite waiting
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Order creation timeout')), 10000)
+      );
+      
+      const { data, error } = await Promise.race([edgeFunctionCall, timeoutPromise]).catch((err) => {
+        // If timeout or error, return error response
+        return { data: null, error: err };
+      }) as { data: any; error: any };
 
       // Check if order was created even if there's an error
       const orderWasCreated = data?.order?.id || data?.success;
