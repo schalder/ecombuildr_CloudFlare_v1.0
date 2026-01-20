@@ -509,10 +509,14 @@ export default function Orders() {
         }
 
         // Exclude fake orders from "All Orders" tab
-        // Note: We'll filter incomplete orders (pending_payment and Stripe failed/cancelled) client-side
+        // ✅ CRITICAL FIX: Exclude ALL incomplete orders at database level for consistent pagination
+        // This works for ALL payment methods (EPS, EB Pay, Stripe, COD, etc.)
         if (activeTab === 'all') {
           ordersQuery = ordersQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
-          // Don't exclude pending_payment here - we'll filter client-side to also exclude Stripe payment_failed/cancelled
+          // Exclude ALL incomplete orders at database level to ensure consistent pagination (always 10 orders per page)
+          ordersQuery = ordersQuery.neq('status', 'pending_payment' as any);
+          ordersQuery = ordersQuery.neq('status', 'payment_failed' as any);
+          ordersQuery = ordersQuery.neq('status', 'cancelled' as any);
         }
         
         // For "Incomplete Orders" tab, fetch orders that might be incomplete
@@ -549,10 +553,13 @@ export default function Orders() {
           .in('store_id', storeIds);
 
         // Exclude fake orders from "All Orders" tab count
-        // Note: Count filtering will be approximate since we filter client-side for Stripe orders
+        // ✅ CRITICAL FIX: Exclude ALL incomplete orders at database level for accurate count
         if (activeTab === 'all') {
           countQuery = countQuery.or('is_potential_fake.is.null,is_potential_fake.eq.false,marked_not_fake.eq.true');
-          // Don't exclude pending_payment here - count will be approximate due to client-side filtering
+          // Exclude ALL incomplete orders at database level to ensure accurate count
+          countQuery = countQuery.neq('status', 'pending_payment' as any);
+          countQuery = countQuery.neq('status', 'payment_failed' as any);
+          countQuery = countQuery.neq('status', 'cancelled' as any);
         }
         
         // For "Incomplete Orders" tab count, fetch orders that might be incomplete
@@ -642,41 +649,18 @@ export default function Orders() {
         if (websitesError) throw websitesError;
         if (funnelsError) throw funnelsError;
         
-        // Apply client-side filtering for Stripe orders
+        // ✅ No client-side filtering needed for "All Orders" tab - all incomplete orders already excluded at database level
+        // This ensures consistent pagination (always 10 orders per page)
         let filteredOrders = orders || [];
         
         if (activeTab === 'all') {
-          // Exclude incomplete orders: pending_payment AND Stripe payment_failed/cancelled
-          filteredOrders = filteredOrders.filter(order => {
-            // Exclude pending_payment orders
-            if (order.status === 'pending_payment') {
-              return false;
-            }
-            // Exclude Stripe orders with payment_failed or cancelled status
-            // Check payment_method case-insensitively to handle any variations
-            const paymentMethod = (order.payment_method || '').toLowerCase();
-            if (paymentMethod === 'stripe' && 
-                (order.status === 'payment_failed' || order.status === 'cancelled')) {
-              return false;
-            }
-            return true;
-          });
+          // ✅ All incomplete orders (pending_payment, payment_failed, cancelled) already excluded at database level
+          // No additional filtering needed - ensures consistent pagination for ALL payment methods
+          filteredOrders = filteredOrders;
         } else if (activeTab === 'incomplete') {
-          // Include pending_payment orders AND Stripe orders with payment_failed/cancelled
-          filteredOrders = filteredOrders.filter(order => {
-            // Always include pending_payment orders
-            if (order.status === 'pending_payment') {
-              return true;
-            }
-            // Also include Stripe orders with payment_failed or cancelled status
-            // Check payment_method case-insensitively to handle any variations
-            const paymentMethod = (order.payment_method || '').toLowerCase();
-            if (paymentMethod === 'stripe' && 
-                (order.status === 'payment_failed' || order.status === 'cancelled')) {
-              return true;
-            }
-            return false;
-          });
+          // ✅ Database query already fetches only incomplete orders (pending_payment, payment_failed, cancelled)
+          // No additional filtering needed - works for ALL payment methods
+          filteredOrders = filteredOrders;
         }
         
         setOrders(filteredOrders);
