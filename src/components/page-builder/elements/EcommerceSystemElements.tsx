@@ -2714,7 +2714,8 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
               <span>Shipping</span>
               <span className="flex items-center gap-2">
                 {formatCurrency(shipping)}
-                {(() => {
+                {/* ✅ Only show (Paid) for COD orders with upfront shipping payment */}
+                {order.payment_method === 'cod' && (() => {
                   // Handle both array and object formats for custom_fields
                   const customFields = order.custom_fields;
                   if (!customFields) return null;
