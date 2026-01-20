@@ -402,8 +402,8 @@ Deno.serve(async (req: Request) => {
     });
 
     // 4) Call Steadfast API
-    // Using portal.steadfast.com.bd to match the working balance endpoint
-    const steadfastApiUrl = 'https://portal.steadfast.com.bd/api/v1/create_order';
+    // Using portal.packzy.com as per official Steadfast API documentation
+    const steadfastApiUrl = 'https://portal.packzy.com/api/v1/create_order';
     const resp = await fetch(steadfastApiUrl, {
       method: 'POST',
       headers: {
@@ -416,17 +416,28 @@ Deno.serve(async (req: Request) => {
 
     const respText = await resp.text();
     let respJson: any;
+    const isHtmlResponse = respText.trim().startsWith('<!DOCTYPE') || respText.trim().startsWith('<html');
+    
     try {
-      respJson = JSON.parse(respText);
+      if (isHtmlResponse) {
+        // If we got HTML instead of JSON, it's likely a server error page
+        respJson = { 
+          raw: 'Server returned HTML error page instead of JSON response',
+          html_preview: respText.substring(0, 200) // First 200 chars for debugging
+        };
+      } else {
+        respJson = JSON.parse(respText);
+      }
     } catch {
-      respJson = { raw: respText };
+      respJson = { raw: respText.substring(0, 500) }; // Limit raw text length
     }
 
     // Log detailed error response for debugging
-    if (!resp.ok) {
+    if (!resp.ok || isHtmlResponse) {
       console.error('Steadfast API error response:', {
         status: resp.status,
         statusText: resp.statusText,
+        isHtmlResponse: isHtmlResponse,
         response: respJson,
         payload: payload,
         order_id: order.id,
@@ -445,6 +456,14 @@ Deno.serve(async (req: Request) => {
     function getUserFriendlyError(respJson: any, httpStatus: number, respText: string): string {
       if (!respJson) return 'Failed to create consignment with Steadfast';
       
+      // Handle HTML error pages (server errors, wrong endpoint, etc.)
+      if (respJson.html_preview || (respJson.raw && respJson.raw.includes('Server returned HTML'))) {
+        if (httpStatus === 500) {
+          return 'Steadfast API server error. The API endpoint may be temporarily unavailable. Please try again later or contact Steadfast support.';
+        }
+        return 'Steadfast API returned an error page. Please verify your API credentials and account status, or contact Steadfast support.';
+      }
+      
       // Handle HTTP 401 - Account authentication/activation issues
       if (httpStatus === 401) {
         const errorText = respText.toLowerCase();
@@ -455,6 +474,11 @@ Deno.serve(async (req: Request) => {
           return 'Invalid Steadfast API credentials. Please verify your API Key and Secret Key in the shipping settings match your Steadfast portal credentials.';
         }
         return 'Authentication failed with Steadfast. Please verify your API credentials are correct and your account has API access enabled.';
+      }
+      
+      // Handle HTTP 500 - Server errors
+      if (httpStatus === 500) {
+        return 'Steadfast API server error. Please try again later or contact Steadfast support if the issue persists.';
       }
       
       // Handle plain text responses (when JSON parsing fails)
