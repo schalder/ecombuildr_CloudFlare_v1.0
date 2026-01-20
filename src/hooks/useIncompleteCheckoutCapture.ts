@@ -153,11 +153,33 @@ export const useIncompleteCheckoutCapture = (
         }
       } else {
         console.log('[useIncompleteCheckoutCapture] Creating new incomplete checkout');
-        const { data, error } = await supabase
-          .from('incomplete_checkouts')
-          .insert(checkoutData)
-          .select()
-          .single();
+        // Use SECURITY DEFINER function to bypass RLS issues
+        const { data, error } = await supabase.rpc('insert_incomplete_checkout', {
+          p_store_id: checkoutData.store_id,
+          p_website_id: checkoutData.website_id,
+          p_funnel_id: checkoutData.funnel_id,
+          p_customer_name: checkoutData.customer_name,
+          p_customer_email: checkoutData.customer_email,
+          p_customer_phone: checkoutData.customer_phone,
+          p_shipping_address: checkoutData.shipping_address,
+          p_shipping_city: checkoutData.shipping_city,
+          p_shipping_area: checkoutData.shipping_area,
+          p_shipping_country: checkoutData.shipping_country,
+          p_shipping_state: checkoutData.shipping_state,
+          p_shipping_postal_code: checkoutData.shipping_postal_code,
+          p_cart_items: checkoutData.cart_items,
+          p_subtotal: checkoutData.subtotal,
+          p_shipping_cost: checkoutData.shipping_cost,
+          p_total: checkoutData.total,
+          p_payment_method: checkoutData.payment_method,
+          p_custom_fields: checkoutData.custom_fields,
+          p_session_id: checkoutData.session_id,
+          p_page_url: checkoutData.page_url,
+          p_referrer: checkoutData.referrer,
+          p_utm_source: checkoutData.utm_source,
+          p_utm_campaign: checkoutData.utm_campaign,
+          p_utm_medium: checkoutData.utm_medium,
+        });
         
         if (error) {
           console.error('[useIncompleteCheckoutCapture] Failed to insert incomplete checkout:', error);
@@ -175,8 +197,8 @@ export const useIncompleteCheckoutCapture = (
             sessionId: sessionIdRef.current,
           });
         } else if (data) {
-          console.log('[useIncompleteCheckoutCapture] Successfully created incomplete checkout:', data.id);
-          incompleteCheckoutIdRef.current = data.id;
+          console.log('[useIncompleteCheckoutCapture] Successfully created incomplete checkout:', data);
+          incompleteCheckoutIdRef.current = data; // Function returns UUID directly
         } else {
           console.warn('[useIncompleteCheckoutCapture] Insert succeeded but no data returned');
         }
