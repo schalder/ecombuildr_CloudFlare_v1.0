@@ -343,10 +343,11 @@ Deno.serve(async (req: Request) => {
       deliveryAmount = (customFields as any).delivery_payment_amount ? Number((customFields as any).delivery_payment_amount) : null;
     }
     
-    // Determine cod_amount:
-    // 1. If delivery_payment_amount exists and > 0 (shipping collected upfront), use it (product price only)
-    // 2. If payment method is COD and no upfront payment, use order.total (product + shipping)
-    // 3. Otherwise, cod_amount = 0 (fully prepaid)
+    // Determine cod_amount based on payment breakdown:
+    // 1. If upfrontAmount > 0 AND deliveryAmount > 0: Shipping was collected upfront, collect product price on delivery
+    // 2. If upfrontAmount is null/0 AND deliveryAmount > 0: No upfront payment, deliveryAmount includes product + shipping
+    // 3. If payment method is COD and no deliveryAmount: Standard COD, use order.total
+    // 4. Otherwise: Fully prepaid, cod_amount = 0
     
     // Debug logging
     console.log('Steadfast COD calculation:', {
@@ -359,12 +360,17 @@ Deno.serve(async (req: Request) => {
       payment_method: order.payment_method
     });
     
+    // Check if upfront payment was collected (indicates shipping was paid upfront)
+    const hasUpfrontPayment = upfrontAmount !== null && upfrontAmount > 0;
+    
     if (deliveryAmount !== null && deliveryAmount > 0) {
-      // Shipping was collected upfront, so collect product price on delivery
+      // delivery_payment_amount exists - this is what needs to be collected on delivery
+      // If upfront payment exists, deliveryAmount is product prices only
+      // If no upfront payment, deliveryAmount is product prices + shipping
       cod_amount = deliveryAmount;
-      console.log('Steadfast: Using delivery_payment_amount as cod_amount:', cod_amount);
+      console.log('Steadfast: Using delivery_payment_amount as cod_amount:', cod_amount, hasUpfrontPayment ? '(shipping collected upfront)' : '(no upfront payment)');
     } else if (isCOD) {
-      // Standard COD order (no upfront payment), collect full amount
+      // Standard COD order (no delivery_payment_amount field), collect full amount
       cod_amount = Number(order.total || 0);
       console.log('Steadfast: Using order.total as cod_amount (standard COD):', cod_amount);
     } else {
@@ -513,6 +519,18 @@ Deno.serve(async (req: Request) => {
         { status: 200, headers: corsHeaders }
       );
     } else {
+      // Log detailed error information
+      console.error('Steadfast API error response:', {
+        status: resp.status,
+        statusText: resp.statusText,
+        response: respJson,
+        payload: payload,
+        order_id: order.id,
+        cod_amount: cod_amount,
+        deliveryAmount: deliveryAmount,
+        upfrontAmount: upfrontAmount
+      });
+      
       const insertRes = await supabase.from('courier_shipments').insert({
         store_id,
         order_id,
