@@ -887,6 +887,11 @@ export const PaymentProcessing: React.FC = () => {
         // Clear cart after successful order creation
         clearCart();
         
+        // ✅ FIX: Update effectiveStoreId from order if not available from store context
+        if (data?.order?.store_id && !effectiveStoreId) {
+          setEffectiveStoreId(data.order.store_id);
+        }
+        
         // ✅ TRACK PURCHASE EVENT FOR DEFERRED PAYMENTS
         // Fetch funnel pixel configuration if this is a funnel checkout
         if (isFunnelCheckout && funnelId) {
@@ -921,7 +926,8 @@ export const PaymentProcessing: React.FC = () => {
                 .select('product_id, product_name, price, quantity')
                 .eq('order_id', data.order.id);
               
-              if (!itemsError && orderItems && orderItems.length > 0) {
+              // ✅ FIX: Only track if effectiveStoreId is available
+              if (!itemsError && orderItems && orderItems.length > 0 && effectiveStoreId) {
                 // Create tracking items
                 const trackingItems = orderItems.map(item => ({
                   item_id: item.product_id,
