@@ -36,7 +36,39 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   const { store, loadStoreById } = useStore();
   const { pixels } = usePixelContext();
   const { stepId } = useFunnelStepContext();
-  const { trackPurchase, trackInitiateCheckout } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
+  
+  // ✅ FIX: Ensure storeId is available - fetch from website/funnel if store not loaded
+  const [effectiveStoreId, setEffectiveStoreId] = useState<string | undefined>(store?.id);
+  
+  useEffect(() => {
+    if (store?.id) {
+      setEffectiveStoreId(store.id);
+    } else if (websiteId) {
+      // Fetch storeId from website
+      supabase.from('websites').select('store_id').eq('id', websiteId).maybeSingle()
+        .then(({ data }) => {
+          if (data?.store_id) {
+            setEffectiveStoreId(data.store_id);
+          }
+        })
+        .catch((error) => {
+          console.warn('[InlineCheckoutElement] Failed to fetch storeId from website:', error);
+        });
+    } else if (funnelId) {
+      // Fetch storeId from funnel
+      supabase.from('funnels').select('store_id').eq('id', funnelId).maybeSingle()
+        .then(({ data }) => {
+          if (data?.store_id) {
+            setEffectiveStoreId(data.store_id);
+          }
+        })
+        .catch((error) => {
+          console.warn('[InlineCheckoutElement] Failed to fetch storeId from funnel:', error);
+        });
+    }
+  }, [store?.id, websiteId, funnelId]);
+  
+  const { trackPurchase, trackInitiateCheckout } = usePixelTracking(pixels, effectiveStoreId, websiteId, funnelId);
   
   // Error states
   const [phoneError, setPhoneError] = useState<string>('');

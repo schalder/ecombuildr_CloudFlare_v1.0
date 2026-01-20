@@ -1193,14 +1193,21 @@ export const PaymentProcessing: React.FC = () => {
         }
         
         // ✅ WEBSITE CHECKOUT: Navigate to order confirmation (existing behavior)
+        // ✅ FIX: Ensure redirect always happens - this is the final fallback
         const newOrderToken = data.order.access_token || data.order.id;
+        const redirectUrl = paths.orderConfirmation(data.order.id, newOrderToken);
         console.log('PaymentProcessing: Redirecting to order confirmation:', {
           orderId: data.order.id,
           hasToken: !!newOrderToken,
-          redirectUrl: paths.orderConfirmation(data.order.id, newOrderToken)
+          redirectUrl: redirectUrl,
+          timestamp: new Date().toISOString()
         });
-        // Don't show toast - redirect immediately without user seeing any messages
-        window.location.replace(paths.orderConfirmation(data.order.id, newOrderToken));
+        
+        // ✅ CRITICAL: Always redirect - use replace to prevent back button issues
+        // Add small delay to ensure any async operations complete
+        setTimeout(() => {
+          window.location.replace(redirectUrl);
+        }, 100);
         return; // Exit early to prevent further execution
       } else {
         // Check if order was actually created (sometimes success=false but order exists)

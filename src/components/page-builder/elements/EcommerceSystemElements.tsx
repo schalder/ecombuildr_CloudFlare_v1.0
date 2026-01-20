@@ -963,7 +963,39 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   const paths = useEcomPaths();
   const { pixels } = usePixelContext();
   const { websiteId, funnelId } = useChannelContext();
-  const { trackPurchase, trackInitiateCheckout } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
+  
+  // ✅ FIX: Ensure storeId is available - fetch from website/funnel if store not loaded
+  const [effectiveStoreId, setEffectiveStoreId] = useState<string | undefined>(store?.id);
+  
+  useEffect(() => {
+    if (store?.id) {
+      setEffectiveStoreId(store.id);
+    } else if (websiteId) {
+      // Fetch storeId from website
+      supabase.from('websites').select('store_id').eq('id', websiteId).maybeSingle()
+        .then(({ data }) => {
+          if (data?.store_id) {
+            setEffectiveStoreId(data.store_id);
+          }
+        })
+        .catch((error) => {
+          console.warn('[CheckoutFullElement] Failed to fetch storeId from website:', error);
+        });
+    } else if (funnelId) {
+      // Fetch storeId from funnel
+      supabase.from('funnels').select('store_id').eq('id', funnelId).maybeSingle()
+        .then(({ data }) => {
+          if (data?.store_id) {
+            setEffectiveStoreId(data.store_id);
+          }
+        })
+        .catch((error) => {
+          console.warn('[CheckoutFullElement] Failed to fetch storeId from funnel:', error);
+        });
+    }
+  }, [store?.id, websiteId, funnelId]);
+  
+  const { trackPurchase, trackInitiateCheckout } = usePixelTracking(pixels, effectiveStoreId, websiteId, funnelId);
 
   const cfg: any = element.content || {};
   const fields = cfg.fields || {

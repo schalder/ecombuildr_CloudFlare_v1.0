@@ -63,7 +63,18 @@ const getFacebookBrowserContext = () => {
 
 export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, websiteId?: string, funnelId?: string) => {
   const storePixelEvent = useCallback(async (eventType: string, eventData: any, providers?: { facebook?: { configured: boolean; attempted: boolean; success: boolean }; google?: { configured: boolean; attempted: boolean; success: boolean } }) => {
-    if (!storeId) return;
+    if (!storeId) {
+      // ✅ FIX: Add detailed logging when storeId is missing
+      console.error('[PixelTracking] storePixelEvent called without storeId:', {
+        eventType,
+        websiteId,
+        funnelId,
+        hasPixelConfig: !!pixelConfig,
+        eventData: Object.keys(eventData || {}),
+        stackTrace: new Error().stack?.split('\n').slice(0, 5).join('\n')
+      });
+      return; // Still return early, but log the error
+    }
     
     try {
       // Ensure session consistency
@@ -347,23 +358,10 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       return;
     }
 
-    // ✅ FIX: Deduplicate PageView events - use same event_id for same URL
+    // Generate event_id for PageView
+    // ✅ FIX: Since we disabled auto PageView, we don't need deduplication check here
     const currentUrl = data?.page_location || window.location.href;
-    const pageViewKey = `pageview_${currentUrl}`;
-    const lastPageViewTime = sessionStorage.getItem(pageViewKey);
-    const now = Date.now();
-    
-    // If PageView was tracked for this URL within last 2 seconds, skip (prevent duplicates)
-    if (lastPageViewTime && (now - parseInt(lastPageViewTime)) < 2000) {
-      logger.debug('[PixelTracking] Skipping duplicate PageView for:', currentUrl);
-      return;
-    }
-    
-    // Store timestamp to prevent duplicates
-    sessionStorage.setItem(pageViewKey, now.toString());
-    
-    // Generate event_id for PageView (consistent for same URL)
-    const eventId = `PageView_${currentUrl}_${Math.floor(now / 1000)}`;
+    const eventId = `PageView_${currentUrl}_${Math.floor(Date.now() / 1000)}`;
     const eventData = {
       page_title: data?.page_title || document.title,
       page_location: currentUrl,

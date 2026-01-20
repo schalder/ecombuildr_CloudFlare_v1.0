@@ -21,6 +21,7 @@ import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useStore } from '@/contexts/StoreContext';
 import { useWebsiteContext } from '@/contexts/WebsiteContext';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
+import { supabase } from '@/integrations/supabase/client';
 
 // Heading Element
 const HeadingElement: React.FC<{
@@ -643,8 +644,40 @@ const ButtonElement: React.FC<{
   const { store } = useStore();
   const { websiteId } = useWebsiteContext();
   const { funnelId } = useFunnelStepContext();
-  const { trackAddToCart } = usePixelTracking(pixels, store?.id, websiteId, funnelId);
   const resolvedWebsiteId = useResolvedWebsiteId(element);
+  
+  // ✅ FIX: Ensure storeId is available - fetch from website/funnel if store not loaded
+  const [effectiveStoreId, setEffectiveStoreId] = React.useState<string | undefined>(store?.id);
+  
+  React.useEffect(() => {
+    if (store?.id) {
+      setEffectiveStoreId(store.id);
+    } else if (resolvedWebsiteId) {
+      // Fetch storeId from website
+      supabase.from('websites').select('store_id').eq('id', resolvedWebsiteId).maybeSingle()
+        .then(({ data }) => {
+          if (data?.store_id) {
+            setEffectiveStoreId(data.store_id);
+          }
+        })
+        .catch((error) => {
+          console.warn('[ButtonElement] Failed to fetch storeId from website:', error);
+        });
+    } else if (funnelId) {
+      // Fetch storeId from funnel
+      supabase.from('funnels').select('store_id').eq('id', funnelId).maybeSingle()
+        .then(({ data }) => {
+          if (data?.store_id) {
+            setEffectiveStoreId(data.store_id);
+          }
+        })
+        .catch((error) => {
+          console.warn('[ButtonElement] Failed to fetch storeId from funnel:', error);
+        });
+    }
+  }, [store?.id, resolvedWebsiteId, funnelId]);
+  
+  const { trackAddToCart } = usePixelTracking(pixels, effectiveStoreId, resolvedWebsiteId, funnelId);
   const productIds = element.content.addToCartProductIds || [];
   const { products } = useStoreProducts({ 
     specificProductIds: productIds.length > 0 ? productIds : undefined,
