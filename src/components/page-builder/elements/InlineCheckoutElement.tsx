@@ -316,15 +316,39 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       return; // Exit early if already tracked
     }
     
+    // ✅ FIX: If effectiveStoreId is not ready, wait and retry (up to 2 seconds)
+    if (!effectiveStoreId && (websiteId || funnelId)) {
+      console.log('[InlineCheckoutElement] effectiveStoreId not ready, retrying in 500ms...');
+      setTimeout(() => {
+        // Retry once after 500ms
+        if (!hasTrackedInitiateCheckout) {
+          handleInitiateCheckoutTracking();
+        }
+      }, 500);
+      return;
+    }
+    
     // ✅ FIX: Check effectiveStoreId instead of store object
     if (!selectedProduct || !effectiveStoreId || trackingSubtotal === 0) {
       console.warn('[InlineCheckoutElement] InitiateCheckout not tracked - missing conditions:', {
         selectedProduct: !!selectedProduct,
         effectiveStoreId,
-        trackingSubtotal
+        trackingSubtotal,
+        hasPixels: !!pixels,
+        hasTrackInitiateCheckout: !!trackInitiateCheckout,
+        timestamp: new Date().toISOString()
       });
       return;
     }
+    
+    console.log('[InlineCheckoutElement] ✅ Firing InitiateCheckout (user intent detected):', {
+      productId: selectedProduct.id,
+      quantity,
+      total: trackingSubtotal,
+      effectiveStoreId,
+      trigger: 'onFocus',
+      timestamp: new Date().toISOString()
+    });
     
     // ✅ FIX: Set flag BEFORE async operations to prevent race conditions
     sessionStorage.setItem(sessionKey, 'true');
@@ -339,7 +363,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         price: selectedProduct.price,
       }],
     });
-  }, [hasTrackedInitiateCheckout, selectedProduct, effectiveStoreId, trackingSubtotal, quantity, element.id, trackInitiateCheckout]);
+  }, [hasTrackedInitiateCheckout, selectedProduct, effectiveStoreId, trackingSubtotal, quantity, element.id, trackInitiateCheckout, pixels, websiteId, funnelId]);
 
   // ✅ REMOVED: InitiateCheckout tracking on mount
   // Now fires when user starts filling the form (see handleInitiateCheckoutTracking)
@@ -1313,11 +1337,15 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                         placeholder={fields.fullName.placeholder} 
                         value={form.customer_name} 
                         onFocus={() => {
-                          handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout once when user focuses the field
+                          handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout when user focuses (user intent)
                         }}
                         onChange={e => {
                           setForm(f => ({ ...f, customer_name: e.target.value }));
                           clearFieldError('customer_name');
+                          // ✅ FIX: Also fire on first character typed (backup trigger for user intent)
+                          if (e.target.value.length === 1 && !hasTrackedInitiateCheckout) {
+                            handleInitiateCheckoutTracking();
+                          }
                         }} 
                         required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
                         aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}

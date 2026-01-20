@@ -1109,15 +1109,38 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       return; // Exit early if already tracked
     }
     
+    // ✅ FIX: If effectiveStoreId is not ready, wait and retry (up to 2 seconds)
+    if (!effectiveStoreId && (websiteId || funnelId)) {
+      console.log('[CheckoutFullElement] effectiveStoreId not ready, retrying in 500ms...');
+      setTimeout(() => {
+        // Retry once after 500ms
+        if (!hasTrackedInitiateCheckout) {
+          handleInitiateCheckoutTracking();
+        }
+      }, 500);
+      return;
+    }
+    
     // ✅ FIX: Check effectiveStoreId instead of store object
     if (!items.length || !effectiveStoreId || total === 0) {
       console.warn('[CheckoutFullElement] InitiateCheckout not tracked - missing conditions:', {
         itemsLength: items.length,
         effectiveStoreId,
-        total
+        total,
+        hasPixels: !!pixels,
+        hasTrackInitiateCheckout: !!trackInitiateCheckout,
+        timestamp: new Date().toISOString()
       });
       return;
     }
+    
+    console.log('[CheckoutFullElement] ✅ Firing InitiateCheckout (user intent detected):', {
+      itemsCount: items.length,
+      total: total + shippingCost,
+      effectiveStoreId,
+      trigger: 'onFocus',
+      timestamp: new Date().toISOString()
+    });
     
     // ✅ FIX: Set flag BEFORE async operations to prevent race conditions
     sessionStorage.setItem(sessionKey, 'true');
@@ -1132,7 +1155,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         price: item.price,
       })),
     });
-  }, [hasTrackedInitiateCheckout, items, effectiveStoreId, total, shippingCost, element.id, trackInitiateCheckout]);
+  }, [hasTrackedInitiateCheckout, items, effectiveStoreId, total, shippingCost, element.id, trackInitiateCheckout, pixels, websiteId, funnelId]);
 
   // Initialize default shipping option
   const availableShippingOptions = getAvailableShippingOptions(websiteShipping);
@@ -1948,11 +1971,15 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                           placeholder={fields.fullName.placeholder} 
                           value={form.customer_name} 
                           onFocus={() => {
-                            handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout once when user focuses the field
+                            handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout when user focuses (user intent)
                           }}
                           onChange={e => {
                             setForm(f => ({ ...f, customer_name: e.target.value }));
                             clearFieldError('customer_name');
+                            // ✅ FIX: Also fire on first character typed (backup trigger for user intent)
+                            if (e.target.value.length === 1 && !hasTrackedInitiateCheckout) {
+                              handleInitiateCheckoutTracking();
+                            }
                           }} 
                           required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))} 
                           aria-required={!!(fields.fullName?.enabled && (fields.fullName?.required ?? true))}
