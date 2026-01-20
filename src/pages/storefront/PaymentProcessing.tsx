@@ -35,6 +35,8 @@ export const PaymentProcessing: React.FC = () => {
     google_ads_id?: string;
   } | undefined>(undefined);
   const [effectiveStoreId, setEffectiveStoreId] = useState<string | undefined>(store?.id);
+  const [effectiveWebsiteId, setEffectiveWebsiteId] = useState<string | null>(websiteId || null);
+  const [effectiveFunnelId, setEffectiveFunnelId] = useState<string | undefined>(funnelContext?.funnelId);
   const paths = useEcomPaths();
   
   // Update effectiveStoreId when store loads
@@ -44,8 +46,15 @@ export const PaymentProcessing: React.FC = () => {
     }
   }, [store?.id]);
   
+  // Update effectiveFunnelId when funnelContext changes
+  useEffect(() => {
+    if (funnelContext?.funnelId) {
+      setEffectiveFunnelId(funnelContext.funnelId);
+    }
+  }, [funnelContext?.funnelId]);
+  
   // Initialize pixel tracking hook (must be called unconditionally)
-  const { trackPurchase } = usePixelTracking(pixelConfig, effectiveStoreId, websiteId, funnelContext?.funnelId);
+  const { trackPurchase } = usePixelTracking(pixelConfig, effectiveStoreId, effectiveWebsiteId, effectiveFunnelId);
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const tempId = searchParams.get('tempId') || '';
   const paymentMethod = searchParams.get('pm') || '';
@@ -887,9 +896,23 @@ export const PaymentProcessing: React.FC = () => {
         // Clear cart after successful order creation
         clearCart();
         
-        // ✅ FIX: Update effectiveStoreId from order if not available from store context
+        // ✅ CRITICAL FIX: Update effectiveStoreId, effectiveWebsiteId, and effectiveFunnelId from order data
+        // These are required for the database trigger to check server-side configuration
         if (data?.order?.store_id && !effectiveStoreId) {
           setEffectiveStoreId(data.order.store_id);
+        }
+        
+        if (data?.order?.website_id && !effectiveWebsiteId) {
+          setEffectiveWebsiteId(data.order.website_id);
+        }
+        
+        if (data?.order?.funnel_id && !effectiveFunnelId) {
+          setEffectiveFunnelId(data.order.funnel_id);
+        } else if (data?.order?.custom_fields) {
+          const customFields = data.order.custom_fields as any;
+          if (customFields.funnelId && !effectiveFunnelId) {
+            setEffectiveFunnelId(customFields.funnelId);
+          }
         }
         
         // ✅ TRACK PURCHASE EVENT FOR DEFERRED PAYMENTS

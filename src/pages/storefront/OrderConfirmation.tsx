@@ -60,12 +60,14 @@ export const OrderConfirmation: React.FC = () => {
   const [isCourseOrder, setIsCourseOrder] = useState(false);
   const [funnelId, setFunnelId] = useState<string | undefined>(urlFunnelId);
   const [effectiveStoreId, setEffectiveStoreId] = useState<string | undefined>(store?.id);
+  const [effectiveWebsiteId, setEffectiveWebsiteId] = useState<string | null>(websiteId || null);
+  const [effectiveFunnelId, setEffectiveFunnelId] = useState<string | undefined>(urlFunnelId);
   const paths = useEcomPaths();
   const orderId = orderIdParam || searchParams.get('orderId') || '';
   const orderToken = searchParams.get('ot') || '';
   const isWebsiteContext = Boolean(websiteId || websiteSlug);
   const { pixels } = usePixelContext();
-  const { trackPurchase } = usePixelTracking(pixels, effectiveStoreId, websiteId, funnelId);
+  const { trackPurchase } = usePixelTracking(pixels, effectiveStoreId, effectiveWebsiteId, effectiveFunnelId);
 
   // Update effectiveStoreId when store loads
   useEffect(() => {
@@ -170,15 +172,28 @@ useEffect(() => {
         setOrder(orderData);
         setOrderItems(itemsData);
         
-        // ✅ FIX: Update effectiveStoreId from order if not available from store context
+        // ✅ CRITICAL FIX: Update effectiveStoreId, effectiveWebsiteId, and effectiveFunnelId from order data
+        // These are required for the database trigger to check server-side configuration
         if (!effectiveStoreId && orderData.store_id) {
           setEffectiveStoreId(orderData.store_id);
         }
         
-        // Extract funnelId from order's custom_fields if not already set from URL
-        if (!funnelId && orderData.custom_fields) {
+        // Update effectiveWebsiteId from order if not available from URL params
+        if (!effectiveWebsiteId && orderData.website_id) {
+          setEffectiveWebsiteId(orderData.website_id);
+        }
+        
+        // Update effectiveFunnelId from order if not available from URL params
+        if (!effectiveFunnelId) {
+          const orderFunnelId = orderData.funnel_id || (orderData.custom_fields as any)?.funnelId;
+          if (orderFunnelId) {
+            setEffectiveFunnelId(orderFunnelId);
+            setFunnelId(orderFunnelId); // Also update funnelId for consistency
+          }
+        } else if (orderData.custom_fields) {
+          // Extract funnelId from order's custom_fields if not already set
           const customFields = orderData.custom_fields as any;
-          if (customFields.funnelId) {
+          if (customFields.funnelId && !funnelId) {
             setFunnelId(customFields.funnelId);
           }
         }

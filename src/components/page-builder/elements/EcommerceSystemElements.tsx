@@ -2429,6 +2429,8 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
   // Get pixel context for tracking
   const { pixels } = usePixelContext();
   const [effectiveStoreId, setEffectiveStoreId] = useState<string | undefined>(store?.id);
+  const [effectiveWebsiteId, setEffectiveWebsiteId] = useState<string | null>(websiteId || null);
+  const [effectiveFunnelId, setEffectiveFunnelId] = useState<string | undefined>(funnelId);
   
   // Update effectiveStoreId when store loads
   useEffect(() => {
@@ -2437,7 +2439,7 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
     }
   }, [store?.id]);
   
-  const { trackPurchase } = usePixelTracking(pixels, effectiveStoreId, websiteId, funnelId);
+  const { trackPurchase } = usePixelTracking(pixels, effectiveStoreId, effectiveWebsiteId, effectiveFunnelId);
 
   const cfg: any = element.content || {};
   const texts = cfg.texts || {
@@ -2549,9 +2551,23 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
         setDownloadLinks(data?.downloadLinks || []);
         setUrlFiles(data?.urlFiles || []);
         
-        // ✅ FIX: Update effectiveStoreId from order if not available from store context
+        // ✅ CRITICAL FIX: Update effectiveStoreId, effectiveWebsiteId, and effectiveFunnelId from order data
+        // These are required for the database trigger to check server-side configuration
         if (data?.order?.store_id && !effectiveStoreId) {
           setEffectiveStoreId(data.order.store_id);
+        }
+        
+        if (data?.order?.website_id && !effectiveWebsiteId) {
+          setEffectiveWebsiteId(data.order.website_id);
+        }
+        
+        if (data?.order?.funnel_id && !effectiveFunnelId) {
+          setEffectiveFunnelId(data.order.funnel_id);
+        } else if (data?.order?.custom_fields) {
+          const customFields = data.order.custom_fields as any;
+          if (customFields.funnelId && !effectiveFunnelId) {
+            setEffectiveFunnelId(customFields.funnelId);
+          }
         }
 
         // Fallback: if no download links yet, try to generate them (service-side)
