@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { callEdgeFunction } from '@/lib/supabase-edge';
+import { supabase } from '@/integrations/supabase/client';
 
 interface IncompleteCheckoutData {
   customer_name?: string;
@@ -176,12 +177,39 @@ export const useIncompleteCheckoutCapture = (
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [enabled, hasMeaningfulData, saveIncompleteCheckout]);
 
-  // Cleanup function - clear local reference when order is successfully placed
-  // The incomplete checkout record can be cleaned up server-side or marked as completed
+  // Cleanup function - delete incomplete checkout record from database when order is successfully placed
   const clearIncompleteCheckout = useCallback(async () => {
-    incompleteCheckoutIdRef.current = null;
-    sessionStorage.removeItem('checkout_session_id');
-  }, []);
+    try {
+      // Get session_id from sessionStorage or ref
+      const sessionId = sessionIdRef.current || sessionStorage.getItem('checkout_session_id');
+      
+      if (sessionId && storeId) {
+        // Delete incomplete checkout record from database using session_id
+        const { error } = await (supabase as any)
+          .from('incomplete_checkouts')
+          .delete()
+          .eq('session_id', sessionId)
+          .eq('store_id', storeId);
+        
+        if (error) {
+          // Silently fail to avoid disrupting user experience
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[useIncompleteCheckoutCapture] Failed to delete incomplete checkout:', error);
+          }
+        }
+      }
+    } catch (error) {
+      // Silently fail to avoid disrupting user experience
+      if (process.env.NODE_ENV === 'development') {
+        console.error('[useIncompleteCheckoutCapture] Exception clearing incomplete checkout:', error);
+      }
+    } finally {
+      // Always clear local state
+      incompleteCheckoutIdRef.current = null;
+      sessionIdRef.current = null;
+      sessionStorage.removeItem('checkout_session_id');
+    }
+  }, [storeId]);
 
   return { clearIncompleteCheckout };
 };

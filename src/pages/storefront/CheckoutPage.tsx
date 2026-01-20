@@ -605,6 +605,25 @@ useEffect(() => {
       // If no upfront payment needed, process regular payment flow
       if (form.payment_method === 'cod' || isManual) {
         // Regular COD or manual payment (no upfront payment required)
+        
+        // ✅ Clear incomplete checkout record if it exists (for abandoned checkout cleanup)
+        const checkoutSessionId = sessionStorage.getItem('checkout_session_id');
+        if (checkoutSessionId && store?.id) {
+          try {
+            await (supabase as any)
+              .from('incomplete_checkouts')
+              .delete()
+              .eq('session_id', checkoutSessionId)
+              .eq('store_id', store.id);
+          } catch (error) {
+            // Silently fail - incomplete checkout cleanup is not critical
+            if (process.env.NODE_ENV === 'development') {
+              console.error('[CheckoutPage] Failed to clear incomplete checkout:', error);
+            }
+          }
+          sessionStorage.removeItem('checkout_session_id');
+        }
+        
         clearCart();
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed successfully!');
         navigate(paths.orderConfirmation(createdOrderId, accessToken));

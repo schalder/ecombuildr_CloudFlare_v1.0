@@ -893,6 +893,24 @@ export const PaymentProcessing: React.FC = () => {
         // Clear stored checkout data
         sessionStorage.removeItem('pending_checkout');
         
+        // ✅ Clear incomplete checkout record if it exists (for abandoned checkout cleanup)
+        const checkoutSessionId = sessionStorage.getItem('checkout_session_id');
+        if (checkoutSessionId && data?.order?.store_id) {
+          try {
+            await (supabase as any)
+              .from('incomplete_checkouts')
+              .delete()
+              .eq('session_id', checkoutSessionId)
+              .eq('store_id', data.order.store_id);
+          } catch (error) {
+            // Silently fail - incomplete checkout cleanup is not critical
+            if (process.env.NODE_ENV === 'development') {
+              console.error('[PaymentProcessing] Failed to clear incomplete checkout:', error);
+            }
+          }
+          sessionStorage.removeItem('checkout_session_id');
+        }
+        
         // Clear cart after successful order creation
         clearCart();
         
