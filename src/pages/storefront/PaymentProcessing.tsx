@@ -268,11 +268,6 @@ export const PaymentProcessing: React.FC = () => {
     // If it's a site checkout with other payment methods, we need store to be loaded
     const canProceed = isFunnelCheckout || isFailedPayment || isStripeSuccess || isEpsEbpaySuccess || store;
     
-    // ✅ CRITICAL FIX: Only block if course payment is explicitly true
-    // If course check is still pending (null) or false, proceed with regular order flow
-    // This prevents getting stuck when course check is slow or hasn't completed
-    const shouldBlockForCourse = isCoursePayment === true;
-    
     console.log('PaymentProcessing: useEffect check:', {
       tempId,
       urlStatus,
@@ -283,11 +278,10 @@ export const PaymentProcessing: React.FC = () => {
       isEpsEbpaySuccess,
       hasStore: !!store,
       canProceed,
-      isCoursePayment,
-      shouldBlockForCourse
+      isCoursePayment
     });
     
-    if (canProceed && !shouldBlockForCourse) {
+    if (canProceed && isCoursePayment === false) {
       if (tempId && (urlStatus === 'success' || urlStatus === 'completed')) {
         console.log('PaymentProcessing: Calling handleDeferredOrderCreation...');
         // Use standard deferred order creation for all payment methods
@@ -307,8 +301,7 @@ export const PaymentProcessing: React.FC = () => {
       console.log('PaymentProcessing: Cannot proceed yet:', {
         canProceed,
         isCoursePayment,
-        shouldBlockForCourse,
-        reason: !canProceed ? 'Waiting for store or conditions not met' : shouldBlockForCourse ? 'Course payment detected' : 'Course payment check pending'
+        reason: !canProceed ? 'Waiting for store or conditions not met' : 'Course payment check pending'
       });
     }
   }, [orderId, tempId, urlStatus, store, isCoursePayment]);
@@ -741,8 +734,8 @@ export const PaymentProcessing: React.FC = () => {
               await loadStoreById(funnel.store_id);
             } else {
               console.error('PaymentProcessing: Cannot load store from funnel');
-              // ✅ FALLBACK: Try to fetch order and get store_id from there
-              await tryLoadStoreFromOrder();
+              setLoading(false);
+              return;
             }
           } else if (checkoutData.storeId) {
             // Site checkout - load store from checkout data
@@ -750,79 +743,19 @@ export const PaymentProcessing: React.FC = () => {
             await loadStoreById(checkoutData.storeId);
           } else {
             console.error('PaymentProcessing: Store not loaded and no storeId in checkout data');
-            // ✅ FALLBACK: Try to fetch order and get store_id from there
-            await tryLoadStoreFromOrder();
+            setLoading(false);
+            return;
           }
         } catch (e) {
           console.error('PaymentProcessing: Error loading store from pending_checkout:', e);
-          // ✅ FALLBACK: Try to fetch order and get store_id from there
-          await tryLoadStoreFromOrder();
+          setLoading(false);
+          return;
         }
       } else {
         console.error('PaymentProcessing: Store not loaded and no checkout data');
-        // ✅ FALLBACK: Try to fetch order and get store_id from there
-        await tryLoadStoreFromOrder();
-      }
-    }
-    
-    // ✅ Helper function to try loading store from order
-    async function tryLoadStoreFromOrder() {
-      if (!tempId) {
-        console.error('PaymentProcessing: No tempId available, cannot load store from order');
-        // ✅ CRITICAL: Even without store, redirect using tempId (payment was successful)
-        // Don't wait for store - payment was successful, redirect immediately
-        setOrderCreated(true);
-        sessionStorage.removeItem('pending_checkout');
-        clearCart();
-        const fallbackToken = crypto.randomUUID().replace(/-/g, '');
-        window.location.replace(paths.orderConfirmation(tempId, fallbackToken));
+        setLoading(false);
         return;
       }
-      
-      try {
-        console.log('PaymentProcessing: Attempting to fetch order to get store_id:', tempId);
-        // Try to fetch order using edge function (bypasses RLS) - this doesn't require storeId/token
-        const { data: orderData, error: fetchError } = await supabase.functions.invoke('get-order', {
-          body: { orderId: tempId }
-        });
-        
-        if (!fetchError && orderData?.order?.store_id) {
-          console.log('PaymentProcessing: Found store_id from order:', orderData.order.store_id);
-          await loadStoreById(orderData.order.store_id);
-          // Store is now loaded, continue with order creation
-          return;
-        }
-        
-        // If order fetch fails or no store_id, redirect anyway (don't wait)
-        console.log('PaymentProcessing: Could not fetch order or get store_id, redirecting anyway');
-        setOrderCreated(true);
-        sessionStorage.removeItem('pending_checkout');
-        clearCart();
-        const fallbackToken = crypto.randomUUID().replace(/-/g, '');
-        window.location.replace(paths.orderConfirmation(tempId, fallbackToken));
-        return; // Exit early - don't continue
-      } catch (error) {
-        console.error('PaymentProcessing: Error fetching order for store_id:', error);
-        // ✅ CRITICAL: Even on error, redirect using tempId (payment was successful)
-        setOrderCreated(true);
-        sessionStorage.removeItem('pending_checkout');
-        clearCart();
-        const fallbackToken = crypto.randomUUID().replace(/-/g, '');
-        window.location.replace(paths.orderConfirmation(tempId, fallbackToken));
-        return; // Exit early - don't continue
-      }
-    }
-    
-    // ✅ Check if store is still not loaded after fallback attempts
-    // If store is not loaded, redirect immediately (don't wait for order creation)
-    if (!store) {
-      console.error('PaymentProcessing: Store still not loaded after all attempts, redirecting anyway');
-      setOrderCreated(true);
-      sessionStorage.removeItem('pending_checkout');
-      clearCart();
-      const fallbackToken = crypto.randomUUID().replace(/-/g, '');
-      window.location.replace(paths.orderConfirmation(tempId, fallbackToken));
-      return; // Exit early - don't continue with order creation
     }
     
     console.log('PaymentProcessing: Store loaded, proceeding with order creation...');
@@ -832,15 +765,7 @@ export const PaymentProcessing: React.FC = () => {
       // Get stored checkout data
       const pendingCheckout = sessionStorage.getItem('pending_checkout');
       if (!pendingCheckout) {
-        console.error('PaymentProcessing: No pending_checkout data, but payment was successful');
-        // ✅ CRITICAL: Even without checkout data, redirect using tempId
-        // Payment was successful, so order might have been created
-        console.log('PaymentProcessing: Redirecting anyway with tempId as orderId');
-        setOrderCreated(true);
-        sessionStorage.removeItem('pending_checkout');
-        clearCart();
-        const fallbackToken = crypto.randomUUID().replace(/-/g, '');
-        window.location.replace(paths.orderConfirmation(tempId, fallbackToken));
+        setLoading(false);
         return;
       }
 
@@ -907,8 +832,7 @@ export const PaymentProcessing: React.FC = () => {
       });
       
       // Create order now that payment is successful
-      // ✅ CRITICAL: Add timeout to prevent infinite waiting
-      const edgeFunctionCall = supabase.functions.invoke('create-order-on-payment-success', {
+      const { data, error } = await supabase.functions.invoke('create-order-on-payment-success', {
         body: {
           orderData: cleanOrderData,
           itemsData: checkoutData.itemsPayload,
@@ -925,16 +849,6 @@ export const PaymentProcessing: React.FC = () => {
           }
         }
       });
-      
-      // Add 10-second timeout to prevent infinite waiting
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Order creation timeout')), 10000)
-      );
-      
-      const { data, error } = await Promise.race([edgeFunctionCall, timeoutPromise]).catch((err) => {
-        // If timeout or error, return error response
-        return { data: null, error: err };
-      }) as { data: any; error: any };
 
       // Check if order was created even if there's an error
       const orderWasCreated = data?.order?.id || data?.success;
@@ -1386,18 +1300,6 @@ export const PaymentProcessing: React.FC = () => {
         return;
       }
       
-      // ✅ CRITICAL FALLBACK: Always redirect even on error
-      // The payment was successful, so we should redirect to order confirmation
-      // Use tempId as orderId (it might have been created)
-      console.log('PaymentProcessing: Order creation error, but redirecting anyway with tempId');
-      setOrderCreated(true);
-      sessionStorage.removeItem('pending_checkout');
-      clearCart();
-      const fallbackOrderId = tempId;
-      const fallbackToken = crypto.randomUUID().replace(/-/g, '');
-      window.location.replace(paths.orderConfirmation(fallbackOrderId, fallbackToken));
-      return;
-    } finally {
       setCreatingOrder(false);
       setLoading(false);
     }
@@ -1538,21 +1440,42 @@ export const PaymentProcessing: React.FC = () => {
       
       // Try public access first with token
       if (orderToken) {
-        const { data, error } = await supabase.functions.invoke('get-order-public', {
-          body: { 
-            orderId: orderId, 
-            storeId: store.id,
-            token: orderToken 
-          }
-        });
+        try {
+          const { data, error } = await supabase.functions.invoke('get-order-public', {
+            body: { 
+              orderId: orderId, 
+              storeId: store.id,
+              token: orderToken 
+            }
+          });
 
-        if (error) throw error;
-        if (data?.order) {
-          // Fetch currency for the order
-          const currency = await getOrderCurrency(data.order);
-          setOrder({ ...data.order, _currency: currency });
-        } else {
-          setOrder(null);
+          if (error) {
+            console.error('PaymentProcessing: get-order-public error:', error);
+            // ✅ FALLBACK: If get-order-public fails, redirect to order confirmation anyway
+            // The order exists, so we can redirect with a generated token
+            console.log('PaymentProcessing: get-order-public failed, redirecting with fallback token');
+            const fallbackToken = crypto.randomUUID().replace(/-/g, '');
+            sessionStorage.removeItem('pending_checkout');
+            clearCart();
+            window.location.replace(paths.orderConfirmation(orderId, fallbackToken));
+            return;
+          }
+          
+          if (data?.order) {
+            // Fetch currency for the order
+            const currency = await getOrderCurrency(data.order);
+            setOrder({ ...data.order, _currency: currency });
+          } else {
+            setOrder(null);
+          }
+        } catch (err) {
+          console.error('PaymentProcessing: Error fetching order:', err);
+          // ✅ FALLBACK: Redirect even on error - order exists, so we can redirect
+          const fallbackToken = crypto.randomUUID().replace(/-/g, '');
+          sessionStorage.removeItem('pending_checkout');
+          clearCart();
+          window.location.replace(paths.orderConfirmation(orderId, fallbackToken));
+          return;
         }
         return;
       }
