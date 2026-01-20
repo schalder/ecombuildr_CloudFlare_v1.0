@@ -695,6 +695,12 @@ const ButtonElement: React.FC<{
   }, [linkType, pageSlug, paths.base, paths.home, url]);
 
   const handleClick = (e: React.MouseEvent) => {
+    // ✅ CRITICAL FIX: Stop Facebook's automatic button click tracking for AddToCart buttons
+    // This prevents ob3_plugin-set events from firing when we manually track AddToCart
+    if (element.content.enableAddToCart && !isEditing) {
+      e.stopImmediatePropagation(); // Prevent Facebook's automatic listener from firing
+    }
+    
     // Fire AddToCart pixel events if enabled (tracking only, no cart manipulation)
     if (element.content.enableAddToCart && !isEditing && productIds.length > 0 && trackAddToCart && products.length > 0) {
       console.log('[ButtonElement] Firing AddToCart events:', {
