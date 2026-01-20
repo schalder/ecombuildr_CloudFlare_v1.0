@@ -576,7 +576,7 @@ export default function Orders() {
 
         // Apply status filter to count query (but not for incomplete tab to avoid overriding the query)
         if (statusFilter && activeTab !== 'incomplete') {
-          countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled' | 'hold');
+          countQuery = countQuery.eq('status', statusFilter as any);
         }
 
         // Apply payment status filter to count query (but not for incomplete tab to avoid overriding the query)
