@@ -263,6 +263,18 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     true // Always enabled for inline checkout
   );
 
+  // Debug logging for InlineCheckoutElement
+  useEffect(() => {
+    console.log('[InlineCheckoutElement] Incomplete checkout capture state:', {
+      effectiveStoreId,
+      enabled: true,
+      hasName: !!form.customer_name,
+      hasPhone: !!form.customer_phone,
+      cartItemsCount: cartItems.length,
+      trackingSubtotal,
+    });
+  }, [effectiveStoreId, form.customer_name, form.customer_phone, cartItems.length, trackingSubtotal]);
+
   // Set default custom shipping option when product changes
   useEffect(() => {
     if (selectedProduct) {

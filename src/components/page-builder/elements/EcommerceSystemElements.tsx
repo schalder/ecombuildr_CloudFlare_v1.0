@@ -1123,6 +1123,18 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     !isEditing // Only capture in live mode, not in editor
   );
 
+  // Debug logging for CheckoutFullElement
+  useEffect(() => {
+    console.log('[CheckoutFullElement] Incomplete checkout capture state:', {
+      effectiveStoreId,
+      enabled: !isEditing,
+      hasName: !!form.customer_name,
+      hasPhone: !!form.customer_phone,
+      itemsCount: items.length,
+      total,
+    });
+  }, [effectiveStoreId, isEditing, form.customer_name, form.customer_phone, items.length, total]);
+
   // Helper function to track InitiateCheckout when user starts filling form
   // ✅ REFACTORED: Now uses trackInitiateCheckout hook (same flow as PageView/AddToCart)
   // This stores event in database, and database trigger handles server-side tracking automatically

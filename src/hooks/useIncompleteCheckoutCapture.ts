@@ -38,6 +38,9 @@ export const useIncompleteCheckoutCapture = (
       if (!sessionId) {
         sessionId = crypto.randomUUID();
         sessionStorage.setItem('checkout_session_id', sessionId);
+        console.log('[useIncompleteCheckoutCapture] Created new session ID:', sessionId);
+      } else {
+        console.log('[useIncompleteCheckoutCapture] Using existing session ID:', sessionId);
       }
       sessionIdRef.current = sessionId;
     }
@@ -50,7 +53,42 @@ export const useIncompleteCheckoutCapture = (
 
   // Save incomplete checkout to database
   const saveIncompleteCheckout = useCallback(async () => {
-    if (!storeId || !enabled || !hasMeaningfulData() || !sessionIdRef.current) {
+    console.log('[useIncompleteCheckoutCapture] saveIncompleteCheckout called', {
+      storeId,
+      enabled,
+      hasMeaningfulData: hasMeaningfulData(),
+      hasSessionId: !!sessionIdRef.current,
+      customerName: formData.customer_name,
+      customerPhone: formData.customer_phone,
+    });
+
+    // ✅ FIX: If storeId is not ready yet, retry after a delay
+    if (!storeId) {
+      console.log('[useIncompleteCheckoutCapture] storeId not ready, will retry');
+      // Retry after 500ms if storeId becomes available
+      setTimeout(() => {
+        if (storeId) {
+          console.log('[useIncompleteCheckoutCapture] Retrying save after storeId became available');
+          saveIncompleteCheckout();
+        } else {
+          console.warn('[useIncompleteCheckoutCapture] storeId still not available after retry');
+        }
+      }, 500);
+      return;
+    }
+
+    if (!enabled) {
+      console.log('[useIncompleteCheckoutCapture] Hook disabled, skipping save');
+      return;
+    }
+
+    if (!hasMeaningfulData()) {
+      console.log('[useIncompleteCheckoutCapture] No meaningful data (name or phone), skipping save');
+      return;
+    }
+
+    if (!sessionIdRef.current) {
+      console.warn('[useIncompleteCheckoutCapture] No session ID, skipping save');
       return;
     }
 
@@ -83,43 +121,102 @@ export const useIncompleteCheckoutCapture = (
         last_updated_at: new Date().toISOString(),
       };
 
+      console.log('[useIncompleteCheckoutCapture] Attempting to save incomplete checkout', {
+        hasExistingId: !!incompleteCheckoutIdRef.current,
+        storeId: checkoutData.store_id,
+        customerName: checkoutData.customer_name,
+        customerPhone: checkoutData.customer_phone,
+        cartItemsCount: checkoutData.cart_items?.length || 0,
+        total: checkoutData.total,
+      });
+
       // Update existing or create new
       if (incompleteCheckoutIdRef.current) {
-        await supabase
+        console.log('[useIncompleteCheckoutCapture] Updating existing incomplete checkout:', incompleteCheckoutIdRef.current);
+        const { data, error } = await supabase
           .from('incomplete_checkouts')
           .update(checkoutData)
-          .eq('id', incompleteCheckoutIdRef.current);
+          .eq('id', incompleteCheckoutIdRef.current)
+          .select()
+          .single();
+        
+        if (error) {
+          console.error('[useIncompleteCheckoutCapture] Failed to update incomplete checkout:', error);
+          console.error('[useIncompleteCheckoutCapture] Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
+        } else {
+          console.log('[useIncompleteCheckoutCapture] Successfully updated incomplete checkout:', data?.id);
+        }
       } else {
+        console.log('[useIncompleteCheckoutCapture] Creating new incomplete checkout');
         const { data, error } = await supabase
           .from('incomplete_checkouts')
           .insert(checkoutData)
           .select()
           .single();
         
-        if (data && !error) {
+        if (error) {
+          console.error('[useIncompleteCheckoutCapture] Failed to insert incomplete checkout:', error);
+          console.error('[useIncompleteCheckoutCapture] Error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code,
+          });
+          console.log('[useIncompleteCheckoutCapture] Attempted to insert:', {
+            store_id: storeId,
+            hasName: !!formData.customer_name,
+            hasPhone: !!formData.customer_phone,
+            cartItemsCount: cartItems?.length || 0,
+            sessionId: sessionIdRef.current,
+          });
+        } else if (data) {
+          console.log('[useIncompleteCheckoutCapture] Successfully created incomplete checkout:', data.id);
           incompleteCheckoutIdRef.current = data.id;
+        } else {
+          console.warn('[useIncompleteCheckoutCapture] Insert succeeded but no data returned');
         }
       }
     } catch (error) {
-      // Silently fail - don't interrupt user experience
-      // Only log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.error('Failed to save incomplete checkout:', error);
-      }
+      console.error('[useIncompleteCheckoutCapture] Exception saving incomplete checkout:', error);
+      console.error('[useIncompleteCheckoutCapture] Exception stack:', (error as Error)?.stack);
     }
   }, [storeId, websiteId, funnelId, formData, cartItems, enabled, hasMeaningfulData]);
 
   // Debounced save (save 2 seconds after user stops typing)
   useEffect(() => {
-    if (!enabled || !hasMeaningfulData()) return;
+    console.log('[useIncompleteCheckoutCapture] Debounce effect triggered', {
+      enabled,
+      hasMeaningfulData: hasMeaningfulData(),
+      customerName: formData.customer_name,
+      customerPhone: formData.customer_phone,
+      storeId,
+    });
+
+    if (!enabled) {
+      console.log('[useIncompleteCheckoutCapture] Hook disabled, not setting debounce timer');
+      return;
+    }
+
+    if (!hasMeaningfulData()) {
+      console.log('[useIncompleteCheckoutCapture] No meaningful data, not setting debounce timer');
+      return;
+    }
 
     // Clear existing timer
     if (debounceTimerRef.current) {
+      console.log('[useIncompleteCheckoutCapture] Clearing existing debounce timer');
       clearTimeout(debounceTimerRef.current);
     }
 
     // Set new timer
+    console.log('[useIncompleteCheckoutCapture] Setting debounce timer (2 seconds)');
     debounceTimerRef.current = setTimeout(() => {
+      console.log('[useIncompleteCheckoutCapture] Debounce timer fired, calling saveIncompleteCheckout');
       saveIncompleteCheckout();
     }, 2000); // 2 second debounce
 
@@ -128,7 +225,7 @@ export const useIncompleteCheckoutCapture = (
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [formData, cartItems, enabled, hasMeaningfulData, saveIncompleteCheckout]);
+  }, [formData, cartItems, enabled, hasMeaningfulData, saveIncompleteCheckout, storeId]);
 
   // Save on page unload (beforeunload)
   useEffect(() => {
