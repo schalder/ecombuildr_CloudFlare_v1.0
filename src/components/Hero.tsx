@@ -14,7 +14,6 @@ export const Hero = () => {
   const getHeroMedia = () => {
     // Priority: iframe embed code > YouTube URL > image fallback
     if (marketingContent?.iframe_embed_code && marketingContent.iframe_embed_code.trim()) {
-      console.log('Hero: Found iframe embed code');
       try {
         // Validate the iframe code before using it
         const sanitized = sanitizeEmbedCode(marketingContent.iframe_embed_code);
@@ -32,23 +31,16 @@ export const Hero = () => {
     }
     
     if (marketingContent?.youtube_url) {
-      console.log('Hero: Found YouTube URL:', marketingContent.youtube_url);
       const videoInfo = parseVideoUrl(marketingContent.youtube_url);
-      console.log('Hero: Parsed video info:', videoInfo);
       
       if (videoInfo.type === 'youtube' && videoInfo.id) {
         // Use youtube-nocookie.com for better privacy and performance
         const embedUrl = `https://www.youtube-nocookie.com/embed/${videoInfo.id}?rel=0&modestbranding=1`;
-        console.log('Hero: Generated embed URL:', embedUrl);
         return {
           type: 'video',
           url: embedUrl
         };
-      } else {
-        console.log('Hero: Invalid YouTube URL or video info');
       }
-    } else {
-      console.log('Hero: No video found, using image fallback');
     }
     
     const imageUrl = marketingContent?.hero_image_url || heroImage;

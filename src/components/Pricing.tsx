@@ -40,7 +40,6 @@ export const Pricing = () => {
   }, []);
   const fetchPlans = async () => {
     try {
-      console.log('Fetching pricing plans...');
       const {
         data,
         error
@@ -56,7 +55,6 @@ export const Pricing = () => {
         return;
       }
       
-      console.log('Pricing plans fetched successfully:', data?.length || 0, 'plans');
       setPlans((data || []).map(plan => ({
         ...plan,
         features: Array.isArray(plan.features) ? plan.features.map(f => String(f)) : []

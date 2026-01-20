@@ -27,12 +27,9 @@ export const Navbar = () => {
         }
 
         if (data) {
-          console.log('Navigation data received:', data);
-          console.log('Nav items:', data.nav_items);
           if (data.logo_url) setLogoUrl(data.logo_url);
           if (data.nav_items) {
             const navItems = data.nav_items as unknown as PlatformNavItem[];
-            console.log('Setting nav items:', navItems);
             setNavItems(navItems);
           }
         }
@@ -42,9 +39,6 @@ export const Navbar = () => {
     };
 
     fetchNavigation();
-
-    // Log nav items for debugging
-    console.log('Current nav items:', navItems);
 
     // Real-time subscription for live updates
     const channel = supabase
@@ -64,7 +58,6 @@ export const Navbar = () => {
   }, []);
 
   const renderNavItem = (item: PlatformNavItem) => {
-    console.log('Rendering nav item:', item);
     const hasChildren = item.children && item.children.length > 0;
     
     if (!hasChildren) {
