@@ -2744,8 +2744,9 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
           )}
           <Separator className="my-2" />
           
-          {/* Total Calculation: When upfront shipping collected, show subtotal - shipping = total */}
-          {(() => {
+          {/* Total Calculation: When upfront shipping collected for COD orders, show subtotal - shipping = total */}
+          {/* ✅ CRITICAL: Only apply this logic for COD orders, not instant payments (EPS/EB Pay/Stripe) */}
+          {order.payment_method === 'cod' && (() => {
             // Handle both array and object formats for custom_fields
             const customFields = order.custom_fields;
             if (!customFields) return false;
@@ -2779,8 +2780,9 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
             <div className="flex justify-between font-bold"><span>Total</span><span>{formatCurrency(Number(order.total))}</span></div>
           )}
           
-          {/* Upfront Payment Breakdown */}
-          {(() => {
+          {/* Upfront Payment Breakdown - ONLY show for COD orders with upfront payment */}
+          {/* ✅ CRITICAL: Instant payments (EPS/EB Pay/Stripe) pay everything upfront, so no breakdown needed */}
+          {order.payment_method === 'cod' && (() => {
             // Handle both array and object formats for custom_fields
             const customFields = order.custom_fields;
             if (!customFields) return null;

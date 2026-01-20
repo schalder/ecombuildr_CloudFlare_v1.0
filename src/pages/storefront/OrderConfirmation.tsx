@@ -536,7 +536,9 @@ useEffect(() => {
                   <span>Shipping:</span>
                   <span className="flex items-center gap-2">
                     ${order.shipping_cost.toFixed(2)}
-                    {order.custom_fields && typeof order.custom_fields === 'object' && 
+                    {/* ✅ Only show (Paid) for COD orders with upfront shipping payment */}
+                    {order.payment_method === 'cod' &&
+                     order.custom_fields && typeof order.custom_fields === 'object' && 
                      (order.custom_fields as any).upfront_payment_amount && 
                      (order.custom_fields as any).upfront_payment_amount > 0 &&
                      (order.custom_fields as any).upfront_payment_amount >= order.shipping_cost && (
@@ -554,8 +556,10 @@ useEffect(() => {
               )}
               <Separator />
               
-              {/* Total Calculation: When upfront shipping collected, show subtotal - shipping = total */}
-              {order.custom_fields && typeof order.custom_fields === 'object' && 
+              {/* Total Calculation: When upfront shipping collected for COD orders, show subtotal - shipping = total */}
+              {/* ✅ CRITICAL: Only apply this logic for COD orders, not instant payments (EPS/EB Pay/Stripe) */}
+              {order.payment_method === 'cod' &&
+               order.custom_fields && typeof order.custom_fields === 'object' && 
                (order.custom_fields as any).upfront_payment_amount && 
                (order.custom_fields as any).upfront_payment_amount > 0 &&
                (order.custom_fields as any).upfront_payment_amount >= order.shipping_cost ? (
@@ -581,8 +585,12 @@ useEffect(() => {
                 </div>
               )}
               
-              {/* Upfront Payment Breakdown */}
-              {order.custom_fields && typeof order.custom_fields === 'object' && (order.custom_fields as any).upfront_payment_amount && (order.custom_fields as any).upfront_payment_amount > 0 && (
+              {/* Upfront Payment Breakdown - ONLY show for COD orders with upfront payment */}
+              {/* ✅ CRITICAL: Instant payments (EPS/EB Pay/Stripe) pay everything upfront, so no breakdown needed */}
+              {order.payment_method === 'cod' &&
+               order.custom_fields && typeof order.custom_fields === 'object' && 
+               (order.custom_fields as any).upfront_payment_amount && 
+               (order.custom_fields as any).upfront_payment_amount > 0 && (
                 <>
                   <Separator />
                   <div className="space-y-2 pt-2">
