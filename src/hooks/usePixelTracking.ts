@@ -105,8 +105,8 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       
       const eventRecord = {
         store_id: storeId,
-        website_id: websiteId || null,
-        funnel_id: funnelId || null,
+        website_id: effectiveWebsiteId || null,
+        funnel_id: effectiveFunnelId || null,
         event_type: eventType,
         event_data: enhancedEventData,
         session_id: sessionId,
@@ -121,12 +121,17 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       };
       
       // Add funnel context if available
-      if (funnelId) {
-        eventRecord.event_data = { ...enhancedEventData, funnel_id: funnelId };
+      if (effectiveFunnelId) {
+        eventRecord.event_data = { ...enhancedEventData, funnel_id: effectiveFunnelId };
       }
 
       await supabase.from('pixel_events').insert(eventRecord);
-      logger.debug('[PixelTracking] Stored event in database:', eventType, enhancedEventData, { websiteId, funnelId, eventId });
+      logger.debug('[PixelTracking] Stored event in database:', eventType, enhancedEventData, { 
+        websiteId: effectiveWebsiteId, 
+        funnelId: effectiveFunnelId, 
+        eventId,
+        storeId 
+      });
     } catch (error) {
       logger.warn('[PixelTracking] Failed to store event:', error);
     }
@@ -314,7 +319,14 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     shipping_state?: string | null;
     shipping_postal_code?: string | null;
     shipping_country?: string | null;
+    // ✅ CRITICAL: Allow overriding websiteId and funnelId from order data
+    // This ensures events are stored with correct IDs even if hook state hasn't updated yet
+    websiteId?: string | null;
+    funnelId?: string | null;
   }) => {
+    // Use provided websiteId/funnelId or fall back to hook's values
+    const effectiveWebsiteId = data.websiteId !== undefined ? data.websiteId : websiteId;
+    const effectiveFunnelId = data.funnelId !== undefined ? data.funnelId : funnelId;
     const eventData = {
       content_ids: data.items.map(item => item.item_id),
       content_type: 'product',
@@ -347,7 +359,17 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         items: data.items,
       });
     }
-  }, [trackEvent, pixelConfig]);
+    
+    // ✅ CRITICAL: Store event with effectiveWebsiteId and effectiveFunnelId
+    // This ensures the database trigger can check server-side configuration
+    storePixelEvent('Purchase', eventData, {
+      facebook: {
+        configured: !!pixelConfig?.facebook_pixel_id,
+        attempted: false,
+        success: false
+      }
+    }, effectiveWebsiteId, effectiveFunnelId);
+  }, [trackEvent, pixelConfig, storePixelEvent, websiteId, funnelId]);
 
   const trackPageView = useCallback((data?: {
     page_title?: string;

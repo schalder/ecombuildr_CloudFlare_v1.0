@@ -235,9 +235,17 @@ useEffect(() => {
             item_category: undefined
           }));
           
-          // ✅ REFACTORED: Use trackPurchase hook (same flow as PageView/AddToCart)
-          // This stores event in database, and database trigger handles server-side tracking automatically
-          // The hook will automatically include browser context, event_id, and provider metadata
+          // ✅ CRITICAL FIX: Extract website_id and funnel_id from order data
+          // Pass them directly to trackPurchase to ensure correct IDs are stored
+          // This is required for the database trigger to check server-side configuration
+          const orderWebsiteId = orderData.website_id || effectiveWebsiteId || null;
+          const orderFunnelId = orderData.funnel_id || 
+                               (orderData.custom_fields as any)?.funnelId || 
+                               effectiveFunnelId || 
+                               null;
+          
+          // ✅ REFACTORED: Use trackPurchase hook with order's website_id/funnel_id
+          // This stores event in database with correct IDs, and database trigger handles server-side tracking
           trackPurchase({
             transaction_id: orderData.id,
             value: orderData.total,
@@ -250,6 +258,10 @@ useEffect(() => {
             shipping_state: orderData.shipping_state || null,
             shipping_postal_code: orderData.shipping_postal_code || null,
             shipping_country: orderData.shipping_country || null,
+            // ✅ CRITICAL: Pass website_id and funnel_id from order data
+            // This ensures the event is stored with correct IDs even if hook state hasn't updated
+            websiteId: orderWebsiteId,
+            funnelId: orderFunnelId,
           });
           
           // Store tracking flag to prevent future duplicates

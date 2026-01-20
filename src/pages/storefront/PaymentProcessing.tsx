@@ -1038,9 +1038,16 @@ export const PaymentProcessing: React.FC = () => {
                   }
                 }
                 
-                // ✅ REFACTORED: Use trackPurchase hook (same flow as PageView/AddToCart)
-                // This stores event in database, and database trigger handles server-side tracking automatically
-                // The hook will automatically include browser context, event_id, and provider metadata
+                // ✅ CRITICAL FIX: Extract website_id and funnel_id from order data
+                // Pass them directly to trackPurchase to ensure correct IDs are stored
+                const orderWebsiteId = data.order.website_id || effectiveWebsiteId || null;
+                const orderFunnelId = data.order.funnel_id || 
+                                     (data.order.custom_fields as any)?.funnelId || 
+                                     effectiveFunnelId || 
+                                     null;
+                
+                // ✅ REFACTORED: Use trackPurchase hook with order's website_id/funnel_id
+                // This stores event in database with correct IDs, and database trigger handles server-side tracking
                 trackPurchase({
                   transaction_id: data.order.id,
                   value: data.order.total,
@@ -1053,6 +1060,9 @@ export const PaymentProcessing: React.FC = () => {
                   shipping_state: data.order.shipping_state || null,
                   shipping_postal_code: data.order.shipping_postal_code || null,
                   shipping_country: data.order.shipping_country || null,
+                  // ✅ CRITICAL: Pass website_id and funnel_id from order data
+                  websiteId: orderWebsiteId,
+                  funnelId: orderFunnelId,
                 });
                 
                 // Store tracking flag to prevent duplicate tracking on redirect
@@ -1103,7 +1113,14 @@ export const PaymentProcessing: React.FC = () => {
                     quantity: item.quantity,
                   }));
                   
-                  // ✅ Use trackPurchase hook - stores in database, trigger handles server-side
+                  // ✅ CRITICAL FIX: Extract website_id and funnel_id from order data
+                  const orderWebsiteId = data.order.website_id || effectiveWebsiteId || null;
+                  const orderFunnelId = data.order.funnel_id || 
+                                       (data.order.custom_fields as any)?.funnelId || 
+                                       effectiveFunnelId || 
+                                       null;
+                  
+                  // ✅ Use trackPurchase hook with order's website_id/funnel_id
                   trackPurchase({
                     transaction_id: data.order.id,
                     value: data.order.total,
@@ -1115,6 +1132,9 @@ export const PaymentProcessing: React.FC = () => {
                     shipping_state: data.order.shipping_state || null,
                     shipping_postal_code: data.order.shipping_postal_code || null,
                     shipping_country: data.order.shipping_country || null,
+                    // ✅ CRITICAL: Pass website_id and funnel_id from order data
+                    websiteId: orderWebsiteId,
+                    funnelId: orderFunnelId,
                   });
                   
                   // Store tracking flag to prevent duplicate tracking on redirect
