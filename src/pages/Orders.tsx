@@ -118,6 +118,7 @@ const statusColors = {
   shipped: "default",
   delivered: "default",
   cancelled: "destructive",
+  hold: "secondary", // Hold status uses secondary/warning color
 } as const;
 
 const SUPPORTED_CURRENCIES: CurrencyCode[] = ['BDT', 'USD', 'INR', 'EUR', 'GBP'];
@@ -575,7 +576,7 @@ export default function Orders() {
 
         // Apply status filter to count query (but not for incomplete tab to avoid overriding the query)
         if (statusFilter && activeTab !== 'incomplete') {
-          countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+          countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled' | 'hold');
         }
 
         // Apply payment status filter to count query (but not for incomplete tab to avoid overriding the query)
