@@ -347,11 +347,26 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       return;
     }
 
-    // Generate event_id for PageView
-    const eventId = `PageView_${Date.now()}_${crypto.randomUUID()}`;
+    // ✅ FIX: Deduplicate PageView events - use same event_id for same URL
+    const currentUrl = data?.page_location || window.location.href;
+    const pageViewKey = `pageview_${currentUrl}`;
+    const lastPageViewTime = sessionStorage.getItem(pageViewKey);
+    const now = Date.now();
+    
+    // If PageView was tracked for this URL within last 2 seconds, skip (prevent duplicates)
+    if (lastPageViewTime && (now - parseInt(lastPageViewTime)) < 2000) {
+      logger.debug('[PixelTracking] Skipping duplicate PageView for:', currentUrl);
+      return;
+    }
+    
+    // Store timestamp to prevent duplicates
+    sessionStorage.setItem(pageViewKey, now.toString());
+    
+    // Generate event_id for PageView (consistent for same URL)
+    const eventId = `PageView_${currentUrl}_${Math.floor(now / 1000)}`;
     const eventData = {
       page_title: data?.page_title || document.title,
-      page_location: data?.page_location || window.location.href,
+      page_location: currentUrl,
       referrer: document.referrer || null,
       event_id: eventId, // Include in eventData for server-side
     };

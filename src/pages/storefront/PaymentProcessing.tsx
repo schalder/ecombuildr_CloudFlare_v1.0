@@ -104,7 +104,8 @@ export const PaymentProcessing: React.FC = () => {
   const isWebsiteContext = Boolean(websiteId || websiteSlug || (window.location.hostname !== 'localhost' && window.location.hostname !== 'ecombuildr.com'));
   
   // Get status from URL - this takes priority over database status
-  const urlStatus = searchParams.get('status');
+  // ✅ FIX: Check both lowercase and uppercase status params (EPS/EBPay may send Status=Success)
+  const urlStatus = searchParams.get('status') || searchParams.get('Status') || '';
   const [statusUpdated, setStatusUpdated] = useState(false);
 
   // ✅ Check if we're on the wrong domain and redirect to custom domain if needed
@@ -1015,6 +1016,75 @@ export const PaymentProcessing: React.FC = () => {
             }
           } catch (error) {
             console.error('PaymentProcessing: Error tracking purchase event:', error);
+            // Don't block order creation if tracking fails
+          }
+        }
+        
+        // ✅ TRACK PURCHASE EVENT FOR WEBSITE CHECKOUTS (EPS/EBPay/Stripe)
+        // This ensures Purchase events fire for all payment methods, not just funnel checkouts
+        if (!isFunnelCheckout && data?.order) {
+          try {
+            // Fetch pixel config from website
+            if (websiteId) {
+              const { data: websiteData } = await supabase
+                .from('websites')
+                .select('settings, facebook_pixel_id, facebook_access_token, facebook_test_event_code, facebook_server_side_enabled')
+                .eq('id', websiteId)
+                .maybeSingle();
+              
+              if (websiteData) {
+                const settings = websiteData.settings as any;
+                const websitePixels = {
+                  facebook_pixel_id: websiteData.facebook_pixel_id || settings?.facebook_pixel_id || undefined,
+                  google_analytics_id: settings?.google_analytics_id || undefined,
+                  google_ads_id: settings?.google_ads_id || undefined,
+                };
+                
+                // Update pixel config state so hook has correct config
+                setPixelConfig(websitePixels);
+                
+                // Fetch order items for tracking
+                const { data: orderItems } = await supabase
+                  .from('order_items')
+                  .select('product_id, product_name, price, quantity')
+                  .eq('order_id', data.order.id);
+                
+                if (orderItems && orderItems.length > 0) {
+                  const trackingItems = orderItems.map(item => ({
+                    item_id: item.product_id,
+                    item_name: item.product_name,
+                    price: item.price,
+                    quantity: item.quantity,
+                  }));
+                  
+                  // ✅ Use trackPurchase hook - stores in database, trigger handles server-side
+                  trackPurchase({
+                    transaction_id: data.order.id,
+                    value: data.order.total,
+                    items: trackingItems,
+                    customer_email: data.order.customer_email || null,
+                    customer_phone: data.order.customer_phone || null,
+                    customer_name: data.order.customer_name || null,
+                    shipping_city: data.order.shipping_city || null,
+                    shipping_state: data.order.shipping_state || null,
+                    shipping_postal_code: data.order.shipping_postal_code || null,
+                    shipping_country: data.order.shipping_country || null,
+                  });
+                  
+                  // Store tracking flag to prevent duplicate tracking on redirect
+                  sessionStorage.setItem('purchase_tracked_' + data.order.id, 'true');
+                  
+                  console.log('PaymentProcessing: ✅ Purchase event tracked for website checkout:', {
+                    orderId: data.order.id,
+                    total: data.order.total,
+                    itemsCount: orderItems.length,
+                    websiteId,
+                  });
+                }
+              }
+            }
+          } catch (error) {
+            console.error('PaymentProcessing: Error tracking purchase event for website checkout:', error);
             // Don't block order creation if tracking fails
           }
         }
