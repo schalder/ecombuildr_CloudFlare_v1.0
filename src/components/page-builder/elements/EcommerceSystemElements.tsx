@@ -2519,48 +2519,6 @@ const OrderConfirmationElement: React.FC<{ element: PageBuilderElement; isEditin
                 .single();
               
               if (funnelData?.settings) {
-                const settings = funnelData.settings as any;
-                const funnelPixels = {
-                  facebook_pixel_id: settings?.facebook_pixel_id || pixels?.facebook_pixel_id,
-                  google_analytics_id: settings?.google_analytics_id || pixels?.google_analytics_id,
-                  google_ads_id: settings?.google_ads_id || pixels?.google_ads_id,
-                };
-                
-                // ✅ Generate event_id for deduplication (use same for both fbq and database)
-                let sessionId = sessionStorage.getItem('session_id');
-                if (!sessionId) {
-                  sessionId = crypto.randomUUID();
-                  sessionStorage.setItem('session_id', sessionId);
-                }
-                const eventId = `Purchase_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
-                
-                // ✅ Capture browser context for server-side matching
-                const getFacebookBrowserContext = () => {
-                  try {
-                    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-                      const [key, value] = cookie.trim().split('=');
-                      acc[key] = value;
-                      return acc;
-                    }, {} as Record<string, string>);
-                    
-                    return {
-                      fbp: cookies['_fbp'] || null,
-                      fbc: cookies['_fbc'] || null,
-                      client_user_agent: navigator.userAgent,
-                      event_source_url: window.location.href,
-                    };
-                  } catch (error) {
-                    return {
-                      fbp: null,
-                      fbc: null,
-                      client_user_agent: navigator.userAgent,
-                      event_source_url: window.location.href,
-                    };
-                  }
-                };
-                
-                const browserContext = getFacebookBrowserContext();
-                
                 // ✅ REFACTORED: Use trackPurchase hook (same flow as PageView/AddToCart)
                 // This stores event in database, and database trigger handles server-side tracking automatically
                 // The hook will automatically include browser context, event_id, and provider metadata
