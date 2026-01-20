@@ -268,6 +268,11 @@ export const PaymentProcessing: React.FC = () => {
     // If it's a site checkout with other payment methods, we need store to be loaded
     const canProceed = isFunnelCheckout || isFailedPayment || isStripeSuccess || isEpsEbpaySuccess || store;
     
+    // ✅ CRITICAL FIX: Only block if course payment is explicitly true
+    // If course check is still pending (null) or false, proceed with regular order flow
+    // This prevents getting stuck when course check is slow or hasn't completed
+    const shouldBlockForCourse = isCoursePayment === true;
+    
     console.log('PaymentProcessing: useEffect check:', {
       tempId,
       urlStatus,
@@ -278,10 +283,11 @@ export const PaymentProcessing: React.FC = () => {
       isEpsEbpaySuccess,
       hasStore: !!store,
       canProceed,
-      isCoursePayment
+      isCoursePayment,
+      shouldBlockForCourse
     });
     
-    if (canProceed && isCoursePayment === false) {
+    if (canProceed && !shouldBlockForCourse) {
       if (tempId && (urlStatus === 'success' || urlStatus === 'completed')) {
         console.log('PaymentProcessing: Calling handleDeferredOrderCreation...');
         // Use standard deferred order creation for all payment methods
@@ -301,7 +307,8 @@ export const PaymentProcessing: React.FC = () => {
       console.log('PaymentProcessing: Cannot proceed yet:', {
         canProceed,
         isCoursePayment,
-        reason: !canProceed ? 'Waiting for store or conditions not met' : 'Course payment check pending'
+        shouldBlockForCourse,
+        reason: !canProceed ? 'Waiting for store or conditions not met' : shouldBlockForCourse ? 'Course payment detected' : 'Course payment check pending'
       });
     }
   }, [orderId, tempId, urlStatus, store, isCoursePayment]);
