@@ -25,17 +25,27 @@ import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
 import { useResolvedWebsiteId } from '@/hooks/useResolvedWebsiteId';
 import { useFunnelStepContext } from '@/contexts/FunnelStepContext';
+import { useChannelContext } from '@/hooks/useChannelContext';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 import { getPhoneValidationError } from '@/utils/phoneValidation';
 import { calculatePaymentBreakdown, getPaymentBreakdownMessage, getUpfrontPaymentMethod, ProductData } from '@/utils/checkoutCalculations';
 
 const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?: 'desktop' | 'tablet' | 'mobile' }> = ({ element, deviceType = 'desktop' }) => {
   const navigate = useNavigate();
-  const { websiteId, funnelId } = useParams<{ websiteId?: string; funnelId?: string }>();
   const paths = useEcomPaths();
   const { store, loadStoreById } = useStore();
   const { pixels } = usePixelContext();
-  const { stepId } = useFunnelStepContext();
+  const { stepId, funnelId: contextFunnelId } = useFunnelStepContext();
+  
+  // ✅ FIX: Resolve websiteId and funnelId from multiple sources (like CheckoutFullElement)
+  // This supports both website landing pages AND funnel step pages
+  const { websiteId: channelWebsiteId, funnelId: channelFunnelId } = useChannelContext();
+  
+  // Resolve funnelId: URL params -> FunnelStepContext -> null
+  const funnelId = channelFunnelId || contextFunnelId || null;
+  
+  // Resolve websiteId: URL params -> WebsiteContext -> null (already handled by useChannelContext)
+  const websiteId = channelWebsiteId || null;
   
   // ✅ FIX: Ensure storeId is available - fetch from website/funnel if store not loaded
   const [effectiveStoreId, setEffectiveStoreId] = useState<string | undefined>(store?.id);
