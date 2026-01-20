@@ -38,9 +38,6 @@ export const useIncompleteCheckoutCapture = (
       if (!sessionId) {
         sessionId = crypto.randomUUID();
         sessionStorage.setItem('checkout_session_id', sessionId);
-        console.log('[useIncompleteCheckoutCapture] Created new session ID:', sessionId);
-      } else {
-        console.log('[useIncompleteCheckoutCapture] Using existing session ID:', sessionId);
       }
       sessionIdRef.current = sessionId;
     }
@@ -51,44 +48,19 @@ export const useIncompleteCheckoutCapture = (
     return !!(formData.customer_name?.trim() || formData.customer_phone?.trim());
   }, [formData.customer_name, formData.customer_phone]);
 
-  // Save incomplete checkout to database
+  // Save incomplete checkout via Edge Function (secure server-side capture)
   const saveIncompleteCheckout = useCallback(async () => {
-    console.log('[useIncompleteCheckoutCapture] saveIncompleteCheckout called', {
-      storeId,
-      enabled,
-      hasMeaningfulData: hasMeaningfulData(),
-      hasSessionId: !!sessionIdRef.current,
-      customerName: formData.customer_name,
-      customerPhone: formData.customer_phone,
-    });
-
-    // ✅ FIX: If storeId is not ready yet, retry after a delay
+    // If storeId is not ready yet, retry after a delay
     if (!storeId) {
-      console.log('[useIncompleteCheckoutCapture] storeId not ready, will retry');
-      // Retry after 500ms if storeId becomes available
       setTimeout(() => {
         if (storeId) {
-          console.log('[useIncompleteCheckoutCapture] Retrying save after storeId became available');
           saveIncompleteCheckout();
-        } else {
-          console.warn('[useIncompleteCheckoutCapture] storeId still not available after retry');
         }
       }, 500);
       return;
     }
 
-    if (!enabled) {
-      console.log('[useIncompleteCheckoutCapture] Hook disabled, skipping save');
-      return;
-    }
-
-    if (!hasMeaningfulData()) {
-      console.log('[useIncompleteCheckoutCapture] No meaningful data (name or phone), skipping save');
-      return;
-    }
-
-    if (!sessionIdRef.current) {
-      console.warn('[useIncompleteCheckoutCapture] No session ID, skipping save');
+    if (!enabled || !hasMeaningfulData() || !sessionIdRef.current) {
       return;
     }
 
@@ -121,19 +93,8 @@ export const useIncompleteCheckoutCapture = (
         last_updated_at: new Date().toISOString(),
       };
 
-      console.log('[useIncompleteCheckoutCapture] Attempting to save incomplete checkout', {
-        hasExistingId: !!incompleteCheckoutIdRef.current,
-        storeId: checkoutData.store_id,
-        customerName: checkoutData.customer_name,
-        customerPhone: checkoutData.customer_phone,
-        cartItemsCount: checkoutData.cart_items?.length || 0,
-        total: checkoutData.total,
-      });
-
       // Call Edge Function to securely capture incomplete checkout
-      // Edge Function uses service role and handles deduplication
-      console.log('[useIncompleteCheckoutCapture] Calling Edge Function to capture incomplete checkout');
-      
+      // Edge Function uses service role, validates input, and handles deduplication
       try {
         const result = await callEdgeFunction('capture-incomplete-checkout', {
           session_id: sessionIdRef.current,
@@ -160,23 +121,18 @@ export const useIncompleteCheckoutCapture = (
           utm_source: checkoutData.utm_source,
           utm_campaign: checkoutData.utm_campaign,
           utm_medium: checkoutData.utm_medium,
-          step: 'checkout_progress', // Indicates user is progressing through checkout
+          step: 'checkout_progress',
         });
 
         if (result?.id) {
-          console.log('[useIncompleteCheckoutCapture] Successfully captured incomplete checkout:', result.id);
           incompleteCheckoutIdRef.current = result.id;
-        } else {
-          console.warn('[useIncompleteCheckoutCapture] Edge Function succeeded but no ID returned');
         }
       } catch (error: any) {
-        console.error('[useIncompleteCheckoutCapture] Failed to capture incomplete checkout:', error);
-        console.error('[useIncompleteCheckoutCapture] Error details:', {
-          message: error?.message,
-          details: error?.details,
-          code: error?.code,
-        });
-        // Don't throw - silently fail to avoid disrupting user experience
+        // Silently fail to avoid disrupting user experience
+        // Errors are logged server-side in Edge Function
+        if (process.env.NODE_ENV === 'development') {
+          console.error('[useIncompleteCheckoutCapture] Failed to capture:', error);
+        }
       }
     } catch (error) {
       console.error('[useIncompleteCheckoutCapture] Exception saving incomplete checkout:', error);
@@ -186,34 +142,17 @@ export const useIncompleteCheckoutCapture = (
 
   // Debounced save (save 2 seconds after user stops typing)
   useEffect(() => {
-    console.log('[useIncompleteCheckoutCapture] Debounce effect triggered', {
-      enabled,
-      hasMeaningfulData: hasMeaningfulData(),
-      customerName: formData.customer_name,
-      customerPhone: formData.customer_phone,
-      storeId,
-    });
-
-    if (!enabled) {
-      console.log('[useIncompleteCheckoutCapture] Hook disabled, not setting debounce timer');
-      return;
-    }
-
-    if (!hasMeaningfulData()) {
-      console.log('[useIncompleteCheckoutCapture] No meaningful data, not setting debounce timer');
+    if (!enabled || !hasMeaningfulData()) {
       return;
     }
 
     // Clear existing timer
     if (debounceTimerRef.current) {
-      console.log('[useIncompleteCheckoutCapture] Clearing existing debounce timer');
       clearTimeout(debounceTimerRef.current);
     }
 
     // Set new timer
-    console.log('[useIncompleteCheckoutCapture] Setting debounce timer (2 seconds)');
     debounceTimerRef.current = setTimeout(() => {
-      console.log('[useIncompleteCheckoutCapture] Debounce timer fired, calling saveIncompleteCheckout');
       saveIncompleteCheckout();
     }, 2000); // 2 second debounce
 
@@ -237,24 +176,11 @@ export const useIncompleteCheckoutCapture = (
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [enabled, hasMeaningfulData, saveIncompleteCheckout]);
 
-  // Cleanup function to mark incomplete checkout as completed when order is successfully placed
-  // We'll call the Edge Function to mark it complete, or it can be handled server-side
+  // Cleanup function - clear local reference when order is successfully placed
+  // The incomplete checkout record can be cleaned up server-side or marked as completed
   const clearIncompleteCheckout = useCallback(async () => {
-    if (sessionIdRef.current) {
-      try {
-        // Call Edge Function to mark checkout as completed
-        // The Edge Function can handle this, or we can create a separate endpoint
-        // For now, just clear the local reference
-        incompleteCheckoutIdRef.current = null;
-        sessionStorage.removeItem('checkout_session_id');
-        console.log('[useIncompleteCheckoutCapture] Cleared incomplete checkout reference');
-      } catch (error) {
-        // Silently fail
-        if (process.env.NODE_ENV === 'development') {
-          console.error('Failed to clear incomplete checkout:', error);
-        }
-      }
-    }
+    incompleteCheckoutIdRef.current = null;
+    sessionStorage.removeItem('checkout_session_id');
   }, []);
 
   return { clearIncompleteCheckout };
