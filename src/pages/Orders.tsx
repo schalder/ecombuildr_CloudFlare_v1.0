@@ -259,6 +259,7 @@ export default function Orders() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [incompleteCheckouts, setIncompleteCheckouts] = useState<IncompleteCheckout[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "");
@@ -313,17 +314,35 @@ export default function Orders() {
     return formatAmount(amount, getOrderCurrency(selectedOrder));
   };
   const fetchIncompleteCheckouts = async () => {
-    if (!user || !store) return;
+    if (!user) return;
     
     try {
       setLoading(true);
+      
+      // Get user's stores (same pattern as fetchOrders)
+      const { data: stores, error: storesError } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('owner_id', user.id)
+        .eq('is_active', true);
+      
+      if (storesError) throw storesError;
+      if (!stores || stores.length === 0) {
+        setIncompleteCheckouts([]);
+        setTotalCount(0);
+        setLoading(false);
+        return;
+      }
+      
+      const storeIds = stores.map(store => store.id);
       const start = (currentPage - 1) * ordersPerPage;
       const end = start + ordersPerPage - 1;
 
-      let query = supabase
+      // Use type assertion since incomplete_checkouts table is not in TypeScript types yet
+      let query = (supabase as any)
         .from('incomplete_checkouts')
         .select('*', { count: 'exact' })
-        .eq('store_id', store.id)
+        .in('store_id', storeIds)
         .order('last_updated_at', { ascending: false })
         .range(start, end);
 
@@ -2315,7 +2334,7 @@ export default function Orders() {
                                 <DropdownMenuItem
                                   onClick={async () => {
                                     try {
-                                      await supabase
+                                      await (supabase as any)
                                         .from('incomplete_checkouts')
                                         .delete()
                                         .eq('id', checkout.id);
