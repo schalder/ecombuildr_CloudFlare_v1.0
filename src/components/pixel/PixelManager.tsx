@@ -72,6 +72,8 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
         s.parentNode.insertBefore(t,s)}(window, document,'script',
         'https://connect.facebook.net/en_US/fbevents.js');
         fbq('init', '${currentPixels.facebook_pixel_id}');
+        // ✅ FIX: Disable auto PageView - we track manually for consistency and deduplication
+        fbq('set', 'autoConfig', false, '${currentPixels.facebook_pixel_id}');
       `;
       document.head.appendChild(script);
       

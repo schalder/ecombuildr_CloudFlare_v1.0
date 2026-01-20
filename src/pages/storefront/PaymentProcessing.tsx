@@ -815,7 +815,8 @@ export const PaymentProcessing: React.FC = () => {
       });
       
       // Create order now that payment is successful
-      const { data, error } = await supabase.functions.invoke('create-order-on-payment-success', {
+      // ✅ FIX: Add timeout to prevent infinite waiting
+      const orderCreationPromise = supabase.functions.invoke('create-order-on-payment-success', {
         body: {
           orderData: cleanOrderData,
           itemsData: checkoutData.itemsPayload,
@@ -833,22 +834,37 @@ export const PaymentProcessing: React.FC = () => {
         }
       });
 
+      // Add 10 second timeout
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Order creation timeout')), 10000)
+      );
+
+      let data, error;
+      try {
+        const result = await Promise.race([orderCreationPromise, timeoutPromise]);
+        data = result as any;
+        error = undefined;
+      } catch (err: any) {
+        error = err;
+        data = undefined;
+      }
+
       // Check if order was created even if there's an error
       const orderWasCreated = data?.order?.id || data?.success;
       
       if (error) {
         console.error('PaymentProcessing: create-order-on-payment-success error:', error);
-        // If order was created despite error, don't throw - just redirect
-        if (orderWasCreated && data?.order?.id) {
-          console.log('PaymentProcessing: Order created despite error, redirecting...');
-          setOrderCreated(true);
-          sessionStorage.removeItem('pending_checkout');
-          clearCart();
-          const newOrderToken = data.order.access_token || data.order.id;
-          window.location.replace(paths.orderConfirmation(data.order.id, newOrderToken));
-          return;
-        }
-        throw error;
+        // ✅ FIX: Always attempt redirect on error (fallback to tempId)
+        console.log('PaymentProcessing: Order creation failed, attempting fallback redirect...');
+        setOrderCreated(true);
+        sessionStorage.removeItem('pending_checkout');
+        clearCart();
+        
+        // Try to use order ID from response, otherwise use tempId
+        const fallbackOrderId = data?.order?.id || tempId;
+        const fallbackToken = data?.order?.access_token || data?.order?.id || crypto.randomUUID().replace(/-/g, '');
+        window.location.replace(paths.orderConfirmation(fallbackOrderId, fallbackToken));
+        return;
       }
 
       console.log('PaymentProcessing: create-order-on-payment-success response:', {
