@@ -953,7 +953,7 @@ export default function Orders() {
       }
 
       if (statusFilter) {
-        countQuery = countQuery.eq('status', statusFilter as 'pending' | 'processing' | 'delivered' | 'confirmed' | 'shipped' | 'cancelled');
+        countQuery = countQuery.eq('status', statusFilter as any);
       }
 
       // Apply payment status filter to count query
