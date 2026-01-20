@@ -698,7 +698,12 @@ const ButtonElement: React.FC<{
     // ✅ CRITICAL FIX: Stop Facebook's automatic button click tracking for AddToCart buttons
     // This prevents ob3_plugin-set events from firing when we manually track AddToCart
     if (element.content.enableAddToCart && !isEditing) {
-      e.stopImmediatePropagation(); // Prevent Facebook's automatic listener from firing
+      // Access native event to use stopImmediatePropagation (React synthetic events don't have it)
+      if (e.nativeEvent && typeof e.nativeEvent.stopImmediatePropagation === 'function') {
+        e.nativeEvent.stopImmediatePropagation();
+      }
+      // Also stop propagation to prevent parent listeners
+      e.stopPropagation();
     }
     
     // Fire AddToCart pixel events if enabled (tracking only, no cart manipulation)
