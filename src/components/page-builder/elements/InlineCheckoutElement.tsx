@@ -394,6 +394,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         value: trackingSubtotal,
         items: [{
           item_id: selectedProduct.id,
+          item_name: selectedProduct.name,
           quantity: quantity,
           price: selectedProduct.price,
         }],
