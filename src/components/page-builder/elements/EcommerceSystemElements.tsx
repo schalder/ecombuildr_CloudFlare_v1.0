@@ -1118,13 +1118,21 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     const sessionKey = `initiate_checkout_tracked_${element.id}`;
     const alreadyTracked = sessionStorage.getItem(sessionKey);
     
-    // ✅ FIX: Set flag IMMEDIATELY (synchronously) to prevent multiple calls
-    if (alreadyTracked || hasTrackedInitiateCheckout) {
-      console.log('[CheckoutFullElement] ⏭️ InitiateCheckout already tracked, skipping', {
+    // ✅ FIX: Only trust sessionStorage if state also confirms it (prevent stale flags)
+    if (hasTrackedInitiateCheckout) {
+      console.log('[CheckoutFullElement] ⏭️ InitiateCheckout already tracked (state confirmed), skipping');
+      return; // Exit early if state confirms tracking
+    }
+    
+    // ✅ FIX: If sessionStorage says tracked but state doesn't, clear stale flag
+    if (alreadyTracked === 'true' && !hasTrackedInitiateCheckout) {
+      console.log('[CheckoutFullElement] 🧹 Clearing stale sessionStorage flag (state mismatch)', {
         alreadyTracked,
-        hasTrackedInitiateCheckout
+        hasTrackedInitiateCheckout,
+        reason: 'Flag exists but state is false - likely from previous session or failed tracking'
       });
-      return; // Exit early if already tracked
+      sessionStorage.removeItem(sessionKey);
+      // Continue with tracking
     }
     
     // ✅ FIX: If effectiveStoreId is not ready, wait and retry (up to 2 seconds)
@@ -1165,10 +1173,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       timestamp: new Date().toISOString()
     });
     
-    // ✅ FIX: Set flag BEFORE async operations to prevent race conditions
-    sessionStorage.setItem(sessionKey, 'true');
-    setHasTrackedInitiateCheckout(true);
-    
     console.log('[CheckoutFullElement] 📤 Calling trackInitiateCheckout hook', {
       value: total + shippingCost,
       itemsCount: items.length,
@@ -1179,7 +1183,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       }))
     });
     
-    // ✅ Use trackInitiateCheckout hook - stores in database, trigger handles server-side
+    // ✅ FIX: Call trackInitiateCheckout FIRST, then set flag only if successful
     try {
       trackInitiateCheckout({
         value: total + shippingCost,
@@ -1189,9 +1193,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
           price: item.price,
         })),
       });
-      console.log('[CheckoutFullElement] ✅ trackInitiateCheckout called successfully');
+      
+      // ✅ FIX: Only set flag AFTER successful tracking call (not before)
+      console.log('[CheckoutFullElement] ✅ trackInitiateCheckout called successfully - setting flag');
+      sessionStorage.setItem(sessionKey, 'true');
+      setHasTrackedInitiateCheckout(true);
     } catch (error) {
       console.error('[CheckoutFullElement] ❌ Error calling trackInitiateCheckout:', error);
+      // Don't set flag if tracking failed
     }
   }, [hasTrackedInitiateCheckout, items, effectiveStoreId, total, shippingCost, element.id, trackInitiateCheckout, pixels, websiteId, funnelId, store?.id]);
 
