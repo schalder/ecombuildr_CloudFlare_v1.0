@@ -119,7 +119,29 @@ serve(async (req: Request) => {
     }
 
     // Return safe subset of order data (no PII exposed in logs)
-    // Include custom_fields so OrderConfirmationElement can check for upfront_payment_amount
+    // ✅ CRITICAL: Sanitize custom_fields to remove backend-only data
+    // Remove order_access_token (backend-only, should never be exposed to customers)
+    // Keep upfront_payment_amount, upfront_payment_method, delivery_payment_amount (used for customer payment breakdowns)
+    let safeCustomFields = null;
+    if (order.custom_fields) {
+      const customFields = typeof order.custom_fields === 'object' ? { ...order.custom_fields } : order.custom_fields;
+      if (typeof customFields === 'object' && !Array.isArray(customFields)) {
+        // Remove backend-only fields
+        const { order_access_token, ...sanitizedFields } = customFields as any;
+        safeCustomFields = Object.keys(sanitizedFields).length > 0 ? sanitizedFields : null;
+      } else {
+        // If it's an array or other format, keep as is but remove order_access_token entries
+        if (Array.isArray(customFields)) {
+          safeCustomFields = customFields.filter((cf: any) => 
+            cf.id !== 'order_access_token' && cf.label !== 'order_access_token'
+          );
+          if (safeCustomFields.length === 0) safeCustomFields = null;
+        } else {
+          safeCustomFields = customFields;
+        }
+      }
+    }
+    
     // ✅ CRITICAL: Include website_id, funnel_id, and store_id for pixel tracking
     // These are required for the database trigger to check server-side configuration
     const safeOrder = {
@@ -140,7 +162,7 @@ serve(async (req: Request) => {
       total: order.total,
       created_at: order.created_at,
       notes: order.notes,
-      custom_fields: order.custom_fields || null, // Include custom_fields for upfront payment info
+      custom_fields: safeCustomFields, // ✅ Sanitized custom_fields (order_access_token removed)
       // ✅ CRITICAL: Include website_id, funnel_id, and store_id for pixel tracking
       website_id: order.website_id || null,
       funnel_id: order.funnel_id || null,
