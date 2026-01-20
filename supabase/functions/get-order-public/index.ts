@@ -144,7 +144,7 @@ serve(async (req: Request) => {
       // ✅ CRITICAL: Include website_id, funnel_id, and store_id for pixel tracking
       website_id: order.website_id || null,
       funnel_id: order.funnel_id || null,
-      store_id: order.store_id,
+      store_id: order.store_id || null, // ✅ Make nullable to prevent errors
     };
 
     // Get download links for digital products
