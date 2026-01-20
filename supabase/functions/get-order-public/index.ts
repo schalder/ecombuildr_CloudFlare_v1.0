@@ -120,6 +120,8 @@ serve(async (req: Request) => {
 
     // Return safe subset of order data (no PII exposed in logs)
     // Include custom_fields so OrderConfirmationElement can check for upfront_payment_amount
+    // ✅ CRITICAL: Include website_id, funnel_id, and store_id for pixel tracking
+    // These are required for the database trigger to check server-side configuration
     const safeOrder = {
       id: order.id,
       order_number: order.order_number,
@@ -139,6 +141,10 @@ serve(async (req: Request) => {
       created_at: order.created_at,
       notes: order.notes,
       custom_fields: order.custom_fields || null, // Include custom_fields for upfront payment info
+      // ✅ CRITICAL: Include website_id, funnel_id, and store_id for pixel tracking
+      website_id: order.website_id || null,
+      funnel_id: order.funnel_id || null,
+      store_id: order.store_id,
     };
 
     // Get download links for digital products
