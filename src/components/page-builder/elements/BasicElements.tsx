@@ -697,14 +697,8 @@ const ButtonElement: React.FC<{
   const handleClick = (e: React.MouseEvent) => {
     // Fire AddToCart pixel events if enabled (tracking only, no cart manipulation)
     if (element.content.enableAddToCart && !isEditing && productIds.length > 0 && trackAddToCart && products.length > 0) {
-      console.log('[ButtonElement] Firing AddToCart events:', {
-        productIds,
-        productsCount: products.length,
-        hasTrackAddToCart: !!trackAddToCart,
-      });
       products.forEach((product) => {
         if (productIds.includes(product.id)) {
-          console.log('[ButtonElement] Tracking AddToCart for product:', product.id, product.name);
           trackAddToCart({
             id: product.id,
             name: product.name,
@@ -713,14 +707,6 @@ const ButtonElement: React.FC<{
             category: product.category_id || undefined,
           });
         }
-      });
-    } else if (element.content.enableAddToCart && !isEditing) {
-      console.warn('[ButtonElement] AddToCart enabled but conditions not met:', {
-        enableAddToCart: element.content.enableAddToCart,
-        isEditing,
-        productIdsLength: productIds.length,
-        hasTrackAddToCart: !!trackAddToCart,
-        productsLength: products.length,
       });
     }
     // Handle in-page scroll always within editor/live
