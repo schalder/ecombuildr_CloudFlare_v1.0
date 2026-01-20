@@ -779,7 +779,6 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       upfrontMethodsToInclude.forEach(method => {
         if ((storeAllowed as any)[method] && !recalculatedAllowedMethods.includes(method as any)) {
           recalculatedAllowedMethods.push(method as any);
-          console.log(`✅ Added upfront payment method to recalculatedAllowedMethods: ${method}`);
         }
       });
       
@@ -789,17 +788,9 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
       // If any product has upfront shipping enabled, remove 'cod' from allowed methods
       if (hasUpfrontShipping) {
         recalculatedAllowedMethods = recalculatedAllowedMethods.filter(m => m !== 'cod');
-        console.log('🚫 Removed COD payment method because product has upfront shipping enabled');
       }
       
       if (recalculatedAllowedMethods.length === 0) recalculatedAllowedMethods = ['cod'];
-      
-      console.log('🔍 Recalculated allowedMethods in handleSubmit (InlineCheckoutElement):', {
-        originalAllowedMethods: allowedMethods,
-        recalculatedAllowedMethods,
-        upfrontMethodsToInclude,
-        storeAllowed
-      });
 
       // Use recalculated breakdown instead of state
       const upfrontAmount = currentPaymentBreakdown.upfrontAmount || 0;

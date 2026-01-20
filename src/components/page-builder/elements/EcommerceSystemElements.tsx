@@ -1217,18 +1217,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
         stripe: !!store?.settings?.payment?.stripe?.enabled && !!store?.settings?.payment?.stripe?.stripe_account_id,
       };
       
-      console.log('🔍 AllowedMethods Calculation Debug (loadAllowed):', {
-        upfrontMethodsToInclude,
-        storeAllowed,
-        accBeforeUpfront: [...acc],
-        productData: data?.map((p: any) => ({
-          id: p.id,
-          collect_shipping_upfront: p.collect_shipping_upfront,
-          upfront_shipping_payment_method: p.upfront_shipping_payment_method,
-          allowed_payment_methods: p.allowed_payment_methods
-        }))
-      });
-      
       // Check if any product has upfront shipping enabled
       const hasUpfrontShipping = (data || []).some((p: any) => p.collect_shipping_upfront);
       
@@ -1236,12 +1224,6 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       upfrontMethodsToInclude.forEach(method => {
         if ((storeAllowed as any)[method] && !acc.includes(method)) {
           acc.push(method);
-          console.log(`✅ Added upfront payment method to allowedMethods: ${method}`);
-        } else {
-          console.log(`❌ Could not add upfront payment method ${method}:`, {
-            storeEnabled: (storeAllowed as any)[method],
-            alreadyIncluded: acc.includes(method)
-          });
         }
       });
       
@@ -1250,12 +1232,9 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       // If any product has upfront shipping enabled, remove 'cod' from allowed methods
       if (hasUpfrontShipping) {
         acc = acc.filter(m => m !== 'cod');
-        console.log('🚫 Removed COD payment method because product has upfront shipping enabled');
       }
       
       if (acc.length === 0) acc = ['cod'];
-      
-      console.log('🔍 Final allowedMethods (loadAllowed):', acc);
       
       // If there's upfront payment required, use the upfront payment method
       const upfrontMethod = paymentBreakdown?.hasUpfrontPayment
@@ -1547,18 +1526,12 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
       upfrontMethodsToInclude.forEach(method => {
         if ((storeAllowed as any)[method] && !recalculatedAllowedMethods.includes(method)) {
           recalculatedAllowedMethods.push(method);
-          console.log(`✅ Added upfront payment method to recalculatedAllowedMethods: ${method}`);
         }
       });
       
       // Filter by store settings
       recalculatedAllowedMethods = recalculatedAllowedMethods.filter((m) => (storeAllowed as any)[m]);
       if (recalculatedAllowedMethods.length === 0) recalculatedAllowedMethods = ['cod'];
-      
-      console.log('🔍 Recalculated allowedMethods in handleSubmit:', {
-        originalAllowedMethods: allowedMethods,
-        recalculatedAllowedMethods,
-        upfrontMethodsToInclude,
         storeAllowed
       });
 
