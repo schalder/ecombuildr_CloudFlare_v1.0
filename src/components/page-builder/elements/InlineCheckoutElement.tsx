@@ -308,20 +308,43 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
   // ✅ REFACTORED: Now uses trackInitiateCheckout hook (same flow as PageView/AddToCart)
   // This stores event in database, and database trigger handles server-side tracking automatically
   const handleInitiateCheckoutTracking = useCallback(() => {
+    console.log('[InlineCheckoutElement] 🔍 handleInitiateCheckoutTracking CALLED', {
+      elementId: element.id,
+      hasTrackedInitiateCheckout,
+      selectedProduct: !!selectedProduct,
+      effectiveStoreId,
+      trackingSubtotal,
+      quantity,
+      websiteId,
+      funnelId,
+      hasTrackInitiateCheckout: typeof trackInitiateCheckout === 'function',
+      hasPixels: !!pixels,
+      timestamp: new Date().toISOString()
+    });
+    
     const sessionKey = `initiate_checkout_tracked_${element.id}`;
     const alreadyTracked = sessionStorage.getItem(sessionKey);
     
     // ✅ FIX: Set flag IMMEDIATELY (synchronously) to prevent multiple calls
     if (alreadyTracked || hasTrackedInitiateCheckout) {
+      console.log('[InlineCheckoutElement] ⏭️ InitiateCheckout already tracked, skipping', {
+        alreadyTracked,
+        hasTrackedInitiateCheckout
+      });
       return; // Exit early if already tracked
     }
     
     // ✅ FIX: If effectiveStoreId is not ready, wait and retry (up to 2 seconds)
     if (!effectiveStoreId && (websiteId || funnelId)) {
-      console.log('[InlineCheckoutElement] effectiveStoreId not ready, retrying in 500ms...');
+      console.log('[InlineCheckoutElement] ⏳ effectiveStoreId not ready, retrying in 500ms...', {
+        websiteId,
+        funnelId,
+        storeId: store?.id
+      });
       setTimeout(() => {
         // Retry once after 500ms
         if (!hasTrackedInitiateCheckout) {
+          console.log('[InlineCheckoutElement] 🔄 Retrying handleInitiateCheckoutTracking after delay');
           handleInitiateCheckoutTracking();
         }
       }, 500);
@@ -330,7 +353,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     
     // ✅ FIX: Check effectiveStoreId instead of store object
     if (!selectedProduct || !effectiveStoreId || trackingSubtotal === 0) {
-      console.warn('[InlineCheckoutElement] InitiateCheckout not tracked - missing conditions:', {
+      console.warn('[InlineCheckoutElement] ❌ InitiateCheckout not tracked - missing conditions:', {
         selectedProduct: !!selectedProduct,
         effectiveStoreId,
         trackingSubtotal,
@@ -354,16 +377,28 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
     sessionStorage.setItem(sessionKey, 'true');
     setHasTrackedInitiateCheckout(true);
     
-    // ✅ Use trackInitiateCheckout hook - stores in database, trigger handles server-side
-    trackInitiateCheckout({
+    console.log('[InlineCheckoutElement] 📤 Calling trackInitiateCheckout hook', {
       value: trackingSubtotal,
-      items: [{
-        item_id: selectedProduct.id,
-        quantity: quantity,
-        price: selectedProduct.price,
-      }],
+      productId: selectedProduct.id,
+      quantity,
+      price: selectedProduct.price
     });
-  }, [hasTrackedInitiateCheckout, selectedProduct, effectiveStoreId, trackingSubtotal, quantity, element.id, trackInitiateCheckout, pixels, websiteId, funnelId]);
+    
+    // ✅ Use trackInitiateCheckout hook - stores in database, trigger handles server-side
+    try {
+      trackInitiateCheckout({
+        value: trackingSubtotal,
+        items: [{
+          item_id: selectedProduct.id,
+          quantity: quantity,
+          price: selectedProduct.price,
+        }],
+      });
+      console.log('[InlineCheckoutElement] ✅ trackInitiateCheckout called successfully');
+    } catch (error) {
+      console.error('[InlineCheckoutElement] ❌ Error calling trackInitiateCheckout:', error);
+    }
+  }, [hasTrackedInitiateCheckout, selectedProduct, effectiveStoreId, trackingSubtotal, quantity, element.id, trackInitiateCheckout, pixels, websiteId, funnelId, store?.id]);
 
   // ✅ REMOVED: InitiateCheckout tracking on mount
   // Now fires when user starts filling the form (see handleInitiateCheckoutTracking)
@@ -1337,6 +1372,14 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                         placeholder={fields.fullName.placeholder} 
                         value={form.customer_name} 
                         onFocus={() => {
+                          console.log('[InlineCheckoutElement] 👆 onFocus fired - calling handleInitiateCheckoutTracking', {
+                            hasHandleInitiateCheckoutTracking: typeof handleInitiateCheckoutTracking === 'function',
+                            hasTrackedInitiateCheckout,
+                            selectedProduct: !!selectedProduct,
+                            effectiveStoreId,
+                            trackingSubtotal,
+                            elementId: element.id
+                          });
                           handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout when user focuses (user intent)
                         }}
                         onChange={e => {
@@ -1344,6 +1387,14 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
                           clearFieldError('customer_name');
                           // ✅ FIX: Also fire on first character typed (backup trigger for user intent)
                           if (e.target.value.length === 1 && !hasTrackedInitiateCheckout) {
+                            console.log('[InlineCheckoutElement] ⌨️ onChange fired (first char) - calling handleInitiateCheckoutTracking', {
+                              hasHandleInitiateCheckoutTracking: typeof handleInitiateCheckoutTracking === 'function',
+                              hasTrackedInitiateCheckout,
+                              selectedProduct: !!selectedProduct,
+                              effectiveStoreId,
+                              trackingSubtotal,
+                              elementId: element.id
+                            });
                             handleInitiateCheckoutTracking();
                           }
                         }} 

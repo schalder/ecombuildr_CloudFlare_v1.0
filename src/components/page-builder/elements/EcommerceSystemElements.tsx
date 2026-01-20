@@ -1101,20 +1101,43 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
   // ✅ REFACTORED: Now uses trackInitiateCheckout hook (same flow as PageView/AddToCart)
   // This stores event in database, and database trigger handles server-side tracking automatically
   const handleInitiateCheckoutTracking = useCallback(() => {
+    console.log('[CheckoutFullElement] 🔍 handleInitiateCheckoutTracking CALLED', {
+      elementId: element.id,
+      hasTrackedInitiateCheckout,
+      itemsLength: items.length,
+      effectiveStoreId,
+      total,
+      shippingCost,
+      websiteId,
+      funnelId,
+      hasTrackInitiateCheckout: typeof trackInitiateCheckout === 'function',
+      hasPixels: !!pixels,
+      timestamp: new Date().toISOString()
+    });
+    
     const sessionKey = `initiate_checkout_tracked_${element.id}`;
     const alreadyTracked = sessionStorage.getItem(sessionKey);
     
     // ✅ FIX: Set flag IMMEDIATELY (synchronously) to prevent multiple calls
     if (alreadyTracked || hasTrackedInitiateCheckout) {
+      console.log('[CheckoutFullElement] ⏭️ InitiateCheckout already tracked, skipping', {
+        alreadyTracked,
+        hasTrackedInitiateCheckout
+      });
       return; // Exit early if already tracked
     }
     
     // ✅ FIX: If effectiveStoreId is not ready, wait and retry (up to 2 seconds)
     if (!effectiveStoreId && (websiteId || funnelId)) {
-      console.log('[CheckoutFullElement] effectiveStoreId not ready, retrying in 500ms...');
+      console.log('[CheckoutFullElement] ⏳ effectiveStoreId not ready, retrying in 500ms...', {
+        websiteId,
+        funnelId,
+        storeId: store?.id
+      });
       setTimeout(() => {
         // Retry once after 500ms
         if (!hasTrackedInitiateCheckout) {
+          console.log('[CheckoutFullElement] 🔄 Retrying handleInitiateCheckoutTracking after delay');
           handleInitiateCheckoutTracking();
         }
       }, 500);
@@ -1123,7 +1146,7 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
     
     // ✅ FIX: Check effectiveStoreId instead of store object
     if (!items.length || !effectiveStoreId || total === 0) {
-      console.warn('[CheckoutFullElement] InitiateCheckout not tracked - missing conditions:', {
+      console.warn('[CheckoutFullElement] ❌ InitiateCheckout not tracked - missing conditions:', {
         itemsLength: items.length,
         effectiveStoreId,
         total,
@@ -1971,6 +1994,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                           placeholder={fields.fullName.placeholder} 
                           value={form.customer_name} 
                           onFocus={() => {
+                            console.log('[CheckoutFullElement] 👆 onFocus fired - calling handleInitiateCheckoutTracking', {
+                              hasHandleInitiateCheckoutTracking: typeof handleInitiateCheckoutTracking === 'function',
+                              hasTrackedInitiateCheckout,
+                              itemsLength: items.length,
+                              effectiveStoreId,
+                              total,
+                              elementId: element.id
+                            });
                             handleInitiateCheckoutTracking(); // ✅ Fire InitiateCheckout when user focuses (user intent)
                           }}
                           onChange={e => {
@@ -1978,6 +2009,14 @@ const CheckoutFullElement: React.FC<{ element: PageBuilderElement; deviceType?: 
                             clearFieldError('customer_name');
                             // ✅ FIX: Also fire on first character typed (backup trigger for user intent)
                             if (e.target.value.length === 1 && !hasTrackedInitiateCheckout) {
+                              console.log('[CheckoutFullElement] ⌨️ onChange fired (first char) - calling handleInitiateCheckoutTracking', {
+                                hasHandleInitiateCheckoutTracking: typeof handleInitiateCheckoutTracking === 'function',
+                                hasTrackedInitiateCheckout,
+                                itemsLength: items.length,
+                                effectiveStoreId,
+                                total,
+                                elementId: element.id
+                              });
                               handleInitiateCheckoutTracking();
                             }
                           }} 

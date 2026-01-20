@@ -277,6 +277,17 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     value: number;
     items: EcommerceItem[];
   }) => {
+    console.log('[usePixelTracking] 🔍 trackInitiateCheckout called', {
+      value: data.value,
+      itemsCount: data.items.length,
+      items: data.items,
+      storeId,
+      websiteId,
+      funnelId,
+      hasPixelConfig: !!pixelConfig,
+      hasTrackEvent: typeof trackEvent === 'function'
+    });
+    
     const eventData = {
       content_ids: data.items.map(item => item.item_id),
       value: data.value,
@@ -288,6 +299,11 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         price: item.price, // ✅ Add price for server-side tracking
       })),
     };
+
+    console.log('[usePixelTracking] 📤 Calling trackEvent for InitiateCheckout', {
+      eventData,
+      storeId
+    });
 
     // Facebook Pixel
     trackEvent('InitiateCheckout', eventData);
