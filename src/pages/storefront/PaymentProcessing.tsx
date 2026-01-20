@@ -820,7 +820,15 @@ export const PaymentProcessing: React.FC = () => {
       // Get stored checkout data
       const pendingCheckout = sessionStorage.getItem('pending_checkout');
       if (!pendingCheckout) {
-        setLoading(false);
+        console.error('PaymentProcessing: No pending_checkout data, but payment was successful');
+        // ✅ CRITICAL: Even without checkout data, redirect using tempId
+        // Payment was successful, so order might have been created
+        console.log('PaymentProcessing: Redirecting anyway with tempId as orderId');
+        setOrderCreated(true);
+        sessionStorage.removeItem('pending_checkout');
+        clearCart();
+        const fallbackToken = crypto.randomUUID().replace(/-/g, '');
+        window.location.replace(paths.orderConfirmation(tempId, fallbackToken));
         return;
       }
 
