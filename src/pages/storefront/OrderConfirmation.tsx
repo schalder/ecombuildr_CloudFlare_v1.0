@@ -206,204 +206,22 @@ useEffect(() => {
             item_category: undefined
           }));
           
-          // Get the final funnelId (from URL, order custom_fields, or state)
-          const finalFunnelId = urlFunnelId || (orderData.custom_fields as any)?.funnelId || funnelId;
-          
-          // If we have a funnelId, ensure it's stored in the event
-          if (finalFunnelId) {
-            // Store purchase event directly with funnel_id to ensure it's captured
-            try {
-              let sessionId = sessionStorage.getItem('session_id');
-              if (!sessionId) {
-                sessionId = crypto.randomUUID();
-                sessionStorage.setItem('session_id', sessionId);
-              }
-              
-              // ✅ Generate event_id for deduplication
-              const eventId = `Purchase_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
-              
-              // ✅ Capture browser context for server-side matching
-              const getFacebookBrowserContext = () => {
-                try {
-                  const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-                    const [key, value] = cookie.trim().split('=');
-                    acc[key] = value;
-                    return acc;
-                  }, {} as Record<string, string>);
-                  
-                  return {
-                    fbp: cookies['_fbp'] || null,
-                    fbc: cookies['_fbc'] || null,
-                    client_user_agent: navigator.userAgent,
-                    event_source_url: window.location.href,
-                  };
-                } catch (error) {
-                  return {
-                    fbp: null,
-                    fbc: null,
-                    client_user_agent: navigator.userAgent,
-                    event_source_url: window.location.href,
-                  };
-                }
-              };
-              
-              const browserContext = getFacebookBrowserContext();
-              
-              const eventData = {
-                content_ids: trackingItems.map(item => item.item_id),
-                content_type: 'product',
-                value: orderData.total,
-                currency: 'BDT',
-                contents: trackingItems.map(item => ({
-                  id: item.item_id,
-                  quantity: item.quantity,
-                  price: item.price, // ✅ Add price for server-side tracking
-                })),
-                // Include customer data for better Facebook matching
-                customer_email: orderData.customer_email || null,
-                customer_phone: orderData.customer_phone || null,
-                customer_name: orderData.customer_name || null,
-                shipping_city: orderData.shipping_city || null,
-                shipping_state: orderData.shipping_state || null,
-                shipping_postal_code: orderData.shipping_postal_code || null,
-                shipping_country: orderData.shipping_country || null,
-                // ✅ ADD: Browser context for server-side matching
-                fbp: browserContext.fbp,
-                fbc: browserContext.fbc,
-                client_user_agent: browserContext.client_user_agent,
-                event_source_url: browserContext.event_source_url,
-                // ✅ ADD: event_id for deduplication
-                event_id: eventId,
-                _providers: {
-                  facebook: {
-                    configured: !!pixels?.facebook_pixel_id,
-                    attempted: !!window.fbq && !!pixels?.facebook_pixel_id,
-                    success: !!window.fbq && !!pixels?.facebook_pixel_id
-                  },
-                  google: {
-                    configured: !!(pixels?.google_analytics_id || pixels?.google_ads_id),
-                    attempted: !!(window.gtag && (pixels?.google_analytics_id || pixels?.google_ads_id)),
-                    success: !!(window.gtag && (pixels?.google_analytics_id || pixels?.google_ads_id))
-                  }
-                },
-                funnel_id: finalFunnelId // ✅ Explicitly include funnel_id in event_data
-              };
-              
-              // ✅ Track with Facebook Pixel using same event_id
-              if (window.fbq && pixels?.facebook_pixel_id) {
-                window.fbq('track', 'Purchase', eventData, { eventID: eventId });
-              }
-              
-              // Store in database (for analytics)
-              await supabase.from('pixel_events').insert({
-                store_id: store?.id || '',
-                website_id: websiteId || null,
-                funnel_id: finalFunnelId || null,
-                event_type: 'Purchase',
-                event_data: eventData,
-                session_id: sessionId,
-                page_url: window.location.href,
-                referrer: document.referrer || null,
-                utm_source: new URLSearchParams(window.location.search).get('utm_source'),
-                utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
-                utm_medium: new URLSearchParams(window.location.search).get('utm_medium'),
-                utm_term: new URLSearchParams(window.location.search).get('utm_term'),
-                utm_content: new URLSearchParams(window.location.search).get('utm_content'),
-                user_agent: navigator.userAgent,
-              });
-              
-              // ✅ FIX: Call server-side tracking edge function directly
-              try {
-                // Fetch pixel config
-                let pixel_id: string | null = null;
-                let access_token: string | null = null;
-                let test_event_code: string | null = null;
-                
-                if (finalFunnelId) {
-                  const { data: funnel } = await supabase
-                    .from('funnels')
-                    .select('settings')
-                    .eq('id', finalFunnelId)
-                    .single();
-                  
-                  if (funnel?.settings) {
-                    const settings = funnel.settings as any;
-                    if (settings.facebook_server_side_enabled && settings.facebook_pixel_id && settings.facebook_access_token) {
-                      pixel_id = settings.facebook_pixel_id;
-                      access_token = settings.facebook_access_token;
-                      test_event_code = settings.facebook_test_event_code || null;
-                    }
-                  }
-                } else if (websiteId) {
-                  const { data: website } = await supabase
-                    .from('websites')
-                    .select('facebook_pixel_id, facebook_access_token, facebook_test_event_code, facebook_server_side_enabled')
-                    .eq('id', websiteId)
-                    .single();
-                  
-                  if (website?.facebook_server_side_enabled && website?.facebook_pixel_id && website?.facebook_access_token) {
-                    pixel_id = website.facebook_pixel_id;
-                    access_token = website.facebook_access_token;
-                    test_event_code = website.facebook_test_event_code;
-                  }
-                }
-                
-                if (pixel_id && access_token) {
-                  const supabaseUrl = 'https://fhqwacmokbtbspkxjixf.supabase.co';
-                  
-                  await fetch(`${supabaseUrl}/functions/v1/send-facebook-event`, {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      pixel_id,
-                      access_token,
-                      event_name: 'Purchase',
-                      event_data: eventData,
-                      user_data: {
-                        email: orderData.customer_email || null,
-                        phone: orderData.customer_phone || null,
-                        firstName: orderData.customer_name ? orderData.customer_name.split(' ')[0] : null,
-                        lastName: orderData.customer_name && orderData.customer_name.includes(' ') 
-                          ? orderData.customer_name.substring(orderData.customer_name.indexOf(' ') + 1) 
-                          : null,
-                        city: orderData.shipping_city || null,
-                        state: orderData.shipping_state || null,
-                        zipCode: orderData.shipping_postal_code || null,
-                        country: orderData.shipping_country || null,
-                      },
-                      browser_context: browserContext,
-                      event_id: eventId,
-                      event_time: Math.floor(Date.now() / 1000),
-                      test_event_code: test_event_code || null,
-                    }),
-                  });
-                  
-                  console.log('OrderConfirmation: Purchase event sent to server-side:', finalFunnelId || websiteId);
-                }
-              } catch (serverError) {
-                console.error('OrderConfirmation: Error sending Purchase to server:', serverError);
-              }
-              
-              console.log('OrderConfirmation: Purchase event stored in database with funnel_id:', finalFunnelId);
-            } catch (dbError) {
-              console.error('OrderConfirmation: Error storing purchase event in database:', dbError);
-              // Fallback: use hook-based tracking if direct insert fails
-              trackPurchase({
-                transaction_id: orderData.id,
-                value: orderData.total,
-                items: trackingItems
-              });
-            }
-          } else {
-            // No funnelId, use hook-based tracking (for website checkouts)
-            trackPurchase({
-              transaction_id: orderData.id,
-              value: orderData.total,
-              items: trackingItems
-            });
-          }
+          // ✅ REFACTORED: Use trackPurchase hook (same flow as PageView/AddToCart)
+          // This stores event in database, and database trigger handles server-side tracking automatically
+          // The hook will automatically include browser context, event_id, and provider metadata
+          trackPurchase({
+            transaction_id: orderData.id,
+            value: orderData.total,
+            items: trackingItems,
+            // Include customer data for better Facebook matching
+            customer_email: orderData.customer_email || null,
+            customer_phone: orderData.customer_phone || null,
+            customer_name: orderData.customer_name || null,
+            shipping_city: orderData.shipping_city || null,
+            shipping_state: orderData.shipping_state || null,
+            shipping_postal_code: orderData.shipping_postal_code || null,
+            shipping_country: orderData.shipping_country || null,
+          });
           
           // Store tracking flag to prevent future duplicates
           sessionStorage.setItem('purchase_tracked_' + orderData.id, 'true');

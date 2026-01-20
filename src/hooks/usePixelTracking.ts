@@ -295,6 +295,14 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     transaction_id: string;
     value: number;
     items: EcommerceItem[];
+    // Optional customer data for better Facebook matching
+    customer_email?: string | null;
+    customer_phone?: string | null;
+    customer_name?: string | null;
+    shipping_city?: string | null;
+    shipping_state?: string | null;
+    shipping_postal_code?: string | null;
+    shipping_country?: string | null;
   }) => {
     const eventData = {
       content_ids: data.items.map(item => item.item_id),
@@ -306,6 +314,14 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         quantity: item.quantity,
         price: item.price, // ✅ Add price for server-side tracking
       })),
+      // ✅ Include customer data for better Facebook matching (extracted by database trigger)
+      customer_email: data.customer_email || null,
+      customer_phone: data.customer_phone || null,
+      customer_name: data.customer_name || null,
+      shipping_city: data.shipping_city || null,
+      shipping_state: data.shipping_state || null,
+      shipping_postal_code: data.shipping_postal_code || null,
+      shipping_country: data.shipping_country || null,
     };
 
     // Facebook Pixel
