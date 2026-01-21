@@ -274,22 +274,10 @@ const ImageElement: React.FC<{
       // Always apply maxWidth (default 100% if not set, user can customize)
       baseStyles.maxWidth = maxWidth;
       
-      // Apply alignment margins to position the sized image
-      switch (alignment) {
-        case 'left':
-          baseStyles.marginLeft = '0';
-          baseStyles.marginRight = 'auto';
-          break;
-        case 'right':
-          baseStyles.marginLeft = 'auto';
-          baseStyles.marginRight = '0';
-          break;
-        case 'center':
-        default:
-          baseStyles.marginLeft = 'auto';
-          baseStyles.marginRight = 'auto';
-          break;
-      }
+      // ✅ REMOVED: Alignment margins are now handled by wrapper div
+      // Image inside wrapper doesn't need alignment margins
+      baseStyles.marginLeft = '0';
+      baseStyles.marginRight = '0';
     }
 
     // Apply border styles directly to the image
@@ -404,13 +392,31 @@ const ImageElement: React.FC<{
       wrapperStyles.boxShadow = boxShadow;
     }
     
-    // ✅ Ensure wrapper has proper display for shadow to show
-    // Match the image's display/width behavior
+    // ✅ Ensure wrapper has proper display and alignment to match image behavior
     if (alignment === 'full') {
       wrapperStyles.width = '100%';
+      wrapperStyles.display = 'block';
     } else {
-      // For centered/left/right aligned images, use inline-block to contain shadow
-      wrapperStyles.display = 'inline-block';
+      // For centered/left/right aligned images, use block with auto margins for proper alignment
+      wrapperStyles.display = 'block';
+      
+      // ✅ CRITICAL FIX: Apply alignment margins to the wrapper div itself
+      // This ensures the wrapper (and its shadow) aligns correctly
+      switch (alignment) {
+        case 'left':
+          wrapperStyles.marginLeft = '0';
+          wrapperStyles.marginRight = 'auto';
+          break;
+        case 'right':
+          wrapperStyles.marginLeft = 'auto';
+          wrapperStyles.marginRight = '0';
+          break;
+        case 'center':
+        default:
+          wrapperStyles.marginLeft = 'auto';
+          wrapperStyles.marginRight = 'auto';
+          break;
+      }
     }
     
     return wrapperStyles;
