@@ -231,6 +231,70 @@ const canManuallyApprove = (order: Order, currentTab: 'all' | 'fake' | 'incomple
   return false;
 };
 
+// Helper function to calculate date ranges for filtering
+const getDateRange = (filter: string): { start: string; end: string } | null => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  switch (filter) {
+    case 'today': {
+      const start = new Date(today);
+      const end = new Date(today);
+      end.setHours(23, 59, 59, 999);
+      return {
+        start: start.toISOString(),
+        end: end.toISOString()
+      };
+    }
+    case 'yesterday': {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 1);
+      const end = new Date(start);
+      end.setHours(23, 59, 59, 999);
+      return {
+        start: start.toISOString(),
+        end: end.toISOString()
+      };
+    }
+    case 'this_week': {
+      const start = new Date(today);
+      const dayOfWeek = start.getDay();
+      const diff = start.getDate() - dayOfWeek; // Sunday = 0
+      start.setDate(diff);
+      const end = new Date(now);
+      end.setHours(23, 59, 59, 999);
+      return {
+        start: start.toISOString(),
+        end: end.toISOString()
+      };
+    }
+    case 'last_7_days': {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 7);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(now);
+      end.setHours(23, 59, 59, 999);
+      return {
+        start: start.toISOString(),
+        end: end.toISOString()
+      };
+    }
+    case 'last_15_days': {
+      const start = new Date(now);
+      start.setDate(start.getDate() - 15);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(now);
+      end.setHours(23, 59, 59, 999);
+      return {
+        start: start.toISOString(),
+        end: end.toISOString()
+      };
+    }
+    default:
+      return null;
+  }
+};
+
 export default function Orders() {
   const { user } = useAuth();
   const { orderId } = useParams<{ orderId?: string }>();
@@ -243,6 +307,7 @@ export default function Orders() {
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>(searchParams.get("paymentStatus") || "");
   const [attributionFilter, setAttributionFilter] = useState<string | null>(searchParams.get("attribution") || null);
+  const [dateFilter, setDateFilter] = useState<string>(searchParams.get("dateFilter") || "");
   const [activeTab, setActiveTab] = useState<'all' | 'fake' | 'incomplete' | 'abandoned'>('all');
   const [fakeOrderFilter, setFakeOrderFilter] = useState<'all' | 'blocked'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -421,7 +486,7 @@ export default function Orders() {
         fetchOrders();
       }
     }
-  }, [user, currentPage, searchTerm, statusFilter, paymentStatusFilter, attributionFilter, activeTab, fakeOrderFilter]);
+  }, [user, currentPage, searchTerm, statusFilter, paymentStatusFilter, attributionFilter, dateFilter, activeTab, fakeOrderFilter]);
 
   // Check if IP is blocked when order details open
   useEffect(() => {
@@ -479,6 +544,7 @@ export default function Orders() {
     const status = searchParams.get("status");
     const search = searchParams.get("search");
     const paymentStatus = searchParams.get("paymentStatus");
+    const dateFilterParam = searchParams.get("dateFilter");
     if (status) {
       setStatusFilter(status);
     }
@@ -488,12 +554,15 @@ export default function Orders() {
     if (paymentStatus) {
       setPaymentStatusFilter(paymentStatus);
     }
+    if (dateFilterParam) {
+      setDateFilter(dateFilterParam);
+    }
   }, [searchParams]);
 
   // Reset to first page when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, paymentStatusFilter]);
+  }, [searchTerm, statusFilter, paymentStatusFilter, dateFilter]);
 
   // Handle orderId parameter from notifications
   useEffect(() => {
@@ -616,6 +685,15 @@ export default function Orders() {
           ordersQuery = ordersQuery.eq('attribution_source', attributionFilter);
         }
 
+        // Apply date filter if dateFilter exists
+        if (dateFilter) {
+          const dateRange = getDateRange(dateFilter);
+          if (dateRange) {
+            ordersQuery = ordersQuery.gte('created_at', dateRange.start);
+            ordersQuery = ordersQuery.lte('created_at', dateRange.end);
+          }
+        }
+
         // Get total count for pagination with same filters
         let countQuery = supabase
           .from('orders')
@@ -663,6 +741,15 @@ export default function Orders() {
         // Apply attribution filter to count query
         if (attributionFilter) {
           countQuery = countQuery.eq('attribution_source', attributionFilter);
+        }
+
+        // Apply date filter to count query
+        if (dateFilter) {
+          const dateRange = getDateRange(dateFilter);
+          if (dateRange) {
+            countQuery = countQuery.gte('created_at', dateRange.start);
+            countQuery = countQuery.lte('created_at', dateRange.end);
+          }
         }
 
         const { count, error: countError } = await countQuery;
@@ -2072,6 +2159,35 @@ export default function Orders() {
                 <SelectItem value="google">Google Ads</SelectItem>
                 <SelectItem value="organic">Organic</SelectItem>
                 <SelectItem value="direct">Direct</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={dateFilter || 'all'}
+              onValueChange={(value) => {
+                const filterValue = value === 'all' ? '' : value;
+                setDateFilter(filterValue);
+                setSearchParams(prev => {
+                  const newParams = new URLSearchParams(prev);
+                  if (filterValue) {
+                    newParams.set("dateFilter", filterValue);
+                  } else {
+                    newParams.delete("dateFilter");
+                  }
+                  return newParams;
+                });
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className={isMobile ? 'w-full' : 'w-[180px]'}>
+                <SelectValue placeholder="All Dates" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Dates</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="yesterday">Yesterday</SelectItem>
+                <SelectItem value="this_week">This Week</SelectItem>
+                <SelectItem value="last_7_days">Last 7 Days</SelectItem>
+                <SelectItem value="last_15_days">Last 15 Days</SelectItem>
               </SelectContent>
             </Select>
           </div>
