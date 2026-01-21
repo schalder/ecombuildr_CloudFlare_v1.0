@@ -166,10 +166,10 @@ const ImageElement: React.FC<{
   }, [src]);
 
   // Generate responsive CSS for this element
-  // Exclude border properties, width, and maxWidth from responsive CSS
+  // Exclude border properties, width, maxWidth, boxShadow, and opacity from responsive CSS
   // These are applied directly to the image via inline styles to work together with alignment
   const responsiveCSS = React.useMemo(() => {
-    // Filter out border properties, width, and maxWidth from styles
+    // Filter out border properties, width, maxWidth, boxShadow, and opacity from styles
     // These are applied directly to the image via inline styles
     const filteredStyles = {
       ...element.styles,
@@ -183,6 +183,9 @@ const ImageElement: React.FC<{
     // Remove width and maxWidth from base styles (applied via inline styles)
     delete filteredStyles.width;
     delete filteredStyles.maxWidth;
+    // ✅ Remove boxShadow and opacity from base styles (applied via inline styles)
+    delete filteredStyles.boxShadow;
+    delete filteredStyles.opacity;
     
     // Process responsive styles if they exist
     if (element.styles?.responsive) {
@@ -192,7 +195,7 @@ const ImageElement: React.FC<{
         mobile: { ...element.styles.responsive.mobile }
       };
       
-      // Remove border properties, width, and maxWidth from responsive styles for each device
+      // Remove border properties, width, maxWidth, boxShadow, and opacity from responsive styles for each device
       ['desktop', 'tablet', 'mobile'].forEach(device => {
         if (filteredStyles.responsive[device]) {
           delete filteredStyles.responsive[device].borderWidth;
@@ -202,6 +205,9 @@ const ImageElement: React.FC<{
           // Exclude width and maxWidth from responsive CSS - applied via inline styles
           delete filteredStyles.responsive[device].width;
           delete filteredStyles.responsive[device].maxWidth;
+          // ✅ Exclude boxShadow and opacity from responsive CSS - applied via inline styles
+          delete filteredStyles.responsive[device].boxShadow;
+          delete filteredStyles.responsive[device].opacity;
         }
       });
     }
@@ -225,6 +231,9 @@ const ImageElement: React.FC<{
     delete cleanStyles.borderColor;
     delete cleanStyles.borderStyle;
     delete cleanStyles.borderRadius;
+    // ✅ Remove boxShadow and opacity - these should only be on the image, not the figure container
+    delete cleanStyles.boxShadow;
+    delete cleanStyles.opacity;
     
     return cleanStyles;
   };
