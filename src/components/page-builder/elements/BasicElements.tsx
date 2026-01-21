@@ -359,15 +359,7 @@ const ImageElement: React.FC<{
       baseStyles.opacity = typeof opacity === 'string' ? parseFloat(opacity) : opacity;
     }
 
-    // ✅ NOTE: boxShadow is handled separately in getWrapperStyles() for proper rendering
-    return baseStyles;
-  };
-
-  // ✅ Get wrapper styles (for box shadow) - shadow needs to be on wrapper div, not img tag
-  const getWrapperStyles = (): React.CSSProperties => {
-    const responsiveStyles = element.styles?.responsive || {};
-    const currentDeviceStyles = responsiveStyles[deviceType] || {};
-    
+    // ✅ ADD: Apply box shadow directly to image (not wrapper)
     let boxShadow = currentDeviceStyles.boxShadow !== undefined ? currentDeviceStyles.boxShadow : undefined;
     if (boxShadow === undefined) {
       if (deviceType === 'mobile') {
@@ -385,12 +377,17 @@ const ImageElement: React.FC<{
       }
     }
     
-    const wrapperStyles: React.CSSProperties = {};
-    
-    // ✅ Apply box shadow if it exists and is not 'none'
+    // Apply box shadow if it exists and is not 'none'
     if (boxShadow && boxShadow !== 'none') {
-      wrapperStyles.boxShadow = boxShadow;
+      baseStyles.boxShadow = boxShadow;
     }
+
+    return baseStyles;
+  };
+
+  // ✅ Get wrapper styles (for alignment only - no box shadow)
+  const getWrapperStyles = (): React.CSSProperties => {
+    const wrapperStyles: React.CSSProperties = {};
     
     // ✅ Apply alignment to wrapper div itself (not the image)
     if (alignment === 'full') {
