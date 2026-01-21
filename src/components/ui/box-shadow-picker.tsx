@@ -4,6 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { Button } from '@/components/ui/button';
+import { RotateCcw } from 'lucide-react';
 
 interface BoxShadowPickerProps {
   value: string;
@@ -171,9 +173,37 @@ export const BoxShadowPicker: React.FC<BoxShadowPickerProps> = ({ value, onChang
     updateShadow('inset', type === 'inner');
   };
 
+  // ✅ Handle reset - clear all shadow values
+  const handleReset = useCallback(() => {
+    isInternalUpdate.current = true;
+    lastGeneratedShadow.current = 'none';
+    setShadow({ x: 0, y: 0, blur: 0, spread: 0, color: '#000000', opacity: 0.2, inset: false });
+    setShadowType('outer');
+    onChange('none');
+  }, [onChange]);
+
+  // Check if shadow is active (not 'none')
+  const hasShadow = value && value !== 'none';
+
   return (
     <div className="space-y-3">
-      {label && <Label className="text-sm font-medium">{label}</Label>}
+      {label && (
+        <div className="flex items-center justify-between">
+          <Label className="text-sm font-medium">{label}</Label>
+          {hasShadow && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReset}
+              className="h-7 px-2 text-xs"
+              title="Reset box shadow"
+            >
+              <RotateCcw className="h-3 w-3 mr-1" />
+              Reset
+            </Button>
+          )}
+        </div>
+      )}
       
       {/* Shadow Type Tabs */}
       <Tabs value={shadowType} onValueChange={(v) => handleShadowTypeChange(v as 'outer' | 'inner')}>
