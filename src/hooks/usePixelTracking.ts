@@ -201,6 +201,12 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         configured: !!(pixelConfig?.google_analytics_id || pixelConfig?.google_ads_id),
         attempted: false,
         success: false
+      },
+      // ✅ ADD: Initialize tiktok provider to prevent undefined error
+      tiktok: {
+        configured: !!pixelConfig?.tiktok_pixel_id,
+        attempted: false,
+        success: false
       }
     };
 
