@@ -333,7 +333,7 @@ serve(async (req) => {
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert(orderToInsert)
-      .select('id, order_number')
+      .select('id, order_number, website_id, funnel_id')
       .single();
 
     if (orderError) {
@@ -380,11 +380,13 @@ serve(async (req) => {
     try {
       await supabase.functions.invoke('send-order-email', {
         body: {
-          orderId: order.id,
-          storeId: storeId,
-          orderNumber: order.order_number,
+          order_id: order.id,           // ✅ Fixed: order_id instead of orderId
+          store_id: storeId,            // ✅ Fixed: store_id instead of storeId
+          website_id: order.website_id || null,  // ✅ Added: website_id
+          event_type: 'new_order'       // ✅ Added: required event_type
         }
       });
+      console.log('New order email notification sent successfully for order:', order.order_number);
     } catch (emailError) {
       console.error('Failed to send order email:', emailError);
       // Don't throw, email is not critical
