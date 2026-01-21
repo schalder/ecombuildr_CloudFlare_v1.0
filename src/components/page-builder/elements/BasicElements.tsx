@@ -350,6 +350,48 @@ const ImageElement: React.FC<{
       baseStyles.borderRadius = '0.5rem'; // Default rounded-lg
     }
 
+    // ✅ ADD: Apply opacity with responsive fallback
+    let opacity = currentDeviceStyles.opacity !== undefined ? currentDeviceStyles.opacity : undefined;
+    if (opacity === undefined) {
+      if (deviceType === 'mobile') {
+        opacity = responsiveStyles.tablet?.opacity !== undefined 
+          ? responsiveStyles.tablet.opacity 
+          : responsiveStyles.desktop?.opacity !== undefined 
+            ? responsiveStyles.desktop.opacity 
+            : element.styles?.opacity;
+      } else if (deviceType === 'tablet') {
+        opacity = responsiveStyles.desktop?.opacity !== undefined 
+          ? responsiveStyles.desktop.opacity 
+          : element.styles?.opacity;
+      } else {
+        opacity = element.styles?.opacity;
+      }
+    }
+    if (opacity !== undefined) {
+      baseStyles.opacity = typeof opacity === 'string' ? parseFloat(opacity) : opacity;
+    }
+
+    // ✅ ADD: Apply boxShadow with responsive fallback
+    let boxShadow = currentDeviceStyles.boxShadow !== undefined ? currentDeviceStyles.boxShadow : undefined;
+    if (boxShadow === undefined) {
+      if (deviceType === 'mobile') {
+        boxShadow = responsiveStyles.tablet?.boxShadow !== undefined 
+          ? responsiveStyles.tablet.boxShadow 
+          : responsiveStyles.desktop?.boxShadow !== undefined 
+            ? responsiveStyles.desktop.boxShadow 
+            : element.styles?.boxShadow;
+      } else if (deviceType === 'tablet') {
+        boxShadow = responsiveStyles.desktop?.boxShadow !== undefined 
+          ? responsiveStyles.desktop.boxShadow 
+          : element.styles?.boxShadow;
+      } else {
+        boxShadow = element.styles?.boxShadow;
+      }
+    }
+    if (boxShadow && boxShadow !== 'none') {
+      baseStyles.boxShadow = boxShadow;
+    }
+
     return baseStyles;
   };
 
