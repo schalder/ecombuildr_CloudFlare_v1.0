@@ -132,6 +132,7 @@ export const DomainWebsiteRenderer: React.FC<DomainWebsiteRendererProps> = ({
           facebook_pixel_id: website.settings?.facebook_pixel_id,
           google_analytics_id: website.settings?.google_analytics_id,
           google_ads_id: website.settings?.google_ads_id,
+          tiktok_pixel_id: website.tiktok_pixel_id,
         }}
         storeId={website.store_id}
       >

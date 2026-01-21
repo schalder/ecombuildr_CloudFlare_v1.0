@@ -8,6 +8,7 @@ interface PixelManagerProps {
     facebook_pixel_id?: string;
     google_analytics_id?: string;
     google_ads_id?: string;
+    tiktok_pixel_id?: string;
   };
   children: React.ReactNode;
   storeId?: string;
@@ -19,11 +20,13 @@ const PixelContext = React.createContext<{
     facebook_pixel_id?: string;
     google_analytics_id?: string;
     google_ads_id?: string;
+    tiktok_pixel_id?: string;
   };
   updatePixels?: (pixels: {
     facebook_pixel_id?: string;
     google_analytics_id?: string;
     google_ads_id?: string;
+    tiktok_pixel_id?: string;
   }) => void;
 }>({});
 
@@ -109,6 +112,21 @@ export const PixelManager: React.FC<PixelManagerProps> = ({ websitePixels: initi
       document.head.appendChild(script2);
       
       logger.debug('[PixelManager] Google Analytics/Ads loaded:', gtagId);
+    }
+
+    // Load TikTok Pixel (completely separate from Facebook)
+    if (currentPixels.tiktok_pixel_id && !window.ttq) {
+      const script = document.createElement('script');
+      script.innerHTML = `
+        !function(w,d,t){
+          w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js";ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};var o=document.createElement("script");o.type="text/javascript",o.async=!0,o.src=i+"?sdkid="+e+"&lib="+t;var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(o,a)};
+          ttq.load('${currentPixels.tiktok_pixel_id}');
+          ttq.page();
+        }(window, document, 'ttq');
+      `;
+      document.head.appendChild(script);
+      
+      logger.debug('[PixelManager] TikTok Pixel loaded:', currentPixels.tiktok_pixel_id);
     }
 
     // Track initial page view

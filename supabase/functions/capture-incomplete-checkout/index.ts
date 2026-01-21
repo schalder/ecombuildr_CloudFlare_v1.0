@@ -51,6 +51,10 @@ serve(async (req) => {
       utm_source,
       utm_campaign,
       utm_medium,
+      attribution_source,
+      attribution_medium,
+      attribution_campaign,
+      attribution_data,
       step, // e.g., "started_checkout", "contact_entered"
     } = await req.json();
 
@@ -115,6 +119,10 @@ serve(async (req) => {
     if (utm_source) checkoutData.utm_source = utm_source;
     if (utm_campaign) checkoutData.utm_campaign = utm_campaign;
     if (utm_medium) checkoutData.utm_medium = utm_medium;
+    if (attribution_source) checkoutData.attribution_source = attribution_source;
+    if (attribution_medium) checkoutData.attribution_medium = attribution_medium;
+    if (attribution_campaign) checkoutData.attribution_campaign = attribution_campaign;
+    if (attribution_data) checkoutData.attribution_data = attribution_data;
 
     // Upsert based on session_id (deduplication)
     // First, check if a record with this session_id exists

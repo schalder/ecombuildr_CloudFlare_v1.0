@@ -175,7 +175,13 @@ export const WebsiteLayout: React.FC = () => {
 
   return (
     <WebsiteProvider websiteId={website.id} websiteSlug={website.slug}>
-      <PixelManager websitePixels={website.settings} storeId={website.store_id}>
+      <PixelManager 
+        websitePixels={{
+          ...website.settings,
+          tiktok_pixel_id: (website as any).tiktok_pixel_id,
+        }} 
+        storeId={website.store_id}
+      >
         <TrackingCodeManager 
           headerCode={website.settings?.header_tracking_code}
           footerCode={website.settings?.footer_tracking_code}

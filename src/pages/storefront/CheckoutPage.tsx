@@ -4,6 +4,7 @@ import { useStore } from '@/contexts/StoreContext';
 import { useCart } from '@/contexts/CartContext';
 import { usePixelTracking } from '@/hooks/usePixelTracking';
 import { usePixelContext } from '@/components/pixel/PixelManager';
+import { useAttributionTracking } from '@/hooks/useAttributionTracking';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -49,6 +50,7 @@ export const CheckoutPage: React.FC = () => {
   const { websiteId: contextWebsiteId } = useWebsiteContext();
   const { websiteId: resolvedWebsiteId, funnelId: resolvedFunnelId } = useChannelContext();
   const { trackInitiateCheckout, trackPurchase, trackAddPaymentInfo } = usePixelTracking(pixels, store?.id, resolvedWebsiteId, resolvedFunnelId);
+  const { getAttribution } = useAttributionTracking();
   const isWebsiteContext = Boolean(websiteId || websiteSlug || contextWebsiteId);
   
   // Error states
@@ -417,6 +419,11 @@ useEffect(() => {
         upfront_payment_amount: upfrontAmount > 0 ? upfrontAmount : null,
         upfront_payment_method: upfrontPaymentMethod || null,
         delivery_payment_amount: currentPaymentBreakdown.deliveryAmount || null,
+        // Attribution data
+        attribution_source: attribution?.source || null,
+        attribution_medium: attribution?.medium || null,
+        attribution_campaign: attribution?.campaign || null,
+        attribution_data: attribution?.data || null,
       };
 
       const itemsPayload = items.map(item => ({
@@ -440,6 +447,9 @@ useEffect(() => {
       const hasUpfrontPayment = upfrontAmount > 0 && upfrontPaymentMethod;
       const upfrontPaymentIsLive = hasUpfrontPayment && isLivePaymentMethod(upfrontPaymentMethod);
       const isLivePayment = isLivePaymentMethod(form.payment_method);
+
+      // Capture attribution before creating order
+      const attribution = getAttribution();
 
       // Debug: Log payment breakdown for troubleshooting
       console.log('🔍 Payment Processing Debug:', {
@@ -480,7 +490,13 @@ useEffect(() => {
       if (isLivePayment || upfrontPaymentIsLive) {
         // Store checkout data temporarily for order creation after payment
         sessionStorage.setItem('pending_checkout', JSON.stringify({
-          orderData,
+          orderData: {
+            ...orderData,
+            attribution_source: attribution?.source || null,
+            attribution_medium: attribution?.medium || null,
+            attribution_campaign: attribution?.campaign || null,
+            attribution_data: attribution?.data || null,
+          },
           itemsPayload,
           storeId: store.id,
           timestamp: Date.now()

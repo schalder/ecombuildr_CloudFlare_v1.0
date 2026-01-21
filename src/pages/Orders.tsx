@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   Table, 
   TableBody, 
@@ -81,6 +82,10 @@ interface Order {
   ip_address?: string | null;
   is_potential_fake?: boolean;
   marked_not_fake?: boolean;
+  attribution_source?: string | null;
+  attribution_medium?: string | null;
+  attribution_campaign?: string | null;
+  attribution_data?: Record<string, any> | null;
 }
 
 interface IncompleteCheckout {
@@ -237,6 +242,7 @@ export default function Orders() {
   const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") || "");
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>(searchParams.get("paymentStatus") || "");
+  const [attributionFilter, setAttributionFilter] = useState<string | null>(searchParams.get("attribution") || null);
   const [activeTab, setActiveTab] = useState<'all' | 'fake' | 'incomplete' | 'abandoned'>('all');
   const [fakeOrderFilter, setFakeOrderFilter] = useState<'all' | 'blocked'>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -415,7 +421,7 @@ export default function Orders() {
         fetchOrders();
       }
     }
-  }, [user, currentPage, searchTerm, statusFilter, paymentStatusFilter, activeTab, fakeOrderFilter]);
+  }, [user, currentPage, searchTerm, statusFilter, paymentStatusFilter, attributionFilter, activeTab, fakeOrderFilter]);
 
   // Check if IP is blocked when order details open
   useEffect(() => {
@@ -605,6 +611,11 @@ export default function Orders() {
           }
         }
 
+        // Apply attribution filter if attributionFilter exists
+        if (attributionFilter) {
+          ordersQuery = ordersQuery.eq('attribution_source', attributionFilter);
+        }
+
         // Get total count for pagination with same filters
         let countQuery = supabase
           .from('orders')
@@ -647,6 +658,11 @@ export default function Orders() {
           } else if (paymentStatusFilter === 'cancelled') {
             countQuery = countQuery.eq('status', 'cancelled');
           }
+        }
+
+        // Apply attribution filter to count query
+        if (attributionFilter) {
+          countQuery = countQuery.eq('attribution_source', attributionFilter);
         }
 
         const { count, error: countError } = await countQuery;
@@ -2029,6 +2045,35 @@ export default function Orders() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            <Select
+              value={attributionFilter || 'all'}
+              onValueChange={(value) => {
+                const filterValue = value === 'all' ? null : value;
+                setAttributionFilter(filterValue);
+                setSearchParams(prev => {
+                  const newParams = new URLSearchParams(prev);
+                  if (filterValue) {
+                    newParams.set("attribution", filterValue);
+                  } else {
+                    newParams.delete("attribution");
+                  }
+                  return newParams;
+                });
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className={isMobile ? 'w-full' : 'w-[180px]'}>
+                <SelectValue placeholder="All Sources" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Sources</SelectItem>
+                <SelectItem value="facebook">Facebook</SelectItem>
+                <SelectItem value="tiktok">TikTok</SelectItem>
+                <SelectItem value="google">Google Ads</SelectItem>
+                <SelectItem value="organic">Organic</SelectItem>
+                <SelectItem value="direct">Direct</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -2684,6 +2729,7 @@ export default function Orders() {
                     <TableHead>Order</TableHead>
                     <TableHead>Customer</TableHead>
                     <TableHead className="hidden md:table-cell">Channel</TableHead>
+                    <TableHead className="hidden lg:table-cell">Attribution</TableHead>
                     <TableHead>Delivery</TableHead>
                     <TableHead>Total</TableHead>
                     <TableHead className="hidden lg:table-cell">Payment</TableHead>
@@ -2765,6 +2811,18 @@ export default function Orders() {
                             {websiteMap[order.website_id] || 'Website'}
                           </div>
                         ) : null}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {order.attribution_source ? (
+                          <div className="space-y-1">
+                            <Badge variant="outline">{order.attribution_source}</Badge>
+                            {order.attribution_campaign && (
+                              <div className="text-xs text-muted-foreground">{order.attribution_campaign}</div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant={statusColors[order.status as keyof typeof statusColors] || "secondary"}>

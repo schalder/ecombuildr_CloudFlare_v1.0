@@ -43,6 +43,10 @@ type OrderInput = {
   upfront_payment_amount?: number | null;
   upfront_payment_method?: string | null;
   delivery_payment_amount?: number | null;
+  attribution_source?: string | null;
+  attribution_medium?: string | null;
+  attribution_campaign?: string | null;
+  attribution_data?: Record<string, any> | null;
 };
 
 function generateOrderNumber() {
@@ -393,6 +397,10 @@ serve(async (req) => {
       ip_address: normalizedClientIP || normalizedOrderIP || null,
       is_potential_fake: isPotentialFake,
       marked_not_fake: false,
+      attribution_source: order.attribution_source || null,
+      attribution_medium: order.attribution_medium || null,
+      attribution_campaign: order.attribution_campaign || null,
+      attribution_data: order.attribution_data || null,
       custom_fields: (() => {
         // Handle both array and object formats for custom_fields
         let baseFields: any = {};

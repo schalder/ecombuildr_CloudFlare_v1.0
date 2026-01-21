@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { callEdgeFunction } from '@/lib/supabase-edge';
 import { supabase } from '@/integrations/supabase/client';
+import { useAttributionTracking } from './useAttributionTracking';
 
 interface IncompleteCheckoutData {
   customer_name?: string;
@@ -31,6 +32,7 @@ export const useIncompleteCheckoutCapture = (
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const incompleteCheckoutIdRef = useRef<string | null>(null);
+  const { getAttribution } = useAttributionTracking();
 
   // Get or create session ID
   useEffect(() => {
@@ -66,6 +68,9 @@ export const useIncompleteCheckoutCapture = (
     }
 
     try {
+      // Get attribution data
+      const attribution = getAttribution();
+
       const checkoutData = {
         store_id: storeId,
         website_id: websiteId || null,
@@ -91,6 +96,10 @@ export const useIncompleteCheckoutCapture = (
         utm_source: new URLSearchParams(window.location.search).get('utm_source'),
         utm_campaign: new URLSearchParams(window.location.search).get('utm_campaign'),
         utm_medium: new URLSearchParams(window.location.search).get('utm_medium'),
+        attribution_source: attribution?.source || null,
+        attribution_medium: attribution?.medium || null,
+        attribution_campaign: attribution?.campaign || null,
+        attribution_data: attribution?.data || null,
         last_updated_at: new Date().toISOString(),
       };
 
@@ -122,6 +131,10 @@ export const useIncompleteCheckoutCapture = (
           utm_source: checkoutData.utm_source,
           utm_campaign: checkoutData.utm_campaign,
           utm_medium: checkoutData.utm_medium,
+          attribution_source: checkoutData.attribution_source,
+          attribution_medium: checkoutData.attribution_medium,
+          attribution_campaign: checkoutData.attribution_campaign,
+          attribution_data: checkoutData.attribution_data,
           step: 'checkout_progress',
         });
 

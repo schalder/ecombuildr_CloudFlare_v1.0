@@ -249,6 +249,11 @@ serve(async (req) => {
     const orderToInsert = {
       ...orderDataWithoutUpfront,
       custom_fields: finalCustomFields,
+      // ✅ Include attribution fields (if present in orderData)
+      attribution_source: orderData.attribution_source || null,
+      attribution_medium: orderData.attribution_medium || null,
+      attribution_campaign: orderData.attribution_campaign || null,
+      attribution_data: orderData.attribution_data || null,
     };
 
     // ✅ Determine order status based on product types and payment method

@@ -813,6 +813,11 @@ export const PaymentProcessing: React.FC = () => {
         upfront_payment_amount: checkoutData.orderData.upfront_payment_amount || null,
         upfront_payment_method: checkoutData.orderData.upfront_payment_method || null,
         delivery_payment_amount: checkoutData.orderData.delivery_payment_amount || null,
+        // Attribution data
+        attribution_source: checkoutData.orderData.attribution_source || null,
+        attribution_medium: checkoutData.orderData.attribution_medium || null,
+        attribution_campaign: checkoutData.orderData.attribution_campaign || null,
+        attribution_data: checkoutData.orderData.attribution_data || null,
         // Store additional funnel context in custom_fields
         custom_fields: {
           ...(checkoutData.orderData.custom_fields || {}),

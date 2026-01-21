@@ -6,6 +6,7 @@ declare global {
   interface Window {
     fbq?: (...args: any[]) => void;
     gtag?: (...args: any[]) => void;
+    ttq?: (...args: any[]) => void;
     dataLayer?: any[];
     _fbq?: any;
     _gtag?: any;
@@ -16,6 +17,7 @@ interface PixelConfig {
   facebook_pixel_id?: string;
   google_analytics_id?: string;
   google_ads_id?: string;
+  tiktok_pixel_id?: string;
 }
 
 interface EcommerceItem {
@@ -61,11 +63,36 @@ const getFacebookBrowserContext = () => {
   }
 };
 
+// Helper function to extract TikTok browser context
+const getTikTokBrowserContext = () => {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+      const [key, value] = cookie.trim().split('=');
+      acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+
+    return {
+      ttclid: urlParams.get('ttclid') || cookies['ttclid'] || null, // TikTok Click ID
+      client_user_agent: navigator.userAgent,
+      event_source_url: window.location.href,
+    };
+  } catch (error) {
+    logger.warn('[PixelTracking] Failed to extract TikTok browser context:', error);
+    return {
+      ttclid: null,
+      client_user_agent: navigator.userAgent,
+      event_source_url: window.location.href,
+    };
+  }
+};
+
 export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, websiteId?: string, funnelId?: string) => {
   const storePixelEvent = useCallback(async (
     eventType: string, 
     eventData: any, 
-    providers?: { facebook?: { configured: boolean; attempted: boolean; success: boolean }; google?: { configured: boolean; attempted: boolean; success: boolean } },
+    providers?: { facebook?: { configured: boolean; attempted: boolean; success: boolean }; google?: { configured: boolean; attempted: boolean; success: boolean }; tiktok?: { configured: boolean; attempted: boolean; success: boolean } },
     overrideWebsiteId?: string | null,
     overrideFunnelId?: string | null
   ) => {
@@ -100,15 +127,18 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       
       // Capture browser context for server-side matching (when PII is missing)
       const browserContext = getFacebookBrowserContext();
+      const tiktokContext = getTikTokBrowserContext();
       
       // Add provider metadata, event_id, and browser context to event data
       const enhancedEventData = {
         ...eventData,
         event_id: eventId,
         _providers: providers || {},
-        // Browser context for server-side matching (when PII is missing)
+        // Facebook browser context (existing)
         fbp: browserContext.fbp,
         fbc: browserContext.fbc,
+        // TikTok browser context (new)
+        ttclid: tiktokContext.ttclid,
         client_user_agent: browserContext.client_user_agent,
         event_source_url: browserContext.event_source_url,
       };
@@ -128,6 +158,8 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         utm_term: new URLSearchParams(window.location.search).get('utm_term'),
         utm_content: new URLSearchParams(window.location.search).get('utm_content'),
         user_agent: navigator.userAgent,
+        ttclid: tiktokContext.ttclid,
+        tiktok_event_id: eventId, // Same event_id for deduplication
       };
       
       // Add funnel context if available
@@ -209,6 +241,20 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       }
     }
 
+    // TikTok Pixel tracking - fire if ttq is available
+    if (window.ttq) {
+      providers.tiktok.attempted = true;
+      try {
+        // TikTok uses different event name format
+        const tiktokEventName = eventName.toLowerCase().replace(/([A-Z])/g, '_$1');
+        window.ttq('track', tiktokEventName, eventDataWithId);
+        providers.tiktok.success = true;
+        logger.debug('[PixelTracking] TikTok event:', tiktokEventName, eventDataWithId);
+      } catch (error) {
+        logger.warn('[PixelTracking] TikTok tracking error:', error);
+      }
+    }
+
     // Store event in database with provider metadata and same event_id for server-side forwarding
     storePixelEvent(eventName, eventDataWithId, providers);
   }, [pixelConfig, storePixelEvent]);
@@ -242,6 +288,17 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
           quantity: 1,
           item_category: product.category,
         }],
+      });
+    }
+
+    // TikTok Pixel
+    if (pixelConfig?.tiktok_pixel_id && window.ttq) {
+      window.ttq('track', 'ViewContent', {
+        content_type: 'product',
+        content_id: product.id,
+        content_name: product.name,
+        value: product.price,
+        currency: 'BDT',
       });
     }
   }, [trackEvent, pixelConfig]);
@@ -286,6 +343,18 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         }],
       });
     }
+
+    // TikTok Pixel
+    if (pixelConfig?.tiktok_pixel_id && window.ttq) {
+      window.ttq('track', 'AddToCart', {
+        content_type: 'product',
+        content_id: product.id,
+        content_name: product.name,
+        value: product.price * product.quantity,
+        currency: 'BDT',
+        quantity: product.quantity,
+      });
+    }
   }, [trackEvent, pixelConfig]);
 
   const trackInitiateCheckout = useCallback((data: {
@@ -313,6 +382,21 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         currency: 'BDT',
         value: data.value,
         items: data.items,
+      });
+    }
+
+    // TikTok Pixel
+    if (pixelConfig?.tiktok_pixel_id && window.ttq) {
+      window.ttq('track', 'InitiateCheckout', {
+        value: data.value,
+        currency: 'BDT',
+        contents: data.items.map(item => ({
+          content_id: item.item_id,
+          content_name: item.item_name,
+          content_type: 'product',
+          price: item.price,
+          quantity: item.quantity,
+        })),
       });
     }
   }, [trackEvent, pixelConfig]);
@@ -369,12 +453,33 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         items: data.items,
       });
     }
+
+    // TikTok Pixel
+    if (pixelConfig?.tiktok_pixel_id && window.ttq) {
+      window.ttq('track', 'CompletePayment', {
+        content_type: 'product',
+        value: data.value,
+        currency: 'BDT',
+        contents: data.items.map(item => ({
+          content_id: item.item_id,
+          content_name: item.item_name,
+          content_type: 'product',
+          price: item.price,
+          quantity: item.quantity,
+        })),
+      });
+    }
     
     // ✅ CRITICAL: Store event with effectiveWebsiteId and effectiveFunnelId
     // This ensures the database trigger can check server-side configuration
     storePixelEvent('Purchase', eventData, {
       facebook: {
         configured: !!pixelConfig?.facebook_pixel_id,
+        attempted: false,
+        success: false
+      },
+      tiktok: {
+        configured: !!pixelConfig?.tiktok_pixel_id,
         attempted: false,
         success: false
       }
@@ -412,6 +517,11 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         configured: !!(pixelConfig?.google_analytics_id || pixelConfig?.google_ads_id),
         attempted: false,
         success: false
+      },
+      tiktok: {
+        configured: !!pixelConfig?.tiktok_pixel_id,
+        attempted: false,
+        success: false
       }
     };
 
@@ -441,6 +551,17 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
       }
     }
 
+    // TikTok Pixel
+    if (window.ttq) {
+      providers.tiktok.attempted = true;
+      try {
+        window.ttq('track', 'PageView', eventData);
+        providers.tiktok.success = true;
+      } catch (error) {
+        logger.warn('[PixelTracking] TikTok PageView tracking error:', error);
+      }
+    }
+
     // Store PageView event in database with provider metadata
     storePixelEvent('PageView', eventData, providers);
   }, [pixelConfig, storePixelEvent]);
@@ -461,6 +582,14 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
     if ((pixelConfig?.google_analytics_id || pixelConfig?.google_ads_id) && window.gtag) {
       window.gtag('event', 'search', {
         search_term: data.search_string,
+      });
+    }
+
+    // TikTok Pixel
+    if (pixelConfig?.tiktok_pixel_id && window.ttq) {
+      window.ttq('track', 'Search', {
+        search_string: data.search_string,
+        content_category: data.content_category || 'product',
       });
     }
   }, [trackEvent, pixelConfig]);
@@ -493,6 +622,21 @@ export const usePixelTracking = (pixelConfig?: PixelConfig, storeId?: string, we
         value: data.value || 0,
         payment_type: data.payment_type || 'credit_card',
         items: data.items || [],
+      });
+    }
+
+    // TikTok Pixel
+    if (pixelConfig?.tiktok_pixel_id && window.ttq) {
+      window.ttq('track', 'AddPaymentInfo', {
+        value: data.value || 0,
+        currency: data.currency || 'BDT',
+        contents: data.items?.map(item => ({
+          content_id: item.item_id,
+          content_name: item.item_name,
+          content_type: 'product',
+          price: item.price,
+          quantity: item.quantity,
+        })) || [],
       });
     }
   }, [trackEvent, pixelConfig]);

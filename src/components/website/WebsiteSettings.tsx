@@ -35,6 +35,10 @@ const websiteSettingsSchema = z.object({
   facebook_access_token: z.string().optional(),
   facebook_test_event_code: z.string().optional(),
   facebook_server_side_enabled: z.boolean().default(false),
+  tiktok_pixel_id: z.string().optional(),
+  tiktok_access_token: z.string().optional(),
+  tiktok_server_side_enabled: z.boolean().optional(),
+  tiktok_test_event_code: z.string().optional(),
   google_analytics_id: z.string().optional(),
   google_ads_id: z.string().optional(),
   currency_code: z.enum(['BDT','USD','INR','EUR','GBP']).default('BDT'),
@@ -146,6 +150,10 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
       facebook_access_token: website.facebook_access_token || '',
       facebook_test_event_code: website.facebook_test_event_code || '',
       facebook_server_side_enabled: website.facebook_server_side_enabled ?? false,
+      tiktok_pixel_id: website.tiktok_pixel_id || '',
+      tiktok_access_token: website.tiktok_access_token || '',
+      tiktok_server_side_enabled: website.tiktok_server_side_enabled ?? false,
+      tiktok_test_event_code: website.tiktok_test_event_code || '',
       google_analytics_id: website.settings?.google_analytics_id || '',
       google_ads_id: website.settings?.google_ads_id || '',
       currency_code: website.settings?.currency?.code || 'BDT',
@@ -238,6 +246,10 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
         facebook_access_token,
         facebook_test_event_code,
         facebook_server_side_enabled,
+        tiktok_pixel_id,
+        tiktok_access_token,
+        tiktok_server_side_enabled,
+        tiktok_test_event_code,
         google_analytics_id, 
         google_ads_id, 
         currency_code, 
@@ -319,6 +331,10 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
           facebook_access_token: facebook_access_token || null,
           facebook_test_event_code: facebook_test_event_code || null,
           facebook_server_side_enabled: facebook_server_side_enabled,
+          tiktok_pixel_id: tiktok_pixel_id || null,
+          tiktok_access_token: tiktok_access_token || null,
+          tiktok_server_side_enabled: tiktok_server_side_enabled || false,
+          tiktok_test_event_code: tiktok_test_event_code || null,
           google_analytics_id: google_analytics_id || null,
           google_ads_id: google_ads_id || null,
           settings,
@@ -997,6 +1013,87 @@ export const WebsiteSettings: React.FC<WebsiteSettingsProps> = ({ website }) => 
                       />
                     </div>
                   )}
+                </div>
+
+                {/* TikTok Pixel */}
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="text-sm font-medium">TikTok Pixel</div>
+                  <FormField
+                    control={form.control}
+                    name="tiktok_pixel_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-foreground">TikTok Pixel ID</FormLabel>
+                        <FormControl>
+                          <Input placeholder="C1234567890ABCDEF" className="text-foreground" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                          Your TikTok Pixel ID for conversion tracking.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {/* TikTok Server-Side Tracking */}
+                  <div className="space-y-4 pt-4 border-t">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium">TikTok Server-Side Tracking</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Improve tracking reliability by forwarding events server-side.
+                        </div>
+                      </div>
+                      <FormField
+                        control={form.control}
+                        name="tiktok_server_side_enabled"
+                        render={({ field }) => (
+                          <Switch
+                            checked={field.value || false}
+                            onCheckedChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </div>
+                    
+                    {form.watch('tiktok_server_side_enabled') && (
+                      <>
+                        <FormField
+                          control={form.control}
+                          name="tiktok_access_token"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-foreground">TikTok Access Token</FormLabel>
+                              <FormControl>
+                                <Input type="password" placeholder="Enter access token" className="text-foreground" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                Required for server-side tracking. Get from TikTok Events Manager.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="tiktok_test_event_code"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-foreground">Test Event Code (Optional)</FormLabel>
+                              <FormControl>
+                                <Input placeholder="TEST12345" className="text-foreground" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                For testing server-side events in TikTok Events Manager.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <FormField
