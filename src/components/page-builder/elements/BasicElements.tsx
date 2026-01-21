@@ -216,18 +216,8 @@ const ImageElement: React.FC<{
     let css = generateResponsiveCSS(element.id, filteredStyles);
     
     // ✅ CRITICAL: Add explicit CSS rules to prevent box shadow on wrapper and ensure alignment works
-    css += `
-      /* Prevent box shadow on wrapper and figure */
-      .image-block-wrapper,
-      figure.element-${element.id} {
-        box-shadow: none !important;
-      }
-      /* Ensure wrapper uses flexbox for alignment */
-      .image-block-wrapper {
-        display: flex !important;
-        width: 100% !important;
-      }
-    `;
+    // Target wrapper and figure elements to prevent box shadow leakage
+    css += `.image-block-wrapper { box-shadow: none !important; border: none !important; display: flex !important; width: 100% !important; }`;
     
     return css;
   }, [element.id, element.styles]);
