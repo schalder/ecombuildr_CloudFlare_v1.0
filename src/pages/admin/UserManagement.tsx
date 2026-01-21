@@ -225,6 +225,7 @@ const UserManagement = () => {
       case 'suspended': return 'bg-red-100 text-red-800';
       case 'expired': return 'bg-yellow-100 text-yellow-800';
       case 'read_only': return 'bg-orange-100 text-orange-800';
+      case 'fake': return 'bg-red-200 text-red-900';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -344,6 +345,7 @@ const UserManagement = () => {
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="trial">Free Trial</SelectItem>
                   <SelectItem value="trial_ended">Trial Ended (Read-Only)</SelectItem>
+                  <SelectItem value="fake">Potential Fake</SelectItem>
                   <SelectItem value="premium_starter">Premium - Starter</SelectItem>
                   <SelectItem value="premium_professional">Premium - Professional</SelectItem>
                   <SelectItem value="premium_enterprise">Premium - Enterprise</SelectItem>
@@ -466,6 +468,24 @@ const UserManagement = () => {
                             >
                               <UserCheck className="h-4 w-4 mr-2" />
                               Activate User
+                            </DropdownMenuItem>
+                          )}
+
+                          {user.account_status !== 'fake' ? (
+                            <DropdownMenuItem 
+                              onClick={() => handleStatusUpdate(user.id, 'fake')}
+                              className="text-orange-600"
+                            >
+                              <UserX className="h-4 w-4 mr-2" />
+                              Mark as Fake
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem 
+                              onClick={() => handleStatusUpdate(user.id, 'active')}
+                              className="text-green-600"
+                            >
+                              <UserCheck className="h-4 w-4 mr-2" />
+                              Remove Fake Status
                             </DropdownMenuItem>
                           )}
 

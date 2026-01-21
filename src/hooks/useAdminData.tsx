@@ -230,6 +230,9 @@ export const useAdminData = () => {
           dataQuery = dataQuery.eq('account_status', 'read_only');
           // Note: Expired trial users will be included in a separate query if needed
           // For simplicity, we show read_only users here
+        } else if (statusFilter === 'fake') {
+          countQuery = countQuery.eq('account_status', 'fake');
+          dataQuery = dataQuery.eq('account_status', 'fake');
         } else if (statusFilter === 'premium_starter') {
           countQuery = countQuery.eq('account_status', 'active').eq('subscription_plan', 'starter');
           dataQuery = dataQuery.eq('account_status', 'active').eq('subscription_plan', 'starter');

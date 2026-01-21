@@ -4,6 +4,7 @@ import { useUserStore } from '@/hooks/useUserStore';
 import { useStoreWebsites } from '@/hooks/useStoreWebsites';
 import { useStoreFunnels } from '@/hooks/useStoreFunnels';
 import { usePlanLimits } from '@/hooks/usePlanLimits';
+import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
   const { user, loading: authLoading, isLoggingOut } = useAuth();
@@ -38,6 +39,13 @@ const Dashboard = () => {
   // Ensure we have a store first (only for routes that need it)
   if (!store && !location.pathname.includes('/create')) {
     return <Navigate to="/dashboard/websites/create" replace />;
+  }
+
+  // Block fake users from accessing dashboard
+  if (userProfile?.account_status === 'fake') {
+    // Sign out and redirect to login
+    supabase.auth.signOut();
+    return <Navigate to="/login" replace />;
   }
 
   // For read-only users (expired trial/subscription), always show dashboard

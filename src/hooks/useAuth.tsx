@@ -41,8 +41,28 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (!isMounted || abortController.signal.aborted) return;
+        
+        // Check if user account is fake on sign-in
+        if (event === 'SIGNED_IN' && session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('account_status')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile?.account_status === 'fake') {
+            // Sign out fake users immediately
+            await supabase.auth.signOut();
+            toast({
+              title: "Access Denied",
+              description: "Your account has been marked as fake and cannot access the platform.",
+              variant: "destructive",
+            });
+            return;
+          }
+        }
         
         const previousSession = session;
         setSession(session);
@@ -96,6 +116,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (!isMounted || abortController.signal.aborted) return;
+        
+        // Check if user account is fake
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('account_status')
+            .eq('id', session.user.id)
+            .single();
+
+          if (profile?.account_status === 'fake') {
+            // Sign out fake users immediately
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+            setLoading(false);
+            setIsInitialLoad(false);
+            return;
+          }
+        }
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -160,12 +199,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error, data } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      return { error };
+      if (error) {
+        return { error };
+      }
+
+      // Check if user account is fake after successful auth
+      if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('account_status')
+          .eq('id', data.user.id)
+          .single();
+
+        if (profile?.account_status === 'fake') {
+          // Sign out immediately
+          await supabase.auth.signOut();
+          return { 
+            error: { 
+              message: 'Your account has been marked as fake and cannot access the platform. Please contact support if you believe this is an error.' 
+            } 
+          };
+        }
+      }
+
+      return { error: null };
     } catch (error: any) {
       return { error };
     }

@@ -243,7 +243,7 @@ export const usePlanLimits = () => {
   };
 
   const isAccountReadOnly = (): boolean => {
-    if (userProfile?.account_status === 'suspended' || userProfile?.account_status === 'read_only') {
+    if (userProfile?.account_status === 'suspended' || userProfile?.account_status === 'read_only' || userProfile?.account_status === 'fake') {
       return true;
     }
     

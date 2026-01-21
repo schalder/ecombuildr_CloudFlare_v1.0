@@ -41,6 +41,18 @@ export const usePlanEnforcement = () => {
       return { allowed: false, reason: 'Account suspended', action: 'suspended' };
     }
 
+    // Check if account is fake
+    if (userProfile?.account_status === 'fake') {
+      if (showToast) {
+        toast({
+          title: 'অ্যাকাউন্ট ব্লক করা হয়েছে',
+          description: 'আপনার অ্যাকাউন্ট ফেক হিসেবে চিহ্নিত করা হয়েছে। সাপোর্টের সাথে যোগাযোগ করুন।',
+          variant: 'destructive',
+        });
+      }
+      return { allowed: false, reason: 'Account marked as fake', action: 'suspended' };
+    }
+
     // Check if trial has expired
     if (isTrialExpired()) {
       if (showToast) {
