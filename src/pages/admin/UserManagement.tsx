@@ -19,7 +19,10 @@ import {
   Crown,
   Eye,
   Calendar,
-  Plus
+  Plus,
+  Users,
+  Clock,
+  Lock
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -29,10 +32,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const UserManagement = () => {
-  const { users, loading, fetchUsers, updateUserPlan, updateUserStatus, extendTrial, loginAsUser, usersTotalCount, createCustomSubscription } = useAdminData();
+  const { users, loading, fetchUsers, updateUserPlan, updateUserStatus, extendTrial, loginAsUser, usersTotalCount, createCustomSubscription, userStats, fetchUserStats } = useAdminData();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [planFilter, setPlanFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('all');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -51,12 +56,13 @@ const UserManagement = () => {
   });
 
   useEffect(() => {
-    fetchUsers(searchTerm, planFilter, currentPage, itemsPerPage);
-  }, [searchTerm, planFilter, currentPage]);
+    fetchUsers(searchTerm, planFilter, statusFilter, dateFilter, currentPage, itemsPerPage);
+    fetchUserStats();
+  }, [searchTerm, planFilter, statusFilter, dateFilter, currentPage]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, planFilter]);
+  }, [searchTerm, planFilter, statusFilter, dateFilter]);
 
   // Fetch plan limits from database
   useEffect(() => {
@@ -201,7 +207,8 @@ const UserManagement = () => {
         paymentReference: '',
         notes: ''
       });
-      fetchUsers(searchTerm, planFilter, currentPage, itemsPerPage);
+      fetchUsers(searchTerm, planFilter, statusFilter, dateFilter, currentPage, itemsPerPage);
+      fetchUserStats();
     } else {
       toast({
         title: 'Upgrade Failed',
@@ -217,6 +224,7 @@ const UserManagement = () => {
       case 'trial': return 'bg-blue-100 text-blue-800';
       case 'suspended': return 'bg-red-100 text-red-800';
       case 'expired': return 'bg-yellow-100 text-yellow-800';
+      case 'read_only': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -234,14 +242,89 @@ const UserManagement = () => {
   return (
     <AdminLayout title="User Management" description="Manage all users and their accounts">
       <div className="space-y-6">
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats?.total || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Trial Users</CardTitle>
+              <Clock className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats?.trial || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Trial Ended</CardTitle>
+              <Lock className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats?.trialEnded || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Premium Starter</CardTitle>
+              <Crown className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats?.premiumStarter || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Premium Professional</CardTitle>
+              <Crown className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats?.premiumProfessional || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Premium Enterprise</CardTitle>
+              <Crown className="h-4 w-4 text-yellow-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{userStats?.premiumEnterprise || 0}</div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Premium</CardTitle>
+              <Crown className="h-4 w-4 text-green-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {(userStats?.premiumStarter || 0) + (userStats?.premiumProfessional || 0) + (userStats?.premiumEnterprise || 0)}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Search and Filters */}
         <Card>
           <CardHeader>
             <CardTitle>Filters & Search</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <div className="flex-1">
+            <div className="flex flex-wrap gap-4">
+              <div className="flex-1 min-w-[200px]">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
@@ -252,16 +335,46 @@ const UserManagement = () => {
                   />
                 </div>
               </div>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="trial">Free Trial</SelectItem>
+                  <SelectItem value="trial_ended">Trial Ended (Read-Only)</SelectItem>
+                  <SelectItem value="premium_starter">Premium - Starter</SelectItem>
+                  <SelectItem value="premium_professional">Premium - Professional</SelectItem>
+                  <SelectItem value="premium_enterprise">Premium - Enterprise</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Select value={planFilter} onValueChange={setPlanFilter}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filter by Plan" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Plans</SelectItem>
-                  
                   <SelectItem value="starter">Starter</SelectItem>
                   <SelectItem value="professional">Professional</SelectItem>
                   <SelectItem value="enterprise">Enterprise</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Signup Date" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="yesterday">Yesterday</SelectItem>
+                  <SelectItem value="last_7_days">Last 7 Days</SelectItem>
+                  <SelectItem value="last_30_days">Last 30 Days</SelectItem>
+                  <SelectItem value="this_month">This Month</SelectItem>
+                  <SelectItem value="last_month">Last Month</SelectItem>
+                  <SelectItem value="this_year">This Year</SelectItem>
                 </SelectContent>
               </Select>
             </div>

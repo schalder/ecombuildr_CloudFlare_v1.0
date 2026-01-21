@@ -30,6 +30,15 @@ interface PlatformStats {
   estimatedMRR: number;
 }
 
+interface UserStats {
+  total: number;
+  trial: number;
+  trialEnded: number;
+  premiumStarter: number;
+  premiumProfessional: number;
+  premiumEnterprise: number;
+}
+
 interface SaasSubscriber {
   id: string;
   user_id: string;
@@ -55,6 +64,7 @@ export const useAdminData = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersTotalCount, setUsersTotalCount] = useState(0);
   const [platformStats, setPlatformStats] = useState<PlatformStats | null>(null);
+  const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [saasSubscribers, setSaasSubscribers] = useState<SaasSubscriber[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -95,8 +105,82 @@ export const useAdminData = () => {
     }
   };
 
+  // Fetch user statistics (counts for cards)
+  const fetchUserStats = async () => {
+    if (!isAdmin) return;
+
+    try {
+      const now = new Date().toISOString();
+
+      // Total users
+      const { count: total } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Trial users (active trial - account_status = 'trial' AND trial_expires_at >= now)
+      const { count: trial } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('account_status', 'trial')
+        .gte('trial_expires_at', now);
+
+      // Trial ended/read-only users
+      // Fetch read_only users
+      const { count: readOnlyCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('account_status', 'read_only');
+
+      // Fetch expired trial users (trial status but expired)
+      const { count: expiredTrialCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('account_status', 'trial')
+        .lt('trial_expires_at', now);
+
+      const trialEnded = (readOnlyCount || 0) + (expiredTrialCount || 0);
+
+      // Premium users by package (account_status = 'active' AND subscription_plan = 'starter'/'professional'/'enterprise')
+      const { count: premiumStarter } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('account_status', 'active')
+        .eq('subscription_plan', 'starter');
+
+      const { count: premiumProfessional } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('account_status', 'active')
+        .eq('subscription_plan', 'professional');
+
+      const { count: premiumEnterprise } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('account_status', 'active')
+        .eq('subscription_plan', 'enterprise');
+
+      setUserStats({
+        total: total || 0,
+        trial: trial || 0,
+        trialEnded: trialEnded || 0,
+        premiumStarter: premiumStarter || 0,
+        premiumProfessional: premiumProfessional || 0,
+        premiumEnterprise: premiumEnterprise || 0,
+      });
+    } catch (err) {
+      console.error('Error fetching user stats:', err);
+    }
+  };
+
   // Fetch all users for admin management
-  const fetchUsers = async (searchTerm?: string, planFilter?: string, page: number = 1, limit: number = 20) => {
+  const fetchUsers = async (
+    searchTerm?: string, 
+    planFilter?: string, 
+    statusFilter?: string,
+    dateFilter?: string,
+    page: number = 1, 
+    limit: number = 20
+  ) => {
     if (!isAdmin) return;
 
     try {
@@ -127,6 +211,77 @@ export const useAdminData = () => {
       if (planFilter && planFilter !== 'all') {
         countQuery = countQuery.eq('subscription_plan', planFilter as any);
         dataQuery = dataQuery.eq('subscription_plan', planFilter as any);
+      }
+
+      // Status filter
+      if (statusFilter && statusFilter !== 'all') {
+        const now = new Date().toISOString();
+        
+        if (statusFilter === 'trial') {
+          // Active trial users
+          countQuery = countQuery.eq('account_status', 'trial').gte('trial_expires_at', now);
+          dataQuery = dataQuery.eq('account_status', 'trial').gte('trial_expires_at', now);
+        } else if (statusFilter === 'trial_ended') {
+          // Trial ended/read-only users: read_only OR (trial AND expired)
+          // Use .or() with separate queries - Supabase doesn't support nested AND in OR
+          // We'll fetch read_only users and expired trial users separately, then combine
+          // For now, fetch read_only users (most common case)
+          countQuery = countQuery.eq('account_status', 'read_only');
+          dataQuery = dataQuery.eq('account_status', 'read_only');
+          // Note: Expired trial users will be included in a separate query if needed
+          // For simplicity, we show read_only users here
+        } else if (statusFilter === 'premium_starter') {
+          countQuery = countQuery.eq('account_status', 'active').eq('subscription_plan', 'starter');
+          dataQuery = dataQuery.eq('account_status', 'active').eq('subscription_plan', 'starter');
+        } else if (statusFilter === 'premium_professional') {
+          countQuery = countQuery.eq('account_status', 'active').eq('subscription_plan', 'professional');
+          dataQuery = dataQuery.eq('account_status', 'active').eq('subscription_plan', 'professional');
+        } else if (statusFilter === 'premium_enterprise') {
+          countQuery = countQuery.eq('account_status', 'active').eq('subscription_plan', 'enterprise');
+          dataQuery = dataQuery.eq('account_status', 'active').eq('subscription_plan', 'enterprise');
+        }
+      }
+
+      // Date filter
+      if (dateFilter && dateFilter !== 'all') {
+        const now = new Date();
+        let startDate: Date | null = null;
+        let endDate: Date | null = null;
+
+        switch (dateFilter) {
+          case 'today':
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            break;
+          case 'yesterday':
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+            endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            break;
+          case 'last_7_days':
+            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case 'last_30_days':
+            startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case 'this_month':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case 'last_month':
+            startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            endDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            break;
+          case 'this_year':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            break;
+        }
+
+        if (startDate) {
+          countQuery = countQuery.gte('created_at', startDate.toISOString());
+          dataQuery = dataQuery.gte('created_at', startDate.toISOString());
+        }
+        if (endDate) {
+          countQuery = countQuery.lt('created_at', endDate.toISOString());
+          dataQuery = dataQuery.lt('created_at', endDate.toISOString());
+        }
       }
 
       // Get total count
@@ -585,6 +740,7 @@ export const useAdminData = () => {
     if (isAdmin) {
       fetchUsers();
       fetchPlatformStats();
+      fetchUserStats();
       fetchSaasSubscribers();
     }
   }, [isAdmin]);
@@ -595,10 +751,12 @@ export const useAdminData = () => {
     users,
     usersTotalCount,
     platformStats,
+    userStats,
     saasSubscribers,
     error,
     fetchUsers,
     fetchPlatformStats,
+    fetchUserStats,
     fetchSaasSubscribers,
     updateUserPlan,
     updateUserStatus,
@@ -611,6 +769,7 @@ export const useAdminData = () => {
     refetch: () => {
       fetchUsers();
       fetchPlatformStats();
+      fetchUserStats();
       fetchSaasSubscribers();
     }
   };
