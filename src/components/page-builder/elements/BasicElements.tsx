@@ -259,19 +259,19 @@ const ImageElement: React.FC<{
     const baseStyles = {
       height: element.styles?.height || 'auto',
       objectFit: element.styles?.objectFit || 'cover',
-      display: 'block',
-      // ADD: Prevent layout shift with aspect ratio
+      display: 'block', // Block display for image element
+      // Prevent layout shift with aspect ratio
       aspectRatio: element.styles?.aspectRatio || (element.styles?.width && element.styles?.height 
         ? `${element.styles.width} / ${element.styles.height}` 
-        : undefined)
+        : undefined),
+      // For flexbox alignment: image should not shrink
+      flexShrink: 0,
     } as React.CSSProperties;
 
     // Apply width and maxWidth to the image element
-    // Width and alignment work together - width sets size, alignment sets position
+    // Image controls its own size, wrapper controls alignment via flexbox
     if (alignment === 'full') {
       baseStyles.width = '100%';
-      baseStyles.marginLeft = '0';
-      baseStyles.marginRight = '0';
     } else {
       // Apply width if set (presets like 50%, 75%, etc. or custom values)
       if (width) {
@@ -279,12 +279,10 @@ const ImageElement: React.FC<{
       }
       // Always apply maxWidth (default 100% if not set, user can customize)
       baseStyles.maxWidth = maxWidth;
-      
-      // ✅ Remove alignment margins from image - alignment is now handled by wrapper
-      // The image should just fill its container (the wrapper)
-      baseStyles.marginLeft = '0';
-      baseStyles.marginRight = '0';
     }
+    
+    // ✅ Image has NO alignment margins - wrapper handles alignment via flexbox
+    // Image is a flex child, so it respects wrapper's justify-content
 
     // Apply border styles directly to the image
     // Check responsive styles first, then fall back to base styles
@@ -391,39 +389,35 @@ const ImageElement: React.FC<{
     return baseStyles;
   };
 
-  // ✅ Get wrapper styles (for alignment only - box shadow is on image)
+  // ✅ Get wrapper styles (ALIGNMENT ONLY - using flexbox, no visual styles)
   const getWrapperStyles = (): React.CSSProperties => {
-    const wrapperStyles: React.CSSProperties = {};
+    const wrapperStyles: React.CSSProperties = {
+      // Use flexbox for clean, standard alignment
+      display: 'flex',
+      width: '100%',
+      // Explicitly ensure wrapper has NO visual styles
+      boxShadow: 'none',
+      border: 'none',
+      borderRadius: '0',
+      backgroundColor: 'transparent',
+    };
     
-    // ✅ Explicitly ensure wrapper has NO box shadow (only image has it)
-    wrapperStyles.boxShadow = 'none';
-    
-    // ✅ Apply alignment to wrapper div itself (not the image)
-    if (alignment === 'full') {
-      wrapperStyles.width = '100%';
-      wrapperStyles.display = 'block';
-    } else {
-      // For non-full alignments, use block display and apply alignment margins to wrapper
-      wrapperStyles.display = 'block';
-      
-      switch (alignment) {
-        case 'left':
-          wrapperStyles.marginLeft = '0';
-          wrapperStyles.marginRight = 'auto';
-          wrapperStyles.width = 'fit-content';
-          break;
-        case 'right':
-          wrapperStyles.marginLeft = 'auto';
-          wrapperStyles.marginRight = '0';
-          wrapperStyles.width = 'fit-content';
-          break;
-        case 'center':
-        default:
-          wrapperStyles.marginLeft = 'auto';
-          wrapperStyles.marginRight = 'auto';
-          wrapperStyles.width = 'fit-content';
-          break;
-      }
+    // Apply alignment using flexbox justify-content (clean, standard approach)
+    switch (alignment) {
+      case 'left':
+        wrapperStyles.justifyContent = 'flex-start';
+        break;
+      case 'right':
+        wrapperStyles.justifyContent = 'flex-end';
+        break;
+      case 'full':
+        // Full width: still use flexbox, image will fill 100% width
+        wrapperStyles.justifyContent = 'stretch'; // Stretch image to fill container
+        break;
+      case 'center':
+      default:
+        wrapperStyles.justifyContent = 'center';
+        break;
     }
     
     return wrapperStyles;
@@ -506,15 +500,18 @@ const ImageElement: React.FC<{
         return undefined;
       };
       
-      // ✅ Wrap StorefrontImage in div for box shadow
+      // ✅ Wrapper: alignment ONLY (flexbox), no visual styles
       const wrapperStyle = getWrapperStyles();
       
       return (
-        <div style={wrapperStyle}>
+        <div 
+          style={wrapperStyle}
+          className="image-block-wrapper"
+        >
           <StorefrontImage
             src={imageUrl}
             alt={alt || (!src ? 'Placeholder image' : '')}
-            className={`element-${element.id}`}
+            className={`element-${element.id} image-element`}
             style={getImageStyles()}
             priority={isCritical}
             isCritical={isCritical}
@@ -527,11 +524,14 @@ const ImageElement: React.FC<{
       );
     }
     
-    // ✅ Editor mode - wrap image in div for box shadow
+    // ✅ Editor mode - wrapper: alignment ONLY (flexbox), no visual styles
     const wrapperStyle = getWrapperStyles();
     
     return (
-      <div className="relative" style={wrapperStyle}>
+      <div 
+        className="image-block-wrapper relative" 
+        style={wrapperStyle}
+      >
         {imageLoading && src && (
           <div className="absolute inset-0 bg-muted animate-pulse rounded-lg flex items-center justify-center pointer-events-none z-10">
             <p className="text-xs text-muted-foreground">Loading...</p>
@@ -541,7 +541,7 @@ const ImageElement: React.FC<{
           src={imageUrl}
           alt={alt || (!src ? 'Placeholder image' : '')}
           style={getImageStyles()}
-          className={`element-${element.id} select-none`}
+          className={`element-${element.id} image-element select-none`}
           onLoad={handleImageLoad}
           onError={handleImageError}
           draggable={false}
@@ -550,11 +550,14 @@ const ImageElement: React.FC<{
     );
   };
 
+  // ✅ Link wrapper should not interfere with flexbox alignment
+  // If there's a link, it wraps the image but doesn't affect layout
   const imageContent = linkUrl ? (
     <a 
       href={linkUrl} 
       target={linkTarget}
-      className="inline-block select-none"
+      className="select-none"
+      style={{ display: 'contents' }} // Use contents display to not interfere with flexbox
       onClick={(e) => {
         // In editing mode, prevent navigation but allow selection
         if (isEditing) {
