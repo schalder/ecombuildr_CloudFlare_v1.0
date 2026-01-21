@@ -8,7 +8,8 @@ import {
   Clock, 
   ShoppingCart,
   Target,
-  Zap
+  Zap,
+  AlertCircle
 } from 'lucide-react';
 
 interface PlatformStats {
@@ -24,6 +25,12 @@ interface PlatformStats {
   monthlyGMV: number;
   averageOrderValue: number;
   estimatedMRR: number;
+  // Detailed MRR breakdown
+  activeMRR?: number;
+  trialPotentialMRR?: number;
+  trialEndedPotentialMRR?: number;
+  totalPotentialMRR?: number;
+  potentialLossMRR?: number;
 }
 
 interface AdminStatsCardsProps {
@@ -70,11 +77,32 @@ export const AdminStatsCards = ({ stats, loading }: AdminStatsCardsProps) => {
       color: 'text-orange-600',
     },
     {
-      title: 'SaaS MRR',
-      value: formatCurrency(stats?.estimatedMRR || 0),
-      description: 'Monthly recurring revenue',
+      title: 'Active MRR',
+      value: formatCurrency(stats?.activeMRR ?? stats?.estimatedMRR ?? 0),
+      description: 'Actual revenue from paying customers',
       icon: DollarSign,
-      color: 'text-emerald-600',
+      color: 'text-green-600',
+    },
+    {
+      title: 'Trial Potential MRR',
+      value: formatCurrency(stats?.trialPotentialMRR || 0),
+      description: 'Potential if trial users upgrade',
+      icon: TrendingUp,
+      color: 'text-blue-600',
+    },
+    {
+      title: 'Trial Ended Potential',
+      value: formatCurrency(stats?.trialEndedPotentialMRR || 0),
+      description: 'Lost opportunity from non-upgraded',
+      icon: AlertCircle,
+      color: 'text-orange-600',
+    },
+    {
+      title: 'Total Potential MRR',
+      value: formatCurrency(stats?.totalPotentialMRR || 0),
+      description: 'All potential revenue combined',
+      icon: Target,
+      color: 'text-purple-600',
     },
     {
       title: 'Merchant GMV',
@@ -88,7 +116,7 @@ export const AdminStatsCards = ({ stats, loading }: AdminStatsCardsProps) => {
   if (loading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[...Array(6)].map((_, i) => (
+        {[...Array(9)].map((_, i) => (
           <Card key={i}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">

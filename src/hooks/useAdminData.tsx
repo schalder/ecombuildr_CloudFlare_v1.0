@@ -27,7 +27,13 @@ interface PlatformStats {
   totalGMV: number;
   monthlyGMV: number;
   averageOrderValue: number;
-  estimatedMRR: number;
+  estimatedMRR: number; // Keep for backward compatibility
+  // NEW detailed MRR breakdown
+  activeMRR: number; // Actual revenue from active subscriptions
+  trialPotentialMRR: number; // Potential if trial users upgrade
+  trialEndedPotentialMRR: number; // Potential from trial-ended users
+  totalPotentialMRR: number; // All potential combined
+  potentialLossMRR: number; // Lost revenue (same as trialEndedPotentialMRR)
 }
 
 interface UserStats {
@@ -367,14 +373,53 @@ export const useAdminData = () => {
 
       const totalOrders = orderData?.length || 0;
       
-      // Calculate real SaaS MRR from active subscriptions
+      // Get plan prices from plan_limits table
+      const { data: planLimits } = await supabase
+        .from('plan_limits')
+        .select('plan_name, price_bdt')
+        .in('plan_name', ['starter', 'professional', 'enterprise']);
+
+      const planPriceMap = new Map(
+        planLimits?.map(plan => [plan.plan_name, Number(plan.price_bdt)]) || []
+      );
+
+      // Calculate Active MRR from active subscriptions (actual paying customers)
+      const now = new Date().toISOString();
       const { data: activeSubscriptions } = await supabase
         .from('saas_subscriptions')
         .select('plan_price_bdt')
         .eq('subscription_status', 'active')
-        .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString());
+        .or('expires_at.is.null,expires_at.gt.' + now);
 
-      const realMrr = activeSubscriptions?.reduce((sum, sub) => sum + Number(sub.plan_price_bdt), 0) || 0;
+      const activeMRR = activeSubscriptions?.reduce((sum, sub) => sum + Number(sub.plan_price_bdt), 0) || 0;
+
+      // Calculate Trial Potential MRR (potential revenue if active trial users upgrade)
+      const { data: trialUsers } = await supabase
+        .from('profiles')
+        .select('subscription_plan')
+        .eq('account_status', 'trial')
+        .gte('trial_expires_at', now)
+        .in('subscription_plan', ['starter', 'professional', 'enterprise']);
+
+      const trialPotentialMRR = trialUsers?.reduce((sum, user) => {
+        const price = planPriceMap.get(user.subscription_plan) || 0;
+        return sum + price;
+      }, 0) || 0;
+
+      // Calculate Trial Ended Potential MRR (lost opportunity from read_only users)
+      const { data: trialEndedUsers } = await supabase
+        .from('profiles')
+        .select('subscription_plan')
+        .eq('account_status', 'read_only')
+        .in('subscription_plan', ['starter', 'professional', 'enterprise']);
+
+      const trialEndedPotentialMRR = trialEndedUsers?.reduce((sum, user) => {
+        const price = planPriceMap.get(user.subscription_plan) || 0;
+        return sum + price;
+      }, 0) || 0;
+
+      // Calculate totals
+      const totalPotentialMRR = activeMRR + trialPotentialMRR + trialEndedPotentialMRR;
 
       setPlatformStats({
         totalUsers: totalUsers,
@@ -388,7 +433,12 @@ export const useAdminData = () => {
         totalGMV: merchantGmv,
         monthlyGMV: monthlyGmv,
         averageOrderValue: totalOrders > 0 ? merchantGmv / totalOrders : 0,
-        estimatedMRR: realMrr,
+        estimatedMRR: activeMRR, // Keep for backward compatibility
+        activeMRR: activeMRR,
+        trialPotentialMRR: trialPotentialMRR,
+        trialEndedPotentialMRR: trialEndedPotentialMRR,
+        totalPotentialMRR: totalPotentialMRR,
+        potentialLossMRR: trialEndedPotentialMRR,
       });
     } catch (err) {
       console.error('Error fetching platform stats:', err);
