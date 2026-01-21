@@ -1343,14 +1343,12 @@ const ElementorPageBuilderContent: React.FC<ElementorPageBuilderProps> = memo(({
             <ScrollArea scrollbarType="always" className="flex-1 min-h-0">
               {selection ? (
                 (() => {
-                  console.log('PropertiesPanel: Current selection:', selection);
                   // Get selected item data based on selection type
                   let selectedItem = null;
                   let updateHandler = null;
 
                   if (selection.type === 'element') {
                     const element = findElement(selection.id);
-                    console.log('PropertiesPanel: selection.id:', selection.id, 'found element:', element);
                     if (element) {
                       selectedItem = { type: 'element', data: element };
                       updateHandler = (elementId: string, updates: any) => {
