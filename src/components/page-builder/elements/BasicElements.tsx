@@ -274,8 +274,8 @@ const ImageElement: React.FC<{
       // Always apply maxWidth (default 100% if not set, user can customize)
       baseStyles.maxWidth = maxWidth;
       
-      // ✅ REMOVED: Alignment margins are now handled by wrapper div
-      // Image inside wrapper doesn't need alignment margins
+      // ✅ Remove alignment margins from image - alignment is now handled by wrapper
+      // The image should just fill its container (the wrapper)
       baseStyles.marginLeft = '0';
       baseStyles.marginRight = '0';
     }
@@ -392,29 +392,30 @@ const ImageElement: React.FC<{
       wrapperStyles.boxShadow = boxShadow;
     }
     
-    // ✅ Ensure wrapper has proper display and alignment to match image behavior
+    // ✅ Apply alignment to wrapper div itself (not the image)
     if (alignment === 'full') {
       wrapperStyles.width = '100%';
       wrapperStyles.display = 'block';
     } else {
-      // For centered/left/right aligned images, use block with auto margins for proper alignment
+      // For non-full alignments, use block display and apply alignment margins to wrapper
       wrapperStyles.display = 'block';
       
-      // ✅ CRITICAL FIX: Apply alignment margins to the wrapper div itself
-      // This ensures the wrapper (and its shadow) aligns correctly
       switch (alignment) {
         case 'left':
           wrapperStyles.marginLeft = '0';
           wrapperStyles.marginRight = 'auto';
+          wrapperStyles.width = 'fit-content';
           break;
         case 'right':
           wrapperStyles.marginLeft = 'auto';
           wrapperStyles.marginRight = '0';
+          wrapperStyles.width = 'fit-content';
           break;
         case 'center':
         default:
           wrapperStyles.marginLeft = 'auto';
           wrapperStyles.marginRight = 'auto';
+          wrapperStyles.width = 'fit-content';
           break;
       }
     }
