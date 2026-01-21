@@ -44,29 +44,43 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       async (event, session) => {
         if (!isMounted || abortController.signal.aborted) return;
         
-        // Check if user account is fake on sign-in
-        if (event === 'SIGNED_IN' && session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('account_status')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profile?.account_status === 'fake') {
-            // Sign out fake users immediately
-            await supabase.auth.signOut();
-            toast({
-              title: "Access Denied",
-              description: "Your account has been marked as fake and cannot access the platform.",
-              variant: "destructive",
-            });
-            return;
-          }
-        }
-        
+        // ✅ SET SESSION FIRST (non-blocking)
         const previousSession = session;
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // ✅ Check fake status in background (non-blocking)
+        if (event === 'SIGNED_IN' && session?.user) {
+          supabase
+            .from('profiles')
+            .select('account_status')
+            .eq('id', session.user.id)
+            .single()
+            .then(({ data: profile, error }) => {
+              if (!isMounted || abortController.signal.aborted) return;
+              
+              if (profile?.account_status === 'fake') {
+                supabase.auth.signOut();
+                toast({
+                  title: "Access Denied",
+                  description: "Your account has been marked as fake and cannot access the platform.",
+                  variant: "destructive",
+                });
+                return;
+              }
+              
+              // Ignore errors - don't block session restoration
+              if (error && error.code !== 'PGRST116') {
+                console.warn('Error checking fake status:', error);
+              }
+            })
+            .catch((error) => {
+              // Silently fail - don't block auth state change
+              if (!abortController.signal.aborted) {
+                console.warn('Error checking fake status:', error);
+              }
+            });
+        }
         
         // Only show toasts for actual user actions, not session refreshes
         const now = Date.now();
@@ -117,31 +131,44 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const { data: { session } } = await supabase.auth.getSession();
         if (!isMounted || abortController.signal.aborted) return;
         
-        // Check if user account is fake
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('account_status')
-            .eq('id', session.user.id)
-            .single();
-
-          if (profile?.account_status === 'fake') {
-            // Sign out fake users immediately
-            await supabase.auth.signOut();
-            setSession(null);
-            setUser(null);
-            setLoading(false);
-            setIsInitialLoad(false);
-            return;
-          }
-        }
-        
+        // ✅ SET SESSION FIRST (non-blocking)
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
         // Reset logging out state during initial session check
         setIsLoggingOut(false);
+        
+        // ✅ Check fake status in background (non-blocking, don't await)
+        if (session?.user) {
+          supabase
+            .from('profiles')
+            .select('account_status')
+            .eq('id', session.user.id)
+            .single()
+            .then(({ data: profile, error }) => {
+              // Only handle if component is still mounted
+              if (!isMounted || abortController.signal.aborted) return;
+              
+              // If fake user, sign out (but session was already set, so dashboard can load)
+              if (profile?.account_status === 'fake') {
+                supabase.auth.signOut();
+                setSession(null);
+                setUser(null);
+              }
+              
+              // Ignore errors - don't block session restoration
+              if (error && error.code !== 'PGRST116') {
+                console.warn('Error checking fake status:', error);
+              }
+            })
+            .catch((error) => {
+              // Silently fail - don't block session restoration
+              if (!abortController.signal.aborted) {
+                console.warn('Error checking fake status:', error);
+              }
+            });
+        }
         
         // Set initial load to false after getting session
         setTimeout(() => {
