@@ -2680,7 +2680,10 @@ export default function Orders() {
                       <div className="flex items-center justify-between pt-2 border-t text-xs text-muted-foreground">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-3 w-3" />
-                          {new Date(order.created_at).toLocaleDateString()}
+                          <div className="flex flex-col">
+                            <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                            <span className="text-xs">{new Date(order.created_at).toLocaleTimeString()}</span>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           {order.funnel_id ? (
@@ -2868,7 +2871,10 @@ export default function Orders() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {new Date(order.created_at).toLocaleDateString()}
+                        <div className="flex flex-col">
+                          <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                          <span className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleTimeString()}</span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
