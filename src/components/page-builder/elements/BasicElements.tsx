@@ -212,7 +212,24 @@ const ImageElement: React.FC<{
       });
     }
     
-    return generateResponsiveCSS(element.id, filteredStyles);
+    // Generate base responsive CSS
+    let css = generateResponsiveCSS(element.id, filteredStyles);
+    
+    // ✅ CRITICAL: Add explicit CSS rules to prevent box shadow on wrapper and ensure alignment works
+    css += `
+      /* Prevent box shadow on wrapper and figure */
+      .image-block-wrapper,
+      figure.element-${element.id} {
+        box-shadow: none !important;
+      }
+      /* Ensure wrapper uses flexbox for alignment */
+      .image-block-wrapper {
+        display: flex !important;
+        width: 100% !important;
+      }
+    `;
+    
+    return css;
   }, [element.id, element.styles]);
 
   // Get container styles using the shared renderer
@@ -231,6 +248,8 @@ const ImageElement: React.FC<{
     delete cleanStyles.borderColor;
     delete cleanStyles.borderStyle;
     delete cleanStyles.borderRadius;
+    // ✅ CRITICAL: Remove boxShadow from figure - it should ONLY be on the image
+    delete cleanStyles.boxShadow;
     
     return cleanStyles;
   };
@@ -578,7 +597,15 @@ const ImageElement: React.FC<{
       <style>{responsiveCSS}</style>
       <figure 
         className="w-full"
-        style={getContainerStyles()}
+        style={{
+          ...getContainerStyles(),
+          // ✅ Ensure figure doesn't interfere with flexbox alignment
+          display: 'block',
+          margin: 0,
+          padding: 0,
+          // ✅ Explicitly ensure figure has NO box shadow
+          boxShadow: 'none',
+        }}
         onClick={(e) => {
           // Allow event to bubble up for element selection in editing mode
           if (isEditing) {
