@@ -151,7 +151,9 @@ const ImageElement: React.FC<{
   onUpdate?: (updates: Partial<PageBuilderElement>) => void;
 }> = ({ element, isEditing, deviceType = 'desktop', onUpdate }) => {
   
-  const { src, alt, caption, alignment = 'center', linkUrl, linkTarget = '_self' } = element.content;
+  // ✅ Ensure alignment defaults to 'center' if not set
+  const { src, alt, caption, linkUrl, linkTarget = '_self' } = element.content;
+  const alignment = element.content.alignment || 'center';
   const [imageError, setImageError] = React.useState(false);
   const [imageLoading, setImageLoading] = React.useState(false);
   
@@ -166,10 +168,10 @@ const ImageElement: React.FC<{
   }, [src]);
 
   // Generate responsive CSS for this element
-  // Exclude border properties, width, and maxWidth from responsive CSS
+  // Exclude border properties, width, maxWidth, and boxShadow from responsive CSS
   // These are applied directly to the image via inline styles to work together with alignment
   const responsiveCSS = React.useMemo(() => {
-    // Filter out border properties, width, and maxWidth from styles
+    // Filter out border properties, width, maxWidth, and boxShadow from styles
     // These are applied directly to the image via inline styles
     const filteredStyles = {
       ...element.styles,
@@ -183,6 +185,8 @@ const ImageElement: React.FC<{
     // Remove width and maxWidth from base styles (applied via inline styles)
     delete filteredStyles.width;
     delete filteredStyles.maxWidth;
+    // ✅ Remove boxShadow from base styles - applied via inline styles only
+    delete filteredStyles.boxShadow;
     
     // Process responsive styles if they exist
     if (element.styles?.responsive) {
@@ -192,7 +196,7 @@ const ImageElement: React.FC<{
         mobile: { ...element.styles.responsive.mobile }
       };
       
-      // Remove border properties, width, and maxWidth from responsive styles for each device
+      // Remove border properties, width, maxWidth, and boxShadow from responsive styles for each device
       ['desktop', 'tablet', 'mobile'].forEach(device => {
         if (filteredStyles.responsive[device]) {
           delete filteredStyles.responsive[device].borderWidth;
@@ -202,6 +206,8 @@ const ImageElement: React.FC<{
           // Exclude width and maxWidth from responsive CSS - applied via inline styles
           delete filteredStyles.responsive[device].width;
           delete filteredStyles.responsive[device].maxWidth;
+          // ✅ Exclude boxShadow from responsive CSS - applied via inline styles only
+          delete filteredStyles.responsive[device].boxShadow;
         }
       });
     }
@@ -388,6 +394,9 @@ const ImageElement: React.FC<{
   // ✅ Get wrapper styles (for alignment only - box shadow is on image)
   const getWrapperStyles = (): React.CSSProperties => {
     const wrapperStyles: React.CSSProperties = {};
+    
+    // ✅ Explicitly ensure wrapper has NO box shadow (only image has it)
+    wrapperStyles.boxShadow = 'none';
     
     // ✅ Apply alignment to wrapper div itself (not the image)
     if (alignment === 'full') {
