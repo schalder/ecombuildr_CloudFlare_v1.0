@@ -324,6 +324,9 @@ export default function Orders() {
   const [funnelMap, setFunnelMap] = useState<Record<string, string>>({});
   const [websiteCurrencyMap, setWebsiteCurrencyMap] = useState<Record<string, CurrencyCode>>({});
   const [funnelCurrencyMap, setFunnelCurrencyMap] = useState<Record<string, CurrencyCode>>({});
+  const [channelFilter, setChannelFilter] = useState<string>(searchParams.get("channel") || "all");
+  const [websitesList, setWebsitesList] = useState<Array<{ id: string; name: string }>>([]);
+  const [funnelsList, setFunnelsList] = useState<Array<{ id: string; name: string }>>([]);
   const [isIPBlocked, setIsIPBlocked] = useState<boolean>(false);
   const [blockedIPInfo, setBlockedIPInfo] = useState<any>(null);
   
@@ -486,7 +489,7 @@ export default function Orders() {
         fetchOrders();
       }
     }
-  }, [user, currentPage, searchTerm, statusFilter, paymentStatusFilter, attributionFilter, dateFilter, activeTab, fakeOrderFilter]);
+  }, [user, currentPage, searchTerm, statusFilter, paymentStatusFilter, attributionFilter, dateFilter, channelFilter, activeTab, fakeOrderFilter]);
 
   // Check if IP is blocked when order details open
   useEffect(() => {
@@ -545,6 +548,7 @@ export default function Orders() {
     const search = searchParams.get("search");
     const paymentStatus = searchParams.get("paymentStatus");
     const dateFilterParam = searchParams.get("dateFilter");
+    const channelParam = searchParams.get("channel");
     if (status) {
       setStatusFilter(status);
     }
@@ -557,12 +561,15 @@ export default function Orders() {
     if (dateFilterParam) {
       setDateFilter(dateFilterParam);
     }
+    if (channelParam) {
+      setChannelFilter(channelParam);
+    }
   }, [searchParams]);
 
   // Reset to first page when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, paymentStatusFilter, dateFilter]);
+  }, [searchTerm, statusFilter, paymentStatusFilter, dateFilter, channelFilter]);
 
   // Handle orderId parameter from notifications
   useEffect(() => {
@@ -694,6 +701,27 @@ export default function Orders() {
           }
         }
 
+        // Apply channel filter if channelFilter exists
+        if (channelFilter && channelFilter !== 'all') {
+          if (channelFilter === 'website') {
+            // Filter for all website orders (website_id is not null, funnel_id is null)
+            ordersQuery = ordersQuery.not('website_id', 'is', null);
+            ordersQuery = ordersQuery.is('funnel_id', null);
+          } else if (channelFilter === 'funnel') {
+            // Filter for all funnel orders (funnel_id is not null, website_id is null)
+            ordersQuery = ordersQuery.not('funnel_id', 'is', null);
+            ordersQuery = ordersQuery.is('website_id', null);
+          } else if (channelFilter.startsWith('website_')) {
+            // Filter for specific website
+            const websiteId = channelFilter.replace('website_', '');
+            ordersQuery = ordersQuery.eq('website_id', websiteId);
+          } else if (channelFilter.startsWith('funnel_')) {
+            // Filter for specific funnel
+            const funnelId = channelFilter.replace('funnel_', '');
+            ordersQuery = ordersQuery.eq('funnel_id', funnelId);
+          }
+        }
+
         // Get total count for pagination with same filters
         let countQuery = supabase
           .from('orders')
@@ -752,6 +780,23 @@ export default function Orders() {
           }
         }
 
+        // Apply channel filter to count query
+        if (channelFilter && channelFilter !== 'all') {
+          if (channelFilter === 'website') {
+            countQuery = countQuery.not('website_id', 'is', null);
+            countQuery = countQuery.is('funnel_id', null);
+          } else if (channelFilter === 'funnel') {
+            countQuery = countQuery.not('funnel_id', 'is', null);
+            countQuery = countQuery.is('website_id', null);
+          } else if (channelFilter.startsWith('website_')) {
+            const websiteId = channelFilter.replace('website_', '');
+            countQuery = countQuery.eq('website_id', websiteId);
+          } else if (channelFilter.startsWith('funnel_')) {
+            const funnelId = channelFilter.replace('funnel_', '');
+            countQuery = countQuery.eq('funnel_id', funnelId);
+          }
+        }
+
         const { count, error: countError } = await countQuery;
         if (countError) throw countError;
         setTotalCount(count || 0);
@@ -785,9 +830,12 @@ export default function Orders() {
         const funnelNameMap: Record<string, string> = {};
         const websiteCurrencyLookup: Record<string, CurrencyCode> = {};
         const funnelCurrencyLookup: Record<string, CurrencyCode> = {};
+        const websitesListData: Array<{ id: string; name: string }> = [];
+        const funnelsListData: Array<{ id: string; name: string }> = [];
         
         (websites || []).forEach(w => {
           websiteNameMap[w.id] = w.name;
+          websitesListData.push({ id: w.id, name: w.name });
           const code = (w.settings as any)?.currency?.code || (w.settings as any)?.currency_code;
           if (isCurrencyCode(code)) {
             websiteCurrencyLookup[w.id] = code;
@@ -796,6 +844,7 @@ export default function Orders() {
         
         (funnels || []).forEach(f => {
           funnelNameMap[f.id] = f.name;
+          funnelsListData.push({ id: f.id, name: f.name });
           const code = (f.settings as any)?.currency_code;
           if (isCurrencyCode(code)) {
             funnelCurrencyLookup[f.id] = code;
@@ -806,6 +855,8 @@ export default function Orders() {
         setFunnelMap(funnelNameMap);
         setWebsiteCurrencyMap(websiteCurrencyLookup);
         setFunnelCurrencyMap(funnelCurrencyLookup);
+        setWebsitesList(websitesListData);
+        setFunnelsList(funnelsListData);
 
         if (ordersError) throw ordersError;
         if (websitesError) throw websitesError;
@@ -2188,6 +2239,51 @@ export default function Orders() {
                 <SelectItem value="this_week">This Week</SelectItem>
                 <SelectItem value="last_7_days">Last 7 Days</SelectItem>
                 <SelectItem value="last_15_days">Last 15 Days</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select
+              value={channelFilter || 'all'}
+              onValueChange={(value) => {
+                setChannelFilter(value);
+                setSearchParams(prev => {
+                  const newParams = new URLSearchParams(prev);
+                  if (value === 'all') {
+                    newParams.delete("channel");
+                  } else {
+                    newParams.set("channel", value);
+                  }
+                  return newParams;
+                });
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className={isMobile ? 'w-full' : 'w-[200px]'}>
+                <SelectValue placeholder="All Channels" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Channels</SelectItem>
+                <SelectItem value="website">All Websites</SelectItem>
+                <SelectItem value="funnel">All Funnels</SelectItem>
+                {websitesList.length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Websites</div>
+                    {websitesList.map((website) => (
+                      <SelectItem key={website.id} value={`website_${website.id}`}>
+                        {website.name}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                {funnelsList.length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Funnels</div>
+                    {funnelsList.map((funnel) => (
+                      <SelectItem key={funnel.id} value={`funnel_${funnel.id}`}>
+                        {funnel.name}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
               </SelectContent>
             </Select>
           </div>
