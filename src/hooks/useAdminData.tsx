@@ -394,14 +394,14 @@ export const useAdminData = () => {
       const activeMRR = activeSubscriptions?.reduce((sum, sub) => sum + Number(sub.plan_price_bdt), 0) || 0;
 
       // Calculate Trial Potential MRR (potential revenue if active trial users upgrade)
-      const { data: trialUsers } = await supabase
+      const { data: activeTrialUsers } = await supabase
         .from('profiles')
         .select('subscription_plan')
         .eq('account_status', 'trial')
         .gte('trial_expires_at', now)
         .in('subscription_plan', ['starter', 'professional', 'enterprise']);
 
-      const trialPotentialMRR = trialUsers?.reduce((sum, user) => {
+      const trialPotentialMRR = activeTrialUsers?.reduce((sum, user) => {
         const price = planPriceMap.get(user.subscription_plan) || 0;
         return sum + price;
       }, 0) || 0;
