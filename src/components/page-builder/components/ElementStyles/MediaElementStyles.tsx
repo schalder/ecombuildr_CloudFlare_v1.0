@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { BoxShadowPicker } from '@/components/ui/box-shadow-picker';
 import { Monitor, Smartphone } from 'lucide-react';
 import { PageBuilderElement } from '../../types';
 import { CollapsibleGroup } from './_shared/CollapsibleGroup';
@@ -268,14 +269,11 @@ export const MediaElementStyles: React.FC<MediaElementStylesProps> = ({
           </div>
         </div>
 
-        <div>
-          <Label className="text-xs">Box Shadow</Label>
-          <Input
-            value={element.styles?.boxShadow || ''}
-            onChange={(e) => onStyleUpdate('boxShadow', e.target.value)}
-            placeholder="e.g., 0 4px 8px rgba(0,0,0,0.1)"
-          />
-        </div>
+        <BoxShadowPicker
+          value={element.styles?.boxShadow || 'none'}
+          onChange={(shadow) => onStyleUpdate('boxShadow', shadow)}
+          label="Box Shadow"
+        />
       </CollapsibleGroup>
 
       {/* Audio Player Colors - Only for audio-player */}
