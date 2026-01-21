@@ -398,8 +398,19 @@ const ImageElement: React.FC<{
     }
     
     const wrapperStyles: React.CSSProperties = {};
+    
+    // ✅ Apply box shadow if it exists and is not 'none'
     if (boxShadow && boxShadow !== 'none') {
       wrapperStyles.boxShadow = boxShadow;
+    }
+    
+    // ✅ Ensure wrapper has proper display for shadow to show
+    // Match the image's display/width behavior
+    if (alignment === 'full') {
+      wrapperStyles.width = '100%';
+    } else {
+      // For centered/left/right aligned images, use inline-block to contain shadow
+      wrapperStyles.display = 'inline-block';
     }
     
     return wrapperStyles;
@@ -486,7 +497,7 @@ const ImageElement: React.FC<{
       const wrapperStyle = getWrapperStyles();
       
       return (
-        <div style={wrapperStyle} className="inline-block">
+        <div style={wrapperStyle}>
           <StorefrontImage
             src={imageUrl}
             alt={alt || (!src ? 'Placeholder image' : '')}

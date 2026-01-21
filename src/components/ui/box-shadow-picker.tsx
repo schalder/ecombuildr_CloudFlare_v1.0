@@ -16,6 +16,54 @@ export const BoxShadowPicker: React.FC<BoxShadowPickerProps> = ({ value, onChang
   const isInternalUpdate = useRef(false);
   const lastGeneratedShadow = useRef<string>('');
   
+  // ✅ Convert HSL/RGB to hex
+  const colorToHex = useCallback((color: string): string => {
+    if (!color) return '#000000';
+    
+    // Already hex
+    if (color.startsWith('#')) {
+      return color.length === 7 ? color : '#000000';
+    }
+    
+    // HSL format: hsl(0, 84%, 60%)
+    const hslMatch = color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+    if (hslMatch) {
+      const h = parseInt(hslMatch[1]) / 360;
+      const s = parseInt(hslMatch[2]) / 100;
+      const l = parseInt(hslMatch[3]) / 100;
+      
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+      const m = l - c / 2;
+      
+      let r = 0, g = 0, b = 0;
+      
+      if (h < 1/6) { r = c; g = x; b = 0; }
+      else if (h < 2/6) { r = x; g = c; b = 0; }
+      else if (h < 3/6) { r = 0; g = c; b = x; }
+      else if (h < 4/6) { r = 0; g = x; b = c; }
+      else if (h < 5/6) { r = x; g = 0; b = c; }
+      else { r = c; g = 0; b = x; }
+      
+      r = Math.round((r + m) * 255);
+      g = Math.round((g + m) * 255);
+      b = Math.round((b + m) * 255);
+      
+      return `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
+    }
+    
+    // RGB format: rgb(255, 0, 0)
+    const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (rgbMatch) {
+      const r = parseInt(rgbMatch[1]);
+      const g = parseInt(rgbMatch[2]);
+      const b = parseInt(rgbMatch[3]);
+      return `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
+    }
+    
+    return '#000000';
+  }, []);
+  
   // Parse current value
   const parseShadow = useCallback((shadowValue: string) => {
     if (!shadowValue || shadowValue === 'none') {
@@ -102,6 +150,12 @@ export const BoxShadowPicker: React.FC<BoxShadowPickerProps> = ({ value, onChang
   const updateShadow = useCallback((key: keyof typeof shadow, val: number | string | boolean) => {
     setShadow(prev => ({ ...prev, [key]: val }));
   }, []);
+
+  // ✅ Handle color change - convert HSL/RGB to hex
+  const handleColorChange = useCallback((color: string) => {
+    const hexColor = colorToHex(color);
+    updateShadow('color', hexColor);
+  }, [colorToHex, updateShadow]);
 
   const handleInputChange = (key: 'x' | 'y' | 'blur' | 'spread', value: string) => {
     const numValue = parseInt(value) || 0;
@@ -232,7 +286,7 @@ export const BoxShadowPicker: React.FC<BoxShadowPickerProps> = ({ value, onChang
           <Label className="text-xs text-muted-foreground">Color</Label>
           <ColorPicker
             color={shadow.color}
-            onChange={(color) => updateShadow('color', color)}
+            onChange={handleColorChange}
             label=""
           />
         </div>
