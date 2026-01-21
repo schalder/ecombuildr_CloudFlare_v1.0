@@ -1,14 +1,9 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ColorPicker } from '@/components/ui/color-picker';
+import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Box, Palette, X } from 'lucide-react';
+import { ColorPicker } from '@/components/ui/color-picker';
 
 interface BoxShadowPickerProps {
   value: string;
@@ -16,60 +11,49 @@ interface BoxShadowPickerProps {
   label?: string;
 }
 
-// Box shadow presets
-const BOX_SHADOW_PRESETS = {
-  none: { name: 'None', value: 'none' },
-  sm: { name: 'Small', value: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' },
-  default: { name: 'Default', value: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)' },
-  md: { name: 'Medium', value: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)' },
-  lg: { name: 'Large', value: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)' },
-  xl: { name: 'Extra Large', value: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' },
-  '2xl': { name: '2X Large', value: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' },
-  inner: { name: 'Inner', value: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.05)' },
-  glow: { name: 'Glow', value: '0 0 20px rgba(59, 130, 246, 0.5)' },
-  colored: { name: 'Colored', value: '0 4px 14px 0 rgba(139, 92, 246, 0.3)' },
-  soft: { name: 'Soft', value: '0 8px 30px rgba(0, 0, 0, 0.12)' },
-  harsh: { name: 'Harsh', value: '0 2px 10px rgba(0, 0, 0, 0.3)' }
-};
-
 export const BoxShadowPicker: React.FC<BoxShadowPickerProps> = ({ value, onChange, label }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [customMode, setCustomMode] = useState(false);
-
-  // Custom shadow state
-  const [offsetX, setOffsetX] = useState([0]);
-  const [offsetY, setOffsetY] = useState([4]);
-  const [blurRadius, setBlurRadius] = useState([6]);
-  const [spreadRadius, setSpreadRadius] = useState([0]);
-  const [shadowColor, setShadowColor] = useState('#000000');
-  const [opacity, setOpacity] = useState([0.1]);
-  const [inset, setInset] = useState(false);
-
-  const getCurrentPreset = () => {
-    const preset = Object.entries(BOX_SHADOW_PRESETS).find(([_, preset]) => preset.value === value);
-    return preset ? preset[1].name : 'Custom';
-  };
-
-  const handlePresetChange = (presetKey: string) => {
-    const preset = BOX_SHADOW_PRESETS[presetKey as keyof typeof BOX_SHADOW_PRESETS];
-    if (preset) {
-      onChange(preset.value);
-      setIsOpen(false);
+  const [shadowType, setShadowType] = useState<'outer' | 'inner'>('outer');
+  
+  // Parse current value
+  const parseShadow = (shadowValue: string) => {
+    if (!shadowValue || shadowValue === 'none') {
+      return { x: 0, y: 0, blur: 0, spread: 0, color: '#000000', opacity: 0.2, inset: false };
     }
+    
+    const isInset = shadowValue.includes('inset');
+    const parts = shadowValue.replace('inset', '').trim().split(/\s+/);
+    
+    // Extract rgba color
+    const rgbaMatch = shadowValue.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+    let color = '#000000';
+    let opacity = 0.2;
+    
+    if (rgbaMatch) {
+      const r = parseInt(rgbaMatch[1]);
+      const g = parseInt(rgbaMatch[2]);
+      const b = parseInt(rgbaMatch[3]);
+      const a = rgbaMatch[4] ? parseFloat(rgbaMatch[4]) : 1;
+      color = `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
+      opacity = a;
+    }
+    
+    // Parse x, y, blur, spread (format: x y blur spread)
+    const x = parts[0] ? parseInt(parts[0]) || 0 : 0;
+    const y = parts[1] ? parseInt(parts[1]) || 0 : 0;
+    const blur = parts[2] ? parseInt(parts[2]) || 0 : 0;
+    const spread = parts[3] ? parseInt(parts[3]) || 0 : 0;
+    
+    return { x, y, blur, spread, color, opacity, inset: isInset };
   };
 
-  const generateCustomShadow = () => {
-    const rgba = hexToRgba(shadowColor, opacity[0]);
-    const insetPrefix = inset ? 'inset ' : '';
-    const shadow = `${insetPrefix}${offsetX[0]}px ${offsetY[0]}px ${blurRadius[0]}px ${spreadRadius[0]}px ${rgba}`;
-    return shadow;
-  };
+  const [shadow, setShadow] = useState(parseShadow(value));
 
-  const applyCustomShadow = () => {
-    const shadow = generateCustomShadow();
-    onChange(shadow);
-    setIsOpen(false);
-  };
+  // Update shadow when value prop changes
+  useEffect(() => {
+    const parsed = parseShadow(value);
+    setShadow(parsed);
+    setShadowType(parsed.inset ? 'inner' : 'outer');
+  }, [value]);
 
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
@@ -78,186 +62,186 @@ export const BoxShadowPicker: React.FC<BoxShadowPickerProps> = ({ value, onChang
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
-  const clearShadow = () => {
-    onChange('none');
-    setIsOpen(false);
+  const generateShadow = () => {
+    if (shadow.x === 0 && shadow.y === 0 && shadow.blur === 0 && shadow.spread === 0) {
+      return 'none';
+    }
+    const rgba = hexToRgba(shadow.color, shadow.opacity);
+    const insetPrefix = shadowType === 'inner' ? 'inset ' : '';
+    return `${insetPrefix}${shadow.x}px ${shadow.y}px ${shadow.blur}px ${shadow.spread}px ${rgba}`;
+  };
+
+  // Auto-apply shadow when any value changes
+  useEffect(() => {
+    const newShadow = generateShadow();
+    onChange(newShadow);
+  }, [shadow.x, shadow.y, shadow.blur, shadow.spread, shadow.color, shadow.opacity, shadowType]);
+
+  const updateShadow = (key: keyof typeof shadow, value: number | string | boolean) => {
+    setShadow(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleInputChange = (key: 'x' | 'y' | 'blur' | 'spread', value: string) => {
+    const numValue = parseInt(value) || 0;
+    updateShadow(key, numValue);
+  };
+
+  const handleSliderChange = (key: 'x' | 'y' | 'blur' | 'spread', value: number[]) => {
+    updateShadow(key, value[0]);
+  };
+
+  const handleShadowTypeChange = (type: 'outer' | 'inner') => {
+    setShadowType(type);
+    updateShadow('inset', type === 'inner');
   };
 
   return (
-    <div className="space-y-2">
-      {label && <Label>{label}</Label>}
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-2 h-10"
-          >
-            <Box className="w-4 h-4" />
-            <span className="flex-1 text-left">{getCurrentPreset()}</span>
-            <Palette className="w-4 h-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-80 p-0">
-          <Tabs defaultValue="presets" className="w-full">
-            <div className="p-4 border-b">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="presets">Presets</TabsTrigger>
-                <TabsTrigger value="custom">Custom</TabsTrigger>
-              </TabsList>
-            </div>
+    <div className="space-y-3">
+      {label && <Label className="text-sm font-medium">{label}</Label>}
+      
+      {/* Shadow Type Tabs */}
+      <Tabs value={shadowType} onValueChange={(v) => handleShadowTypeChange(v as 'outer' | 'inner')}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="outer">Outer Shadow</TabsTrigger>
+          <TabsTrigger value="inner">Inner Shadow</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-            <TabsContent value="presets" className="p-4 space-y-4">
-              <div className="flex justify-between items-center">
-                <Label>Shadow Presets</Label>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearShadow}
-                  className="h-8 px-2"
-                >
-                  <X className="w-3 h-3 mr-1" />
-                  Clear
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto">
-                {Object.entries(BOX_SHADOW_PRESETS).map(([key, preset]) => (
-                  <button
-                    key={key}
-                    onClick={() => handlePresetChange(key)}
-                    className="text-left p-3 rounded-lg border hover:bg-accent transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{preset.name}</span>
-                      <div 
-                        className="w-6 h-6 bg-background border rounded shadow-sm"
-                        style={{ 
-                          boxShadow: preset.value === 'none' ? 'none' : preset.value,
-                          backgroundColor: 'white'
-                        }}
-                      />
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1 truncate">
-                      {preset.value}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </TabsContent>
+      {/* Shadow Controls */}
+      <div className="space-y-3">
+        {/* X Offset */}
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">X</Label>
+          <div className="flex items-center gap-2">
+            <Slider
+              value={[shadow.x]}
+              onValueChange={(v) => handleSliderChange('x', v)}
+              min={-50}
+              max={50}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={shadow.x}
+              onChange={(e) => handleInputChange('x', e.target.value)}
+              className="w-20 h-8 text-xs"
+              min={-50}
+              max={50}
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
+        </div>
 
-            <TabsContent value="custom" className="p-4 space-y-4">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs">Offset X</Label>
-                    <Slider
-                      value={offsetX}
-                      onValueChange={setOffsetX}
-                      min={-50}
-                      max={50}
-                      step={1}
-                      className="mt-2"
-                    />
-                    <div className="text-xs text-muted-foreground mt-1">{offsetX[0]}px</div>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Offset Y</Label>
-                    <Slider
-                      value={offsetY}
-                      onValueChange={setOffsetY}
-                      min={-50}
-                      max={50}
-                      step={1}
-                      className="mt-2"
-                    />
-                    <div className="text-xs text-muted-foreground mt-1">{offsetY[0]}px</div>
-                  </div>
-                </div>
+        {/* Y Offset */}
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Y</Label>
+          <div className="flex items-center gap-2">
+            <Slider
+              value={[shadow.y]}
+              onValueChange={(v) => handleSliderChange('y', v)}
+              min={-50}
+              max={50}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={shadow.y}
+              onChange={(e) => handleInputChange('y', e.target.value)}
+              className="w-20 h-8 text-xs"
+              min={-50}
+              max={50}
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
+        </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-xs">Blur Radius</Label>
-                    <Slider
-                      value={blurRadius}
-                      onValueChange={setBlurRadius}
-                      min={0}
-                      max={100}
-                      step={1}
-                      className="mt-2"
-                    />
-                    <div className="text-xs text-muted-foreground mt-1">{blurRadius[0]}px</div>
-                  </div>
-                  <div>
-                    <Label className="text-xs">Spread</Label>
-                    <Slider
-                      value={spreadRadius}
-                      onValueChange={setSpreadRadius}
-                      min={-50}
-                      max={50}
-                      step={1}
-                      className="mt-2"
-                    />
-                    <div className="text-xs text-muted-foreground mt-1">{spreadRadius[0]}px</div>
-                  </div>
-                </div>
+        {/* Blur */}
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Blur</Label>
+          <div className="flex items-center gap-2">
+            <Slider
+              value={[shadow.blur]}
+              onValueChange={(v) => handleSliderChange('blur', v)}
+              min={0}
+              max={100}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={shadow.blur}
+              onChange={(e) => handleInputChange('blur', e.target.value)}
+              className="w-20 h-8 text-xs"
+              min={0}
+              max={100}
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
+        </div>
 
-                <div>
-                  <ColorPicker
-                    color={shadowColor}
-                    onChange={setShadowColor}
-                    label="Shadow Color"
-                  />
-                </div>
+        {/* Spread */}
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Spread</Label>
+          <div className="flex items-center gap-2">
+            <Slider
+              value={[shadow.spread]}
+              onValueChange={(v) => handleSliderChange('spread', v)}
+              min={-50}
+              max={50}
+              step={1}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={shadow.spread}
+              onChange={(e) => handleInputChange('spread', e.target.value)}
+              className="w-20 h-8 text-xs"
+              min={-50}
+              max={50}
+            />
+            <span className="text-xs text-muted-foreground w-6">px</span>
+          </div>
+        </div>
 
-                <div>
-                  <Label className="text-xs">Opacity</Label>
-                  <Slider
-                    value={opacity}
-                    onValueChange={setOpacity}
-                    min={0}
-                    max={1}
-                    step={0.01}
-                    className="mt-2"
-                  />
-                  <div className="text-xs text-muted-foreground mt-1">{Math.round(opacity[0] * 100)}%</div>
-                </div>
+        {/* Color Picker */}
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">Color</Label>
+          <ColorPicker
+            color={shadow.color}
+            onChange={(color) => updateShadow('color', color)}
+            label=""
+          />
+        </div>
 
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="inset"
-                    checked={inset}
-                    onChange={(e) => setInset(e.target.checked)}
-                    className="rounded"
-                  />
-                  <Label htmlFor="inset" className="text-xs">Inner Shadow</Label>
-                </div>
-
-                {/* Preview */}
-                <div className="space-y-2">
-                  <Label className="text-xs">Preview</Label>
-                  <div 
-                    className="w-full h-16 bg-background border rounded-md"
-                    style={{ 
-                      boxShadow: generateCustomShadow(),
-                      backgroundColor: 'white'
-                    }}
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <Button onClick={applyCustomShadow} className="flex-1" size="sm">
-                    Apply Shadow
-                  </Button>
-                  <Button onClick={clearShadow} variant="outline" size="sm">
-                    Clear
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </PopoverContent>
-      </Popover>
+        {/* Opacity Slider */}
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Opacity</Label>
+          <div className="flex items-center gap-2">
+            <Slider
+              value={[shadow.opacity]}
+              onValueChange={(v) => updateShadow('opacity', v[0])}
+              min={0}
+              max={1}
+              step={0.01}
+              className="flex-1"
+            />
+            <Input
+              type="number"
+              value={Math.round(shadow.opacity * 100)}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                updateShadow('opacity', Math.max(0, Math.min(100, val)) / 100);
+              }}
+              className="w-20 h-8 text-xs"
+              min={0}
+              max={100}
+            />
+            <span className="text-xs text-muted-foreground w-6">%</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

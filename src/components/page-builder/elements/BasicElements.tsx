@@ -371,7 +371,15 @@ const ImageElement: React.FC<{
       baseStyles.opacity = typeof opacity === 'string' ? parseFloat(opacity) : opacity;
     }
 
-    // ✅ ADD: Apply boxShadow with responsive fallback
+    // ✅ NOTE: boxShadow is handled separately in getWrapperStyles() for proper rendering
+    return baseStyles;
+  };
+
+  // ✅ Get wrapper styles (for box shadow) - shadow needs to be on wrapper div, not img tag
+  const getWrapperStyles = (): React.CSSProperties => {
+    const responsiveStyles = element.styles?.responsive || {};
+    const currentDeviceStyles = responsiveStyles[deviceType] || {};
+    
     let boxShadow = currentDeviceStyles.boxShadow !== undefined ? currentDeviceStyles.boxShadow : undefined;
     if (boxShadow === undefined) {
       if (deviceType === 'mobile') {
@@ -388,11 +396,13 @@ const ImageElement: React.FC<{
         boxShadow = element.styles?.boxShadow;
       }
     }
+    
+    const wrapperStyles: React.CSSProperties = {};
     if (boxShadow && boxShadow !== 'none') {
-      baseStyles.boxShadow = boxShadow;
+      wrapperStyles.boxShadow = boxShadow;
     }
-
-    return baseStyles;
+    
+    return wrapperStyles;
   };
 
   const handleImageLoad = () => {
@@ -472,25 +482,32 @@ const ImageElement: React.FC<{
         return undefined;
       };
       
+      // ✅ Wrap StorefrontImage in div for box shadow
+      const wrapperStyle = getWrapperStyles();
+      
       return (
-        <StorefrontImage
-          src={imageUrl}
-          alt={alt || (!src ? 'Placeholder image' : '')}
-          className={`element-${element.id}`}
-          style={getImageStyles()}
-          priority={isCritical}
-          isCritical={isCritical}
-          width={getNumericWidth()}
-          height={getNumericHeight()}
-          aspectRatio={element.styles?.aspectRatio}
-          preserveOriginal={true}
-        />
+        <div style={wrapperStyle} className="inline-block">
+          <StorefrontImage
+            src={imageUrl}
+            alt={alt || (!src ? 'Placeholder image' : '')}
+            className={`element-${element.id}`}
+            style={getImageStyles()}
+            priority={isCritical}
+            isCritical={isCritical}
+            width={getNumericWidth()}
+            height={getNumericHeight()}
+            aspectRatio={element.styles?.aspectRatio}
+            preserveOriginal={true}
+          />
+        </div>
       );
     }
     
-    // Editor mode - keep existing simple img tag
+    // ✅ Editor mode - wrap image in div for box shadow
+    const wrapperStyle = getWrapperStyles();
+    
     return (
-      <div className="relative">
+      <div className="relative" style={wrapperStyle}>
         {imageLoading && src && (
           <div className="absolute inset-0 bg-muted animate-pulse rounded-lg flex items-center justify-center pointer-events-none z-10">
             <p className="text-xs text-muted-foreground">Loading...</p>
