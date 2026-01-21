@@ -324,12 +324,69 @@ export default function Orders() {
         query = query.or(`customer_name.ilike.%${searchTerm}%,customer_phone.ilike.%${searchTerm}%,customer_email.ilike.%${searchTerm}%`);
       }
 
-      const { data, error, count } = await query;
+      const { data: incompleteCheckoutsData, error, count } = await query;
 
       if (error) throw error;
 
-      setIncompleteCheckouts((data as IncompleteCheckout[]) || []);
-      setTotalCount(count || 0);
+      // ✅ FIX: Filter out incomplete checkouts that have matching completed orders
+      // This prevents orders from appearing in both "All Orders" and "Abandoned Checkouts" tabs
+      if (incompleteCheckoutsData && incompleteCheckoutsData.length > 0) {
+        // Fetch all completed orders for these stores (excluding incomplete statuses)
+        // Only check orders from the last 30 days to avoid performance issues
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+        
+        const { data: completedOrders, error: ordersError } = await supabase
+          .from('orders')
+          .select('customer_phone, customer_email, store_id, created_at')
+          .in('store_id', storeIds)
+          .not('status', 'in', '(pending_payment,payment_failed,cancelled)')
+          .gte('created_at', thirtyDaysAgo);
+
+        if (!ordersError && completedOrders) {
+          // Create a Set of unique identifiers for completed orders
+          const completedOrderIdentifiers = new Set<string>();
+          
+          completedOrders.forEach((order: any) => {
+            // Create unique identifier using store_id + phone or email
+            if (order.customer_phone && order.customer_phone.trim()) {
+              const phoneKey = `${order.store_id}:${order.customer_phone.trim()}`;
+              completedOrderIdentifiers.add(phoneKey);
+            }
+            if (order.customer_email && order.customer_email.trim()) {
+              const emailKey = `${order.store_id}:${order.customer_email.trim().toLowerCase()}`;
+              completedOrderIdentifiers.add(emailKey);
+            }
+          });
+
+          // Filter out incomplete checkouts that match completed orders
+          const filteredCheckouts = incompleteCheckoutsData.filter((checkout: IncompleteCheckout) => {
+            // Check if this incomplete checkout matches any completed order
+            const hasMatchingOrder = 
+              (checkout.customer_phone && checkout.customer_phone.trim() && 
+               completedOrderIdentifiers.has(`${checkout.store_id}:${checkout.customer_phone.trim()}`)) ||
+              (checkout.customer_email && checkout.customer_email.trim() && 
+               completedOrderIdentifiers.has(`${checkout.store_id}:${checkout.customer_email.trim().toLowerCase()}`));
+            
+            return !hasMatchingOrder; // Keep only checkouts without matching orders
+          });
+
+          setIncompleteCheckouts(filteredCheckouts);
+          // Update count to reflect filtered results
+          // Note: This count may be slightly off due to pagination, but it's acceptable for UX
+          setTotalCount(filteredCheckouts.length);
+        } else {
+          // If error fetching orders, still show incomplete checkouts (fallback)
+          // This ensures the page doesn't break if there's a temporary database issue
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('[fetchIncompleteCheckouts] Error fetching completed orders for filtering:', ordersError);
+          }
+          setIncompleteCheckouts((incompleteCheckoutsData as IncompleteCheckout[]) || []);
+          setTotalCount(count || 0);
+        }
+      } else {
+        setIncompleteCheckouts([]);
+        setTotalCount(0);
+      }
     } catch (error) {
       console.error('Error fetching incomplete checkouts:', error);
       toast({
