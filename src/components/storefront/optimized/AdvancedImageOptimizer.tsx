@@ -157,16 +157,22 @@ export const AdvancedImageOptimizer: React.FC<AdvancedImageOptimizerProps> = ({
 
   // Calculate container styles
   const getContainerStyles = useCallback((): React.CSSProperties => {
-    // When preserving original, exclude width-related and border properties from container
-    // These should only be applied to the image itself, not the container
+    // Always exclude boxShadow and opacity from container - these should only be on the image
     let containerStyle = style || {};
-    if (preserveOriginal && style) {
+    if (style) {
+      const { boxShadow, opacity, ...rest } = style;
+      containerStyle = rest;
+    }
+    
+    // When preserving original, also exclude width-related and border properties from container
+    // These should only be applied to the image itself, not the container
+    if (preserveOriginal && containerStyle) {
       const { 
         width, maxWidth, minWidth, height, maxHeight, minHeight, 
         margin, marginLeft, marginRight, marginTop, marginBottom,
         borderWidth, borderColor, borderStyle, borderRadius,
         ...rest 
-      } = style;
+      } = containerStyle;
       containerStyle = rest;
     }
     
