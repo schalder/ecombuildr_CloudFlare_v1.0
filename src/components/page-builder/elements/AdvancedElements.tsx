@@ -102,11 +102,18 @@ const CustomHTMLElement: React.FC<{
 
   // Execute scripts when content changes and dangerous HTML is allowed
   useEffect(() => {
-    if (!containerRef.current || !html || !allowDangerousHTML) {
-      // If dangerous HTML is disabled, just set innerHTML safely
-      if (containerRef.current && !allowDangerousHTML) {
-        containerRef.current.innerHTML = html;
-      }
+    if (!containerRef.current) return;
+    
+    const container = containerRef.current;
+    
+    // Always clear existing content
+    container.innerHTML = '';
+    
+    if (!html) return;
+    
+    // If dangerous HTML is disabled, just set innerHTML safely (no script execution)
+    if (!allowDangerousHTML) {
+      container.innerHTML = html;
       return;
     }
 
@@ -158,10 +165,10 @@ const CustomHTMLElement: React.FC<{
 
   if (isEditing) {
     return (
-      <div className="max-w-4xl mx-auto p-4 border rounded-lg" style={element.styles}>
+      <div style={element.styles}>
         <div 
           ref={containerRef}
-          className="p-4 border rounded-lg bg-background min-h-[200px] overflow-auto"
+          className="min-h-[200px] overflow-auto"
         />
       </div>
     );

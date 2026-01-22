@@ -152,7 +152,6 @@ export const CustomHTMLProperties: React.FC<AdvancedPropertiesProps> = ({
   element,
   onUpdate
 }) => {
-  const [showPreview, setShowPreview] = useState(false);
   const html = element.content.html || '';
   const enableSyntaxHighlighting = element.content.enableSyntaxHighlighting !== false;
   const allowDangerousHTML = element.content.allowDangerousHTML || false;
@@ -205,31 +204,14 @@ export const CustomHTMLProperties: React.FC<AdvancedPropertiesProps> = ({
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <Label>HTML Code</Label>
-          <Button
-            onClick={() => setShowPreview(!showPreview)}
-            size="sm"
-            variant="outline"
-          >
-            {showPreview ? 'Show Code' : 'Show Preview'}
-          </Button>
-        </div>
-        
-        {showPreview ? (
-          <div 
-            className="p-4 border rounded-lg bg-background min-h-[200px]"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
-        ) : (
-          <Textarea
-            value={html}
-            onChange={(e) => onUpdate('html', e.target.value)}
-            placeholder="Enter your HTML code here..."
-            rows={12}
-            className="font-mono text-sm"
-          />
-        )}
+        <Label>HTML Code</Label>
+        <Textarea
+          value={html}
+          onChange={(e) => onUpdate('html', e.target.value)}
+          placeholder="Enter your HTML code here..."
+          rows={12}
+          className="font-mono text-sm mt-2"
+        />
       </div>
 
       <div>
