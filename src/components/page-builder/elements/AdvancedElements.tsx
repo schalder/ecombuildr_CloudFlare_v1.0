@@ -116,11 +116,6 @@ const CustomHTMLElement: React.FC<{
       container.innerHTML = html;
       return;
     }
-
-    const container = containerRef.current;
-    
-    // Clear existing content
-    container.innerHTML = '';
     
     // Create a temporary div to parse the HTML
     const tempDiv = document.createElement('div');
