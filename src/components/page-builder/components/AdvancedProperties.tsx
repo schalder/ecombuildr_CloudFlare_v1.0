@@ -232,11 +232,6 @@ export const CustomHTMLProperties: React.FC<AdvancedPropertiesProps> = ({
         )}
       </div>
 
-      <div className="text-xs text-muted-foreground p-3 bg-muted rounded">
-        <p className="font-medium mb-1">Security Notice:</p>
-        <p>Be cautious when enabling dangerous HTML. Only use trusted code to prevent XSS attacks.</p>
-      </div>
-
       <div>
         <Label>Common HTML Snippets</Label>
         <div className="grid grid-cols-2 gap-2 mt-2">

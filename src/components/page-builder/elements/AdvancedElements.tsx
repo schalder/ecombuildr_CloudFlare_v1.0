@@ -87,7 +87,6 @@ const CustomHTMLElement: React.FC<{
 }> = ({ element, isEditing, onUpdate }) => {
   const html = element.content.html || '';
   const allowDangerousHTML = element.content.allowDangerousHTML || false;
-  const [showPreview, setShowPreview] = useState(!isEditing);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleTitleUpdate = (newTitle: string) => {
@@ -96,17 +95,6 @@ const CustomHTMLElement: React.FC<{
         content: {
           ...element.content,
           title: newTitle
-        }
-      });
-    }
-  };
-
-  const toggleDangerousHTML = () => {
-    if (onUpdate) {
-      onUpdate({
-        content: {
-          ...element.content,
-          allowDangerousHTML: !allowDangerousHTML
         }
       });
     }
@@ -171,67 +159,10 @@ const CustomHTMLElement: React.FC<{
   if (isEditing) {
     return (
       <div className="max-w-4xl mx-auto p-4 border rounded-lg" style={element.styles}>
-        <div className="flex items-center justify-end mb-4">
-          <div className="flex items-center space-x-2">
-            <label className="flex items-center space-x-2 text-sm">
-              <input
-                type="checkbox"
-                checked={allowDangerousHTML}
-                onChange={toggleDangerousHTML}
-                className="rounded"
-              />
-              <span>Enable JS</span>
-            </label>
-            <Button 
-              onClick={() => setShowPreview(!showPreview)} 
-              size="sm" 
-              variant="outline"
-            >
-              {showPreview ? 'Edit Code' : 'Preview'}
-            </Button>
-          </div>
-        </div>
-        
-        {showPreview ? (
-          <div 
-            ref={containerRef}
-            className="p-4 border rounded-lg bg-background min-h-[200px] overflow-auto"
-          />
-        ) : (
-          <div>
-            <Textarea
-              value={html}
-              onChange={(e) => onUpdate && onUpdate({ content: { ...element.content, html: e.target.value } })}
-              placeholder={`Enter your HTML/CSS/JS code here...
-
-Example:
-<div style="padding: 20px; background: #f0f0f0; border-radius: 8px;">
-  <h2>Hello World</h2>
-  <button onclick="alert('Hello!')">Click me</button>
-</div>
-
-<style>
-  .my-class { color: blue; }
-</style>
-
-<script>
-  
-</script>`}
-              rows={15}
-              className="font-mono text-sm"
-            />
-            <div className="flex items-center justify-between mt-2">
-              <p className="text-xs text-muted-foreground">
-                Supports HTML elements, CSS within &lt;style&gt; tags, and JavaScript within &lt;script&gt; tags
-              </p>
-              {!allowDangerousHTML && (
-                <p className="text-xs text-amber-600">
-                  JavaScript execution is disabled
-                </p>
-              )}
-            </div>
-          </div>
-        )}
+        <div 
+          ref={containerRef}
+          className="p-4 border rounded-lg bg-background min-h-[200px] overflow-auto"
+        />
       </div>
     );
   }
