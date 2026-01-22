@@ -1,16 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { PageBuilderData } from '@/components/page-builder/types';
 import { StorefrontSection } from './StorefrontSection';
 import { storefrontRegistry } from '../registry/storefrontRegistry';
 import { BREAKPOINTS, DeviceType } from '@/components/page-builder/utils/responsive';
-import { ensureGoogleFontLoaded } from '@/hooks/useGoogleFontLoader';
 import { CriticalResourceLoader } from '../optimized/CriticalResourceLoader';
 import { FontOptimizer } from '../optimized/FontOptimizer';
 import { ScriptManager } from '../optimized/ScriptManager';
 import { PerformanceMonitor } from '../optimized/PerformanceMonitor';
 import { ServiceWorkerManager } from '../optimized/ServiceWorkerManager';
-import { CriticalCSSLoader } from '../optimized/CriticalCSSLoader';
-import { PreloadManager } from '../optimized/PreloadManager';
 import { CriticalImageManager } from '../optimized/CriticalImageManager';
 
 interface StorefrontPageBuilderProps {
@@ -27,16 +24,20 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
   customScripts
 }) => {
   const [deviceType, setDeviceType] = useState<DeviceType>('desktop');
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Preload page elements on mount
+  // Preload page elements on mount (non-blocking - render content immediately)
   useEffect(() => {
+    if (!data?.sections) return;
+
+    // Defer non-critical element preloading to avoid blocking render
     const initializePage = async () => {
       try {
-        // Phase 1: Load critical above-fold elements immediately
-        await storefrontRegistry.preloadCriticalElements();
+        // Phase 1: Load critical above-fold elements (non-blocking)
+        storefrontRegistry.preloadCriticalElements().catch(err => 
+          console.warn('Failed to preload critical elements:', err)
+        );
         
-        // Phase 2: Preload page-specific elements (deferred)
+        // Phase 2: Preload page-specific elements (deferred to idle time)
         if ('requestIdleCallback' in window) {
           requestIdleCallback(() => {
             storefrontRegistry.preloadPageElements(data).catch(err => 
@@ -53,23 +54,24 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
         }
       } catch (error) {
         console.warn('Failed to load critical elements:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
-    if (data?.sections) {
-      initializePage();
-    } else {
-      setIsLoading(false);
-    }
+    initializePage();
   }, [data]);
 
-  // Load Google fonts
-  useEffect(() => {
-    if (!data?.sections) return;
+  // Extract critical resources synchronously (before render) for optimal Lighthouse scores
+  const criticalResources = useMemo(() => {
+    if (!data?.sections) {
+      return { heroImage: undefined, fonts: [], preloadImages: [] };
+    }
 
-    const usedGoogleFonts = new Set<string>();
+    const heroImage = data.sections?.[0]?.rows?.[0]?.columns?.[0]?.elements?.find(
+      el => el.type === 'image'
+    )?.content?.src;
+    
+    const usedFonts = new Set<string>();
+    const preloadImages: string[] = [];
     
     const extractFonts = (obj: any) => {
       if (!obj) return;
@@ -85,19 +87,7 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
             const match = value.match(/"([^"]+)"/);
             if (match) {
               const fontFamily = match[1];
-              const fontWeights = {
-                'Poppins': '400;500;600;700',
-                'Montserrat': '400;500;600;700', 
-                'Roboto': '400;500;700',
-                'Open Sans': '400;600;700',
-                'Lato': '400;700',
-                'Playfair Display': '400;700',
-                'Hind Siliguri': '300;400;500;600;700'
-              };
-              
-              if (fontWeights[fontFamily as keyof typeof fontWeights]) {
-                usedGoogleFonts.add(`${fontFamily}:${fontWeights[fontFamily as keyof typeof fontWeights]}`);
-              }
+              usedFonts.add(fontFamily);
             }
           }
           
@@ -108,7 +98,8 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
       }
     };
 
-    data.sections.forEach(section => {
+    // Extract fonts and images from first 2 sections (above fold)
+    data.sections.slice(0, 2).forEach(section => {
       extractFonts(section.styles);
       section.rows?.forEach(row => {
         extractFonts(row.styles);
@@ -117,64 +108,20 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
           column.elements?.forEach(element => {
             extractFonts(element.styles);
             extractFonts(element.content);
+            
+            if (element.type === 'image' && element.content?.src) {
+              preloadImages.push(element.content.src);
+            }
           });
         });
       });
     });
-
-    usedGoogleFonts.forEach(fontWithWeights => {
-      const [family, weights] = fontWithWeights.split(':');
-      ensureGoogleFontLoaded(family, weights);
-    });
-  }, [data]);
-
-  // Preload LCP image candidate
-  useEffect(() => {
-    if (!data?.sections) return;
     
-    // Find first image in first section (likely LCP candidate)
-    const firstSection = data.sections[0];
-    if (!firstSection) return;
-    
-    const findFirstImage = (obj: any): string | null => {
-      if (!obj) return null;
-      
-      if (obj.type === 'image' && obj.content?.src) {
-        return obj.content.src;
-      }
-      
-      if (Array.isArray(obj)) {
-        for (const item of obj) {
-          const result = findFirstImage(item);
-          if (result) return result;
-        }
-      } else if (typeof obj === 'object') {
-        for (const value of Object.values(obj)) {
-          const result = findFirstImage(value);
-          if (result) return result;
-        }
-      }
-      
-      return null;
+    return {
+      heroImage,
+      fonts: Array.from(usedFonts),
+      preloadImages: preloadImages.slice(0, 3) // Limit to first 3 images
     };
-    
-    const lcpImage = findFirstImage(firstSection);
-    
-    if (lcpImage) {
-      // Preload the LCP image
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = lcpImage;
-      link.fetchPriority = 'high';
-      document.head.appendChild(link);
-      
-      return () => {
-        if (document.head.contains(link)) {
-          document.head.removeChild(link);
-        }
-      };
-    }
   }, [data]);
 
   // Handle responsive design
@@ -252,56 +199,6 @@ export const StorefrontPageBuilder: React.FC<StorefrontPageBuilderProps> = ({
     return styles;
   };
 
-  if (isLoading) {
-    return (
-      <div className={`animate-pulse space-y-4 ${className}`}>
-        <div className="h-64 bg-muted rounded-lg"></div>
-        <div className="h-32 bg-muted rounded-lg"></div>
-        <div className="h-48 bg-muted rounded-lg"></div>
-      </div>
-    );
-  }
-
-  // Extract critical resources for optimization
-  const extractCriticalResources = () => {
-    const heroImage = data.sections?.[0]?.rows?.[0]?.columns?.[0]?.elements?.find(
-      el => el.type === 'image'
-    )?.content?.src;
-    
-    const usedFonts = new Set<string>();
-    const preloadImages: string[] = [];
-    
-    // Extract first few images for preloading
-    data.sections?.slice(0, 2)?.forEach(section => {
-      section.rows?.forEach(row => {
-        row.columns?.forEach(column => {
-          column.elements?.forEach(element => {
-            if (element.type === 'image' && element.content?.src) {
-              preloadImages.push(element.content.src);
-            }
-            
-            // Extract fonts from styles
-            if (element.styles) {
-              Object.values(element.styles).forEach((value: any) => {
-                if (typeof value === 'string' && value.includes('"')) {
-                  const match = value.match(/"([^"]+)"/);
-                  if (match) usedFonts.add(match[1]);
-                }
-              });
-            }
-          });
-        });
-      });
-    });
-    
-    return {
-      heroImage,
-      fonts: Array.from(usedFonts),
-      preloadImages: preloadImages.slice(0, 3) // Limit to first 3 images
-    };
-  };
-
-  const criticalResources = extractCriticalResources();
 
   return (
     <CriticalImageManager maxCriticalImages={3}>
