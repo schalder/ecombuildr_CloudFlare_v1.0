@@ -142,6 +142,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         return;
       }
       if (settingsDropdownOpenRef.current) {
+        // Don't update position when dropdown is open to prevent duplicate toolbars
         setShowToolbar(true);
         return;
       }
@@ -172,14 +173,26 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         return;
       }
       const rect = range.getBoundingClientRect();
+      
+      // Validate rect to prevent toolbars at invalid positions (like top-left corner)
+      if (!rect || rect.width === 0 || rect.height === 0) {
+        return;
+      }
+      
+      // Validate calculated position - ensure it's reasonable
+      const calculatedTop = Math.max(8, rect.top - 48);
+      const calculatedLeft = Math.max(8, rect.left + rect.width / 2);
+      
+      // Prevent setting toolbar at default (8, 8) position unless it's actually near that area
+      if (calculatedTop === 8 && calculatedLeft === 8 && rect.top > 100) {
+        // Invalid position - don't update
+        return;
+      }
+      
       // save selection for toolbar actions
       lastRangeRef.current = range.cloneRange();
-      if (rect) {
-        const top = Math.max(8, rect.top - 48);
-        const left = Math.max(8, rect.left + rect.width / 2);
-        setToolbarPos({ top, left });
-        setShowToolbar(true);
-      }
+      setToolbarPos({ top: calculatedTop, left: calculatedLeft });
+      setShowToolbar(true);
     };
 
     document.addEventListener('selectionchange', handleSelection);
@@ -336,26 +349,54 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
     if (!range) return;
     
     try {
-      // Check if selection is already wrapped in a hand-drawn effect
+      // Find ANY existing hand-drawn effect in the selection
       let container = range.commonAncestorContainer as HTMLElement;
       if (container.nodeType === Node.TEXT_NODE) {
         container = container.parentElement as HTMLElement;
       }
       
       const existingEffect = container.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement;
-      if (existingEffect && existingEffect.classList.contains(`hand-drawn-${effectType}`)) {
-        // Remove existing effect if same type
-        const parent = existingEffect.parentElement;
-        if (parent) {
-          const textNode = document.createTextNode(existingEffect.textContent || '');
-          parent.replaceChild(textNode, existingEffect);
-          parent.normalize();
+      
+      if (existingEffect) {
+        // If same effect type, remove it (toggle off)
+        if (existingEffect.classList.contains(`hand-drawn-${effectType}`)) {
+          const parent = existingEffect.parentElement;
+          if (parent) {
+            // Extract text content and preserve selection
+            const textContent = existingEffect.textContent || '';
+            const textNode = document.createTextNode(textContent);
+            parent.replaceChild(textNode, existingEffect);
+            parent.normalize();
+            
+            // Restore selection to the text node
+            const newRange = document.createRange();
+            newRange.selectNodeContents(textNode);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+            lastRangeRef.current = newRange.cloneRange();
+          }
+          onInput();
+          return;
+        } else {
+          // Different effect type - remove existing one first
+          const parent = existingEffect.parentElement;
+          if (parent) {
+            // Extract text content from existing effect
+            const textContent = existingEffect.textContent || '';
+            const textNode = document.createTextNode(textContent);
+            parent.replaceChild(textNode, existingEffect);
+            parent.normalize();
+            
+            // Update range to point to the new text node
+            const newRange = document.createRange();
+            newRange.selectNodeContents(textNode);
+            range = newRange;
+            lastRangeRef.current = newRange.cloneRange();
+          }
         }
-        onInput();
-        return;
       }
       
-      // Create new span with hand-drawn effect
+      // Now apply the new effect
       const span = document.createElement('span');
       span.className = `hand-drawn-${effectType}`;
       
@@ -386,9 +427,10 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
       
       // Update selection
       sel.removeAllRanges();
-      const newRange = document.createRange();
-      newRange.selectNodeContents(span);
-      sel.addRange(newRange);
+      const finalRange = document.createRange();
+      finalRange.selectNodeContents(span);
+      sel.addRange(finalRange);
+      lastRangeRef.current = finalRange.cloneRange();
       
       onInput();
     } catch (error) {
