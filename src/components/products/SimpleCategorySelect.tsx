@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useCategories } from "@/hooks/useCategories";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Category {
   id: string;
@@ -59,15 +60,38 @@ export function SimpleCategorySelect({
       return;
     }
 
-    // Filter categories that are visible on the selected website
-    // This uses the same logic as the original CategoryTreeSelect
-    const filtered = flatCategories.filter((category: Category) => {
-      // For now, we'll include all categories since the website filtering
-      // logic is handled in the useCategories hook
-      return true;
-    });
+    // Fetch visibility data and filter categories by website
+    // This ensures only categories visible on the selected website are shown
+    const filterByWebsite = async () => {
+      try {
+        // Get all category IDs visible on this website
+        const { data: visibilityData, error } = await supabase
+          .from('category_website_visibility')
+          .select('category_id')
+          .eq('website_id', websiteId);
 
-    setFilteredCategories(filtered);
+        if (error) {
+          console.error('Error fetching category visibility:', error);
+          setFilteredCategories([]);
+          return;
+        }
+
+        // Create a Set of visible category IDs for fast lookup
+        const visibleCategoryIds = new Set(visibilityData?.map(v => v.category_id) || []);
+        
+        // Filter categories to only include those visible on the selected website
+        const filtered = flatCategories.filter((category: Category) => {
+          return visibleCategoryIds.has(category.id);
+        });
+
+        setFilteredCategories(filtered);
+      } catch (error) {
+        console.error('Error filtering categories by website:', error);
+        setFilteredCategories([]);
+      }
+    };
+
+    filterByWebsite();
   }, [flatCategories, websiteId]);
 
   // Separate main categories and subcategories
