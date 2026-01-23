@@ -309,9 +309,59 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
     exec('foreColor', color);
   };
 
+  // Convert any color format (HSL, RGB, hex) to hex for SVG
+  const colorToHex = (color: string): string => {
+    if (!color) return '#e03131';
+    
+    // Already hex
+    if (color.startsWith('#')) {
+      return color.length === 7 ? color : '#e03131';
+    }
+    
+    // HSL format: hsl(25, 95%, 55%) or hsl(25 95% 55%)
+    const hslMatch = color.match(/hsl\((\d+)[,\s]+(\d+)%[,\s]+(\d+)%\)/);
+    if (hslMatch) {
+      const h = parseInt(hslMatch[1]) / 360;
+      const s = parseInt(hslMatch[2]) / 100;
+      const l = parseInt(hslMatch[3]) / 100;
+      
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs((h * 6) % 2 - 1));
+      const m = l - c / 2;
+      
+      let r = 0, g = 0, b = 0;
+      
+      if (h < 1/6) { r = c; g = x; b = 0; }
+      else if (h < 2/6) { r = x; g = c; b = 0; }
+      else if (h < 3/6) { r = 0; g = c; b = x; }
+      else if (h < 4/6) { r = 0; g = x; b = c; }
+      else if (h < 5/6) { r = x; g = 0; b = c; }
+      else { r = c; g = 0; b = x; }
+      
+      r = Math.round((r + m) * 255);
+      g = Math.round((g + m) * 255);
+      b = Math.round((b + m) * 255);
+      
+      return `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
+    }
+    
+    // RGB format: rgb(255, 0, 0) or rgb(255 0 0)
+    const rgbMatch = color.match(/rgb\((\d+)[,\s]+(\d+)[,\s]+(\d+)\)/);
+    if (rgbMatch) {
+      const r = parseInt(rgbMatch[1]);
+      const g = parseInt(rgbMatch[2]);
+      const b = parseInt(rgbMatch[3]);
+      return `#${[r, g, b].map(x => x.toString(16).padStart(2, '0')).join('')}`;
+    }
+    
+    return '#e03131';
+  };
+
   const generateHandDrawnUnderlineSVG = (color: string, thickness: number = 2.5): string => {
-    // Remove # from color if present
-    const colorHex = color.replace('#', '');
+    // Convert color to hex format for SVG
+    const hexColor = colorToHex(color);
+    const colorHex = hexColor.replace('#', '');
+    
     // Build the SVG data URL with custom thickness
     const svgContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10'><path d='M0,8 Q15,4 30,7 T60,5 T90,8 T100,7' stroke='#${colorHex}' stroke-width='${thickness}' fill='none' stroke-linecap='round'/></svg>`;
     const encodedSvg = encodeURIComponent(svgContent);
