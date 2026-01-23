@@ -588,39 +588,3 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
   transform: translateY(-50%) rotate(8deg);
 }
 
-.hand-drawn-circle {
-  position: relative;
-  display: inline-block;
-  /* Add equal padding on all sides to ensure circle wraps around text */
-  padding: 0.35em;
-  --effect-color: #e03131;
-  --effect-thickness: 2.5px;
-  --effect-size: 100%;
-}
-
-.hand-drawn-circle::after {
-  content: '';
-  position: absolute;
-  /* Position circle centered around the text */
-  top: 50%;
-  left: 50%;
-  /* Calculate size based on container dimensions to wrap around text */
-  /* Use 100% of container width/height, but ensure minimum size based on line-height */
-  /* Scale by effect-size percentage */
-  width: calc(100% * var(--effect-size) / 100);
-  height: calc(100% * var(--effect-size) / 100);
-  /* Ensure minimum size based on line-height for single-line text */
-  min-width: calc((1em + 0.7em) * var(--effect-size) / 100);
-  min-height: calc((1em + 0.7em) * var(--effect-size) / 100);
-  /* Force perfect circle using aspect-ratio */
-  aspect-ratio: 1;
-  /* Center it around the text content */
-  transform: translate(-50%, -50%);
-  border: var(--effect-thickness) solid var(--effect-color);
-  border-radius: 50%;
-  opacity: 0.85;
-  pointer-events: none;
-  box-sizing: border-box;
-  /* Place behind text so text appears on top */
-  z-index: -1;
-}

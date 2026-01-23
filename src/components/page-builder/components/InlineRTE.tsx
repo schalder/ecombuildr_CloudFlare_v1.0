@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bold, Italic, Underline, Strikethrough, Link as LinkIcon, Minus, X, Circle, Settings2 } from 'lucide-react';
+import { Bold, Italic, Underline, Strikethrough, Link as LinkIcon, Minus, X, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -388,7 +388,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
     }
   };
 
-  const applyHandDrawnEffect = (effectType: 'underline' | 'cross' | 'circle') => {
+  const applyHandDrawnEffect = (effectType: 'underline' | 'cross') => {
     const editorEl = editorRef.current;
     if (!editorEl) return;
     
@@ -607,16 +607,6 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
                 title="Hand-drawn cross-out"
               >
                 <X className="h-4 w-4" />
-              </Button>
-              <Button 
-                size="sm" 
-                variant="ghost" 
-                className="h-7 w-7 p-0" 
-                onMouseDown={(e) => e.preventDefault()} 
-                onClick={() => applyHandDrawnEffect('circle')}
-                title="Hand-drawn circle"
-              >
-                <Circle className="h-4 w-4" />
               </Button>
             </div>
 
