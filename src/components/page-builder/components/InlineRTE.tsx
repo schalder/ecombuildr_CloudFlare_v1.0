@@ -9,6 +9,20 @@ import { Label } from '@/components/ui/label';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 
+// Global registry to ensure only one toolbar is visible at a time
+const activeToolbarRegistry = {
+  currentId: null as string | null,
+  setActive: (id: string | null) => {
+    activeToolbarRegistry.currentId = id;
+  },
+  isActive: (id: string) => {
+    return activeToolbarRegistry.currentId === id;
+  },
+  clear: () => {
+    activeToolbarRegistry.currentId = null;
+  }
+};
+
 export interface InlineRTEProps {
   value: string;
   onChange: (html: string) => void;
@@ -111,6 +125,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   
   const keepOpenRef = useRef(false);
   const settingsDropdownOpenRef = useRef(false);
+  const instanceIdRef = useRef<string>(`rte-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
 
   // Inject placeholder CSS into document head to prevent visibility issues
   useHeadStyle('inline-rte-placeholder', `
@@ -131,21 +146,40 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
     }
   }, [value, isEditing]);
 
+  // Cleanup: Clear from registry when component unmounts
+  useEffect(() => {
+    const instanceId = instanceIdRef.current;
+    return () => {
+      if (activeToolbarRegistry.isActive(instanceId)) {
+        activeToolbarRegistry.clear();
+      }
+    };
+  }, []);
+
   // Selection-based toolbar
   useEffect(() => {
     const el = editorRef.current;
     if (!el) return;
 
     const handleSelection = () => {
+      const instanceId = instanceIdRef.current;
+      
       if (keepOpenRef.current) {
-        setShowToolbar(true);
+        // Only show if this instance is the active one
+        if (activeToolbarRegistry.isActive(instanceId)) {
+          setShowToolbar(true);
+        }
         return;
       }
+      
       if (settingsDropdownOpenRef.current) {
-        // Don't update position when dropdown is open to prevent duplicate toolbars
-        setShowToolbar(true);
+        // Don't update position when dropdown is open, but keep toolbar visible if we're the active instance
+        if (activeToolbarRegistry.isActive(instanceId)) {
+          setShowToolbar(true);
+        }
         return;
       }
+      
       const sel = window.getSelection();
       const active = document.activeElement as HTMLElement | null;
       const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating], [data-radix-popper-content-wrapper]')) as HTMLElement[];
@@ -155,23 +189,40 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
 
       if (interactingWithFloating || interactingWithToolbar) {
         // Keep toolbar visible when interacting with its popovers/menus or the toolbar itself
-        setShowToolbar(true);
+        if (activeToolbarRegistry.isActive(instanceId)) {
+          setShowToolbar(true);
+        }
         return;
       }
 
       if (!sel || sel.rangeCount === 0) {
-        if (!settingsDropdownOpenRef.current) {
-          setShowToolbar(false);
+        // Clear this instance from registry and hide toolbar
+        if (activeToolbarRegistry.isActive(instanceId)) {
+          activeToolbarRegistry.clear();
+          if (!settingsDropdownOpenRef.current) {
+            setShowToolbar(false);
+          }
         }
         return;
       }
+      
       const range = sel.getRangeAt(0);
+      
+      // CRITICAL: Only show toolbar if selection is within THIS editor instance
       if (!el.contains(range.commonAncestorContainer) || sel.isCollapsed) {
-        if (!settingsDropdownOpenRef.current) {
-          setShowToolbar(false);
+        // Selection is not in this editor - clear from registry and hide
+        if (activeToolbarRegistry.isActive(instanceId)) {
+          activeToolbarRegistry.clear();
+          if (!settingsDropdownOpenRef.current) {
+            setShowToolbar(false);
+          }
         }
         return;
       }
+      
+      // Selection is in this editor - make this the active instance
+      activeToolbarRegistry.setActive(instanceId);
+      
       const rect = range.getBoundingClientRect();
       
       // Validate rect to prevent toolbars at invalid positions (like top-left corner)

@@ -591,7 +591,8 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
 .hand-drawn-circle {
   position: relative;
   display: inline-block;
-  padding: 0.15em 0.25em;
+  /* Add equal padding on all sides to ensure circle wraps around text */
+  padding: 0.35em;
   --effect-color: #e03131;
   --effect-thickness: 2.5px;
   --effect-size: 100%;
@@ -600,21 +601,26 @@ All colors MUST be HSL. Designed for trust, energy, and conversion.
 .hand-drawn-circle::after {
   content: '';
   position: absolute;
-  /* Center the circle around the text */
+  /* Position circle centered around the text */
   top: 50%;
   left: 50%;
-  /* Calculate size based on font size and effect-size percentage */
-  /* Use line-height (1em) as base, add padding, then scale by effect-size */
-  width: calc((1em + 0.3em) * var(--effect-size) / 100);
-  height: calc((1em + 0.3em) * var(--effect-size) / 100);
-  /* Ensure it's always a perfect circle by using the same value for both */
-  min-width: calc((1em + 0.3em) * var(--effect-size) / 100);
-  min-height: calc((1em + 0.3em) * var(--effect-size) / 100);
-  /* Center it */
+  /* Calculate size based on container dimensions to wrap around text */
+  /* Use 100% of container width/height, but ensure minimum size based on line-height */
+  /* Scale by effect-size percentage */
+  width: calc(100% * var(--effect-size) / 100);
+  height: calc(100% * var(--effect-size) / 100);
+  /* Ensure minimum size based on line-height for single-line text */
+  min-width: calc((1em + 0.7em) * var(--effect-size) / 100);
+  min-height: calc((1em + 0.7em) * var(--effect-size) / 100);
+  /* Force perfect circle using aspect-ratio */
+  aspect-ratio: 1;
+  /* Center it around the text content */
   transform: translate(-50%, -50%);
   border: var(--effect-thickness) solid var(--effect-color);
   border-radius: 50%;
   opacity: 0.85;
   pointer-events: none;
   box-sizing: border-box;
+  /* Place behind text so text appears on top */
+  z-index: -1;
 }
