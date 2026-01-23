@@ -64,7 +64,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, label
             </Button>
           )}
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-64 p-4" align="start">
+        <DropdownMenuContent className="w-64 p-4" align="start" onOpenAutoFocus={(e) => e.preventDefault()} data-rte-floating>
           <div className="space-y-4">
             <div>
               <Label htmlFor="color-input" className="text-xs">Custom Color</Label>

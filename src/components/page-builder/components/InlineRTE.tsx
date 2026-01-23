@@ -123,7 +123,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
       }
       const sel = window.getSelection();
       const active = document.activeElement as HTMLElement | null;
-      const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating]')) as HTMLElement[];
+      const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating], [data-radix-popper-content-wrapper]')) as HTMLElement[];
       const toolbarEl = toolbarRef.current;
       const interactingWithFloating = !!active && floatingEls.some((f) => f.contains(active));
       const interactingWithToolbar = !!active && !!toolbarEl && toolbarEl.contains(active);
@@ -163,7 +163,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
       const target = e.target as Node | null;
       const toolbarEl = toolbarRef.current;
       const inToolbar = !!toolbarEl && !!target && toolbarEl.contains(target);
-      const inFloating = !!(target as Element | null) && (target as Element).closest?.('[data-rte-floating]');
+      const inFloating = !!(target as Element | null) && ((target as Element).closest?.('[data-rte-floating]') || (target as Element).closest?.('[data-radix-popper-content-wrapper]'));
       if (inToolbar || inFloating) {
         keepOpenRef.current = true;
         // Preserve current selection
@@ -293,7 +293,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
             <div className="w-px h-4 bg-border mx-1" />
 
             {/* Full color picker with reset */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" onMouseDown={(e) => e.preventDefault()}>
               <ColorPicker
                 compact
                 color={currentColor}
@@ -344,7 +344,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
           }
           const active = document.activeElement as HTMLElement | null;
           const toolbarEl = toolbarRef.current;
-          const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating]')) as HTMLElement[];
+          const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating], [data-radix-popper-content-wrapper]')) as HTMLElement[];
           const interacting = !!active && ((toolbarEl && toolbarEl.contains(active)) || floatingEls.some((f) => f.contains(active)));
 
           if (interacting) {
