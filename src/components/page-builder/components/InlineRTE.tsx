@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bold, Italic, Underline, Strikethrough, Link as LinkIcon } from 'lucide-react';
+import { Bold, Italic, Underline, Strikethrough, Link as LinkIcon, Minus, X, Circle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -54,12 +54,24 @@ export function sanitizeHtml(input: string, variant?: 'heading' | 'paragraph'): 
     }
     if (el.tagName === 'SPAN') {
       const style = el.getAttribute('style') || '';
-      // allow only safe inline styles we use
+      // allow safe inline styles including CSS custom properties for hand-drawn effects
       const allowedStyles = style
         .split(';')
         .map((s) => s.trim())
-        .filter((s) => /^(color|font-family|font-weight|font-style|text-decoration(?:-line)?)\s*:/i.test(s));
+        .filter((s) => {
+          // Allow standard styles
+          if (/^(color|font-family|font-weight|font-style|text-decoration(?:-line)?)\s*:/i.test(s)) return true;
+          // Allow CSS custom properties (--effect-color, --underline-svg)
+          if (/^--[a-zA-Z-]+\s*:/.test(s)) return true;
+          return false;
+        });
       if (allowedStyles.length) newEl.setAttribute('style', allowedStyles.join('; '));
+      
+      // Allow class attribute for hand-drawn effects
+      const className = el.getAttribute('class') || '';
+      if (className && /hand-drawn-(underline|cross|circle)/.test(className)) {
+        newEl.setAttribute('class', className);
+      }
     }
     if (el.tagName === 'FONT') {
       ['color','face'].forEach((attr) => {
@@ -88,6 +100,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   const [showToolbar, setShowToolbar] = useState(false);
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [currentColor, setCurrentColor] = useState<string>('');
+  const [handDrawnEffectColor, setHandDrawnEffectColor] = useState<string>('#e03131');
   const toolbarRef = useRef<HTMLDivElement>(null);
   
   const keepOpenRef = useRef(false);
@@ -215,6 +228,84 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
     exec('foreColor', color);
   };
 
+  const generateHandDrawnUnderlineSVG = (color: string): string => {
+    // Remove # from color if present
+    const colorHex = color.replace('#', '');
+    // Encode the SVG path properly
+    const svgPath = encodeURIComponent("M0,8 Q15,4 30,7 T60,5 T90,8 T100,7");
+    // Build the SVG data URL
+    const svgContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10'><path d='M0,8 Q15,4 30,7 T60,5 T90,8 T100,7' stroke='#${colorHex}' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>`;
+    const encodedSvg = encodeURIComponent(svgContent);
+    return `url("data:image/svg+xml,${encodedSvg}")`;
+  };
+
+  const applyHandDrawnEffect = (effectType: 'underline' | 'cross' | 'circle') => {
+    const editorEl = editorRef.current;
+    if (!editorEl) return;
+    
+    editorEl.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    
+    const range = lastRangeRef.current || sel.getRangeAt(0);
+    if (!range) return;
+    
+    try {
+      // Check if selection is already wrapped in a hand-drawn effect
+      let container = range.commonAncestorContainer as HTMLElement;
+      if (container.nodeType === Node.TEXT_NODE) {
+        container = container.parentElement as HTMLElement;
+      }
+      
+      const existingEffect = container.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement;
+      if (existingEffect && existingEffect.classList.contains(`hand-drawn-${effectType}`)) {
+        // Remove existing effect if same type
+        const parent = existingEffect.parentElement;
+        if (parent) {
+          const textNode = document.createTextNode(existingEffect.textContent || '');
+          parent.replaceChild(textNode, existingEffect);
+          parent.normalize();
+        }
+        onInput();
+        return;
+      }
+      
+      // Create new span with hand-drawn effect
+      const span = document.createElement('span');
+      span.className = `hand-drawn-${effectType}`;
+      
+      // Set color using CSS variable and inline style
+      const colorHex = handDrawnEffectColor || '#e03131';
+      span.style.setProperty('--effect-color', colorHex);
+      
+      // For underline, generate SVG with color
+      if (effectType === 'underline') {
+        const svgUrl = generateHandDrawnUnderlineSVG(colorHex);
+        span.style.setProperty('--underline-svg', svgUrl);
+      }
+      
+      // Wrap selected content
+      try {
+        range.surroundContents(span);
+      } catch (e) {
+        // If surroundContents fails, extract content and wrap it
+        const contents = range.extractContents();
+        span.appendChild(contents);
+        range.insertNode(span);
+      }
+      
+      // Update selection
+      sel.removeAllRanges();
+      const newRange = document.createRange();
+      newRange.selectNodeContents(span);
+      sel.addRange(newRange);
+      
+      onInput();
+    } catch (error) {
+      console.error('Error applying hand-drawn effect:', error);
+    }
+  };
+
 
   const toggleLink = () => {
     const sel = window.getSelection();
@@ -308,6 +399,76 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
               <Button size="sm" variant="secondary" className="h-7 px-2 text-[10px]" onMouseDown={(e) => e.preventDefault()} onClick={() => applyColor('')}>
                 Reset
               </Button>
+            </div>
+
+            <div className="w-px h-4 bg-border mx-1" />
+
+            {/* Hand-drawn effects */}
+            <div className="flex items-center gap-1">
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-7 w-7 p-0" 
+                onMouseDown={(e) => e.preventDefault()} 
+                onClick={() => applyHandDrawnEffect('underline')}
+                title="Hand-drawn underline"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-7 w-7 p-0" 
+                onMouseDown={(e) => e.preventDefault()} 
+                onClick={() => applyHandDrawnEffect('cross')}
+                title="Hand-drawn cross-out"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-7 w-7 p-0" 
+                onMouseDown={(e) => e.preventDefault()} 
+                onClick={() => applyHandDrawnEffect('circle')}
+                title="Hand-drawn circle"
+              >
+                <Circle className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="w-px h-4 bg-border mx-1" />
+
+            {/* Hand-drawn effect color picker */}
+            <div className="flex items-center gap-1" onMouseDown={(e) => e.preventDefault()}>
+              <ColorPicker
+                compact
+                color={handDrawnEffectColor}
+                onChange={(c) => {
+                  const colorHex = c || '#e03131';
+                  setHandDrawnEffectColor(colorHex);
+                  
+                  // Update existing hand-drawn effects in selection
+                  const editorEl = editorRef.current;
+                  if (editorEl) {
+                    const sel = window.getSelection();
+                    if (sel && sel.rangeCount > 0) {
+                      const range = sel.getRangeAt(0);
+                      const container = range.commonAncestorContainer as HTMLElement;
+                      const effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement;
+                      if (effectEl) {
+                        effectEl.style.setProperty('--effect-color', colorHex);
+                        // Update underline SVG if it's an underline effect
+                        if (effectEl.classList.contains('hand-drawn-underline')) {
+                          const svgUrl = generateHandDrawnUnderlineSVG(colorHex);
+                          effectEl.style.setProperty('--underline-svg', svgUrl);
+                        }
+                        onInput();
+                      }
+                    }
+                  }
+                }}
+              />
             </div>
 
             <div className="w-px h-4 bg-border mx-1" />
