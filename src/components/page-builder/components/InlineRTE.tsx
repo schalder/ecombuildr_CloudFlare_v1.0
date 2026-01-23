@@ -1,8 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bold, Italic, Underline, Strikethrough, Link as LinkIcon, Minus, X, Circle } from 'lucide-react';
+import { Bold, Italic, Underline, Strikethrough, Link as LinkIcon, Minus, X, Circle, Settings2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
+import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useHeadStyle } from '@/hooks/useHeadStyle';
 
 export interface InlineRTEProps {
@@ -101,6 +105,8 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   const [toolbarPos, setToolbarPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [currentColor, setCurrentColor] = useState<string>('');
   const [handDrawnEffectColor, setHandDrawnEffectColor] = useState<string>('#e03131');
+  const [handDrawnThickness, setHandDrawnThickness] = useState<number>(2.5);
+  const [handDrawnSize, setHandDrawnSize] = useState<number>(100); // Percentage for size scaling
   const toolbarRef = useRef<HTMLDivElement>(null);
   
   const keepOpenRef = useRef(false);
@@ -228,15 +234,83 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
     exec('foreColor', color);
   };
 
-  const generateHandDrawnUnderlineSVG = (color: string): string => {
+  const generateHandDrawnUnderlineSVG = (color: string, thickness: number = 2.5): string => {
     // Remove # from color if present
     const colorHex = color.replace('#', '');
-    // Encode the SVG path properly
-    const svgPath = encodeURIComponent("M0,8 Q15,4 30,7 T60,5 T90,8 T100,7");
-    // Build the SVG data URL
-    const svgContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10'><path d='M0,8 Q15,4 30,7 T60,5 T90,8 T100,7' stroke='#${colorHex}' stroke-width='2.5' fill='none' stroke-linecap='round'/></svg>`;
+    // Build the SVG data URL with custom thickness
+    const svgContent = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 10'><path d='M0,8 Q15,4 30,7 T60,5 T90,8 T100,7' stroke='#${colorHex}' stroke-width='${thickness}' fill='none' stroke-linecap='round'/></svg>`;
     const encodedSvg = encodeURIComponent(svgContent);
     return `url("data:image/svg+xml,${encodedSvg}")`;
+  };
+
+  const resetAllFormatting = () => {
+    const editorEl = editorRef.current;
+    if (!editorEl) return;
+    
+    editorEl.focus();
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+    
+    const range = lastRangeRef.current || sel.getRangeAt(0);
+    if (!range) return;
+    
+    try {
+      // Get the container element
+      let container = range.commonAncestorContainer as HTMLElement;
+      if (container.nodeType === Node.TEXT_NODE) {
+        container = container.parentElement as HTMLElement;
+      }
+      
+      // Find all formatting elements in the selection
+      const walker = document.createTreeWalker(
+        range.commonAncestorContainer,
+        NodeFilter.SHOW_ELEMENT,
+        {
+          acceptNode: (node) => {
+            const el = node as HTMLElement;
+            if (range.intersectsNode(el)) {
+              if (el.tagName === 'B' || el.tagName === 'STRONG' || el.tagName === 'I' || 
+                  el.tagName === 'EM' || el.tagName === 'U' || el.tagName === 'S' ||
+                  el.classList.contains('hand-drawn-underline') || 
+                  el.classList.contains('hand-drawn-cross') || 
+                  el.classList.contains('hand-drawn-circle') ||
+                  (el.tagName === 'SPAN' && el.hasAttribute('style'))) {
+                return NodeFilter.FILTER_ACCEPT;
+              }
+            }
+            return NodeFilter.FILTER_SKIP;
+          }
+        }
+      );
+      
+      const elementsToRemove: HTMLElement[] = [];
+      let node;
+      while (node = walker.nextNode()) {
+        elementsToRemove.push(node as HTMLElement);
+      }
+      
+      // Remove formatting while preserving text content
+      elementsToRemove.forEach(el => {
+        const parent = el.parentElement;
+        if (parent) {
+          const textContent = el.textContent || '';
+          const textNode = document.createTextNode(textContent);
+          parent.replaceChild(textNode, el);
+        }
+      });
+      
+      // Also remove formatting using execCommand
+      try {
+        document.execCommand('removeFormat', false);
+        document.execCommand('unlink', false);
+      } catch (e) {
+        // Ignore errors
+      }
+      
+      onInput();
+    } catch (error) {
+      console.error('Error resetting formatting:', error);
+    }
   };
 
   const applyHandDrawnEffect = (effectType: 'underline' | 'cross' | 'circle') => {
@@ -276,11 +350,16 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
       
       // Set color using CSS variable and inline style
       const colorHex = handDrawnEffectColor || '#e03131';
-      span.style.setProperty('--effect-color', colorHex);
+      const thickness = handDrawnThickness || 2.5;
+      const size = handDrawnSize || 100;
       
-      // For underline, generate SVG with color
+      span.style.setProperty('--effect-color', colorHex);
+      span.style.setProperty('--effect-thickness', `${thickness}px`);
+      span.style.setProperty('--effect-size', `${size}%`);
+      
+      // For underline, generate SVG with color and thickness
       if (effectType === 'underline') {
-        const svgUrl = generateHandDrawnUnderlineSVG(colorHex);
+        const svgUrl = generateHandDrawnUnderlineSVG(colorHex, thickness);
         span.style.setProperty('--underline-svg', svgUrl);
       }
       
@@ -396,7 +475,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
                   }
                 }}
               />
-              <Button size="sm" variant="secondary" className="h-7 px-2 text-[10px]" onMouseDown={(e) => e.preventDefault()} onClick={() => applyColor('')}>
+              <Button size="sm" variant="secondary" className="h-7 px-2 text-[10px]" onMouseDown={(e) => e.preventDefault()} onClick={resetAllFormatting}>
                 Reset
               </Button>
             </div>
@@ -457,10 +536,11 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
                       const container = range.commonAncestorContainer as HTMLElement;
                       const effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement;
                       if (effectEl) {
+                        const thickness = parseFloat(effectEl.style.getPropertyValue('--effect-thickness') || '2.5');
                         effectEl.style.setProperty('--effect-color', colorHex);
                         // Update underline SVG if it's an underline effect
                         if (effectEl.classList.contains('hand-drawn-underline')) {
-                          const svgUrl = generateHandDrawnUnderlineSVG(colorHex);
+                          const svgUrl = generateHandDrawnUnderlineSVG(colorHex, thickness);
                           effectEl.style.setProperty('--underline-svg', svgUrl);
                         }
                         onInput();
@@ -470,6 +550,125 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
                 }}
               />
             </div>
+
+            {/* Hand-drawn effect settings (thickness & size) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  className="h-7 w-7 p-0" 
+                  onMouseDown={(e) => e.preventDefault()}
+                  title="Effect settings"
+                >
+                  <Settings2 className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                className="w-64 p-4" 
+                align="start"
+                onOpenAutoFocus={(e) => e.preventDefault()}
+                data-rte-floating
+              >
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-xs mb-2 block">Thickness</Label>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[handDrawnThickness]}
+                        onValueChange={(val) => {
+                          const thickness = val[0];
+                          setHandDrawnThickness(thickness);
+                          
+                          // Update existing hand-drawn effects in selection
+                          const editorEl = editorRef.current;
+                          if (editorEl) {
+                            const sel = window.getSelection();
+                            if (sel && sel.rangeCount > 0) {
+                              const range = sel.getRangeAt(0);
+                              const container = range.commonAncestorContainer as HTMLElement;
+                              const effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement;
+                              if (effectEl) {
+                                const colorHex = effectEl.style.getPropertyValue('--effect-color') || '#e03131';
+                                effectEl.style.setProperty('--effect-thickness', `${thickness}px`);
+                                // Update underline SVG if it's an underline effect
+                                if (effectEl.classList.contains('hand-drawn-underline')) {
+                                  const svgUrl = generateHandDrawnUnderlineSVG(colorHex, thickness);
+                                  effectEl.style.setProperty('--underline-svg', svgUrl);
+                                }
+                                onInput();
+                              }
+                            }
+                          }
+                        }}
+                        min={1}
+                        max={8}
+                        step={0.5}
+                        className="flex-1"
+                      />
+                      <Input
+                        type="number"
+                        value={handDrawnThickness}
+                        onChange={(e) => {
+                          const val = Math.max(1, Math.min(8, parseFloat(e.target.value) || 2.5));
+                          setHandDrawnThickness(val);
+                        }}
+                        min={1}
+                        max={8}
+                        step={0.5}
+                        className="w-16 h-8 text-xs"
+                      />
+                      <span className="text-xs text-muted-foreground">px</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <Label className="text-xs mb-2 block">Size</Label>
+                    <div className="flex items-center gap-2">
+                      <Slider
+                        value={[handDrawnSize]}
+                        onValueChange={(val) => {
+                          const size = val[0];
+                          setHandDrawnSize(size);
+                          
+                          // Update existing hand-drawn effects in selection
+                          const editorEl = editorRef.current;
+                          if (editorEl) {
+                            const sel = window.getSelection();
+                            if (sel && sel.rangeCount > 0) {
+                              const range = sel.getRangeAt(0);
+                              const container = range.commonAncestorContainer as HTMLElement;
+                              const effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement;
+                              if (effectEl) {
+                                effectEl.style.setProperty('--effect-size', `${size}%`);
+                                onInput();
+                              }
+                            }
+                          }
+                        }}
+                        min={50}
+                        max={150}
+                        step={5}
+                        className="flex-1"
+                      />
+                      <Input
+                        type="number"
+                        value={handDrawnSize}
+                        onChange={(e) => {
+                          const val = Math.max(50, Math.min(150, parseInt(e.target.value) || 100));
+                          setHandDrawnSize(val);
+                        }}
+                        min={50}
+                        max={150}
+                        step={5}
+                        className="w-16 h-8 text-xs"
+                      />
+                      <span className="text-xs text-muted-foreground">%</span>
+                    </div>
+                  </div>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <div className="w-px h-4 bg-border mx-1" />
 
