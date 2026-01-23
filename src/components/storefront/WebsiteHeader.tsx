@@ -99,7 +99,7 @@ export const WebsiteHeader: React.FC<{ website: WebsiteData; }> = ({ website }) 
     const slug = item.page_slug || '';
     const to = slug ? `${paths.base}/${slug}` : paths.home;
     return (
-      <a href={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</a>
+      <a href={to} target={item.new_tab ? '_blank' : undefined} rel={item.new_tab ? 'noopener' : undefined} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</a>
     );
   };
 

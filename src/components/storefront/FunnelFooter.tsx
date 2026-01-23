@@ -134,6 +134,8 @@ export const FunnelFooter: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
                       ) : (
                         <a 
                           href={link.step_slug ? (isCustomDomain() ? `/${link.step_slug}` : `/funnel/${funnel.id}/${link.step_slug}`) : paths.home} 
+                          target={link.new_tab ? '_blank' : undefined}
+                          rel={link.new_tab ? 'noopener' : undefined}
                           className="text-sm transition-colors" 
                           style={{ color: cfg?.style?.text_color || undefined }}
                         >

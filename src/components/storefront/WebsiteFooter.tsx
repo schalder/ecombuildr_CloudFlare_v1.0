@@ -136,6 +136,8 @@ export const WebsiteFooter: React.FC<{ website: WebsiteData; }> = ({ website }) 
                       ) : (
                         <a 
                           href={link.page_slug ? `${paths.base}/${link.page_slug}` : paths.home} 
+                          target={link.new_tab ? '_blank' : undefined}
+                          rel={link.new_tab ? 'noopener' : undefined}
                           className="text-sm transition-colors" 
                           style={{ color: cfg?.style?.text_color || undefined }}
                         >

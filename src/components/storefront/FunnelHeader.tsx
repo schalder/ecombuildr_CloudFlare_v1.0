@@ -148,7 +148,7 @@ export const FunnelHeader: React.FC<{ funnel: FunnelData; }> = ({ funnel }) => {
       to = paths.home;
     }
     return (
-      <a href={to} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</a>
+      <a href={to} target={item.new_tab ? '_blank' : undefined} rel={item.new_tab ? 'noopener' : undefined} className={`${fontSizeClass} transition-colors`} style={{ color: cfg?.style?.text_color || undefined }}>{item.label}</a>
     );
   };
 
