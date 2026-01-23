@@ -97,6 +97,9 @@ export function sanitizeHtml(input: string, variant?: 'heading' | 'paragraph'): 
   return wrap.innerHTML.replace(/^<div>|<\/div>$/g, '');
 }
 
+// Global registry to track active toolbars and ensure only one is visible
+const activeToolbars = new Set<HTMLDivElement>();
+
 export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placeholder, className, disabled, style, variant = 'heading' }) => {
   const editorRef = useRef<HTMLDivElement>(null);
   const lastRangeRef = useRef<Range | null>(null);
@@ -110,6 +113,29 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
   const toolbarRef = useRef<HTMLDivElement>(null);
   
   const keepOpenRef = useRef(false);
+  
+  // Register/unregister toolbar to prevent duplicates
+  useEffect(() => {
+    const toolbar = toolbarRef.current;
+    if (toolbar && showToolbar) {
+      // Hide all other toolbars
+      activeToolbars.forEach(tb => {
+        if (tb !== toolbar) {
+          tb.style.display = 'none';
+        }
+      });
+      activeToolbars.add(toolbar);
+      toolbar.style.display = '';
+      return () => {
+        activeToolbars.delete(toolbar);
+        // Show next toolbar if any
+        if (activeToolbars.size > 0) {
+          const nextToolbar = Array.from(activeToolbars)[0];
+          if (nextToolbar) nextToolbar.style.display = '';
+        }
+      };
+    }
+  }, [showToolbar]);
 
   // Inject placeholder CSS into document head to prevent visibility issues
   useHeadStyle('inline-rte-placeholder', `
@@ -140,12 +166,21 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         setShowToolbar(true);
         return;
       }
-      const sel = window.getSelection();
+      
+      // Check if user is interacting with any floating UI (toolbar, dropdowns, sliders)
       const active = document.activeElement as HTMLElement | null;
-      const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating], [data-radix-popper-content-wrapper]')) as HTMLElement[];
       const toolbarEl = toolbarRef.current;
-      const interactingWithFloating = !!active && floatingEls.some((f) => f.contains(active));
+      const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating], [data-radix-popper-content-wrapper]')) as HTMLElement[];
+      
+      // Check if active element is within toolbar or any floating element
       const interactingWithToolbar = !!active && !!toolbarEl && toolbarEl.contains(active);
+      const interactingWithFloating = !!active && floatingEls.some((f) => f.contains(active));
+      
+      // Check if keepOpenRef is set (indicates ongoing interaction)
+      if (keepOpenRef.current) {
+        setShowToolbar(true);
+        return;
+      }
 
       if (interactingWithFloating || interactingWithToolbar) {
         // Keep toolbar visible when interacting with its popovers/menus or the toolbar itself
@@ -153,6 +188,7 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         return;
       }
 
+      const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) {
         setShowToolbar(false);
         return;
@@ -173,8 +209,18 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
       }
     };
 
-    document.addEventListener('selectionchange', handleSelection);
-    return () => document.removeEventListener('selectionchange', handleSelection);
+    // Throttle selection change handler to prevent excessive calls
+    let timeoutId: NodeJS.Timeout;
+    const throttledHandleSelection = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleSelection, 50);
+    };
+
+    document.addEventListener('selectionchange', throttledHandleSelection);
+    return () => {
+      document.removeEventListener('selectionchange', throttledHandleSelection);
+      clearTimeout(timeoutId);
+    };
   }, []);
 
   useEffect(() => {
@@ -183,7 +229,15 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
       const toolbarEl = toolbarRef.current;
       const inToolbar = !!toolbarEl && !!target && toolbarEl.contains(target);
       const inFloating = !!(target as Element | null) && ((target as Element).closest?.('[data-rte-floating]') || (target as Element).closest?.('[data-radix-popper-content-wrapper]'));
-      if (inToolbar || inFloating) {
+      
+      // Also check if clicking on slider or input within dropdown
+      const inSlider = !!(target as Element | null) && (
+        (target as Element).closest?.('[role="slider"]') ||
+        (target as Element).closest?.('input[type="number"]') ||
+        (target as Element).closest?.('.hand-drawn-settings')
+      );
+      
+      if (inToolbar || inFloating || inSlider) {
         keepOpenRef.current = true;
         // Preserve current selection
         const sel = window.getSelection();
@@ -192,17 +246,47 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         }
       }
     };
+    
     const onDocMouseUp = () => {
-      // release latch after current event loop to allow handlers to run
+      // Don't release immediately - wait longer to ensure slider interactions complete
       setTimeout(() => {
-        keepOpenRef.current = false;
-      }, 0);
+        // Only release if not actively interacting
+        const active = document.activeElement as HTMLElement | null;
+        const toolbarEl = toolbarRef.current;
+        const floatingEls = Array.from(document.querySelectorAll('[data-rte-floating], [data-radix-popper-content-wrapper]')) as HTMLElement[];
+        const stillInteracting = !!active && (
+          (toolbarEl && toolbarEl.contains(active)) ||
+          floatingEls.some((f) => f.contains(active)) ||
+          active.closest?.('[role="slider"]') ||
+          active.closest?.('input[type="number"]')
+        );
+        if (!stillInteracting) {
+          keepOpenRef.current = false;
+        }
+      }, 300);
     };
+    
+    // Handle mouse move to keep toolbar open when hovering over dropdowns/sliders
+    const onDocMouseMove = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      if (target) {
+        const inFloating = target.closest?.('[data-rte-floating]') || 
+                          target.closest?.('[data-radix-popper-content-wrapper]') ||
+                          target.closest?.('[role="slider"]') ||
+                          target.closest?.('.hand-drawn-settings');
+        if (inFloating) {
+          keepOpenRef.current = true;
+        }
+      }
+    };
+    
     document.addEventListener('mousedown', onDocMouseDown, true);
     document.addEventListener('mouseup', onDocMouseUp, true);
+    document.addEventListener('mousemove', onDocMouseMove, true);
     return () => {
       document.removeEventListener('mousedown', onDocMouseDown, true);
       document.removeEventListener('mouseup', onDocMouseUp, true);
+      document.removeEventListener('mousemove', onDocMouseMove, true);
     };
   }, []);
 
@@ -442,9 +526,16 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
         {showToolbar && (
           <div
             ref={toolbarRef}
-            className="fixed z-50 -translate-x-1/2 rounded-md border bg-popover text-popover-foreground shadow-md px-2 py-1 flex items-center gap-1"
+            className="fixed z-[9999] -translate-x-1/2 rounded-md border bg-popover text-popover-foreground shadow-md px-2 py-1 flex items-center gap-1"
             style={{ top: toolbarPos.top, left: toolbarPos.left }}
             data-rte-floating
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              keepOpenRef.current = true;
+            }}
+            onMouseEnter={() => {
+              keepOpenRef.current = true;
+            }}
           >
 
             <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onMouseDown={(e) => e.preventDefault()} onClick={() => exec('bold')}>
@@ -565,12 +656,20 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent 
-                className="w-64 p-4" 
+                className="w-64 p-4 hand-drawn-settings" 
                 align="start"
                 onOpenAutoFocus={(e) => e.preventDefault()}
+                onCloseAutoFocus={(e) => e.preventDefault()}
                 data-rte-floating
+                onMouseDown={(e) => {
+                  e.stopPropagation();
+                  keepOpenRef.current = true;
+                }}
+                onMouseEnter={() => {
+                  keepOpenRef.current = true;
+                }}
               >
-                <div className="space-y-4">
+                <div className="space-y-4" onMouseDown={(e) => e.stopPropagation()}>
                   <div>
                     <Label className="text-xs mb-2 block">Thickness</Label>
                     <div className="flex items-center gap-2">
@@ -580,31 +679,63 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
                           const thickness = val[0];
                           setHandDrawnThickness(thickness);
                           
-                          // Update existing hand-drawn effects in selection
+                          // Prevent selection change during slider interaction
+                          keepOpenRef.current = true;
+                          
+                          // Update hand-drawn effects in current selection
                           const editorEl = editorRef.current;
-                          if (editorEl) {
+                          if (!editorEl) return;
+                          
+                          // Try to find effect in saved range first
+                          let effectEl: HTMLElement | null = null;
+                          if (lastRangeRef.current) {
+                            const container = lastRangeRef.current.commonAncestorContainer as HTMLElement;
+                            effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement | null;
+                          }
+                          
+                          // If not found, try current selection
+                          if (!effectEl) {
                             const sel = window.getSelection();
                             if (sel && sel.rangeCount > 0) {
                               const range = sel.getRangeAt(0);
                               const container = range.commonAncestorContainer as HTMLElement;
-                              const effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement;
-                              if (effectEl) {
-                                const colorHex = effectEl.style.getPropertyValue('--effect-color') || '#e03131';
-                                effectEl.style.setProperty('--effect-thickness', `${thickness}px`);
-                                // Update underline SVG if it's an underline effect
-                                if (effectEl.classList.contains('hand-drawn-underline')) {
-                                  const svgUrl = generateHandDrawnUnderlineSVG(colorHex, thickness);
-                                  effectEl.style.setProperty('--underline-svg', svgUrl);
-                                }
-                                onInput();
-                              }
+                              effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement | null;
                             }
                           }
+                          
+                          // If still not found, search entire editor for any hand-drawn effects
+                          if (!effectEl) {
+                            const allEffects = editorEl.querySelectorAll('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as NodeListOf<HTMLElement>;
+                            if (allEffects.length > 0) {
+                              effectEl = allEffects[0]; // Use first found effect
+                            }
+                          }
+                          
+                          // Update the effect
+                          if (effectEl) {
+                            const colorHex = effectEl.style.getPropertyValue('--effect-color') || handDrawnEffectColor || '#e03131';
+                            effectEl.style.setProperty('--effect-thickness', `${thickness}px`);
+                            if (effectEl.classList.contains('hand-drawn-underline')) {
+                              const svgUrl = generateHandDrawnUnderlineSVG(colorHex, thickness);
+                              effectEl.style.setProperty('--underline-svg', svgUrl);
+                            }
+                            onInput();
+                          }
+                        }}
+                        onValueCommit={(val) => {
+                          // Release keepOpen after slider interaction completes
+                          setTimeout(() => {
+                            keepOpenRef.current = false;
+                          }, 200);
                         }}
                         min={1}
                         max={8}
                         step={0.5}
                         className="flex-1"
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          keepOpenRef.current = true;
+                        }}
                       />
                       <Input
                         type="number"
@@ -612,6 +743,53 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
                         onChange={(e) => {
                           const val = Math.max(1, Math.min(8, parseFloat(e.target.value) || 2.5));
                           setHandDrawnThickness(val);
+                          
+                          // Update effects in selection when input changes
+                          keepOpenRef.current = true;
+                          const editorEl = editorRef.current;
+                          if (!editorEl) return;
+                          
+                          // Find effect element
+                          let effectEl: HTMLElement | null = null;
+                          if (lastRangeRef.current) {
+                            const container = lastRangeRef.current.commonAncestorContainer as HTMLElement;
+                            effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement | null;
+                          }
+                          
+                          if (!effectEl) {
+                            const sel = window.getSelection();
+                            if (sel && sel.rangeCount > 0) {
+                              const range = sel.getRangeAt(0);
+                              const container = range.commonAncestorContainer as HTMLElement;
+                              effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement | null;
+                            }
+                          }
+                          
+                          if (!effectEl) {
+                            const allEffects = editorEl.querySelectorAll('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as NodeListOf<HTMLElement>;
+                            if (allEffects.length > 0) {
+                              effectEl = allEffects[0];
+                            }
+                          }
+                          
+                          if (effectEl) {
+                            const colorHex = effectEl.style.getPropertyValue('--effect-color') || handDrawnEffectColor || '#e03131';
+                            effectEl.style.setProperty('--effect-thickness', `${val}px`);
+                            if (effectEl.classList.contains('hand-drawn-underline')) {
+                              const svgUrl = generateHandDrawnUnderlineSVG(colorHex, val);
+                              effectEl.style.setProperty('--underline-svg', svgUrl);
+                            }
+                            onInput();
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            keepOpenRef.current = false;
+                          }, 200);
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          keepOpenRef.current = true;
                         }}
                         min={1}
                         max={8}
@@ -631,20 +809,49 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
                           const size = val[0];
                           setHandDrawnSize(size);
                           
-                          // Update existing hand-drawn effects in selection
+                          // Prevent selection change during slider interaction
+                          keepOpenRef.current = true;
+                          
+                          // Update hand-drawn effects in current selection
                           const editorEl = editorRef.current;
-                          if (editorEl) {
+                          if (!editorEl) return;
+                          
+                          // Find effect element
+                          let effectEl: HTMLElement | null = null;
+                          if (lastRangeRef.current) {
+                            const container = lastRangeRef.current.commonAncestorContainer as HTMLElement;
+                            effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement | null;
+                          }
+                          
+                          if (!effectEl) {
                             const sel = window.getSelection();
                             if (sel && sel.rangeCount > 0) {
                               const range = sel.getRangeAt(0);
                               const container = range.commonAncestorContainer as HTMLElement;
-                              const effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement;
-                              if (effectEl) {
-                                effectEl.style.setProperty('--effect-size', `${size}%`);
-                                onInput();
-                              }
+                              effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement | null;
                             }
                           }
+                          
+                          if (!effectEl) {
+                            const allEffects = editorEl.querySelectorAll('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as NodeListOf<HTMLElement>;
+                            if (allEffects.length > 0) {
+                              effectEl = allEffects[0];
+                            }
+                          }
+                          
+                          if (effectEl) {
+                            effectEl.style.setProperty('--effect-size', `${size}%`);
+                            onInput();
+                          }
+                        }}
+                        onValueCommit={(val) => {
+                          setTimeout(() => {
+                            keepOpenRef.current = false;
+                          }, 200);
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          keepOpenRef.current = true;
                         }}
                         min={50}
                         max={150}
@@ -657,6 +864,48 @@ export const InlineRTE: React.FC<InlineRTEProps> = ({ value, onChange, placehold
                         onChange={(e) => {
                           const val = Math.max(50, Math.min(150, parseInt(e.target.value) || 100));
                           setHandDrawnSize(val);
+                          
+                          // Update effects in selection
+                          keepOpenRef.current = true;
+                          const editorEl = editorRef.current;
+                          if (!editorEl) return;
+                          
+                          // Find effect element
+                          let effectEl: HTMLElement | null = null;
+                          if (lastRangeRef.current) {
+                            const container = lastRangeRef.current.commonAncestorContainer as HTMLElement;
+                            effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement | null;
+                          }
+                          
+                          if (!effectEl) {
+                            const sel = window.getSelection();
+                            if (sel && sel.rangeCount > 0) {
+                              const range = sel.getRangeAt(0);
+                              const container = range.commonAncestorContainer as HTMLElement;
+                              effectEl = (container.nodeType === Node.TEXT_NODE ? container.parentElement : container)?.closest('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as HTMLElement | null;
+                            }
+                          }
+                          
+                          if (!effectEl) {
+                            const allEffects = editorEl.querySelectorAll('.hand-drawn-underline, .hand-drawn-cross, .hand-drawn-circle') as NodeListOf<HTMLElement>;
+                            if (allEffects.length > 0) {
+                              effectEl = allEffects[0];
+                            }
+                          }
+                          
+                          if (effectEl) {
+                            effectEl.style.setProperty('--effect-size', `${val}%`);
+                            onInput();
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            keepOpenRef.current = false;
+                          }, 200);
+                        }}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          keepOpenRef.current = true;
                         }}
                         min={50}
                         max={150}
