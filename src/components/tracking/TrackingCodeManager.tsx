@@ -7,6 +7,68 @@ interface TrackingCodeManagerProps {
   priority?: 'page' | 'funnel' | 'website' | 'store';
 }
 
+// Helper function to execute script content safely, handling DOMContentLoaded
+const executeScriptContent = (scriptContent: string, targetElement: HTMLElement, priority: string, trackingId: string) => {
+  const isDocumentReady = document.readyState === 'complete' || document.readyState === 'interactive';
+  const usesDOMContentLoaded = /DOMContentLoaded/.test(scriptContent);
+  
+  // If script uses DOMContentLoaded and document is already ready, execute immediately
+  if (usesDOMContentLoaded && isDocumentReady) {
+    try {
+      // Replace DOMContentLoaded event listeners with immediate execution
+      // This handles: document.addEventListener("DOMContentLoaded", function() { ... });
+      let modifiedContent = scriptContent;
+      
+      // Replace addEventListener('DOMContentLoaded', function() { ... }) with immediate execution
+      // Match: document.addEventListener("DOMContentLoaded", function() { ... });
+      modifiedContent = modifiedContent.replace(
+        /document\.addEventListener\s*\(\s*["']DOMContentLoaded["']\s*,\s*function\s*\(\)\s*\{/g,
+        '(function() {'
+      );
+      
+      // Match: document.addEventListener('DOMContentLoaded', function() { ... });
+      modifiedContent = modifiedContent.replace(
+        /document\.addEventListener\s*\(\s*['"]DOMContentLoaded['"]\s*,\s*function\s*\(\)\s*\{/g,
+        '(function() {'
+      );
+      
+      // Match: document.addEventListener("DOMContentLoaded", () => { ... });
+      modifiedContent = modifiedContent.replace(
+        /document\.addEventListener\s*\(\s*["']DOMContentLoaded["']\s*,\s*\(\)\s*=>\s*\{/g,
+        '(function() {'
+      );
+      
+      // Match: document.addEventListener('DOMContentLoaded', () => { ... });
+      modifiedContent = modifiedContent.replace(
+        /document\.addEventListener\s*\(\s*['"]DOMContentLoaded['"]\s*,\s*\(\)\s*=>\s*\{/g,
+        '(function() {'
+      );
+      
+      // Execute the modified script
+      const newScript = document.createElement('script');
+      newScript.setAttribute('data-tracking-priority', priority);
+      newScript.setAttribute('data-tracking-id', trackingId);
+      newScript.textContent = modifiedContent;
+      targetElement.appendChild(newScript);
+    } catch (error) {
+      console.warn('Error executing script with DOMContentLoaded handling:', error);
+      // Fallback to normal execution
+      const newScript = document.createElement('script');
+      newScript.setAttribute('data-tracking-priority', priority);
+      newScript.setAttribute('data-tracking-id', trackingId);
+      newScript.textContent = scriptContent;
+      targetElement.appendChild(newScript);
+    }
+  } else {
+    // Normal execution - either no DOMContentLoaded or document not ready yet
+    const newScript = document.createElement('script');
+    newScript.setAttribute('data-tracking-priority', priority);
+    newScript.setAttribute('data-tracking-id', trackingId);
+    newScript.textContent = scriptContent;
+    targetElement.appendChild(newScript);
+  }
+};
+
 export const TrackingCodeManager: React.FC<TrackingCodeManagerProps> = ({ 
   headerCode, 
   footerCode, 
@@ -50,12 +112,14 @@ export const TrackingCodeManager: React.FC<TrackingCodeManagerProps> = ({
         
         // Copy content
         if (script.src) {
+          // External script - just set src
           newScript.src = script.src;
+          document.head.appendChild(newScript);
         } else {
-          newScript.textContent = script.textContent;
+          // Inline script - handle DOMContentLoaded properly
+          const scriptContent = script.textContent || '';
+          executeScriptContent(scriptContent, document.head, priority, trackingId);
         }
-        
-        document.head.appendChild(newScript);
       });
 
       // Handle non-script elements (meta tags, links, etc.)
@@ -120,13 +184,14 @@ export const TrackingCodeManager: React.FC<TrackingCodeManagerProps> = ({
         
         // Copy content
         if (script.src) {
+          // External script - just set src
           newScript.src = script.src;
+          document.body.appendChild(newScript);
         } else {
-          newScript.textContent = script.textContent;
+          // Inline script - handle DOMContentLoaded properly
+          const scriptContent = script.textContent || '';
+          executeScriptContent(scriptContent, document.body, priority, trackingId);
         }
-        
-        // Add to end of body
-        document.body.appendChild(newScript);
       });
 
       // Handle non-script elements

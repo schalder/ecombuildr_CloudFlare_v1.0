@@ -8,6 +8,7 @@ import { FunnelHeader } from '@/components/storefront/FunnelHeader';
 import { FunnelFooter } from '@/components/storefront/FunnelFooter';
 import { FunnelStepProvider } from '@/contexts/FunnelStepContext';
 import { useStorefrontFunnelStep } from '@/hooks/useStorefrontData';
+import { TrackingCodeManager } from '@/components/tracking/TrackingCodeManager';
 interface FunnelStepData {
   id: string;
   title: string;
@@ -139,6 +140,11 @@ export const FunnelStepPage: React.FC = () => {
         storeId={funnel?.store_id || ''}
         funnelId={funnel?.id || ''}
       >
+        <TrackingCodeManager 
+          headerCode={funnel?.settings?.header_tracking_code}
+          footerCode={funnel?.settings?.footer_tracking_code}
+          priority="funnel"
+        />
         <div className="w-full min-h-screen">
           {funnel && <FunnelHeader funnel={funnel} />}
           {/* Render funnel step content using PageBuilderRenderer */}
