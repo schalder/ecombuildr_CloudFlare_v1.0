@@ -1525,16 +1525,38 @@ export default function Orders() {
         return;
       }
 
-      // Prepare order items from cart items
-      const orderItems = checkout.cart_items.map((item: any) => ({
-        product_id: item.product_id || null,
-        product_name: item.name || 'Unknown Product',
-        product_variant_id: item.variant_id || null,
-        variant_name: item.variant_name || null,
-        quantity: item.quantity || 1,
-        price: item.price || 0,
-        total: (item.price || 0) * (item.quantity || 1),
-      }));
+      // Prepare order items from cart items - correctly map from abandoned checkout format to create-order format
+      // Abandoned checkouts store cart items in camelCase (productId, name, sku, image)
+      // create-order expects snake_case (product_id, product_name, product_sku, image, variation)
+      const orderItems = checkout.cart_items.map((item: any) => {
+        // Handle both camelCase (from abandoned checkout) and snake_case (if already converted)
+        const productId = item.product_id || item.productId || null;
+        const productName = item.name || item.product_name || 'Unknown Product';
+        const productSku = item.sku || item.product_sku || null;
+        const image = item.image || item.product_image || null;
+        const variantId = item.variant_id || item.variantId || null;
+        const variantName = item.variant_name || item.variantName || null;
+        
+        // Build variation object if variant data exists
+        const variation: Record<string, any> | null = 
+          (variantId || variantName || item.variation) 
+            ? { 
+                ...(variantId && { variant_id: variantId }),
+                ...(variantName && { variant_name: variantName }),
+                ...(item.variation || {})
+              }
+            : null;
+
+        return {
+          product_id: productId,
+          product_name: productName,
+          product_sku: productSku,
+          price: item.price || 0,
+          quantity: item.quantity || 1,
+          image: image,
+          variation: variation,
+        };
+      });
 
       // Prepare order data
       const orderData = {
@@ -1588,8 +1610,8 @@ export default function Orders() {
         .eq('id', checkoutId);
 
       toast({
-        title: 'Checkout Converted',
-        description: 'Abandoned checkout has been converted to an order and moved to All Orders.',
+        title: 'Order Created',
+        description: 'Order has been created from abandoned checkout and moved to All Orders.',
       });
 
       // Refresh both orders and incomplete checkouts
@@ -2953,14 +2975,14 @@ export default function Orders() {
                                 }
                               }}
                             >
-                              {/* Manual Approve Option */}
+                              {/* Create Order Option */}
                               {checkout.customer_name && checkout.customer_phone && checkout.cart_items && checkout.cart_items.length > 0 && (
                                 <DropdownMenuItem
                                   onClick={() => handleManualApproveCheckout(checkout.id)}
                                   className="flex items-center py-2 px-3 text-sm cursor-pointer text-green-600"
                                 >
                                   <CheckCircle className="mr-2 h-4 w-4" />
-                                  Manual Approve
+                                  Create Order
                                 </DropdownMenuItem>
                               )}
                               {/* Contact Status Actions */}
@@ -3144,14 +3166,14 @@ export default function Orders() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="z-[100] touch-manipulation">
-                                {/* Manual Approve Option */}
+                                {/* Create Order Option */}
                                 {checkout.customer_name && checkout.customer_phone && checkout.cart_items && checkout.cart_items.length > 0 && (
                                   <DropdownMenuItem
                                     onClick={() => handleManualApproveCheckout(checkout.id)}
                                     className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation text-green-600"
                                   >
                                     <CheckCircle className="mr-3 h-4 w-4" />
-                                    Manual Approve
+                                    Create Order
                                   </DropdownMenuItem>
                                 )}
                                 {/* Contact Status Actions */}
