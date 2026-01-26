@@ -86,6 +86,9 @@ interface Order {
   attribution_medium?: string | null;
   attribution_campaign?: string | null;
   attribution_data?: Record<string, any> | null;
+  contact_status?: 'contacted' | 'replied' | null;
+  contacted_at?: string | null;
+  replied_at?: string | null;
 }
 
 interface IncompleteCheckout {
@@ -116,6 +119,9 @@ interface IncompleteCheckout {
   utm_medium?: string | null;
   last_updated_at: string;
   created_at: string;
+  contact_status?: 'contacted' | 'replied' | null;
+  contacted_at?: string | null;
+  replied_at?: string | null;
 }
 
 const statusColors = {
@@ -640,7 +646,10 @@ export default function Orders() {
             funnel_id,
             ip_address,
             is_potential_fake,
-            marked_not_fake
+            marked_not_fake,
+            contact_status,
+            contacted_at,
+            replied_at
           `)
           .in('store_id', storeIds);
 
@@ -948,7 +957,10 @@ export default function Orders() {
             funnel_id,
             ip_address,
             is_potential_fake,
-            marked_not_fake
+            marked_not_fake,
+            contact_status,
+            contacted_at,
+            replied_at
           `)
           .in('store_id', storeIds)
           .eq('is_potential_fake', true)
@@ -1117,7 +1129,10 @@ export default function Orders() {
           funnel_id,
           ip_address,
           is_potential_fake,
-          marked_not_fake
+          marked_not_fake,
+          contact_status,
+          contacted_at,
+          replied_at
         `)
         .in('store_id', storeIds)
         .in('ip_address', blockedIPAddresses);
@@ -1479,6 +1494,102 @@ export default function Orders() {
         title: 'Error', 
         description: 'Failed to approve order. Please try again.', 
         variant: 'destructive' 
+      });
+    }
+  };
+
+  // Update contact status for an order
+  const updateOrderContactStatus = async (orderId: string, status: 'contacted' | 'replied') => {
+    try {
+      const updateData: any = {
+        contact_status: status,
+      };
+      
+      if (status === 'contacted') {
+        updateData.contacted_at = new Date().toISOString();
+      } else if (status === 'replied') {
+        updateData.replied_at = new Date().toISOString();
+        // If marking as replied, also set contacted_at if not already set
+        const order = orders.find(o => o.id === orderId);
+        if (order && !order.contacted_at) {
+          updateData.contacted_at = new Date().toISOString();
+        }
+      }
+
+      const { error } = await supabase
+        .from('orders')
+        .update(updateData)
+        .eq('id', orderId);
+
+      if (error) throw error;
+
+      // Update local state
+      setOrders(orders.map(o => 
+        o.id === orderId 
+          ? { ...o, ...updateData, contact_status: status }
+          : o
+      ));
+
+      toast({
+        title: 'Success',
+        description: status === 'contacted' 
+          ? 'Order marked as contacted' 
+          : 'Order marked as replied',
+      });
+    } catch (error) {
+      console.error('Error updating contact status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update contact status',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Update contact status for an incomplete checkout
+  const updateCheckoutContactStatus = async (checkoutId: string, status: 'contacted' | 'replied') => {
+    try {
+      const updateData: any = {
+        contact_status: status,
+      };
+      
+      if (status === 'contacted') {
+        updateData.contacted_at = new Date().toISOString();
+      } else if (status === 'replied') {
+        updateData.replied_at = new Date().toISOString();
+        // If marking as replied, also set contacted_at if not already set
+        const checkout = incompleteCheckouts.find(c => c.id === checkoutId);
+        if (checkout && !checkout.contacted_at) {
+          updateData.contacted_at = new Date().toISOString();
+        }
+      }
+
+      const { error } = await supabase
+        .from('incomplete_checkouts')
+        .update(updateData)
+        .eq('id', checkoutId);
+
+      if (error) throw error;
+
+      // Update local state
+      setIncompleteCheckouts(incompleteCheckouts.map(c => 
+        c.id === checkoutId 
+          ? { ...c, ...updateData, contact_status: status }
+          : c
+      ));
+
+      toast({
+        title: 'Success',
+        description: status === 'contacted' 
+          ? 'Checkout marked as contacted' 
+          : 'Checkout marked as replied',
+      });
+    } catch (error) {
+      console.error('Error updating contact status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update contact status',
+        variant: 'destructive',
       });
     }
   };
@@ -2498,7 +2609,19 @@ export default function Orders() {
                     <Card key={checkout.id} className="p-4">
                       <div className="flex justify-between items-start mb-3">
                         <div>
-                          <h3 className="font-semibold">{checkout.customer_name || 'Unknown'}</h3>
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <h3 className="font-semibold">{checkout.customer_name || 'Unknown'}</h3>
+                            {checkout.contact_status === 'contacted' && (
+                              <Badge variant="default" className="text-xs bg-blue-500">
+                                Contacted
+                              </Badge>
+                            )}
+                            {checkout.contact_status === 'replied' && (
+                              <Badge variant="default" className="text-xs bg-green-500">
+                                Replied
+                              </Badge>
+                            )}
+                          </div>
                           {checkout.customer_phone && (
                             <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                               <Phone className="h-3 w-3" />
@@ -2565,7 +2688,19 @@ export default function Orders() {
                       {incompleteCheckouts.map((checkout) => (
                         <TableRow key={checkout.id}>
                           <TableCell className="font-medium">
-                            {checkout.customer_name || 'Unknown'}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span>{checkout.customer_name || 'Unknown'}</span>
+                              {checkout.contact_status === 'contacted' && (
+                                <Badge variant="default" className="text-xs bg-blue-500">
+                                  Contacted
+                                </Badge>
+                              )}
+                              {checkout.contact_status === 'replied' && (
+                                <Badge variant="default" className="text-xs bg-green-500">
+                                  Replied
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">
@@ -2633,6 +2768,38 @@ export default function Orders() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                {/* Contact Status Actions */}
+                                {checkout.customer_phone && (
+                                  <>
+                                    {checkout.contact_status !== 'contacted' && checkout.contact_status !== 'replied' && (
+                                      <DropdownMenuItem
+                                        onClick={() => updateCheckoutContactStatus(checkout.id, 'contacted')}
+                                        className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                      >
+                                        <MessageCircle className="mr-3 h-4 w-4" />
+                                        Mark as Contacted
+                                      </DropdownMenuItem>
+                                    )}
+                                    {checkout.contact_status === 'contacted' && checkout.contact_status !== 'replied' && (
+                                      <DropdownMenuItem
+                                        onClick={() => updateCheckoutContactStatus(checkout.id, 'replied')}
+                                        className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                      >
+                                        <CheckCircle className="mr-3 h-4 w-4" />
+                                        Mark as Replied
+                                      </DropdownMenuItem>
+                                    )}
+                                    {checkout.contact_status === 'replied' && (
+                                      <DropdownMenuItem
+                                        onClick={() => updateCheckoutContactStatus(checkout.id, 'contacted')}
+                                        className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                      >
+                                        <MessageCircle className="mr-3 h-4 w-4" />
+                                        Change to Contacted
+                                      </DropdownMenuItem>
+                                    )}
+                                  </>
+                                )}
                                 <DropdownMenuItem
                                   onClick={async () => {
                                     try {
@@ -2714,6 +2881,16 @@ export default function Orders() {
                                 Potential Fake
                               </Badge>
                             )}
+                            {order.contact_status === 'contacted' && (
+                              <Badge variant="default" className="text-xs bg-blue-500">
+                                Contacted
+                              </Badge>
+                            )}
+                            {order.contact_status === 'replied' && (
+                              <Badge variant="default" className="text-xs bg-green-500">
+                                Replied
+                              </Badge>
+                            )}
                             </div>
                           </div>
                         </div>
@@ -2763,6 +2940,38 @@ export default function Orders() {
                                 <Eye className="mr-3 h-4 w-4" />
                                 View Details
                               </DropdownMenuItem>
+                              {/* Contact Status Actions */}
+                              {order.customer_phone && (
+                                <>
+                                  {order.contact_status !== 'contacted' && order.contact_status !== 'replied' && (
+                                    <DropdownMenuItem
+                                      onClick={() => updateOrderContactStatus(order.id, 'contacted')}
+                                      className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                    >
+                                      <MessageCircle className="mr-3 h-4 w-4" />
+                                      Mark as Contacted
+                                    </DropdownMenuItem>
+                                  )}
+                                  {order.contact_status === 'contacted' && order.contact_status !== 'replied' && (
+                                    <DropdownMenuItem
+                                      onClick={() => updateOrderContactStatus(order.id, 'replied')}
+                                      className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                    >
+                                      <CheckCircle className="mr-3 h-4 w-4" />
+                                      Mark as Replied
+                                    </DropdownMenuItem>
+                                  )}
+                                  {order.contact_status === 'replied' && (
+                                    <DropdownMenuItem
+                                      onClick={() => updateOrderContactStatus(order.id, 'contacted')}
+                                      className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                    >
+                                      <MessageCircle className="mr-3 h-4 w-4" />
+                                      Change to Contacted
+                                    </DropdownMenuItem>
+                                  )}
+                                </>
+                              )}
                               {canManuallyApprove(order, activeTab) && (
                                 <DropdownMenuItem
                                   onClick={() => handleManualApprove(order.id)}
@@ -2813,6 +3022,38 @@ export default function Orders() {
                                 >
                                   Remove Hold
                                 </DropdownMenuItem>
+                              )}
+                              {/* Contact Status Actions */}
+                              {order.customer_phone && (
+                                <>
+                                  {order.contact_status !== 'contacted' && order.contact_status !== 'replied' && (
+                                    <DropdownMenuItem
+                                      onClick={() => updateOrderContactStatus(order.id, 'contacted')}
+                                      className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                    >
+                                      <MessageCircle className="mr-3 h-4 w-4" />
+                                      Mark as Contacted
+                                    </DropdownMenuItem>
+                                  )}
+                                  {order.contact_status === 'contacted' && order.contact_status !== 'replied' && (
+                                    <DropdownMenuItem
+                                      onClick={() => updateOrderContactStatus(order.id, 'replied')}
+                                      className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                    >
+                                      <CheckCircle className="mr-3 h-4 w-4" />
+                                      Mark as Replied
+                                    </DropdownMenuItem>
+                                  )}
+                                  {order.contact_status === 'replied' && (
+                                    <DropdownMenuItem
+                                      onClick={() => updateOrderContactStatus(order.id, 'contacted')}
+                                      className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
+                                    >
+                                      <MessageCircle className="mr-3 h-4 w-4" />
+                                      Change to Contacted
+                                    </DropdownMenuItem>
+                                  )}
+                                </>
                               )}
                               <DropdownMenuItem
                                 onClick={async () => {
@@ -3013,7 +3254,19 @@ export default function Orders() {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{order.customer_name}</div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className="font-medium">{order.customer_name}</div>
+                            {order.contact_status === 'contacted' && (
+                              <Badge variant="default" className="text-xs bg-blue-500">
+                                Contacted
+                              </Badge>
+                            )}
+                            {order.contact_status === 'replied' && (
+                              <Badge variant="default" className="text-xs bg-green-500">
+                                Replied
+                              </Badge>
+                            )}
+                          </div>
                           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
                             <span>{order.customer_phone}</span>
                             {order.customer_phone && (
@@ -3140,6 +3393,38 @@ export default function Orders() {
                               <Eye className="mr-2 h-4 w-4" />
                               View Details
                             </DropdownMenuItem>
+                            {/* Contact Status Actions */}
+                            {order.customer_phone && (
+                              <>
+                                {order.contact_status !== 'contacted' && order.contact_status !== 'replied' && (
+                                  <DropdownMenuItem
+                                    onClick={() => updateOrderContactStatus(order.id, 'contacted')}
+                                    className="flex items-center py-2 px-3 text-sm cursor-pointer"
+                                  >
+                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                    Mark as Contacted
+                                  </DropdownMenuItem>
+                                )}
+                                {order.contact_status === 'contacted' && order.contact_status !== 'replied' && (
+                                  <DropdownMenuItem
+                                    onClick={() => updateOrderContactStatus(order.id, 'replied')}
+                                    className="flex items-center py-2 px-3 text-sm cursor-pointer"
+                                  >
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Mark as Replied
+                                  </DropdownMenuItem>
+                                )}
+                                {order.contact_status === 'replied' && (
+                                  <DropdownMenuItem
+                                    onClick={() => updateOrderContactStatus(order.id, 'contacted')}
+                                    className="flex items-center py-2 px-3 text-sm cursor-pointer"
+                                  >
+                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                    Change to Contacted
+                                  </DropdownMenuItem>
+                                )}
+                              </>
+                            )}
                             {canManuallyApprove(order, activeTab) && (
                               <DropdownMenuItem
                                 onClick={() => handleManualApprove(order.id)}
