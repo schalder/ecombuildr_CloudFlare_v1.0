@@ -1498,9 +1498,15 @@ export default function Orders() {
     }
   };
 
-  // Update contact status for an order
+  // Update contact status for an order - synchronized across all tabs
   const updateOrderContactStatus = async (orderId: string, status: 'contacted' | 'replied') => {
     try {
+      // Find the order being updated
+      const order = orders.find(o => o.id === orderId);
+      if (!order) {
+        throw new Error('Order not found');
+      }
+
       const updateData: any = {
         contact_status: status,
       };
@@ -1510,31 +1516,110 @@ export default function Orders() {
       } else if (status === 'replied') {
         updateData.replied_at = new Date().toISOString();
         // If marking as replied, also set contacted_at if not already set
-        const order = orders.find(o => o.id === orderId);
-        if (order && !order.contacted_at) {
+        if (!order.contacted_at) {
           updateData.contacted_at = new Date().toISOString();
         }
       }
 
-      const { error } = await supabase
-        .from('orders')
-        .update(updateData)
-        .eq('id', orderId);
+      // Get customer identifiers for matching
+      const storeId = order.store_id;
+      const normalizedPhone = order.customer_phone ? normalizePhoneNumber(order.customer_phone) : null;
+      const customerEmail = order.customer_email ? order.customer_email.toLowerCase().trim() : null;
 
-      if (error) throw error;
+      // Collect all matching IDs
+      const matchingOrderIds = new Set<string>();
+      const matchingCheckoutIds = new Set<string>();
 
-      // Update local state
-      setOrders(orders.map(o => 
-        o.id === orderId 
-          ? { ...o, ...updateData, contact_status: status }
-          : o
-      ));
+      // Match by phone if available
+      if (normalizedPhone) {
+        // Get all orders/checkouts with matching normalized phone
+        const { data: allOrders } = await supabase
+          .from('orders')
+          .select('id, customer_phone')
+          .eq('store_id', storeId)
+          .not('customer_phone', 'is', null);
+
+        const { data: allCheckouts } = await (supabase as any)
+          .from('incomplete_checkouts')
+          .select('id, customer_phone')
+          .eq('store_id', storeId)
+          .not('customer_phone', 'is', null);
+
+        // Find IDs with matching normalized phone
+        allOrders?.forEach((o: any) => {
+          if (normalizePhoneNumber(o.customer_phone) === normalizedPhone) {
+            matchingOrderIds.add(o.id);
+          }
+        });
+
+        allCheckouts?.forEach((c: any) => {
+          if (normalizePhoneNumber(c.customer_phone) === normalizedPhone) {
+            matchingCheckoutIds.add(c.id);
+          }
+        });
+      }
+
+      // Match by email if available
+      if (customerEmail) {
+        const { data: emailOrders } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('store_id', storeId)
+          .ilike('customer_email', customerEmail);
+
+        const { data: emailCheckouts } = await (supabase as any)
+          .from('incomplete_checkouts')
+          .select('id')
+          .eq('store_id', storeId)
+          .ilike('customer_email', customerEmail);
+
+        emailOrders?.forEach((o: any) => matchingOrderIds.add(o.id));
+        emailCheckouts?.forEach((c: any) => matchingCheckoutIds.add(c.id));
+      }
+
+      // Update all matching orders
+      if (matchingOrderIds.size > 0) {
+        const { error: ordersError } = await supabase
+          .from('orders')
+          .update(updateData)
+          .in('id', Array.from(matchingOrderIds));
+
+        if (ordersError) throw ordersError;
+      }
+
+      // Update all matching checkouts
+      if (matchingCheckoutIds.size > 0) {
+        const { error: checkoutsError } = await (supabase as any)
+          .from('incomplete_checkouts')
+          .update(updateData)
+          .in('id', Array.from(matchingCheckoutIds));
+
+        if (checkoutsError) throw checkoutsError;
+      }
+
+      // Update local state for orders
+      setOrders(prevOrders => prevOrders.map(o => {
+        const matchesPhone = normalizedPhone && o.customer_phone && normalizePhoneNumber(o.customer_phone) === normalizedPhone;
+        const matchesEmail = customerEmail && o.customer_email && o.customer_email.toLowerCase().trim() === customerEmail;
+        const matches = (matchesPhone || matchesEmail) && o.store_id === storeId;
+        
+        return matches ? { ...o, ...updateData, contact_status: status } : o;
+      }));
+
+      // Update local state for checkouts
+      setIncompleteCheckouts(prevCheckouts => prevCheckouts.map(c => {
+        const matchesPhone = normalizedPhone && c.customer_phone && normalizePhoneNumber(c.customer_phone) === normalizedPhone;
+        const matchesEmail = customerEmail && c.customer_email && c.customer_email.toLowerCase().trim() === customerEmail;
+        const matches = (matchesPhone || matchesEmail) && c.store_id === storeId;
+        
+        return matches ? { ...c, ...updateData, contact_status: status } : c;
+      }));
 
       toast({
         title: 'Success',
         description: status === 'contacted' 
-          ? 'Order marked as contacted' 
-          : 'Order marked as replied',
+          ? 'Contact status updated across all tabs' 
+          : 'Reply status updated across all tabs',
       });
     } catch (error) {
       console.error('Error updating contact status:', error);
@@ -1546,9 +1631,15 @@ export default function Orders() {
     }
   };
 
-  // Update contact status for an incomplete checkout
+  // Update contact status for an incomplete checkout - synchronized across all tabs
   const updateCheckoutContactStatus = async (checkoutId: string, status: 'contacted' | 'replied') => {
     try {
+      // Find the checkout being updated
+      const checkout = incompleteCheckouts.find(c => c.id === checkoutId);
+      if (!checkout) {
+        throw new Error('Checkout not found');
+      }
+
       const updateData: any = {
         contact_status: status,
       };
@@ -1558,31 +1649,110 @@ export default function Orders() {
       } else if (status === 'replied') {
         updateData.replied_at = new Date().toISOString();
         // If marking as replied, also set contacted_at if not already set
-        const checkout = incompleteCheckouts.find(c => c.id === checkoutId);
-        if (checkout && !checkout.contacted_at) {
+        if (!checkout.contacted_at) {
           updateData.contacted_at = new Date().toISOString();
         }
       }
 
-      const { error } = await supabase
-        .from('incomplete_checkouts')
-        .update(updateData)
-        .eq('id', checkoutId);
+      // Get customer identifiers for matching
+      const storeId = checkout.store_id;
+      const normalizedPhone = checkout.customer_phone ? normalizePhoneNumber(checkout.customer_phone) : null;
+      const customerEmail = checkout.customer_email ? checkout.customer_email.toLowerCase().trim() : null;
 
-      if (error) throw error;
+      // Collect all matching IDs
+      const matchingOrderIds = new Set<string>();
+      const matchingCheckoutIds = new Set<string>();
 
-      // Update local state
-      setIncompleteCheckouts(incompleteCheckouts.map(c => 
-        c.id === checkoutId 
-          ? { ...c, ...updateData, contact_status: status }
-          : c
-      ));
+      // Match by phone if available
+      if (normalizedPhone) {
+        // Get all orders/checkouts with matching normalized phone
+        const { data: allOrders } = await supabase
+          .from('orders')
+          .select('id, customer_phone')
+          .eq('store_id', storeId)
+          .not('customer_phone', 'is', null);
+
+        const { data: allCheckouts } = await (supabase as any)
+          .from('incomplete_checkouts')
+          .select('id, customer_phone')
+          .eq('store_id', storeId)
+          .not('customer_phone', 'is', null);
+
+        // Find IDs with matching normalized phone
+        allOrders?.forEach((o: any) => {
+          if (normalizePhoneNumber(o.customer_phone) === normalizedPhone) {
+            matchingOrderIds.add(o.id);
+          }
+        });
+
+        allCheckouts?.forEach((c: any) => {
+          if (normalizePhoneNumber(c.customer_phone) === normalizedPhone) {
+            matchingCheckoutIds.add(c.id);
+          }
+        });
+      }
+
+      // Match by email if available
+      if (customerEmail) {
+        const { data: emailOrders } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('store_id', storeId)
+          .ilike('customer_email', customerEmail);
+
+        const { data: emailCheckouts } = await (supabase as any)
+          .from('incomplete_checkouts')
+          .select('id')
+          .eq('store_id', storeId)
+          .ilike('customer_email', customerEmail);
+
+        emailOrders?.forEach((o: any) => matchingOrderIds.add(o.id));
+        emailCheckouts?.forEach((c: any) => matchingCheckoutIds.add(c.id));
+      }
+
+      // Update all matching orders
+      if (matchingOrderIds.size > 0) {
+        const { error: ordersError } = await supabase
+          .from('orders')
+          .update(updateData)
+          .in('id', Array.from(matchingOrderIds));
+
+        if (ordersError) throw ordersError;
+      }
+
+      // Update all matching checkouts
+      if (matchingCheckoutIds.size > 0) {
+        const { error: checkoutsError } = await (supabase as any)
+          .from('incomplete_checkouts')
+          .update(updateData)
+          .in('id', Array.from(matchingCheckoutIds));
+
+        if (checkoutsError) throw checkoutsError;
+      }
+
+      // Update local state for orders
+      setOrders(prevOrders => prevOrders.map(o => {
+        const matchesPhone = normalizedPhone && o.customer_phone && normalizePhoneNumber(o.customer_phone) === normalizedPhone;
+        const matchesEmail = customerEmail && o.customer_email && o.customer_email.toLowerCase().trim() === customerEmail;
+        const matches = (matchesPhone || matchesEmail) && o.store_id === storeId;
+        
+        return matches ? { ...o, ...updateData, contact_status: status } : o;
+      }));
+
+      // Update local state for checkouts
+      setIncompleteCheckouts(prevCheckouts => prevCheckouts.map(c => {
+        const matchesPhone = normalizedPhone && c.customer_phone && normalizePhoneNumber(c.customer_phone) === normalizedPhone;
+        const matchesEmail = customerEmail && c.customer_email && c.customer_email.toLowerCase().trim() === customerEmail;
+        const matches = (matchesPhone || matchesEmail) && c.store_id === storeId;
+        
+        return matches ? { ...c, ...updateData, contact_status: status } : c;
+      }));
 
       toast({
         title: 'Success',
         description: status === 'contacted' 
-          ? 'Checkout marked as contacted' 
-          : 'Checkout marked as replied',
+          ? 'Contact status updated across all tabs' 
+          : 'Reply status updated across all tabs',
       });
     } catch (error) {
       console.error('Error updating contact status:', error);
