@@ -2499,7 +2499,26 @@ export default function Orders() {
                       <div className="flex justify-between items-start mb-3">
                         <div>
                           <h3 className="font-semibold">{checkout.customer_name || 'Unknown'}</h3>
-                          <p className="text-sm text-muted-foreground">{checkout.customer_phone || 'No phone'}</p>
+                          {checkout.customer_phone && (
+                            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                              <Phone className="h-3 w-3" />
+                              <span>{checkout.customer_phone}</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const normalizedPhone = normalizePhoneNumber(checkout.customer_phone!);
+                                  openWhatsApp(normalizedPhone);
+                                }}
+                                className="text-green-600 hover:text-green-700 transition-colors"
+                                title="Open WhatsApp chat"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </button>
+                            </div>
+                          )}
+                          {!checkout.customer_phone && (
+                            <p className="text-sm text-muted-foreground">No phone</p>
+                          )}
                           {checkout.customer_email && (
                             <p className="text-sm text-muted-foreground">{checkout.customer_email}</p>
                           )}
@@ -2551,9 +2570,20 @@ export default function Orders() {
                           <TableCell>
                             <div className="space-y-1">
                               {checkout.customer_phone && (
-                                <div className="flex items-center gap-1">
+                                <div className="flex items-center gap-1.5">
                                   <Phone className="h-3 w-3" />
                                   <span>{checkout.customer_phone}</span>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const normalizedPhone = normalizePhoneNumber(checkout.customer_phone!);
+                                      openWhatsApp(normalizedPhone);
+                                    }}
+                                    className="text-green-600 hover:text-green-700 transition-colors"
+                                    title="Open WhatsApp chat"
+                                  >
+                                    <MessageCircle className="h-4 w-4" />
+                                  </button>
                                 </div>
                               )}
                               {checkout.customer_email && (
@@ -2603,15 +2633,6 @@ export default function Orders() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                {checkout.customer_phone && (
-                                  <DropdownMenuItem
-                                    onClick={() => openWhatsApp(checkout.customer_phone!)}
-                                    className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation"
-                                  >
-                                    <MessageCircle className="mr-3 h-4 w-4" />
-                                    Contact via WhatsApp
-                                  </DropdownMenuItem>
-                                )}
                                 <DropdownMenuItem
                                   onClick={async () => {
                                     try {
