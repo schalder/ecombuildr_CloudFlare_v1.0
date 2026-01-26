@@ -350,15 +350,7 @@ export default function Orders() {
   const ordersPerPage = 10;
   
   // Revenue comparison state
-  const [revenueComparison, setRevenueComparison] = useState<{
-    today: number;
-    yesterday: number;
-    thisWeek: number;
-    lastWeek: number;
-    thisMonth: number;
-    lastMonth: number;
-    loading: boolean;
-  }>({
+  const [revenueComparison, setRevenueComparison] = useState({
     today: 0,
     yesterday: 0,
     thisWeek: 0,
@@ -389,34 +381,46 @@ export default function Orders() {
     return formatAmount(amount, getOrderCurrency(selectedOrder));
   };
 
-  // Calculate revenue from orders for a given time period
-  const calculateRevenueForPeriod = async (
-    startDate: Date,
-    endDate: Date,
-    storeIds: string[]
-  ): Promise<number> => {
+  // Fetch revenue for a specific date range
+  const fetchRevenueForDateRange = async (startDate: Date, endDate: Date): Promise<number> => {
+    if (!user) return 0;
+    
     try {
-      const { data: ordersData, error } = await supabase
+      // Get user's stores
+      const { data: stores, error: storesError } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('owner_id', user.id);
+
+      if (storesError || !stores || stores.length === 0) return 0;
+
+      const storeIds = stores.map(store => store.id);
+
+      // Build query for orders in date range
+      let revenueQuery = supabase
         .from('orders')
-        .select('id, total, website_id, funnel_id, status')
+        .select('id, total, website_id, funnel_id, created_at')
         .in('store_id', storeIds)
         .gte('created_at', startDate.toISOString())
         .lte('created_at', endDate.toISOString())
-        .not('status', 'in', '(pending_payment,payment_failed,cancelled)');
+        // Exclude incomplete orders
+        .neq('status', 'pending_payment' as any)
+        .neq('status', 'payment_failed' as any)
+        .neq('status', 'cancelled');
 
-      if (error) {
-        console.error('Error fetching revenue:', error);
-        return 0;
-      }
+      const { data: ordersData, error } = await revenueQuery;
 
+      if (error || !ordersData) return 0;
+
+      // Calculate total revenue (sum all currencies)
       let totalRevenue = 0;
-      ordersData?.forEach(order => {
+      ordersData.forEach(order => {
         totalRevenue += Number(order.total) || 0;
       });
 
       return totalRevenue;
     } catch (error) {
-      console.error('Error calculating revenue:', error);
+      console.error('Error fetching revenue for date range:', error);
       return 0;
     }
   };
@@ -428,22 +432,9 @@ export default function Orders() {
     try {
       setRevenueComparison(prev => ({ ...prev, loading: true }));
 
-      // Get user's stores
-      const { data: stores, error: storesError } = await supabase
-        .from('stores')
-        .select('id')
-        .eq('owner_id', user.id)
-        .eq('is_active', true);
-
-      if (storesError || !stores || stores.length === 0) {
-        setRevenueComparison(prev => ({ ...prev, loading: false }));
-        return;
-      }
-
-      const storeIds = stores.map(s => s.id);
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
+      
       // Today
       const todayStart = new Date(today);
       const todayEnd = new Date(today);
@@ -458,15 +449,16 @@ export default function Orders() {
       // This week (Sunday to today)
       const thisWeekStart = new Date(today);
       const dayOfWeek = thisWeekStart.getDay();
-      const diff = thisWeekStart.getDate() - dayOfWeek;
+      const diff = thisWeekStart.getDate() - dayOfWeek; // Sunday = 0
       thisWeekStart.setDate(diff);
       thisWeekStart.setHours(0, 0, 0, 0);
       const thisWeekEnd = new Date(now);
       thisWeekEnd.setHours(23, 59, 59, 999);
 
-      // Last week (previous Sunday to Saturday)
+      // Last week (previous Sunday to previous Saturday)
       const lastWeekEnd = new Date(thisWeekStart);
-      lastWeekEnd.setMilliseconds(-1);
+      lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
+      lastWeekEnd.setHours(23, 59, 59, 999);
       const lastWeekStart = new Date(lastWeekEnd);
       lastWeekStart.setDate(lastWeekStart.getDate() - 6);
       lastWeekStart.setHours(0, 0, 0, 0);
@@ -478,19 +470,19 @@ export default function Orders() {
       thisMonthEnd.setHours(23, 59, 59, 999);
 
       // Last month
-      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-      lastMonthEnd.setHours(23, 59, 59, 999);
       const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       lastMonthStart.setHours(0, 0, 0, 0);
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      lastMonthEnd.setHours(23, 59, 59, 999);
 
-      // Fetch all periods in parallel
+      // Fetch all revenue data in parallel
       const [todayRev, yesterdayRev, thisWeekRev, lastWeekRev, thisMonthRev, lastMonthRev] = await Promise.all([
-        calculateRevenueForPeriod(todayStart, todayEnd, storeIds),
-        calculateRevenueForPeriod(yesterdayStart, yesterdayEnd, storeIds),
-        calculateRevenueForPeriod(thisWeekStart, thisWeekEnd, storeIds),
-        calculateRevenueForPeriod(lastWeekStart, lastWeekEnd, storeIds),
-        calculateRevenueForPeriod(thisMonthStart, thisMonthEnd, storeIds),
-        calculateRevenueForPeriod(lastMonthStart, lastMonthEnd, storeIds),
+        fetchRevenueForDateRange(todayStart, todayEnd),
+        fetchRevenueForDateRange(yesterdayStart, yesterdayEnd),
+        fetchRevenueForDateRange(thisWeekStart, thisWeekEnd),
+        fetchRevenueForDateRange(lastWeekStart, lastWeekEnd),
+        fetchRevenueForDateRange(thisMonthStart, thisMonthEnd),
+        fetchRevenueForDateRange(lastMonthStart, lastMonthEnd),
       ]);
 
       setRevenueComparison({
@@ -508,10 +500,70 @@ export default function Orders() {
     }
   };
 
+  // Calculate revenue from filtered orders (respects current filters)
+  const calculateFilteredRevenue = (): Record<CurrencyCode, number> => {
+    const revenueByCurrency: Record<CurrencyCode, number> = {
+      BDT: 0,
+      USD: 0,
+      INR: 0,
+      EUR: 0,
+      GBP: 0,
+    };
+
+    orders.forEach(order => {
+      const currency = getOrderCurrency(order);
+      revenueByCurrency[currency] += Number(order.total) || 0;
+    });
+
+    return revenueByCurrency;
+  };
+
+  // Format multi-currency revenue display
+  const formatMultiCurrencyRevenue = (revenueByCurrency: Record<CurrencyCode, number>): string => {
+    // Filter out currencies with zero revenue and sort by amount (descending)
+    const currencies = Object.entries(revenueByCurrency)
+      .filter(([_, amount]) => amount > 0)
+      .sort(([_, a], [__, b]) => b - a) as [CurrencyCode, number][];
+    
+    if (currencies.length === 0) {
+      return formatAmount(0, 'BDT');
+    }
+    
+    if (currencies.length === 1) {
+      // Single currency: show formatted amount
+      const [code, amount] = currencies[0];
+      return formatAmount(amount, code);
+    }
+    
+    // Multiple currencies: show up to 3, then "and X more" if needed
+    const displayCurrencies = currencies.slice(0, 3);
+    const remaining = currencies.length - 3;
+    
+    const formatted = displayCurrencies
+      .map(([code, amount]) => {
+        const symbol = currencySymbols[code];
+        const formatted = new Intl.NumberFormat('en-US', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(amount);
+        return `${symbol}${formatted} ${code}`;
+      })
+      .join(' + ');
+    
+    if (remaining > 0) {
+      return `${formatted} + ${remaining} more`;
+    }
+    
+    return formatted;
+  };
+
   // Calculate percentage change
-  const calculatePercentageChange = (current: number, previous: number): number => {
-    if (previous === 0) return current > 0 ? 100 : 0;
-    return ((current - previous) / previous) * 100;
+  const calculatePercentageChange = (current: number, previous: number): { value: number; isPositive: boolean } => {
+    if (previous === 0) {
+      return { value: current > 0 ? 100 : 0, isPositive: current > 0 };
+    }
+    const change = ((current - previous) / previous) * 100;
+    return { value: Math.abs(change), isPositive: change >= 0 };
   };
 
   const fetchIncompleteCheckouts = async () => {
@@ -645,12 +697,12 @@ export default function Orders() {
     }
   }, [user, currentPage, searchTerm, statusFilter, paymentStatusFilter, attributionFilter, dateFilter, channelFilter, activeTab, fakeOrderFilter]);
 
-  // Fetch revenue comparison data when user is available
+  // Fetch revenue comparison data on mount and when filters change
   useEffect(() => {
-    if (user) {
+    if (user && activeTab === 'all') {
       fetchRevenueComparison();
     }
-  }, [user]);
+  }, [user, activeTab]);
 
   // Check if IP is blocked when order details open
   useEffect(() => {
@@ -2554,68 +2606,6 @@ export default function Orders() {
     delivered: orders.filter(o => o.status === 'delivered').length,
   };
 
-  // Calculate current filtered revenue from displayed orders
-  const calculateCurrentRevenue = (): Record<CurrencyCode, number> => {
-    const revenueByCurrency: Record<CurrencyCode, number> = {
-      BDT: 0,
-      USD: 0,
-      INR: 0,
-      EUR: 0,
-      GBP: 0,
-    };
-
-    orders.forEach(order => {
-      const currency = getOrderCurrency(order);
-      revenueByCurrency[currency] += Number(order.total) || 0;
-    });
-
-    return revenueByCurrency;
-  };
-
-  // Format multi-currency revenue display
-  const formatMultiCurrencyRevenue = (revenueByCurrency: Record<CurrencyCode, number>): string => {
-    const currencies = Object.entries(revenueByCurrency)
-      .filter(([_, amount]) => amount > 0)
-      .sort(([_, a], [__, b]) => b - a) as [CurrencyCode, number][];
-    
-    if (currencies.length === 0) {
-      return formatAmount(0, 'BDT');
-    }
-    
-    if (currencies.length === 1) {
-      const [code, amount] = currencies[0];
-      return formatAmount(amount, code);
-    }
-    
-    const displayCurrencies = currencies.slice(0, 3);
-    const remaining = currencies.length - 3;
-    
-    const formatted = displayCurrencies
-      .map(([code, amount]) => {
-        const symbol = currencySymbols[code];
-        const formatted = new Intl.NumberFormat('en-US', {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(amount);
-        return `${symbol}${formatted} ${code}`;
-      })
-      .join(' + ');
-    
-    if (remaining > 0) {
-      return `${formatted} + ${remaining} more`;
-    }
-    
-    return formatted;
-  };
-
-  const currentRevenue = calculateCurrentRevenue();
-  const currentRevenueDisplay = formatMultiCurrencyRevenue(currentRevenue);
-
-  // Calculate percentage changes for comparison cards
-  const todayVsYesterday = calculatePercentageChange(revenueComparison.today, revenueComparison.yesterday);
-  const thisWeekVsLastWeek = calculatePercentageChange(revenueComparison.thisWeek, revenueComparison.lastWeek);
-  const thisMonthVsLastMonth = calculatePercentageChange(revenueComparison.thisMonth, revenueComparison.lastMonth);
-
   return (
     <DashboardLayout 
       title="Orders" 
@@ -2624,18 +2614,6 @@ export default function Orders() {
       <div className="space-y-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                  <p className="text-2xl font-bold">{currentRevenueDisplay}</p>
-                  <p className="text-xs text-muted-foreground mt-1">Filtered orders</p>
-                </div>
-                <DollarSign className="h-5 w-5 text-muted-foreground" />
-              </div>
-            </CardContent>
-          </Card>
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -2666,106 +2644,154 @@ export default function Orders() {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Revenue Comparison Cards */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {/* Today vs Yesterday */}
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">Today vs Yesterday</p>
-                  <div className="flex items-baseline gap-2 mt-2">
-                    <p className="text-2xl font-bold">{formatAmount(revenueComparison.today, 'BDT')}</p>
-                    {!revenueComparison.loading && (
-                      <div className={`flex items-center gap-1 text-sm ${
-                        todayVsYesterday >= 0 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {todayVsYesterday >= 0 ? (
-                          <TrendingUp className="h-4 w-4" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4" />
-                        )}
-                        <span>{Math.abs(todayVsYesterday).toFixed(1)}%</span>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Yesterday: {formatAmount(revenueComparison.yesterday, 'BDT')}
-                  </p>
+              <div className="flex items-center">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Delivered</p>
+                  <p className="text-2xl font-bold">{orderStats.delivered}</p>
                 </div>
-                {revenueComparison.loading && (
-                  <div className="h-4 w-4 bg-muted animate-pulse rounded" />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* This Week vs Last Week */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">This Week vs Last Week</p>
-                  <div className="flex items-baseline gap-2 mt-2">
-                    <p className="text-2xl font-bold">{formatAmount(revenueComparison.thisWeek, 'BDT')}</p>
-                    {!revenueComparison.loading && (
-                      <div className={`flex items-center gap-1 text-sm ${
-                        thisWeekVsLastWeek >= 0 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {thisWeekVsLastWeek >= 0 ? (
-                          <TrendingUp className="h-4 w-4" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4" />
-                        )}
-                        <span>{Math.abs(thisWeekVsLastWeek).toFixed(1)}%</span>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Last week: {formatAmount(revenueComparison.lastWeek, 'BDT')}
-                  </p>
-                </div>
-                {revenueComparison.loading && (
-                  <div className="h-4 w-4 bg-muted animate-pulse rounded" />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* This Month vs Last Month */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-muted-foreground">This Month vs Last Month</p>
-                  <div className="flex items-baseline gap-2 mt-2">
-                    <p className="text-2xl font-bold">{formatAmount(revenueComparison.thisMonth, 'BDT')}</p>
-                    {!revenueComparison.loading && (
-                      <div className={`flex items-center gap-1 text-sm ${
-                        thisMonthVsLastMonth >= 0 ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {thisMonthVsLastMonth >= 0 ? (
-                          <TrendingUp className="h-4 w-4" />
-                        ) : (
-                          <TrendingDown className="h-4 w-4" />
-                        )}
-                        <span>{Math.abs(thisMonthVsLastMonth).toFixed(1)}%</span>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Last month: {formatAmount(revenueComparison.lastMonth, 'BDT')}
-                  </p>
-                </div>
-                {revenueComparison.loading && (
-                  <div className="h-4 w-4 bg-muted animate-pulse rounded" />
-                )}
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Revenue Cards */}
+        {activeTab === 'all' && (
+          <div className="space-y-4">
+            {/* Total Revenue (Filtered Orders) */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
+                      <p className="text-2xl font-bold mt-1">
+                        {formatMultiCurrencyRevenue(calculateFilteredRevenue())}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">Filtered orders</p>
+                    </div>
+                    <DollarSign className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Today vs Yesterday */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">Today vs Yesterday</p>
+                      {revenueComparison.loading ? (
+                        <div className="mt-2 h-6 w-24 bg-muted animate-pulse rounded" />
+                      ) : (
+                        <>
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <p className="text-2xl font-bold">
+                              {formatAmount(revenueComparison.today, 'BDT')}
+                            </p>
+                            {(() => {
+                              const change = calculatePercentageChange(revenueComparison.today, revenueComparison.yesterday);
+                              return (
+                                <div className={`flex items-center gap-1 text-sm ${change.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                                  {change.isPositive ? (
+                                    <TrendingUp className="h-4 w-4" />
+                                  ) : (
+                                    <TrendingDown className="h-4 w-4" />
+                                  )}
+                                  <span>{change.value.toFixed(1)}%</span>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Yesterday: {formatAmount(revenueComparison.yesterday, 'BDT')}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* This Week vs Last Week */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">This Week vs Last Week</p>
+                      {revenueComparison.loading ? (
+                        <div className="mt-2 h-6 w-24 bg-muted animate-pulse rounded" />
+                      ) : (
+                        <>
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <p className="text-2xl font-bold">
+                              {formatAmount(revenueComparison.thisWeek, 'BDT')}
+                            </p>
+                            {(() => {
+                              const change = calculatePercentageChange(revenueComparison.thisWeek, revenueComparison.lastWeek);
+                              return (
+                                <div className={`flex items-center gap-1 text-sm ${change.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                                  {change.isPositive ? (
+                                    <TrendingUp className="h-4 w-4" />
+                                  ) : (
+                                    <TrendingDown className="h-4 w-4" />
+                                  )}
+                                  <span>{change.value.toFixed(1)}%</span>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Last week: {formatAmount(revenueComparison.lastWeek, 'BDT')}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* This Month vs Last Month */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">This Month vs Last Month</p>
+                      {revenueComparison.loading ? (
+                        <div className="mt-2 h-6 w-24 bg-muted animate-pulse rounded" />
+                      ) : (
+                        <>
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <p className="text-2xl font-bold">
+                              {formatAmount(revenueComparison.thisMonth, 'BDT')}
+                            </p>
+                            {(() => {
+                              const change = calculatePercentageChange(revenueComparison.thisMonth, revenueComparison.lastMonth);
+                              return (
+                                <div className={`flex items-center gap-1 text-sm ${change.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                                  {change.isPositive ? (
+                                    <TrendingUp className="h-4 w-4" />
+                                  ) : (
+                                    <TrendingDown className="h-4 w-4" />
+                                  )}
+                                  <span>{change.value.toFixed(1)}%</span>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Last month: {formatAmount(revenueComparison.lastMonth, 'BDT')}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
         <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-between sm:items-center w-full overflow-hidden">
