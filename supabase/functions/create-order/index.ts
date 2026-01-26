@@ -459,20 +459,33 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: false, error: itemsError.message || 'Failed to create order items' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Send email notification (don't block order creation if email fails)
-    try {
-      await supabase.functions.invoke('send-order-email', {
-        body: {
-          order_id: createdOrder.id,
-          store_id: storeId,
-          website_id: order.website_id,
-          event_type: 'new_order'
-        }
-      });
-      console.log('New order email notification sent successfully');
-    } catch (emailError) {
-      console.error('Failed to send new order email notification:', emailError);
-      // Don't fail the order creation if email fails
+    // Send email notification conditionally (don't block order creation if email fails)
+    // For COD orders: Always send email notification
+    // For instant payment methods (EB Pay, EPS, bkash, stripe, etc.): Only send if status is NOT pending_payment or payment_failed
+    // (These incomplete statuses are not actual orders - email will be sent when payment is verified)
+    const instantPaymentMethods = ['eps', 'ebpay', 'stripe', 'bkash', 'nagad', 'sslcommerz'];
+    const incompleteStatuses = ['pending_payment', 'payment_failed'];
+    const shouldSendEmail =
+      order.payment_method === 'cod' ||
+      (instantPaymentMethods.includes(order.payment_method) && !incompleteStatuses.includes(safeStatus));
+
+    if (shouldSendEmail) {
+      try {
+        await supabase.functions.invoke('send-order-email', {
+          body: {
+            order_id: createdOrder.id,
+            store_id: storeId,
+            website_id: order.website_id,
+            event_type: 'new_order'
+          }
+        });
+        console.log('New order email notification sent successfully');
+      } catch (emailError) {
+        console.error('Failed to send new order email notification:', emailError);
+        // Don't fail the order creation if email fails
+      }
+    } else {
+      console.log(`Skipping email notification for ${order.payment_method} order with status ${safeStatus} (will send when payment verified)`);
     }
 
     // ✅ Track Purchase event server-side for COD orders

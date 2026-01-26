@@ -125,6 +125,24 @@ serve(async (req) => {
       throw new Error(`Failed to update order: ${error.message}`);
     }
 
+    // ✅ Send email notification when payment is successfully verified
+    // For instant payment methods, email is only sent when payment succeeds (not on order creation)
+    if (paymentStatus === 'success' && (orderStatus === 'processing' || orderStatus === 'delivered')) {
+      try {
+        await supabase.functions.invoke('send-order-email', {
+          body: {
+            order_id: orderId,
+            store_id: order.store_id,
+            website_id: order.website_id || null,
+            event_type: 'new_order'
+          }
+        });
+        console.log('New order email notification sent successfully after payment verification');
+      } catch (emailError) {
+        console.error('Failed to send new order email notification after payment verification:', emailError);
+        // Don't fail payment verification if email fails
+      }
+    }
 
     return new Response(
       JSON.stringify({
