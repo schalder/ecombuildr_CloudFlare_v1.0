@@ -357,6 +357,8 @@ export default function Orders() {
     lastWeek: 0,
     thisMonth: 0,
     lastMonth: 0,
+    thisYear: 0,
+    lastYear: 0,
     loading: true,
   });
   
@@ -475,14 +477,28 @@ export default function Orders() {
       const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
       lastMonthEnd.setHours(23, 59, 59, 999);
 
+      // This year (January 1 to today)
+      const thisYearStart = new Date(now.getFullYear(), 0, 1);
+      thisYearStart.setHours(0, 0, 0, 0);
+      const thisYearEnd = new Date(now);
+      thisYearEnd.setHours(23, 59, 59, 999);
+
+      // Last year (January 1 to December 31 of previous year)
+      const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
+      lastYearStart.setHours(0, 0, 0, 0);
+      const lastYearEnd = new Date(now.getFullYear() - 1, 11, 31);
+      lastYearEnd.setHours(23, 59, 59, 999);
+
       // Fetch all revenue data in parallel
-      const [todayRev, yesterdayRev, thisWeekRev, lastWeekRev, thisMonthRev, lastMonthRev] = await Promise.all([
+      const [todayRev, yesterdayRev, thisWeekRev, lastWeekRev, thisMonthRev, lastMonthRev, thisYearRev, lastYearRev] = await Promise.all([
         fetchRevenueForDateRange(todayStart, todayEnd),
         fetchRevenueForDateRange(yesterdayStart, yesterdayEnd),
         fetchRevenueForDateRange(thisWeekStart, thisWeekEnd),
         fetchRevenueForDateRange(lastWeekStart, lastWeekEnd),
         fetchRevenueForDateRange(thisMonthStart, thisMonthEnd),
         fetchRevenueForDateRange(lastMonthStart, lastMonthEnd),
+        fetchRevenueForDateRange(thisYearStart, thisYearEnd),
+        fetchRevenueForDateRange(lastYearStart, lastYearEnd),
       ]);
 
       setRevenueComparison({
@@ -492,6 +508,8 @@ export default function Orders() {
         lastWeek: lastWeekRev,
         thisMonth: thisMonthRev,
         lastMonth: lastMonthRev,
+        thisYear: thisYearRev,
+        lastYear: lastYearRev,
         loading: false,
       });
     } catch (error) {
@@ -2659,24 +2677,8 @@ export default function Orders() {
         {/* Revenue Cards */}
         {activeTab === 'all' && (
           <div className="space-y-4">
-            {/* Total Revenue (Filtered Orders) */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                      <p className="text-2xl font-bold mt-1">
-                        {formatMultiCurrencyRevenue(calculateFilteredRevenue())}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">Filtered orders</p>
-                    </div>
-                    <DollarSign className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Today vs Yesterday */}
+              {/* Today vs Yesterday - First Card */}
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -2714,7 +2716,7 @@ export default function Orders() {
                 </CardContent>
               </Card>
 
-              {/* This Week vs Last Week */}
+              {/* This Week vs Last Week - Second Card */}
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -2752,7 +2754,7 @@ export default function Orders() {
                 </CardContent>
               </Card>
 
-              {/* This Month vs Last Month */}
+              {/* This Month vs Last Month - Third Card */}
               <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
@@ -2782,6 +2784,44 @@ export default function Orders() {
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
                             Last month: {formatAmount(revenueComparison.lastMonth, 'BDT')}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* This Year vs Last Year - Fourth Card */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-muted-foreground">This Year vs Last Year</p>
+                      {revenueComparison.loading ? (
+                        <div className="mt-2 h-6 w-24 bg-muted animate-pulse rounded" />
+                      ) : (
+                        <>
+                          <div className="flex items-baseline gap-2 mt-1">
+                            <p className="text-2xl font-bold">
+                              {formatAmount(revenueComparison.thisYear, 'BDT')}
+                            </p>
+                            {(() => {
+                              const change = calculatePercentageChange(revenueComparison.thisYear, revenueComparison.lastYear);
+                              return (
+                                <div className={`flex items-center gap-1 text-sm ${change.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                                  {change.isPositive ? (
+                                    <TrendingUp className="h-4 w-4" />
+                                  ) : (
+                                    <TrendingDown className="h-4 w-4" />
+                                  )}
+                                  <span>{change.value.toFixed(1)}%</span>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Last year: {formatAmount(revenueComparison.lastYear, 'BDT')}
                           </p>
                         </>
                       )}
