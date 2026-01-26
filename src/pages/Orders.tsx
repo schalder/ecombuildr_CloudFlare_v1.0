@@ -2384,7 +2384,7 @@ export default function Orders() {
     >
       <div className="space-y-6">
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center">
@@ -2428,15 +2428,15 @@ export default function Orders() {
         </div>
 
         {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-            <div className="relative flex-1 sm:flex-none">
+        <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-between sm:items-center">
+          <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center w-full sm:w-auto">
+            <div className="relative w-full sm:w-auto sm:flex-none">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search orders..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className={`pl-10 text-foreground ${isMobile ? 'w-full' : 'w-80'}`}
+                className="pl-10 text-foreground w-full sm:w-80"
               />
             </div>
             <DropdownMenu>
@@ -2927,11 +2927,28 @@ export default function Orders() {
                           <Badge variant="secondary">Abandoned</Badge>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                className="touch-manipulation"
+                                onPointerDown={(e) => {
+                                  // Prevent event propagation to ensure dropdown opens on mobile
+                                  e.stopPropagation();
+                                }}
+                              >
                                 <MoreHorizontal className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent 
+                              align="end"
+                              className="z-[100] touch-manipulation"
+                              onCloseAutoFocus={(e) => {
+                                // Prevent auto-focus issues on mobile
+                                if (isMobile) {
+                                  e.preventDefault();
+                                }
+                              }}
+                            >
                               {/* Manual Approve Option */}
                               {checkout.customer_name && checkout.customer_phone && checkout.cart_items && checkout.cart_items.length > 0 && (
                                 <DropdownMenuItem
@@ -3118,11 +3135,11 @@ export default function Orders() {
                           <TableCell className="text-right">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm">
+                                <Button variant="ghost" size="sm" className="touch-manipulation">
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align="end" className="z-[100] touch-manipulation">
                                 {/* Manual Approve Option */}
                                 {checkout.customer_name && checkout.customer_phone && checkout.cart_items && checkout.cart_items.length > 0 && (
                                   <DropdownMenuItem
@@ -3277,7 +3294,15 @@ export default function Orders() {
                           </div>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-9 w-9 p-0 touch-manipulation">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-9 w-9 p-0 touch-manipulation"
+                                onPointerDown={(e) => {
+                                  // Prevent event propagation to ensure dropdown opens on mobile
+                                  e.stopPropagation();
+                                }}
+                              >
                                 <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">Open menu</span>
                               </Button>
@@ -3286,6 +3311,12 @@ export default function Orders() {
                               align="end" 
                               className="z-[100] bg-background border shadow-lg min-w-[200px] touch-manipulation"
                               sideOffset={5}
+                              onCloseAutoFocus={(e) => {
+                                // Prevent auto-focus issues on mobile
+                                if (isMobile) {
+                                  e.preventDefault();
+                                }
+                              }}
                             >
                               <DropdownMenuItem 
                                 onClick={async () => {
