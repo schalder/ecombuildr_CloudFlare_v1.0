@@ -2428,8 +2428,8 @@ export default function Orders() {
         </div>
 
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-between sm:items-center">
-          <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center w-full sm:w-auto">
+        <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:justify-between sm:items-center w-full overflow-hidden">
+          <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center w-full sm:w-auto overflow-hidden">
             <div className="relative w-full sm:w-auto sm:flex-none">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -2685,15 +2685,16 @@ export default function Orders() {
               Orders ({totalCount})
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-x-hidden">
             {/* Tabs */}
-            <div className="flex gap-2 mb-4">
+            <div className="grid grid-cols-2 gap-2 mb-4 sm:flex sm:gap-2">
               <Button
                 variant={activeTab === 'all' ? 'default' : 'outline'}
                 onClick={() => {
                   setActiveTab('all');
                   setCurrentPage(1);
                 }}
+                className="w-full sm:w-auto"
               >
                 All Orders
               </Button>
@@ -2703,6 +2704,7 @@ export default function Orders() {
                   setActiveTab('incomplete');
                   setCurrentPage(1);
                 }}
+                className="w-full sm:w-auto"
               >
                 Incomplete Orders
               </Button>
@@ -2712,6 +2714,7 @@ export default function Orders() {
                   setActiveTab('fake');
                   setCurrentPage(1);
                 }}
+                className="w-full sm:w-auto"
               >
                 Fake Orders
               </Button>
@@ -2721,6 +2724,7 @@ export default function Orders() {
                   setActiveTab('abandoned');
                   setCurrentPage(1);
                 }}
+                className="w-full sm:w-auto"
               >
                 Abandoned Checkouts
               </Button>
