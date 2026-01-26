@@ -7,6 +7,88 @@ interface TrackingCodeManagerProps {
   priority?: 'page' | 'funnel' | 'website' | 'store';
 }
 
+// Helper function to find matching closing brace/parenthesis
+const findMatchingClose = (str: string, startIndex: number, openChar: string, closeChar: string): number => {
+  let depth = 1;
+  let i = startIndex + 1;
+  
+  while (i < str.length && depth > 0) {
+    if (str[i] === openChar) depth++;
+    else if (str[i] === closeChar) depth--;
+    i++;
+  }
+  
+  return depth === 0 ? i - 1 : -1;
+};
+
+// Helper function to extract and replace DOMContentLoaded listeners
+const replaceDOMContentLoadedListeners = (scriptContent: string): string => {
+  let result = scriptContent;
+  let searchIndex = 0;
+  
+  // Pattern to match: document.addEventListener("DOMContentLoaded", function() { or () => {
+  const pattern = /document\.addEventListener\s*\(\s*["']DOMContentLoaded["']\s*,\s*(function\s*\(\)\s*\{|\(\)\s*=>\s*\{)/g;
+  
+  // We need to process matches in reverse order to maintain correct indices
+  const matches: Array<{ start: number; end: number; body: string }> = [];
+  
+  let match;
+  while ((match = pattern.exec(scriptContent)) !== null) {
+    const startIndex = match.index;
+    const callbackStart = match.index + match[0].length - 1; // Position of opening {
+    
+    // Find the matching closing brace for the callback function
+    const callbackEnd = findMatchingClose(scriptContent, callbackStart, '{', '}');
+    
+    if (callbackEnd === -1) continue;
+    
+    // Extract the function body (content between the braces)
+    const functionBody = scriptContent.substring(callbackStart + 1, callbackEnd).trim();
+    
+    // Find the closing of addEventListener call - should be ); after the callback's closing }
+    // Skip whitespace after the closing brace
+    let addEventListenerEnd = callbackEnd + 1;
+    while (addEventListenerEnd < scriptContent.length && 
+           /\s/.test(scriptContent[addEventListenerEnd])) {
+      addEventListenerEnd++;
+    }
+    
+    // After the callback's closing }, we should have ); to close addEventListener
+    if (scriptContent[addEventListenerEnd] === ')' && scriptContent[addEventListenerEnd + 1] === ';') {
+      addEventListenerEnd += 2;
+    } else {
+      // If we don't find );, try to find the next ); (might have extra whitespace/newlines)
+      const nextParen = scriptContent.indexOf(');', addEventListenerEnd);
+      if (nextParen !== -1) {
+        addEventListenerEnd = nextParen + 2;
+      } else {
+        // Fallback: just skip to the end of the line or next semicolon
+        const nextSemi = scriptContent.indexOf(';', addEventListenerEnd);
+        if (nextSemi !== -1) {
+          addEventListenerEnd = nextSemi + 1;
+        }
+      }
+    }
+    
+    matches.push({
+      start: startIndex,
+      end: addEventListenerEnd,
+      body: functionBody
+    });
+  }
+  
+  // Replace matches in reverse order to maintain correct indices
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const m = matches[i];
+    const before = result.substring(0, m.start);
+    const after = result.substring(m.end);
+    // Replace with immediate IIFE execution
+    result = before + '(function() {' + m.body + '})();' + after;
+  }
+  
+  return result;
+};
+
 // Helper function to execute script content safely, handling DOMContentLoaded
 const executeScriptContent = (scriptContent: string, targetElement: HTMLElement, priority: string, trackingId: string) => {
   const isDocumentReady = document.readyState === 'complete' || document.readyState === 'interactive';
@@ -16,33 +98,7 @@ const executeScriptContent = (scriptContent: string, targetElement: HTMLElement,
   if (usesDOMContentLoaded && isDocumentReady) {
     try {
       // Replace DOMContentLoaded event listeners with immediate execution
-      // This handles: document.addEventListener("DOMContentLoaded", function() { ... });
-      let modifiedContent = scriptContent;
-      
-      // Replace addEventListener('DOMContentLoaded', function() { ... }) with immediate execution
-      // Match: document.addEventListener("DOMContentLoaded", function() { ... });
-      modifiedContent = modifiedContent.replace(
-        /document\.addEventListener\s*\(\s*["']DOMContentLoaded["']\s*,\s*function\s*\(\)\s*\{/g,
-        '(function() {'
-      );
-      
-      // Match: document.addEventListener('DOMContentLoaded', function() { ... });
-      modifiedContent = modifiedContent.replace(
-        /document\.addEventListener\s*\(\s*['"]DOMContentLoaded['"]\s*,\s*function\s*\(\)\s*\{/g,
-        '(function() {'
-      );
-      
-      // Match: document.addEventListener("DOMContentLoaded", () => { ... });
-      modifiedContent = modifiedContent.replace(
-        /document\.addEventListener\s*\(\s*["']DOMContentLoaded["']\s*,\s*\(\)\s*=>\s*\{/g,
-        '(function() {'
-      );
-      
-      // Match: document.addEventListener('DOMContentLoaded', () => { ... });
-      modifiedContent = modifiedContent.replace(
-        /document\.addEventListener\s*\(\s*['"]DOMContentLoaded['"]\s*,\s*\(\)\s*=>\s*\{/g,
-        '(function() {'
-      );
+      const modifiedContent = replaceDOMContentLoadedListeners(scriptContent);
       
       // Execute the modified script
       const newScript = document.createElement('script');
