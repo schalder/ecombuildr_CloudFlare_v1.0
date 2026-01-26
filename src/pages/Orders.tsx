@@ -1498,6 +1498,113 @@ export default function Orders() {
     }
   };
 
+  // Convert incomplete checkout to order (Manual Approve for Abandoned Checkouts)
+  const handleManualApproveCheckout = async (checkoutId: string) => {
+    try {
+      const checkout = incompleteCheckouts.find(c => c.id === checkoutId);
+      if (!checkout) {
+        throw new Error('Checkout not found');
+      }
+
+      // Validate required fields
+      if (!checkout.customer_name || !checkout.customer_phone) {
+        toast({
+          title: 'Error',
+          description: 'Customer name and phone are required to create an order.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      if (!checkout.cart_items || checkout.cart_items.length === 0) {
+        toast({
+          title: 'Error',
+          description: 'Cart items are required to create an order.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Prepare order items from cart items
+      const orderItems = checkout.cart_items.map((item: any) => ({
+        product_id: item.product_id || null,
+        product_name: item.name || 'Unknown Product',
+        product_variant_id: item.variant_id || null,
+        variant_name: item.variant_name || null,
+        quantity: item.quantity || 1,
+        price: item.price || 0,
+        total: (item.price || 0) * (item.quantity || 1),
+      }));
+
+      // Prepare order data
+      const orderData = {
+        store_id: checkout.store_id,
+        customer_name: checkout.customer_name,
+        customer_email: checkout.customer_email || '',
+        customer_phone: checkout.customer_phone,
+        shipping_address: checkout.shipping_address || '',
+        shipping_city: checkout.shipping_city || '',
+        shipping_area: checkout.shipping_area || '',
+        shipping_country: checkout.shipping_country || '',
+        shipping_state: checkout.shipping_state || '',
+        shipping_postal_code: checkout.shipping_postal_code || '',
+        payment_method: checkout.payment_method || 'cod',
+        total: checkout.total || 0,
+        subtotal: checkout.subtotal || 0,
+        shipping_cost: checkout.shipping_cost || 0,
+        website_id: checkout.website_id || null,
+        funnel_id: checkout.funnel_id || null,
+        status: 'processing', // Set to processing for manual approval
+        custom_fields: checkout.custom_fields || {},
+        attribution_source: checkout.utm_source || null,
+        attribution_medium: checkout.utm_medium || null,
+        attribution_campaign: checkout.utm_campaign || null,
+        attribution_data: {
+          referrer: checkout.referrer || null,
+          page_url: checkout.page_url || null,
+          ...(checkout.custom_fields || {}),
+        },
+      };
+
+      // Call create-order edge function
+      const { data, error } = await supabase.functions.invoke('create-order', {
+        body: {
+          order: orderData,
+          items: orderItems,
+          storeId: checkout.store_id,
+        },
+      });
+
+      if (error) throw error;
+
+      if (!data?.success) {
+        throw new Error(data?.error || 'Failed to create order');
+      }
+
+      // Delete the incomplete checkout (trigger will also handle this, but doing it explicitly for immediate UI update)
+      await (supabase as any)
+        .from('incomplete_checkouts')
+        .delete()
+        .eq('id', checkoutId);
+
+      toast({
+        title: 'Checkout Converted',
+        description: 'Abandoned checkout has been converted to an order and moved to All Orders.',
+      });
+
+      // Refresh both orders and incomplete checkouts
+      fetchOrders();
+      fetchIncompleteCheckouts();
+    } catch (error) {
+      console.error('Error converting checkout to order:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to convert checkout to order. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Update contact status for an order - synchronized across all tabs
   const updateOrderContactStatus = async (orderId: string, status: 'contacted' | 'replied') => {
     try {
@@ -2816,7 +2923,85 @@ export default function Orders() {
                             <p className="text-sm text-muted-foreground">{checkout.customer_email}</p>
                           )}
                         </div>
-                        <Badge variant="secondary">Abandoned</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">Abandoned</Badge>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {/* Manual Approve Option */}
+                              {checkout.customer_name && checkout.customer_phone && checkout.cart_items && checkout.cart_items.length > 0 && (
+                                <DropdownMenuItem
+                                  onClick={() => handleManualApproveCheckout(checkout.id)}
+                                  className="flex items-center py-2 px-3 text-sm cursor-pointer text-green-600"
+                                >
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Manual Approve
+                                </DropdownMenuItem>
+                              )}
+                              {/* Contact Status Actions */}
+                              {checkout.customer_phone && (
+                                <>
+                                  {checkout.contact_status !== 'contacted' && checkout.contact_status !== 'replied' && (
+                                    <DropdownMenuItem
+                                      onClick={() => updateCheckoutContactStatus(checkout.id, 'contacted')}
+                                      className="flex items-center py-2 px-3 text-sm cursor-pointer"
+                                    >
+                                      <MessageCircle className="mr-2 h-4 w-4" />
+                                      Mark as Contacted
+                                    </DropdownMenuItem>
+                                  )}
+                                  {checkout.contact_status === 'contacted' && checkout.contact_status !== 'replied' && (
+                                    <DropdownMenuItem
+                                      onClick={() => updateCheckoutContactStatus(checkout.id, 'replied')}
+                                      className="flex items-center py-2 px-3 text-sm cursor-pointer"
+                                    >
+                                      <CheckCircle className="mr-2 h-4 w-4" />
+                                      Mark as Replied
+                                    </DropdownMenuItem>
+                                  )}
+                                  {checkout.contact_status === 'replied' && (
+                                    <DropdownMenuItem
+                                      onClick={() => updateCheckoutContactStatus(checkout.id, 'contacted')}
+                                      className="flex items-center py-2 px-3 text-sm cursor-pointer"
+                                    >
+                                      <MessageCircle className="mr-2 h-4 w-4" />
+                                      Change to Contacted
+                                    </DropdownMenuItem>
+                                  )}
+                                </>
+                              )}
+                              <DropdownMenuItem
+                                onClick={async () => {
+                                  try {
+                                    await (supabase as any)
+                                      .from('incomplete_checkouts')
+                                      .delete()
+                                      .eq('id', checkout.id);
+                                    toast({
+                                      title: "Success",
+                                      description: "Abandoned checkout deleted",
+                                    });
+                                    fetchIncompleteCheckouts();
+                                  } catch (error) {
+                                    toast({
+                                      title: "Error",
+                                      description: "Failed to delete abandoned checkout",
+                                      variant: "destructive",
+                                    });
+                                  }
+                                }}
+                                className="flex items-center py-2 px-3 text-sm cursor-pointer text-red-600"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
                       <div className="space-y-2 text-sm">
                         {checkout.shipping_address && (
@@ -2938,6 +3123,16 @@ export default function Orders() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
+                                {/* Manual Approve Option */}
+                                {checkout.customer_name && checkout.customer_phone && checkout.cart_items && checkout.cart_items.length > 0 && (
+                                  <DropdownMenuItem
+                                    onClick={() => handleManualApproveCheckout(checkout.id)}
+                                    className="flex items-center py-3 px-4 text-sm cursor-pointer touch-manipulation text-green-600"
+                                  >
+                                    <CheckCircle className="mr-3 h-4 w-4" />
+                                    Manual Approve
+                                  </DropdownMenuItem>
+                                )}
                                 {/* Contact Status Actions */}
                                 {checkout.customer_phone && (
                                   <>
