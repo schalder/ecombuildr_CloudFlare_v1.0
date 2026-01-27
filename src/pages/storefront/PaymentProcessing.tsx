@@ -982,85 +982,6 @@ export const PaymentProcessing: React.FC = () => {
                   quantity: item.quantity,
                 }));
                 
-                // ✅ Generate event_id for deduplication (use same for both fbq and database)
-                let sessionId = sessionStorage.getItem('session_id');
-                if (!sessionId) {
-                  sessionId = crypto.randomUUID();
-                  sessionStorage.setItem('session_id', sessionId);
-                }
-                const eventId = `Purchase_${Date.now()}_${sessionId}_${Math.random().toString(36).substring(2, 9)}`;
-                
-                // ✅ Capture browser context for server-side matching
-                const getFacebookBrowserContext = () => {
-                  try {
-                    const cookies = document.cookie.split(';').reduce((acc, cookie) => {
-                      const [key, value] = cookie.trim().split('=');
-                      acc[key] = value;
-                      return acc;
-                    }, {} as Record<string, string>);
-                    
-                    return {
-                      fbp: cookies['_fbp'] || null,
-                      fbc: cookies['_fbc'] || null,
-                      client_user_agent: navigator.userAgent,
-                      event_source_url: window.location.href,
-                    };
-                  } catch (error) {
-                    return {
-                      fbp: null,
-                      fbc: null,
-                      client_user_agent: navigator.userAgent,
-                      event_source_url: window.location.href,
-                    };
-                  }
-                };
-                
-                const browserContext = getFacebookBrowserContext();
-                
-                // Track purchase event directly using window.fbq if available
-                if (window.fbq && funnelPixels.facebook_pixel_id) {
-                  try {
-                    const fbqEventData = {
-                      content_ids: trackingItems.map(item => item.item_id),
-                      content_type: 'product',
-                      value: data.order.total,
-                      currency: 'BDT',
-                      contents: trackingItems.map(item => ({
-                        id: item.item_id,
-                        quantity: item.quantity,
-                        price: item.price, // ✅ Add price for server-side tracking
-                      })),
-                      event_id: eventId, // Include in eventData for server-side
-                    };
-                    // ✅ FIX: Pass event_id in options parameter for proper deduplication
-                    window.fbq('track', 'Purchase', fbqEventData, { eventID: eventId });
-                    console.log('PaymentProcessing: Facebook Purchase event tracked:', {
-                      orderId: data.order.id,
-                      total: data.order.total,
-                      itemsCount: orderItems.length,
-                      funnelId,
-                      eventId
-                    });
-                  } catch (error) {
-                    console.error('PaymentProcessing: Error tracking Facebook Purchase:', error);
-                  }
-                }
-                
-                // Track with Google Analytics if configured
-                if ((funnelPixels.google_analytics_id || funnelPixels.google_ads_id) && window.gtag) {
-                  try {
-                    window.gtag('event', 'purchase', {
-                      transaction_id: data.order.id,
-                      currency: 'BDT',
-                      value: data.order.total,
-                      items: trackingItems,
-                    });
-                    console.log('PaymentProcessing: Google Analytics Purchase event tracked');
-                  } catch (error) {
-                    console.error('PaymentProcessing: Error tracking Google Purchase:', error);
-                  }
-                }
-                
                 // ✅ CRITICAL FIX: Extract website_id and funnel_id from order data
                 // Pass them directly to trackPurchase to ensure correct IDs are stored
                 const orderWebsiteId = data.order.website_id || effectiveWebsiteId || null;
@@ -1070,7 +991,8 @@ export const PaymentProcessing: React.FC = () => {
                                      null;
                 
                 // ✅ REFACTORED: Use trackPurchase hook with order's website_id/funnel_id
-                // This stores event in database with correct IDs, and database trigger handles server-side tracking
+                // This handles both browser pixel tracking (with event ID) and database storage
+                // The database trigger will forward to server-side with the same event_id for deduplication
                 trackPurchase({
                   transaction_id: data.order.id,
                   value: data.order.total,

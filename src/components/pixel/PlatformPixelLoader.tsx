@@ -43,6 +43,16 @@ export const PlatformPixelLoader: React.FC<PlatformPixelLoaderProps> = ({ childr
   useEffect(() => {
     if (!pixelId || loading || shouldDisableTracking()) return;
 
+    // Generate event_id for PageView (consistent with usePixelTracking format)
+    const currentUrl = window.location.href;
+    const eventId = `PageView_${currentUrl}_${Math.floor(Date.now() / 1000)}`;
+    const eventData = {
+      page_title: document.title,
+      page_location: currentUrl,
+      referrer: document.referrer || null,
+      event_id: eventId,
+    };
+
     // Load Facebook Pixel script if not already loaded
     if (!window.fbq) {
       const script = document.createElement('script');
@@ -56,7 +66,7 @@ export const PlatformPixelLoader: React.FC<PlatformPixelLoaderProps> = ({ childr
         s.parentNode.insertBefore(t,s)}(window, document,'script',
         'https://connect.facebook.net/en_US/fbevents.js');
         fbq('init', '${pixelId}');
-        fbq('track', 'PageView');
+        fbq('set', 'autoConfig', false, '${pixelId}');
       `;
       document.head.appendChild(script);
       
@@ -70,12 +80,26 @@ export const PlatformPixelLoader: React.FC<PlatformPixelLoaderProps> = ({ childr
       noscript.appendChild(img);
       document.head.appendChild(noscript);
       
-      logger.debug('[PlatformPixelLoader] Facebook Pixel loaded:', pixelId);
+      // Wait for fbq to be available, then track PageView with event ID
+      const checkFbq = setInterval(() => {
+        if (window.fbq) {
+          clearInterval(checkFbq);
+          try {
+            window.fbq('track', 'PageView', eventData, { eventID: eventId });
+            logger.debug('[PlatformPixelLoader] Facebook Pixel loaded and PageView tracked with event ID:', eventId);
+          } catch (error) {
+            logger.warn('[PlatformPixelLoader] Error tracking PageView:', error);
+          }
+        }
+      }, 50);
+      
+      // Clear interval after 5 seconds if fbq never loads
+      setTimeout(() => clearInterval(checkFbq), 5000);
     } else {
-      // Pixel already loaded, just track PageView
+      // Pixel already loaded, track PageView with event ID
       try {
-        window.fbq('track', 'PageView');
-        logger.debug('[PlatformPixelLoader] PageView tracked');
+        window.fbq('track', 'PageView', eventData, { eventID: eventId });
+        logger.debug('[PlatformPixelLoader] PageView tracked with event ID:', eventId);
       } catch (error) {
         logger.warn('[PlatformPixelLoader] Error tracking PageView:', error);
       }
@@ -92,9 +116,17 @@ export const PlatformPixelLoader: React.FC<PlatformPixelLoaderProps> = ({ childr
       const currentUrl = window.location.href;
       if (currentUrl !== lastUrl && window.fbq) {
         lastUrl = currentUrl;
+        // Generate event_id for PageView (consistent with usePixelTracking format)
+        const eventId = `PageView_${currentUrl}_${Math.floor(Date.now() / 1000)}`;
+        const eventData = {
+          page_title: document.title,
+          page_location: currentUrl,
+          referrer: document.referrer || null,
+          event_id: eventId,
+        };
         try {
-          window.fbq('track', 'PageView');
-          logger.debug('[PlatformPixelLoader] PageView tracked on navigation');
+          window.fbq('track', 'PageView', eventData, { eventID: eventId });
+          logger.debug('[PlatformPixelLoader] PageView tracked on navigation with event ID:', eventId);
         } catch (error) {
           logger.warn('[PlatformPixelLoader] Error tracking PageView on navigation:', error);
         }
