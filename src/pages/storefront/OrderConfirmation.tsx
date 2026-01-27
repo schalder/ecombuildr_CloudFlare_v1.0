@@ -272,10 +272,7 @@ useEffect(() => {
           sessionStorage.setItem('purchase_tracked_' + orderData.id, 'true');
         }
         
-        // Clear tracking flag after processing
-        if (alreadyTracked) {
-          sessionStorage.removeItem('purchase_tracked_' + orderData.id);
-        }
+        // Keep tracking flag to prevent duplicate Purchase events
       }
     } catch (error) {
       console.error('Error fetching order via edge function:', error);
