@@ -966,9 +966,23 @@ export const PaymentProcessing: React.FC = () => {
           setEffectiveFunnelId(checkoutData.orderData.funnelId);
         }
         
+        let hasCustomSuccessRedirect = false;
+        if (isFunnelCheckout && currentStepId) {
+          try {
+            const { data: stepData } = await supabase
+              .from('funnel_steps')
+              .select('on_success_custom_url')
+              .eq('id', currentStepId)
+              .maybeSingle();
+            hasCustomSuccessRedirect = !!stepData?.on_success_custom_url?.trim();
+          } catch (error) {
+            console.error('PaymentProcessing: Error checking custom redirect:', error);
+          }
+        }
+
         // ✅ TRACK PURCHASE EVENT FOR DEFERRED PAYMENTS
         // Fetch funnel pixel configuration if this is a funnel checkout
-        if (isFunnelCheckout && funnelId) {
+        if (isFunnelCheckout && funnelId && !hasCustomSuccessRedirect) {
           try {
             // Update funnelContext state FIRST so the hook has the correct funnelId
             setFunnelContext({
