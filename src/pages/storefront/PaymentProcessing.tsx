@@ -1156,6 +1156,46 @@ export const PaymentProcessing: React.FC = () => {
               if (currentStep.on_success_custom_url && currentStep.on_success_custom_url.trim()) {
                 // Custom URL takes priority
                 try {
+                  // ✅ Ensure Purchase is tracked before custom URL redirect
+                  const purchaseTrackedKey = `purchase_tracked_${orderId}`;
+                  const alreadyTracked = sessionStorage.getItem(purchaseTrackedKey) === 'true';
+                  if (!alreadyTracked) {
+                    try {
+                      const { data: orderItems } = await supabase
+                        .from('order_items')
+                        .select('product_id, product_name, price, quantity')
+                        .eq('order_id', orderId);
+
+                      if (orderItems && orderItems.length > 0) {
+                        const trackingItems = orderItems.map(item => ({
+                          item_id: item.product_id,
+                          item_name: item.product_name,
+                          price: item.price,
+                          quantity: item.quantity,
+                        }));
+
+                        trackPurchase({
+                          transaction_id: orderId,
+                          value: checkoutData.orderData?.total || 0,
+                          items: trackingItems,
+                          customer_email: checkoutData.orderData?.customer_email || null,
+                          customer_phone: checkoutData.orderData?.customer_phone || null,
+                          customer_name: checkoutData.orderData?.customer_name || null,
+                          shipping_city: checkoutData.orderData?.shipping_city || null,
+                          shipping_state: checkoutData.orderData?.shipping_state || null,
+                          shipping_postal_code: checkoutData.orderData?.shipping_postal_code || null,
+                          shipping_country: checkoutData.orderData?.shipping_country || null,
+                          websiteId: checkoutData.orderData?.website_id || effectiveWebsiteId || null,
+                          funnelId: checkoutData.orderData?.funnelId || effectiveFunnelId || null,
+                        });
+
+                        sessionStorage.setItem(purchaseTrackedKey, 'true');
+                      }
+                    } catch (trackingError) {
+                      console.error('PaymentProcessing: Failed to track purchase before redirect:', trackingError);
+                    }
+                  }
+
                   const customUrl = new URL(currentStep.on_success_custom_url, window.location.origin);
                   customUrl.searchParams.set('orderId', orderId);
                   customUrl.searchParams.set('ot', newOrderToken);

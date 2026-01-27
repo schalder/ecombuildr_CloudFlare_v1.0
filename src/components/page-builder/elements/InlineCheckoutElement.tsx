@@ -1052,10 +1052,41 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         toast.success(isManual ? 'Order placed! Please complete payment to the provided number.' : 'Order placed!');
         
         // Handle funnel step success redirect
+        const trackPurchaseBeforeRedirect = () => {
+          const purchaseTrackedKey = `purchase_tracked_${orderId}`;
+          const alreadyTracked = sessionStorage.getItem(purchaseTrackedKey) === 'true';
+          if (alreadyTracked) return;
+
+          const trackingItems = itemsPayload.map(item => ({
+            item_id: item.product_id,
+            item_name: item.product_name,
+            price: item.price,
+            quantity: item.quantity,
+          }));
+
+          trackPurchase({
+            transaction_id: orderId,
+            value: orderData.total,
+            items: trackingItems,
+            customer_email: orderData.customer_email || null,
+            customer_phone: orderData.customer_phone || null,
+            customer_name: orderData.customer_name || null,
+            shipping_city: orderData.shipping_city || null,
+            shipping_state: orderData.shipping_state || null,
+            shipping_postal_code: orderData.shipping_postal_code || null,
+            shipping_country: orderData.shipping_country || null,
+            websiteId: resolvedWebsiteId || null,
+            funnelId: orderFunnelId || null,
+          });
+
+          sessionStorage.setItem(purchaseTrackedKey, 'true');
+        };
+
         // Priority: Custom URL first, then step ID
         if (funnelStepData?.on_success_custom_url && funnelStepData.on_success_custom_url.trim()) {
           // Custom URL takes priority
           try {
+            trackPurchaseBeforeRedirect();
             const customUrl = new URL(funnelStepData.on_success_custom_url, window.location.origin);
             customUrl.searchParams.set('orderId', orderId);
             customUrl.searchParams.set('ot', accessToken || '');
@@ -1108,6 +1139,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
         
         // Fallback: Check element-level redirect URL
         if (successRedirectUrl && successRedirectUrl.trim()) {
+          trackPurchaseBeforeRedirect();
           const redirectUrl = new URL(successRedirectUrl, window.location.origin);
           redirectUrl.searchParams.set('orderId', orderId);
           redirectUrl.searchParams.set('ot', accessToken || '');
