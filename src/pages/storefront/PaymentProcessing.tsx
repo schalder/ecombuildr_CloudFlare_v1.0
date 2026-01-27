@@ -709,6 +709,32 @@ export const PaymentProcessing: React.FC = () => {
     
     // ✅ For funnel checkouts, ensure store is loaded from funnel if not already loaded
     // For EPS/EB Pay site checkouts, load store from pending_checkout.storeId
+    const redirectToExistingOrder = async () => {
+      if (!tempId) return false;
+      try {
+        console.log('PaymentProcessing: pending_checkout missing, fetching existing order...');
+        const { data: orderData, error: fetchError } = await supabase.functions.invoke('get-order', {
+          body: { orderId: tempId }
+        });
+        if (fetchError || !orderData?.order) {
+          console.error('PaymentProcessing: Failed to fetch existing order:', fetchError);
+          return false;
+        }
+        const existingOrder = orderData.order;
+        const orderToken =
+          existingOrder?.custom_fields?.order_access_token ||
+          existingOrder?.access_token ||
+          crypto.randomUUID().replace(/-/g, '');
+        sessionStorage.removeItem('pending_checkout');
+        clearCart();
+        window.location.replace(paths.orderConfirmation(existingOrder.id, orderToken));
+        return true;
+      } catch (error) {
+        console.error('PaymentProcessing: Error fetching existing order:', error);
+        return false;
+      }
+    };
+
     if (!store) {
       console.log('PaymentProcessing: Store not loaded, attempting to load from pending_checkout...');
       const pendingCheckout = sessionStorage.getItem('pending_checkout');
@@ -753,6 +779,8 @@ export const PaymentProcessing: React.FC = () => {
         }
       } else {
         console.error('PaymentProcessing: Store not loaded and no checkout data');
+        const redirected = await redirectToExistingOrder();
+        if (redirected) return;
         setLoading(false);
         return;
       }
@@ -765,6 +793,8 @@ export const PaymentProcessing: React.FC = () => {
       // Get stored checkout data
       const pendingCheckout = sessionStorage.getItem('pending_checkout');
       if (!pendingCheckout) {
+        const redirected = await redirectToExistingOrder();
+        if (redirected) return;
         setLoading(false);
         return;
       }
