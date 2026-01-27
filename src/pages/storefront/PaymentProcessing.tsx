@@ -889,7 +889,9 @@ export const PaymentProcessing: React.FC = () => {
         fullData: data
       });
 
-      if (data?.success && data?.order) {
+      // ✅ FIX: Check for orderId instead of full order object (edge function returns minimal order)
+      const orderId = data?.order?.id;
+      if (data?.success && orderId) {
         console.log('PaymentProcessing: ✅ Order created successfully, preparing redirect...');
         
         // Mark order as created IMMEDIATELY to prevent any error toasts
@@ -899,14 +901,15 @@ export const PaymentProcessing: React.FC = () => {
         sessionStorage.removeItem('pending_checkout');
         
         // ✅ Clear incomplete checkout record if it exists (for abandoned checkout cleanup)
+        // ✅ FIX: Use store.id instead of data.order.store_id (minimal response doesn't include store_id)
         const checkoutSessionId = sessionStorage.getItem('checkout_session_id');
-        if (checkoutSessionId && data?.order?.store_id) {
+        if (checkoutSessionId && store?.id) {
           try {
             await (supabase as any)
               .from('incomplete_checkouts')
               .delete()
               .eq('session_id', checkoutSessionId)
-              .eq('store_id', data.order.store_id);
+              .eq('store_id', store.id);
           } catch (error) {
             // Silently fail - incomplete checkout cleanup is not critical
             if (process.env.NODE_ENV === 'development') {
@@ -919,23 +922,18 @@ export const PaymentProcessing: React.FC = () => {
         // Clear cart after successful order creation
         clearCart();
         
-        // ✅ CRITICAL FIX: Update effectiveStoreId, effectiveWebsiteId, and effectiveFunnelId from order data
-        // These are required for the database trigger to check server-side configuration
-        if (data?.order?.store_id && !effectiveStoreId) {
-          setEffectiveStoreId(data.order.store_id);
+        // ✅ CRITICAL FIX: Update effectiveStoreId, effectiveWebsiteId, and effectiveFunnelId from checkoutData
+        // The edge function returns minimal order, so use checkoutData.orderData for these values
+        if (checkoutData.orderData?.store_id && !effectiveStoreId) {
+          setEffectiveStoreId(checkoutData.orderData.store_id);
         }
         
-        if (data?.order?.website_id && !effectiveWebsiteId) {
-          setEffectiveWebsiteId(data.order.website_id);
+        if (checkoutData.orderData?.website_id && !effectiveWebsiteId) {
+          setEffectiveWebsiteId(checkoutData.orderData.website_id);
         }
         
-        if (data?.order?.funnel_id && !effectiveFunnelId) {
-          setEffectiveFunnelId(data.order.funnel_id);
-        } else if (data?.order?.custom_fields) {
-          const customFields = data.order.custom_fields as any;
-          if (customFields.funnelId && !effectiveFunnelId) {
-            setEffectiveFunnelId(customFields.funnelId);
-          }
+        if (checkoutData.orderData?.funnelId && !effectiveFunnelId) {
+          setEffectiveFunnelId(checkoutData.orderData.funnelId);
         }
         
         // ✅ TRACK PURCHASE EVENT FOR DEFERRED PAYMENTS
@@ -967,10 +965,11 @@ export const PaymentProcessing: React.FC = () => {
               setPixelConfig(funnelPixels);
               
               // Fetch order items for tracking
+              // ✅ FIX: Use orderId variable (edge function returns minimal order)
               const { data: orderItems, error: itemsError } = await supabase
                 .from('order_items')
                 .select('product_id, product_name, price, quantity')
-                .eq('order_id', data.order.id);
+                .eq('order_id', orderId);
               
               // ✅ FIX: Only track if effectiveStoreId is available
               if (!itemsError && orderItems && orderItems.length > 0 && effectiveStoreId) {
@@ -982,36 +981,34 @@ export const PaymentProcessing: React.FC = () => {
                   quantity: item.quantity,
                 }));
                 
-                // ✅ CRITICAL FIX: Extract website_id and funnel_id from order data
-                // Pass them directly to trackPurchase to ensure correct IDs are stored
-                const orderWebsiteId = data.order.website_id || effectiveWebsiteId || null;
-                const orderFunnelId = data.order.funnel_id || 
-                                     (data.order.custom_fields as any)?.funnelId || 
-                                     effectiveFunnelId || 
-                                     null;
+                // ✅ CRITICAL FIX: Extract website_id and funnel_id from checkoutData
+                // Edge function returns minimal order, so use checkoutData.orderData
+                const orderWebsiteId = checkoutData.orderData?.website_id || effectiveWebsiteId || null;
+                const orderFunnelId = checkoutData.orderData?.funnelId || effectiveFunnelId || null;
                 
                 // ✅ REFACTORED: Use trackPurchase hook with order's website_id/funnel_id
                 // This handles both browser pixel tracking (with event ID) and database storage
                 // The database trigger will forward to server-side with the same event_id for deduplication
+                // ✅ FIX: Use checkoutData.orderData for tracking values (edge function returns minimal order)
                 trackPurchase({
-                  transaction_id: data.order.id,
-                  value: data.order.total,
+                  transaction_id: orderId,
+                  value: checkoutData.orderData?.total || 0,
                   items: trackingItems,
                   // Include customer data for better Facebook matching
-                  customer_email: data.order.customer_email || null,
-                  customer_phone: data.order.customer_phone || null,
-                  customer_name: data.order.customer_name || null,
-                  shipping_city: data.order.shipping_city || null,
-                  shipping_state: data.order.shipping_state || null,
-                  shipping_postal_code: data.order.shipping_postal_code || null,
-                  shipping_country: data.order.shipping_country || null,
-                  // ✅ CRITICAL: Pass website_id and funnel_id from order data
-                  websiteId: orderWebsiteId,
-                  funnelId: orderFunnelId,
+                  customer_email: checkoutData.orderData?.customer_email || null,
+                  customer_phone: checkoutData.orderData?.customer_phone || null,
+                  customer_name: checkoutData.orderData?.customer_name || null,
+                  shipping_city: checkoutData.orderData?.shipping_city || null,
+                  shipping_state: checkoutData.orderData?.shipping_state || null,
+                  shipping_postal_code: checkoutData.orderData?.shipping_postal_code || null,
+                  shipping_country: checkoutData.orderData?.shipping_country || null,
+                  // ✅ CRITICAL: Pass website_id and funnel_id from checkoutData
+                  websiteId: checkoutData.orderData?.website_id || effectiveWebsiteId || null,
+                  funnelId: checkoutData.orderData?.funnelId || effectiveFunnelId || null,
                 });
                 
                 // Store tracking flag to prevent duplicate tracking on redirect
-                sessionStorage.setItem('purchase_tracked_' + data.order.id, 'true');
+                sessionStorage.setItem('purchase_tracked_' + orderId, 'true');
               }
             }
           } catch (error) {
@@ -1044,10 +1041,11 @@ export const PaymentProcessing: React.FC = () => {
                 setPixelConfig(websitePixels);
                 
                 // Fetch order items for tracking
+                // ✅ FIX: Use orderId variable (edge function returns minimal order)
                 const { data: orderItems } = await supabase
                   .from('order_items')
                   .select('product_id, product_name, price, quantity')
-                  .eq('order_id', data.order.id);
+                  .eq('order_id', orderId);
                 
                 // ✅ FIX: Only track if effectiveStoreId is available
                 if (orderItems && orderItems.length > 0 && effectiveStoreId) {
@@ -1058,36 +1056,35 @@ export const PaymentProcessing: React.FC = () => {
                     quantity: item.quantity,
                   }));
                   
-                  // ✅ CRITICAL FIX: Extract website_id and funnel_id from order data
-                  const orderWebsiteId = data.order.website_id || effectiveWebsiteId || null;
-                  const orderFunnelId = data.order.funnel_id || 
-                                       (data.order.custom_fields as any)?.funnelId || 
-                                       effectiveFunnelId || 
-                                       null;
+                  // ✅ CRITICAL FIX: Extract website_id and funnel_id from checkoutData
+                  // Edge function returns minimal order, so use checkoutData.orderData
+                  const orderWebsiteId = checkoutData.orderData?.website_id || effectiveWebsiteId || null;
+                  const orderFunnelId = checkoutData.orderData?.funnelId || effectiveFunnelId || null;
                   
                   // ✅ Use trackPurchase hook with order's website_id/funnel_id
+                  // ✅ FIX: Use checkoutData.orderData for tracking values (edge function returns minimal order)
                   trackPurchase({
-                    transaction_id: data.order.id,
-                    value: data.order.total,
+                    transaction_id: orderId,
+                    value: checkoutData.orderData?.total || 0,
                     items: trackingItems,
-                    customer_email: data.order.customer_email || null,
-                    customer_phone: data.order.customer_phone || null,
-                    customer_name: data.order.customer_name || null,
-                    shipping_city: data.order.shipping_city || null,
-                    shipping_state: data.order.shipping_state || null,
-                    shipping_postal_code: data.order.shipping_postal_code || null,
-                    shipping_country: data.order.shipping_country || null,
-                    // ✅ CRITICAL: Pass website_id and funnel_id from order data
-                    websiteId: orderWebsiteId,
-                    funnelId: orderFunnelId,
+                    customer_email: checkoutData.orderData?.customer_email || null,
+                    customer_phone: checkoutData.orderData?.customer_phone || null,
+                    customer_name: checkoutData.orderData?.customer_name || null,
+                    shipping_city: checkoutData.orderData?.shipping_city || null,
+                    shipping_state: checkoutData.orderData?.shipping_state || null,
+                    shipping_postal_code: checkoutData.orderData?.shipping_postal_code || null,
+                    shipping_country: checkoutData.orderData?.shipping_country || null,
+                    // ✅ CRITICAL: Pass website_id and funnel_id from checkoutData
+                    websiteId: checkoutData.orderData?.website_id || effectiveWebsiteId || null,
+                    funnelId: checkoutData.orderData?.funnelId || effectiveFunnelId || null,
                   });
                   
                   // Store tracking flag to prevent duplicate tracking on redirect
-                  sessionStorage.setItem('purchase_tracked_' + data.order.id, 'true');
+                  sessionStorage.setItem('purchase_tracked_' + orderId, 'true');
                   
                   console.log('PaymentProcessing: ✅ Purchase event tracked for website checkout:', {
-                    orderId: data.order.id,
-                    total: data.order.total,
+                    orderId: orderId,
+                    total: checkoutData.orderData?.total || 0,
                     itemsCount: orderItems.length,
                     websiteId,
                   });
@@ -1122,14 +1119,15 @@ export const PaymentProcessing: React.FC = () => {
               .single();
             
             if (!stepError && currentStep) {
-              const newOrderToken = data.order.access_token;
+              // ✅ FIX: Use orderId variable (edge function returns minimal order)
+              const newOrderToken = data.order.access_token || orderId;
               
               // Priority: Custom URL first, then step ID
               if (currentStep.on_success_custom_url && currentStep.on_success_custom_url.trim()) {
                 // Custom URL takes priority
                 try {
                   const customUrl = new URL(currentStep.on_success_custom_url, window.location.origin);
-                  customUrl.searchParams.set('orderId', data.order.id);
+                  customUrl.searchParams.set('orderId', orderId);
                   customUrl.searchParams.set('ot', newOrderToken);
                   console.log(`PaymentProcessing: Redirecting to custom success URL: ${customUrl.toString()}`);
                   window.location.href = customUrl.toString();
@@ -1159,13 +1157,15 @@ export const PaymentProcessing: React.FC = () => {
                 
                 if (isAppEnvironment) {
                   // App/sandbox: use funnel-aware paths
-                  const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                  // ✅ FIX: Use orderId variable (edge function returns minimal order)
+                  const nextUrl = `/funnel/${funnelId}/${nextStep.slug}?orderId=${orderId}&ot=${newOrderToken}`;
                     console.log(`PaymentProcessing: Funnel redirect (app): ${nextUrl}`);
                   window.location.href = nextUrl;
                   return;
                 } else {
                   // Custom domain: use clean paths
-                  const nextUrl = `/${nextStep.slug}?orderId=${data.order.id}&ot=${newOrderToken}`;
+                  // ✅ FIX: Use orderId variable (edge function returns minimal order)
+                  const nextUrl = `/${nextStep.slug}?orderId=${orderId}&ot=${newOrderToken}`;
                     console.log(`PaymentProcessing: Funnel redirect (custom domain): ${nextUrl}`);
                   window.location.href = nextUrl;
                   return;
@@ -1176,17 +1176,19 @@ export const PaymentProcessing: React.FC = () => {
               } else {
                 console.log('PaymentProcessing: Current step not found or no next step configured');
                 // Fallback: redirect to order confirmation if no funnel redirect configured
-                const newOrderToken = data.order.access_token || data.order.id;
+                // ✅ FIX: Use orderId variable (edge function returns minimal order)
+                const newOrderToken = data.order.access_token || orderId;
                 // Don't show toast - redirect immediately
-                window.location.replace(paths.orderConfirmation(data.order.id, newOrderToken));
+                window.location.replace(paths.orderConfirmation(orderId, newOrderToken));
                 return;
               }
             } else {
               console.log('PaymentProcessing: Current step not found or no next step configured');
               // Fallback: redirect to order confirmation if current step not found
-              const newOrderToken = data.order.access_token || data.order.id;
+              // ✅ FIX: Use orderId variable (edge function returns minimal order)
+              const newOrderToken = data.order.access_token || orderId;
               // Don't show toast - redirect immediately
-              window.location.replace(paths.orderConfirmation(data.order.id, newOrderToken));
+              window.location.replace(paths.orderConfirmation(orderId, newOrderToken));
               return;
             }
           } catch (error) {
@@ -1197,10 +1199,11 @@ export const PaymentProcessing: React.FC = () => {
         
         // ✅ WEBSITE CHECKOUT: Navigate to order confirmation (existing behavior)
         // ✅ FIX: Ensure redirect always happens - this is the final fallback
-        const newOrderToken = data.order.access_token || data.order.id;
-        const redirectUrl = paths.orderConfirmation(data.order.id, newOrderToken);
+        // ✅ FIX: Use orderId variable (edge function returns minimal order with id and access_token)
+        const newOrderToken = data.order.access_token || orderId;
+        const redirectUrl = paths.orderConfirmation(orderId, newOrderToken);
         console.log('PaymentProcessing: Redirecting to order confirmation:', {
-          orderId: data.order.id,
+          orderId: orderId,
           hasToken: !!newOrderToken,
           redirectUrl: redirectUrl,
           timestamp: new Date().toISOString()
