@@ -1161,19 +1161,31 @@ export const PaymentProcessing: React.FC = () => {
                   const alreadyTracked = sessionStorage.getItem(purchaseTrackedKey) === 'true';
                   if (!alreadyTracked) {
                     try {
-                      const { data: orderItems } = await supabase
-                        .from('order_items')
-                        .select('product_id, product_name, price, quantity')
-                        .eq('order_id', orderId);
+                      const pendingItems = Array.isArray(checkoutData?.itemsPayload)
+                        ? checkoutData.itemsPayload
+                        : [];
+                      let trackingItems = pendingItems.map((item: any) => ({
+                        item_id: item.product_id,
+                        item_name: item.product_name,
+                        price: item.price,
+                        quantity: item.quantity,
+                      }));
 
-                      if (orderItems && orderItems.length > 0) {
-                        const trackingItems = orderItems.map(item => ({
+                      if (!trackingItems.length) {
+                        const { data: orderItems } = await supabase
+                          .from('order_items')
+                          .select('product_id, product_name, price, quantity')
+                          .eq('order_id', orderId);
+
+                        trackingItems = (orderItems || []).map(item => ({
                           item_id: item.product_id,
                           item_name: item.product_name,
                           price: item.price,
                           quantity: item.quantity,
                         }));
+                      }
 
+                      if (trackingItems.length > 0) {
                         trackPurchase({
                           transaction_id: orderId,
                           value: checkoutData.orderData?.total || 0,
@@ -1199,6 +1211,7 @@ export const PaymentProcessing: React.FC = () => {
                   const customUrl = new URL(currentStep.on_success_custom_url, window.location.origin);
                   customUrl.searchParams.set('orderId', orderId);
                   customUrl.searchParams.set('ot', newOrderToken);
+                  await new Promise(resolve => setTimeout(resolve, 300));
                   console.log(`PaymentProcessing: Redirecting to custom success URL: ${customUrl.toString()}`);
                   window.location.href = customUrl.toString();
                   return;

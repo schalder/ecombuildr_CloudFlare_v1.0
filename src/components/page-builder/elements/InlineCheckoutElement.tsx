@@ -1090,6 +1090,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
             const customUrl = new URL(funnelStepData.on_success_custom_url, window.location.origin);
             customUrl.searchParams.set('orderId', orderId);
             customUrl.searchParams.set('ot', accessToken || '');
+            await new Promise(resolve => setTimeout(resolve, 300));
             console.log(`Redirecting to custom success URL: ${customUrl.toString()}`);
             window.location.href = customUrl.toString();
             return;
@@ -1143,6 +1144,7 @@ const InlineCheckoutElement: React.FC<{ element: PageBuilderElement; deviceType?
           const redirectUrl = new URL(successRedirectUrl, window.location.origin);
           redirectUrl.searchParams.set('orderId', orderId);
           redirectUrl.searchParams.set('ot', accessToken || '');
+          await new Promise(resolve => setTimeout(resolve, 300));
           console.log(`Redirecting to element success URL: ${redirectUrl.toString()}`);
           window.location.href = redirectUrl.toString();
         } else {
