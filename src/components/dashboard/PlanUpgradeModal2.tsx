@@ -365,13 +365,13 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
                             <CheckCircle className="h-5 w-5 text-green-500" />
                           )}
                         </div>
-                        {/* Show account number for manual methods (bKash/Nagad), hide for EB Pay */}
-                        {option.account_number && option.provider !== 'ebpay' && (
+                        {/* Show account number for manual methods (bKash/Nagad), hide for gateways */}
+                        {option.account_number && option.provider !== 'ebpay' && option.provider !== 'eps' && (
                           <p className="text-sm text-muted-foreground mb-2">
                             নম্বর: <span className="font-mono font-semibold">{option.account_number}</span>
                           </p>
                         )}
-                        {option.provider === 'ebpay' && (
+                        {(option.provider === 'ebpay' || option.provider === 'eps') && (
                           <p className="text-sm text-muted-foreground mb-2">
                             স্বয়ংক্রিয় পেমেন্ট গেটওয়ে
                           </p>
@@ -384,12 +384,14 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
                   ))
                 )}
 
-                {selectedPaymentMethod === 'ebpay' ? (
+                {selectedPaymentMethod === 'ebpay' || selectedPaymentMethod === 'eps' ? (
                   <div className="space-y-4 mt-6 p-4 border rounded-lg bg-muted/50">
                     <div className="text-center">
-                      <h4 className="font-medium mb-2">EB Pay দিয়ে পেমেন্ট করুন</h4>
+                      <h4 className="font-medium mb-2">
+                        {selectedPaymentMethod === 'ebpay' ? 'EB Pay' : 'EPS'} দিয়ে পেমেন্ট করুন
+                      </h4>
                       <p className="text-sm text-muted-foreground mb-4">
-                        আপনি EB Pay গেটওয়েতে রিডাইরেক্ট হবেন যেখানে আপনি নিরাপদে পেমেন্ট সম্পূর্ণ করতে পারবেন। 
+                        আপনি {selectedPaymentMethod === 'ebpay' ? 'EB Pay' : 'EPS'} গেটওয়েতে রিডাইরেক্ট হবেন যেখানে আপনি নিরাপদে পেমেন্ট সম্পূর্ণ করতে পারবেন।
                         সফল পেমেন্টের পর আপনার অ্যাকাউন্ট স্বয়ংক্রিয়ভাবে আপগ্রেড হবে।
                       </p>
                     </div>
@@ -399,7 +401,9 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
                       className="w-full"
                       size="lg"
                     >
-                      {submitting ? 'রিডাইরেক্ট করা হচ্ছে...' : 'EB Pay এ যান'}
+                      {submitting
+                        ? 'রিডাইরেক্ট করা হচ্ছে...'
+                        : `${selectedPaymentMethod === 'ebpay' ? 'EB Pay' : 'EPS'} এ যান`}
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </div>
