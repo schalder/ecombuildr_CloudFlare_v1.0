@@ -130,8 +130,8 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
       return;
     }
 
-    // EB Pay automated flow
-    if (selectedPaymentMethod === 'ebpay') {
+    // Automated gateway flow (EB Pay / EPS)
+    if (selectedPaymentMethod === 'ebpay' || selectedPaymentMethod === 'eps') {
       setSubmitting(true);
       try {
         const selectedPlanData = plans.find(p => p.plan_name === selectedPlan);
@@ -143,7 +143,8 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
           .eq('id', user?.id)
           .single();
 
-        const { data, error } = await supabase.functions.invoke('platform-ebpay-payment', {
+        const functionName = selectedPaymentMethod === 'ebpay' ? 'platform-ebpay-payment' : 'platform-eps-payment';
+        const { data, error } = await supabase.functions.invoke(functionName, {
           body: {
             userId: user?.id,
             planName: selectedPlan,
@@ -159,14 +160,14 @@ export const PlanUpgradeModal2: React.FC<PlanUpgradeModal2Props> = ({ open, onOp
         if (error) throw error;
 
         if (data?.success && data?.paymentURL) {
-          toast.success('EB Pay গেটওয়েতে রিডাইরেক্ট করা হচ্ছে...');
+          toast.success(selectedPaymentMethod === 'ebpay' ? 'EB Pay গেটওয়েতে রিডাইরেক্ট করা হচ্ছে...' : 'EPS গেটওয়েতে রিডাইরেক্ট করা হচ্ছে...');
           // Redirect to EB Pay payment page
           window.location.href = data.paymentURL;
         } else {
           throw new Error('পেমেন্ট সেশন তৈরি করতে ব্যর্থ');
         }
       } catch (error: any) {
-        console.error('Error initiating EB Pay payment:', error);
+        console.error('Error initiating payment:', error);
         toast.error('পেমেন্ট শুরু করতে ব্যর্থ। আবার চেষ্টা করুন।');
         setSubmitting(false);
       }

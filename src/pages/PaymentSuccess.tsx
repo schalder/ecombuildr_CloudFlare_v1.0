@@ -16,11 +16,17 @@ export default function PaymentSuccess() {
   const subscriptionId = searchParams.get('subscriptionId');
   const status = searchParams.get('status');
   const paymentMethod = searchParams.get('pm');
-  const transactionId = searchParams.get('transactionId') || searchParams.get('transaction_id') || searchParams.get('txn_id');
+  const transactionId =
+    searchParams.get('transactionId') ||
+    searchParams.get('transaction_id') ||
+    searchParams.get('txn_id') ||
+    searchParams.get('MerchantTransactionId') ||
+    searchParams.get('merchantTransactionId') ||
+    searchParams.get('EPSTransactionId');
 
   useEffect(() => {
     const verifyPayment = async () => {
-      if (!subscriptionId || !['success', 'completed'].includes(status || '') || paymentMethod !== 'ebpay') {
+      if (!subscriptionId || !['success', 'completed'].includes(status || '') || !['ebpay', 'eps'].includes(paymentMethod || '')) {
         setError('Invalid payment parameters');
         setVerifying(false);
         return;
@@ -28,7 +34,8 @@ export default function PaymentSuccess() {
 
       try {
         // Call verification edge function
-        const { data, error } = await supabase.functions.invoke('platform-ebpay-verify-payment', {
+        const functionName = paymentMethod === 'ebpay' ? 'platform-ebpay-verify-payment' : 'platform-eps-verify-payment';
+        const { data, error } = await supabase.functions.invoke(functionName, {
           body: { subscriptionId, transactionId }
         });
 

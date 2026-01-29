@@ -33,9 +33,9 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
 
       if (error) throw error;
       
-      // Parse account_number for ebpay from JSON string to object
+      // Parse account_number for ebpay/eps from JSON string to object
       const processedData = (data || []).map(row => {
-        if (row.provider === 'ebpay' && typeof row.account_number === 'string') {
+        if ((row.provider === 'ebpay' || row.provider === 'eps') && typeof row.account_number === 'string') {
           try {
             return { ...row, account_number: JSON.parse(row.account_number) };
           } catch {
@@ -65,8 +65,8 @@ export const usePaymentOptions = (options: { enabled?: boolean } = { enabled: fa
         ...cleanUpdates,
       };
 
-      // For ebpay, stringify account_number if it's an object
-      if (provider === 'ebpay' && basePayload.account_number && typeof basePayload.account_number === 'object') {
+      // For ebpay/eps, stringify account_number if it's an object
+      if ((provider === 'ebpay' || provider === 'eps') && basePayload.account_number && typeof basePayload.account_number === 'object') {
         basePayload.account_number = JSON.stringify(basePayload.account_number);
       }
 

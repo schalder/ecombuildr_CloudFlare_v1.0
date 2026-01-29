@@ -61,8 +61,8 @@ export default function BillingManagement() {
     paymentOptions.forEach(option => {
       let accountNumber = option.account_number;
       
-      // For ebpay, ensure account_number is parsed as object if it's a JSON string
-      if (option.provider === 'ebpay' && typeof accountNumber === 'string') {
+      // For ebpay/eps, ensure account_number is parsed as object if it's a JSON string
+      if ((option.provider === 'ebpay' || option.provider === 'eps') && typeof accountNumber === 'string') {
         try {
           accountNumber = JSON.parse(accountNumber);
         } catch {
@@ -177,6 +177,16 @@ export default function BillingManagement() {
         const accountNumber = ebpayConfig.account_number || {};
         if (!accountNumber.brand_key || !accountNumber.api_key || !accountNumber.secret_key) {
           toast.error('EB Pay requires Brand Key, API Key, and Secret Key to be enabled');
+          setLoading(false);
+          return;
+        }
+      }
+      
+      const epsConfig = paymentConfigData['eps'];
+      if (epsConfig?.is_enabled) {
+        const accountNumber = epsConfig.account_number || {};
+        if (!accountNumber.merchant_id || !accountNumber.store_id || !accountNumber.username || !accountNumber.password || !accountNumber.hash_key) {
+          toast.error('EPS requires Merchant ID, Store ID, Username, Password, and Hash Key to be enabled');
           setLoading(false);
           return;
         }
@@ -502,6 +512,157 @@ export default function BillingManagement() {
                                 </div>
                               </div>
                             </div>
+                          ) : option.provider === 'eps' ? (
+                            <div className="col-span-2 space-y-3">
+                              <p className="text-sm text-muted-foreground">Configure EPS Gateway Credentials:</p>
+                              <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                  <Label htmlFor={`${option.provider}-merchant-id`}>Merchant ID</Label>
+                                  <Input
+                                    id={`${option.provider}-merchant-id`}
+                                    placeholder="Enter Merchant ID"
+                                    value={
+                                      typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                        ? paymentConfigData[option.provider]?.account_number?.merchant_id || ''
+                                        : ''
+                                    }
+                                    onChange={(e) => {
+                                      const currentConfig = typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                        ? paymentConfigData[option.provider]?.account_number
+                                        : {};
+                                      setPaymentConfigData(prev => ({
+                                        ...prev,
+                                        [option.provider]: {
+                                          ...prev[option.provider],
+                                          account_number: { ...currentConfig, merchant_id: e.target.value }
+                                        }
+                                      }));
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`${option.provider}-store-id`}>Store ID</Label>
+                                  <Input
+                                    id={`${option.provider}-store-id`}
+                                    placeholder="Enter Store ID"
+                                    value={
+                                      typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                        ? paymentConfigData[option.provider]?.account_number?.store_id || ''
+                                        : ''
+                                    }
+                                    onChange={(e) => {
+                                      const currentConfig = typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                        ? paymentConfigData[option.provider]?.account_number
+                                        : {};
+                                      setPaymentConfigData(prev => ({
+                                        ...prev,
+                                        [option.provider]: {
+                                          ...prev[option.provider],
+                                          account_number: { ...currentConfig, store_id: e.target.value }
+                                        }
+                                      }));
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`${option.provider}-username`}>Username</Label>
+                                  <Input
+                                    id={`${option.provider}-username`}
+                                    placeholder="Enter Username"
+                                    value={
+                                      typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                        ? paymentConfigData[option.provider]?.account_number?.username || ''
+                                        : ''
+                                    }
+                                    onChange={(e) => {
+                                      const currentConfig = typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                        ? paymentConfigData[option.provider]?.account_number
+                                        : {};
+                                      setPaymentConfigData(prev => ({
+                                        ...prev,
+                                        [option.provider]: {
+                                          ...prev[option.provider],
+                                          account_number: { ...currentConfig, username: e.target.value }
+                                        }
+                                      }));
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`${option.provider}-password`}>Password</Label>
+                                  <Input
+                                    id={`${option.provider}-password`}
+                                    type="password"
+                                    placeholder="Enter Password"
+                                    value={
+                                      typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                        ? paymentConfigData[option.provider]?.account_number?.password || ''
+                                        : ''
+                                    }
+                                    onChange={(e) => {
+                                      const currentConfig = typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                        ? paymentConfigData[option.provider]?.account_number
+                                        : {};
+                                      setPaymentConfigData(prev => ({
+                                        ...prev,
+                                        [option.provider]: {
+                                          ...prev[option.provider],
+                                          account_number: { ...currentConfig, password: e.target.value }
+                                        }
+                                      }));
+                                    }}
+                                  />
+                                </div>
+                                <div>
+                                  <Label htmlFor={`${option.provider}-hash-key`}>Hash Key</Label>
+                                  <Input
+                                    id={`${option.provider}-hash-key`}
+                                    placeholder="Enter Hash Key"
+                                    value={
+                                      typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                        ? paymentConfigData[option.provider]?.account_number?.hash_key || ''
+                                        : ''
+                                    }
+                                    onChange={(e) => {
+                                      const currentConfig = typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                        ? paymentConfigData[option.provider]?.account_number
+                                        : {};
+                                      setPaymentConfigData(prev => ({
+                                        ...prev,
+                                        [option.provider]: {
+                                          ...prev[option.provider],
+                                          account_number: { ...currentConfig, hash_key: e.target.value }
+                                        }
+                                      }));
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex items-end gap-3">
+                                  <div className="flex items-center gap-2">
+                                    <Switch
+                                      checked={
+                                        typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                          ? !!paymentConfigData[option.provider]?.account_number?.is_live
+                                          : false
+                                      }
+                                      onCheckedChange={(checked) => {
+                                        const currentConfig = typeof paymentConfigData[option.provider]?.account_number === 'object'
+                                          ? paymentConfigData[option.provider]?.account_number
+                                          : {};
+                                        setPaymentConfigData(prev => ({
+                                          ...prev,
+                                          [option.provider]: {
+                                            ...prev[option.provider],
+                                            account_number: { ...currentConfig, is_live: checked }
+                                          }
+                                        }));
+                                      }}
+                                    />
+                                    <Label htmlFor={`${option.provider}-is-live`}>Live Mode</Label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           ) : (
                             <div>
                               <Label htmlFor={`${option.provider}-number`}>Account Number</Label>
@@ -558,7 +719,7 @@ export default function BillingManagement() {
                   <div>
                     <h4 className="font-medium">{option.display_name}</h4>
                     <p className="text-sm text-muted-foreground">
-                      {option.provider === 'ebpay' 
+                      {option.provider === 'ebpay' || option.provider === 'eps'
                         ? (option.account_number ? 'Configured (credentials hidden)' : 'Not configured')
                         : (option.account_number || 'Not configured')
                       }
